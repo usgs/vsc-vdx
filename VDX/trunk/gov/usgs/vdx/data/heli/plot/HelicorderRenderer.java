@@ -22,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * Revision 1.6  2005/05/01 16:57:14  cervelli
  * Changes for minimal axes.
  *
@@ -52,7 +55,7 @@ public class HelicorderRenderer extends FrameRenderer
 	private double hcMinY;
 	private double hcMaxY;
 	private Color[] colors = 
-		new Color[] {new Color(0, 0, 255), new Color(0, 0, 205), new Color(0, 0, 155), new Color(0, 0, 105)};//, new Color(0, 0, 145), new Color(0, 0, 200)};
+		new Color[] {new Color(0, 0, 255), new Color(0, 0, 205), new Color(0, 0, 155), new Color(0, 0, 105)};
 		
 	private String timeZoneAbbr = "";
 	private double timeZoneOffset = 0;
@@ -141,8 +144,6 @@ public class HelicorderRenderer extends FrameRenderer
 		yChunk = (double)graphHeight / (double)numRows;
 		
 		super.setExtents(0, timeChunk, 0, numRows);
-		//System.out.println("numRows: " + numRows);
-		//System.out.println("y-scale: " + helicorderGetYScale());
 	}
 	
 	public int getRow(double x)
@@ -233,7 +234,6 @@ public class HelicorderRenderer extends FrameRenderer
 				lastColor = colors[k];
 			}
 			
-//			t1 = j2k.getQuick(j, 0);
 			t2 = t1 + 1;
 			
 			int r = getRow(t2);
@@ -245,65 +245,40 @@ public class HelicorderRenderer extends FrameRenderer
 			}
 			x = helicorderGetXPixel(t1);
 			w = helicorderGetXPixel(t2) - x;
-			ymax = max.getQuick(j, 0);// - bias;
-			ymin = min.getQuick(j, 0);// - bias;
+			ymax = max.getQuick(j, 0);
+			ymin = min.getQuick(j, 0);
 			
 			if (ymax == Integer.MIN_VALUE || ymin == Integer.MIN_VALUE)
 				continue;
 			
 			ymax -= bias;
 			ymin -= bias;
-			//int clip = clipBars * 2 + 1;
-			if (forceCenter)
+			
+			if (showClip && (ymax >= clipValue || ymin <= -clipValue))
 			{
-				// TODO: optimize as below.
-				if (showClip && (Math.abs(ymax) >= clipValue || Math.abs(ymin) >= clipValue))
-					g.setColor(Color.red);
-				
-				if (Math.abs(ymax) > clipValue)
-					ymax = clipValue;
-				
-				if (Math.abs(ymin) > clipValue)
-					ymin = -clipValue;
-				
-//				if (hgt > clip * yChunk)
-//					g.setColor(Color.red);
-				//hgt = Math.min((int)(clip * yChunk), hgt);
-				
-				y = helicorderGetYPixel(t1, ymax);
-				h = helicorderGetYPixel(t1, ymin) - y;
-				int hgt = (int)Math.ceil(h);
-				hgt = Math.max(1, hgt);
-				
-				y = helicorderGetYPixel(t1, 0) - hgt / 2;
-				
-				g.fillRect((int)Math.ceil(x), (int)Math.ceil(y), (int)Math.ceil(w), hgt);
-			}
-			else
-			{
-				if (showClip && (ymax >= clipValue || ymin <= -clipValue))
+				if (lastColor != Color.red)
 				{
-					if (lastColor != Color.red)
-					{
-						g.setColor(Color.red);
-						lastColor = Color.red;
-					}
+					g.setColor(Color.red);
+					lastColor = Color.red;
 				}
-				
-				if (ymax > clipValue)
-					ymax = clipValue;
-				
-				if (ymin < -clipValue)
-					ymin = -clipValue;
-				
-				y = helicorderGetYPixel(t1, ymax);
-				h = helicorderGetYPixel(t1, ymin) - y;
-				int hgt = (int)(h + 1);
-				if (hgt < 1)
-					hgt = 1;
-				g.fillRect((int)(x + 1), (int)(y + 1), (int)(w + 1), hgt);
 			}
+			
+			if (ymax > clipValue)
+				ymax = clipValue;
+			
+			if (ymin < -clipValue)
+				ymin = -clipValue;
+			
+			y = helicorderGetYPixel(t1, ymax);
+			h = helicorderGetYPixel(t1, ymin) - y;
+			int hgt = (int)(h + 1);
+			if (hgt < 1)
+				hgt = 1;
+			if (forceCenter)
+				y = helicorderGetYPixel(t1, 0) - hgt / 2;
+			g.fillRect((int)(x + 1), (int)(y + 1), (int)(w + 1), hgt);
 		}
+		
 		g.setClip(origClip);
 		g.setColor(origColor);
 		g.setTransform(origAT);
@@ -465,17 +440,14 @@ public class HelicorderRenderer extends FrameRenderer
 		axis.createLeftTickLabels(labelPosLR, leftLabelText);
 		axis.createRightTickLabels(labelPosLR, rightLabelText);
 		axis.setBottomLeftLabelAsText("Time (" + timeZoneAbbr + ")");
-		//axis.addRenderer(new TextRenderer(10, graphY + graphHeight + 30, "Time (" + timeZoneAbbr + ")"));
 		if (timeZoneOffset != 0)
 			axis.setBottomRightLabelAsText("Time (UTC)");
-//			axis.addRenderer(new TextRenderer(graphX + graphWidth + 6, graphY + graphHeight + 30, "Time (UTC)"));
 		
 		double[] hg = new double[numRows - 1];
 		for(int i = 0; i < numRows - 1; i++)
 			hg[i] = i + 1.0;
 			
 		axis.createHorizontalGridLines(hg); 
-
 		axis.setBackgroundColor(Color.white);
 	}
 	
