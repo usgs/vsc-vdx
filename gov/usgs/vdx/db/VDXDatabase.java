@@ -29,6 +29,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class VDXDatabase
@@ -55,14 +58,7 @@ public class VDXDatabase
 	
 	public VDXDatabase(String driver, String url, String db)
 	{
-	    this(driver, url, db, Log.getLogger("gov.usgs.vdx"));
-	    Log.attachSystemErrLogger(logger);
-		logger.setLevel(Level.ALL);
-	}
-	
-	public VDXDatabase(String driver, String url, String db, Logger log)
-	{
-	    logger = log;
+	    logger = Log.getLogger("gov.usgs.vdx");
 		dbDriver = driver;
 		dbURL = url;
 		if (db != null)

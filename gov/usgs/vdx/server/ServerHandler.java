@@ -10,6 +10,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class ServerHandler extends CommandHandler
@@ -23,8 +26,8 @@ public class ServerHandler extends CommandHandler
 		super(s, "VDX/ServerHandler-" + instances++);
 		
 		vdx = s;
-		netTools = new NetTools(vdx.getLogger());
-		dataSourceHandler = new DataSourceHandler(vdx.getLogger());
+		netTools = new NetTools();
+		dataSourceHandler = new DataSourceHandler();
 		setupCommandHandlers();
 	}
 
