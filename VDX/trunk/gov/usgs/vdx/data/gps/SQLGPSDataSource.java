@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SQLGPSDataSource extends SQLDataSource implements DataSource
@@ -255,4 +258,118 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 
+	public int insertBenchmarkType(String n)
+	{
+		int result = -1;
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("INSERT INTO benchmark_types (name) VALUES (?)");
+			ps.setString(1, n);
+			ps.execute();
+			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			rs.next();
+			result = rs.getInt(1);
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert benchmark type.", e);
+		}
+		return result;
+	}
+	
+	public int insertSolutionType(String n, int rank)
+	{
+		int result = -1;
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("INSERT INTO solution_types (name, rank) VALUES (?,?)");
+			ps.setString(1, n);
+			ps.setInt(2, rank);
+			ps.execute();
+			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			rs.next();
+			result = rs.getInt(1);
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert solution type.", e);
+		}
+		return result;
+	}
+	
+	public int insertBenchmark(String code, double lon, double lat, double height, int btid)
+	{
+		int result = -1;
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("INSERT INTO benchmarks (code, lon, lat, height, btid) VALUES (?,?,?,?,?)");
+			ps.setString(1, code);
+			ps.setDouble(2, lon);
+			ps.setDouble(3, lat);
+			ps.setDouble(4, height);
+			ps.setInt(5, btid);
+			ps.execute();
+			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			rs.next();
+			result = rs.getInt(1);
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert benchmark.", e);
+		}
+		return result;
+	}
+	
+	public int insertSource(String n, String hash, double t0, double t1, int stid)
+	{
+		int result = -1;
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("INSERT INTO sources (name, hash, t0, t1, stid) VALUES (?,?,?,?,?)");
+			ps.setString(1, n);
+			ps.setString(2, hash);
+			ps.setDouble(3, t0);
+			ps.setDouble(4, t1);
+			ps.setInt(5, stid);
+			ps.execute();
+			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			rs.next();
+			result = rs.getInt(1);
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert source.", e);
+		}
+		return result;
+	}
+	
+	public void insertSolution(int sid, int bid, DataPoint dp, int bad)
+	{
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("INSERT INTO solutions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+			ps.setInt(1, sid);
+			ps.setInt(2, bid);
+			ps.setDouble(3, dp.x);
+			ps.setDouble(4, dp.y);
+			ps.setDouble(5, dp.z);
+			ps.setDouble(6, dp.sxx);
+			ps.setDouble(7, dp.syy);
+			ps.setDouble(8, dp.szz);
+			ps.setDouble(9, dp.sxy);
+			ps.setDouble(10, dp.sxz);
+			ps.setDouble(11, dp.syz);
+			ps.setInt(12, bad);
+			ps.execute();
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert solution.", e);
+		}
+	}
 }
