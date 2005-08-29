@@ -9,6 +9,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class Benchmark implements Comparable<Object>
@@ -18,6 +21,15 @@ public class Benchmark implements Comparable<Object>
 	private double lon;
 	private double lat;
 	private double height;
+	
+	public Benchmark()
+	{
+		bid = -1;
+		code = null;
+		lon = -999;
+		lat = -999;
+		height = -99999;
+	}
 	
 	public Benchmark(String bm)
 	{
@@ -66,6 +78,11 @@ public class Benchmark implements Comparable<Object>
 	public int getId()
 	{
 		return bid;
+	}
+	
+	public void setCode(String c)
+	{
+		code = c;
 	}
 	
 	public String getCode()
