@@ -1,94 +1,110 @@
 package gov.usgs.vdx.data.gps;
 
 import gov.usgs.util.CodeTimer;
-import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Log;
+import gov.usgs.util.ResourceReader;
+import gov.usgs.util.Util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 public class ImportStacov
 {	
-//	private static SQLGPSDataManager gdm;
+	private Logger logger;
+	private Map<String, Benchmark> benchmarks;
+	private SQLGPSDataSource dataSource;
 
-	public static void initialize(String d, String u)
+	public ImportStacov()
 	{
-//		SQLGPSDataManager.initialize(d, u);
-//		gdm = (SQLGPSDataManager)SQLGPSDataManager.getInstance();		
+		dataSource = new SQLGPSDataSource();
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("vdx.host", "localhost");
+		params.put("vdx.name", "v");
+		params.put("vdx.databaseName", "msh");
+		dataSource.initialize(params);
+		List<Benchmark> bms = dataSource.getBenchmarks();
+		benchmarks = new HashMap<String, Benchmark>();
+		for (Benchmark bm : bms)
+			benchmarks.put(bm.getCode(), bm);
 	}
 	
-	public void importFile(String fn, boolean useFileDate)
+	public void importFile(String fn)
 	{
+		logger = Log.getLogger("gov.usgs.vdx");
 		try
 		{
-			System.out.println("working on file '" + fn + "'");
+			CodeTimer ct = new CodeTimer("ImportStacov");
+			String md5 = Util.md5Resource(fn);
+			System.out.println("MD5: " + md5);
+			ct.mark("compute md5");
+			ResourceReader rr = ResourceReader.getResourceReader(fn);
+			if (rr == null)
+				return;
+			logger.info("importing: " + fn);
 			SimpleDateFormat dateIn;
-			if (useFileDate)
-				dateIn = new SimpleDateFormat("yyMMddHHmm");
-			else
-				dateIn = new SimpleDateFormat("yyMMMdd");
+			
+			dateIn = new SimpleDateFormat("yyMMMdd");
 			SimpleDateFormat dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 			dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
-			BufferedReader in = new BufferedReader(new FileReader(fn));
-			String s = in.readLine();
+			
+			String s = rr.nextLine();
 			int numParams = Integer.parseInt(s.substring(0, 5).trim());
-			Station[] stations = new Station[numParams / 3];
-			Date fileDate = null;
-			if (useFileDate)
-			{
-				int idx = fn.lastIndexOf('\\');
-				fileDate = dateIn.parse(fn.substring(idx + 2, idx + 12));
-			}
-			else
-			{
-				fileDate = dateIn.parse(s.substring(20, 27));
-				fileDate.setTime(fileDate.getTime() + 12 * 60 * 60 * 1000);
-			}
-			double j2ksec = (((double)fileDate.getTime() / (double)1000) - 946728000);
-//			gdm.deleteData(j2ksec);
-			CodeTimer ct = new CodeTimer("read stations");
+			SolutionPoint[] points = new SolutionPoint[numParams / 3];
+			
+			Date fileDate = dateIn.parse(s.substring(20, 27));
+			fileDate.setTime(fileDate.getTime() + 12 * 60 * 60 * 1000);
+			double t0 = (((double)fileDate.getTime() / (double)1000) - 946728000);
+			double t1 = t0 + 86400;
+			
+			int sid = dataSource.insertSource(fn, md5, t0, t1, 7);
+			ct.mark("prepare");
 			for (int i = 0; i < numParams / 3; i++)
 			{
-				String sx = in.readLine();
-				String sy = in.readLine();
-				String sz = in.readLine();
-				Station st = new Station();
-				st.j2ksec = j2ksec;
-				st.code = sx.substring(7, 11).trim();
-				//if (st.code.length() == 3)
-				//	st.code = st.code + "_";
-//				st.sid = gdm.getStationID(st.code);
-				st.x = Double.parseDouble(sx.substring(25, 47).trim());
-				st.sx = Double.parseDouble(sx.substring(53, 74).trim());
-				st.y = Double.parseDouble(sy.substring(25, 47).trim());
-				st.sy = Double.parseDouble(sy.substring(53, 74).trim());
-				st.z = Double.parseDouble(sz.substring(25, 47).trim());
-				st.sz = Double.parseDouble(sz.substring(53, 74).trim());
-				stations[i] = st;
-//public void addData(int sid, double j2ksec, String time, double x, double y, double z, double sx, double sy, double sz)				
-//				gdm.addData(st.sid, j2ksec, dateOut.format(fileDate), st.x, st.y, st.z, st.sx, st.sy, st.sz);
+				String sx = rr.nextLine();
+				String sy = rr.nextLine();
+				String sz = rr.nextLine();
+				SolutionPoint sp = new SolutionPoint();
+				
+				sp.benchmark = sx.substring(7, 11).trim();
+				sp.dp.t = (t0 + t1) / 2;
+				sp.dp.x = Double.parseDouble(sx.substring(25, 47).trim());
+				sp.dp.sxx = Double.parseDouble(sx.substring(53, 74).trim());
+				sp.dp.y = Double.parseDouble(sy.substring(25, 47).trim());
+				sp.dp.syy = Double.parseDouble(sy.substring(53, 74).trim());
+				sp.dp.z = Double.parseDouble(sz.substring(25, 47).trim());
+				sp.dp.szz = Double.parseDouble(sz.substring(53, 74).trim());
+				points[i] = sp;
 			}
-			ct.stop();
-			ct = new CodeTimer("read cov");
+			ct.mark("read stations");
 			boolean done = false;
 			while (!done)
 			{
 				try
 				{
-					String sc = in.readLine();
+					String sc = rr.nextLine();
 					if (sc != null && sc.length() >= 2)
 					{
 						int p1 = Integer.parseInt(sc.substring(0, 5).trim()) - 1;
 						int p2 = Integer.parseInt(sc.substring(5, 11).trim()) - 1;
 						double data = Double.parseDouble(sc.substring(13).trim());
-						Station s1 = stations[p1 / 3];
-						Station s2 = stations[p2 / 3];
-	//public void addCovData(double j2ksec, int sid1, int sid2, int c1, int c2, double data)					
-//						gdm.addCovData(j2ksec, s1.sid, s2.sid, p1 % 3, p2 % 3, data);
+						if (p1 / 3 == p2 / 3)
+						{
+							SolutionPoint sp = points[p1 / 3];
+							int i1 = Math.min(p1 % 3, p2 % 3);
+							int i2 = Math.max(p1 % 3, p2 % 3);
+							if (i1 == 0 && i2 == 1)
+								sp.dp.sxy = data;
+							else if (i1 == 0 && i2 == 2)
+								sp.dp.sxz = data;
+							else if (i1 == 1 && i2 == 2)
+								sp.dp.syz = data;
+						}
 					}
 					else
 						done = true;
@@ -98,19 +114,38 @@ public class ImportStacov
 					done = true;	
 				}
 			}
-			in.close();
+			rr.close();
+			ct.mark("read covariance");
+			for (SolutionPoint sp : points)
+			{
+				Benchmark bm = benchmarks.get(sp.benchmark);
+				if (bm == null)
+				{
+					int bid = dataSource.insertBenchmark(sp.benchmark, -999, -999, -99999, 1);
+					bm = new Benchmark();
+					bm.setCode(sp.benchmark);
+					bm.setId(bid);
+					benchmarks.put(sp.benchmark, bm);
+					System.out.println("Created benchmark: " + sp.benchmark);
+				}
+				dataSource.insertSolution(sid, bm.getId(), sp.dp, 0);
+//				System.out.println(sp.benchmark + " " + sp.dp);
+			}
+			ct.mark("write to database");
 			ct.stop();
-//			gdm.addFrame(j2ksec, 0, 0, 0);
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();	
 		}
-				
 	}
 
 	public static void main(String args[])
 	{
+		ImportStacov is = new ImportStacov();
+		for (int i = 0; i < args.length; i++)
+			is.importFile(args[i]);
+		/*
 		ImportStacov is = new ImportStacov();
 		is.importFile(args[0], false);
 		System.exit(1);
@@ -163,26 +198,18 @@ public class ImportStacov
 			}
 		}
 		else
-			is.importFile(args[0], false);	
+			is.importFile(args[0], false);
+			*/	
 	}	
 	
-	class Station
+	class SolutionPoint
 	{
-		double j2ksec;
-		String code;
-		int sid;
-		double x, y, z;
-		double sx, sy, sz;
-		double cxy, cxz, cyz;
+		public String benchmark;
+		public DataPoint dp;
+		
+		public SolutionPoint()
+		{
+			dp = new DataPoint();
+		}
 	}
-	
-	class Covariance
-	{
-		double j2ksec;
-		int sid1, sid2;
-		double xx, xy, xz;
-		double yx, yy, yz;
-		double zx, zy, zz;
-	}
-	
 }
