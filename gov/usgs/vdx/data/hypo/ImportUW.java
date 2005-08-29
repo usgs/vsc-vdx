@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing UW format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class ImportUW extends Importer
@@ -77,6 +80,7 @@ public class ImportUW extends Importer
 				System.err.println("Line " + lines + ": " + e.getMessage());
 			}
 		}
+		rr.close();
 		return hypos;
 	}
 	
