@@ -9,25 +9,26 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Set;
-import java.util.logging.Level;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class VDX extends Server
 {
 	protected String configFilename = "VDX.config";
 	protected int numHandlers;
-//	protected DataSourceHandler dataSourceHandler;
 	
 	public VDX(String cf)
 	{
 		super();
 		name = "VDX";
-		Log.attachSystemErrLogger(logger);
-		logger.setLevel(Level.ALL);
+		logger = Log.getLogger("gov.usgs.vdx");
+
 		String[] version = Util.getVersion("gov.usgs.vdx");
 		if (version != null)
 			logger.info("Version: " + version[0] + " Built: " + version[1]);
@@ -37,19 +38,11 @@ public class VDX extends Server
 		if (cf != null)
 			configFilename = cf;
 		processConfigFile();
-//		ReadHandler[] readHandlers = new ReadHandler[numHandlers];
 		for (int i = 0; i < numHandlers; i++)
 			this.addReadHandler(new ServerHandler(this));
-//			readHandlers[i] = ;
-//		setReadHandlers(readHandlers);
-//		dataSourceHandler = new DataSourceHandler(logger);
+
 		startListening();
 	}
-	
-//	public DataSourceHandler getDataSourceHandler()
-//	{
-//		return dataSourceHandler;
-//	}
 	
 	protected void fatalError(String msg)
 	{

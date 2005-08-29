@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +13,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class DataSourceHandler
@@ -22,9 +26,9 @@ public class DataSourceHandler
 	protected Map<String, DataSourceDescriptor> dataSources;
 	private ConfigFile config;
 	
-	public DataSourceHandler(Logger log)
+	public DataSourceHandler()
 	{
-		logger = log;
+		logger = Log.getLogger("gov.usgs.vdx");
 		dataSources = new HashMap<String, DataSourceDescriptor>();
 		processConfigFile();
 	}
