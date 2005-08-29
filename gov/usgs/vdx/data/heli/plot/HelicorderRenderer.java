@@ -22,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 22:15:48  dcervelli
+ * Optimized forceCenter.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -221,7 +224,7 @@ public class HelicorderRenderer extends FrameRenderer
 		double bias = Double.NaN;
 		int lastRow = -1;
 		int numRows = j2k.rows();
-		Color lastColor = colors[0];
+		Color lastColor = null;
 		for (int j = 0; j < numRows; j++)
 		{
 			t1 = j2k.getQuick(j, 0);
