@@ -9,6 +9,9 @@ import java.awt.Color;
  * A class that encapsulated the settings for a HelicorderRenderer.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * Revision 1.3  2005/05/01 16:57:14  cervelli
  * Changes for minimal axes.
  *
@@ -37,6 +40,7 @@ public class HelicorderSettings
 
 	public int clipValue = -1;
 	public int barRange = -1;
+	public float barMult = 3;
 	public boolean showClip = false;
 
 	public String timeZoneAbbr = "GMT";
@@ -55,7 +59,6 @@ public class HelicorderSettings
 		mean = Math.abs(bias - mean);
 
 		// auto-scale
-		int barMult = 3;
 		if (minimumAxis)
 			barMult = 6;
 		if (clipValue == -1)
