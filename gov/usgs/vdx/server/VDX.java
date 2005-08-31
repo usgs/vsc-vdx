@@ -13,6 +13,9 @@ import java.util.Set;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 15:56:28  dcervelli
+ * New logging changes.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -39,7 +42,7 @@ public class VDX extends Server
 			configFilename = cf;
 		processConfigFile();
 		for (int i = 0; i < numHandlers; i++)
-			this.addReadHandler(new ServerHandler(this));
+			this.addCommandHandler(new ServerHandler(this));
 
 		startListening();
 	}
