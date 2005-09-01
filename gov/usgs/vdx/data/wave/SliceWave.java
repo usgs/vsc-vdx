@@ -3,46 +3,37 @@ package gov.usgs.vdx.data.wave;
 import gov.usgs.math.FFT;
 
 /**
+ * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SliceWave
 {
-	private double startTime;
-	private double samplingRate;
-	private double registrationOffset;
+	private Wave source;
 	
-	private int[] buffer;
 	private int position;
 	private int limit;
-	
 	private int readPosition;
 	
 	// These values are cached to improved performance
 	private transient double mean = Double.NaN;
 	private transient double rsam = Double.NaN;
-	private transient int max = Integer.MIN_VALUE;
-	private transient int min = Integer.MAX_VALUE;
-	private transient int[] dataRange = null;
+	private transient double max = -1E300;
+	private transient double min = 1E300;
+	private transient double[] dataRange = null;
 	
 	public SliceWave(Wave sw)
 	{
-		startTime = sw.getStartTime();
-		samplingRate = sw.getSamplingRate();
-		registrationOffset = sw.getRegistrationOffset();
-		
-		buffer = sw.buffer;
+		source = sw;
 		position = 0; 
-		limit = buffer.length;
+		limit = source.buffer.length;
 	}
 	
-	public double getRegistrationOffset()
-	{
-		return registrationOffset;
-	}
-	
-	public int[] getDataRange()
+	public double[] getDataRange()
 	{
 		if (dataRange == null)
 			deriveStatistics();
@@ -57,36 +48,36 @@ public class SliceWave
 	
 	public double getSamplingRate()
 	{
-		return samplingRate;
+		return source.getSamplingRate();
 	}
 	
 	public double getStartTime()
 	{
-		return startTime + position * (1 / samplingRate);
+		return source.getStartTime() + position * (1 / getSamplingRate());
 	}
 	
 	public double getEndTime()
 	{
-		return startTime + limit * (1 / samplingRate);
+		return source.getStartTime() + limit * (1 / getSamplingRate());
 	}
 
 	private double getTrueEndTime()
 	{
-		return startTime + buffer.length * (1 / samplingRate);
+		return getStartTime() + source.buffer.length * (1 / getSamplingRate());
 	}
 	
 	public void setSlice(double t1, double t2)
 	{
-		if (t1 < startTime || t2 > getTrueEndTime() || t1 >= t2)
+		if (t1 < getStartTime() || t2 > getTrueEndTime() || t1 >= t2)
 			return;
 	
 		invalidateStatistics();
 		
-		position = (int)Math.round((t1 - startTime) * samplingRate);
-		limit = position + (int)Math.round((t2 - t1) * samplingRate);
+		position = (int)Math.round((t1 - getStartTime()) * getSamplingRate());
+		limit = position + (int)Math.round((t2 - t1) * getSamplingRate());
 		
-		if (limit > buffer.length)
-			limit = buffer.length;
+		if (limit > source.buffer.length)
+			limit = source.buffer.length;
 	}
 	
 	/**
@@ -96,13 +87,13 @@ public class SliceWave
 	{
 		mean = Double.NaN;
 		rsam = Double.NaN;
-		max = Integer.MIN_VALUE;
-		min = Integer.MAX_VALUE;
+		max = -1E300;
+		min = 1E300;
 	}
 	 
 	private void deriveStatistics()
 	{
-		if (buffer == null || buffer.length == 0)
+		if (source.buffer == null || source.buffer.length == 0)
 		{
 			mean = 0;
 			rsam = 0;
@@ -115,7 +106,7 @@ public class SliceWave
 		long rs = 0;
 		for (int i = position; i < limit; i++)
 		{
-			int d = buffer[i];
+			int d = source.buffer[i];
 			if (d != Wave.NO_DATA)
 			{
 				sum += d;
@@ -129,7 +120,7 @@ public class SliceWave
 		
 		mean = (double)sum / (double)(samples() - noDatas);
 		rsam = (double)rs / (double)(samples() - noDatas);
-		dataRange = new int[] {min, max};
+		dataRange = new double[] {min, max};
 	}
 
 	/**
@@ -150,7 +141,7 @@ public class SliceWave
 	 * 
 	 * @return the maximum value
 	 */
-	public int max()
+	public double max()
 	{
 		if (max == Integer.MIN_VALUE)
 			deriveStatistics();
@@ -163,7 +154,7 @@ public class SliceWave
 	 * 
 	 * @return the minimum value
 	 */
-	public int min()
+	public double min()
 	{
 		if (min == Integer.MAX_VALUE)
 			deriveStatistics();
@@ -190,8 +181,8 @@ public class SliceWave
 	 */
 	public boolean isData()
 	{
-		for (int i = 0; i < buffer.length; i++)
-			if (buffer[i] != Wave.NO_DATA)
+		for (int i = 0; i < source.buffer.length; i++)
+			if (source.buffer[i] != Wave.NO_DATA)
 				return true;
 			
 		return false;
@@ -244,8 +235,8 @@ public class SliceWave
 			int si = i * (sampleSize - overlapSize);
 			for (int j = 0; j < sampleSize; j++)
 			{
-				if (si + j < samples() && buffer[position + si + j] != Wave.NO_DATA)
-					smallBuf[j][0] = buffer[position + si + j];
+				if (si + j < samples() && source.buffer[position + si + j] != Wave.NO_DATA)
+					smallBuf[j][0] = source.buffer[position + si + j];
 				else 
 					smallBuf[j][0] = m;
 				smallBuf[j][1] = 0;
@@ -287,7 +278,7 @@ public class SliceWave
 		int i = 0;
 		while (hasNext())
 		{
-			if (buffer[i] != Wave.NO_DATA)
+			if (source.buffer[i] != Wave.NO_DATA)
 				buf[i][0] = next();
 			else
 				buf[i][0] = m;
@@ -310,9 +301,9 @@ public class SliceWave
 		return readPosition < limit;
 	}
 	
-	public int next()
+	public double next()
 	{
-		return buffer[readPosition++];
+		return source.buffer[readPosition++];
 	}
 	
 }
