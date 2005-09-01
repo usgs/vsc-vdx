@@ -14,6 +14,9 @@ import java.awt.geom.GeneralPath;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * Revision 1.3  2005/03/25 00:17:19  cervelli
  * Comment update.
  *
@@ -129,7 +132,7 @@ public class SliceWaveRenderer extends FrameRenderer
 		
 		gp.reset();
 		wave.reset();
-		int y = wave.next();
+		double y = wave.next();
 		
 		double bias = 0;
 		if (removeBias)
