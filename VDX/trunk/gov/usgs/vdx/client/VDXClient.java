@@ -1,6 +1,7 @@
 package gov.usgs.vdx.client;
 
 import gov.usgs.net.InternetClient;
+import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.RetryManager;
 import gov.usgs.util.Util;
@@ -15,10 +16,14 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class VDXClient extends InternetClient
 {
+	private static final int MAX_RETRIES = 3;
 	protected static Map<String, String> dataTypeMap; 
 	
 	static
@@ -34,6 +39,7 @@ public class VDXClient extends InternetClient
 	public VDXClient(String h, int p)
 	{
 		super(h, p);
+		logger = Log.getLogger("gov.usgs.vdx");
 	}
 	
 	public static void addDataType(String t, String c)
@@ -44,64 +50,76 @@ public class VDXClient extends InternetClient
 	public Object getData(final Map<String, String> params)
 	{
 		RetryManager rm = new RetryManager();
-		Object finalResult = rm.attempt(new Retriable()
+		Object finalResult = rm.attempt(new Retriable("VDXClient.getData()", MAX_RETRIES)
 				{
 					public void attemptFix()
 					{
 						close();
+						connect();
 					}
 					
 					public boolean attempt()
 					{
-						String cmd = "getdata: " + Util.mapToString(params) + "\n";
-						writeString(cmd);
-						
-						String rs = readString();
-						if (rs == null || rs.length() <= 0 || rs.indexOf(':') == -1)
-							return false;
-						
-						String rc = rs.substring(0, rs.indexOf(':'));
-						String r = rs.substring(rs.indexOf(':') + 1);
-						Object data = null;
-						if (rc.equals("ok"))
+						try
 						{
-							System.out.println(r);
-							Map<String, String> map = Util.stringToMap(r);
-							if (map.get("bytes") != null)
-							{
-								int bytes = Integer.parseInt(map.get("bytes"));
-								byte[] buffer = readBinary(bytes);
-								byte[] decompBuf = Util.decompress(buffer);
-								ByteBuffer bb = ByteBuffer.wrap(decompBuf);
-								try
-								{
-									String className = dataTypeMap.get(map.get("type"));
-									BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
-									ds.fromBinary(bb);
-//									System.out.println(ds);
-									data = ds;
-								}
-								catch (Exception e)
-								{
-									e.printStackTrace();
-								}
-							}
-							else if (map.get("lines") != null)
-							{
-								int lines = Integer.parseInt(map.get("lines"));
-								List<String> list = new ArrayList<String>();
-								for (int i = 0; i < lines; i++)
-									list.add(readString());
-				
-								data = list;
-							}
-						}
-						else if (rc.equals("error"))
-						{
-							System.out.println(r);
-						}
+							if (!connected())
+								connect();
+							String cmd = "getdata: " + Util.mapToString(params) + "\n";
+							writeString(cmd);
 							
-						result = data;
+							String rs = readString();
+							if (rs == null || rs.length() <= 0 || rs.indexOf(':') == -1)
+								return false;
+							
+							String rc = rs.substring(0, rs.indexOf(':'));
+							String r = rs.substring(rs.indexOf(':') + 1);
+							Object data = null;
+							if (rc.equals("ok"))
+							{
+								System.out.println(r);
+								Map<String, String> map = Util.stringToMap(r);
+								if (map.get("bytes") != null)
+								{
+									int bytes = Integer.parseInt(map.get("bytes"));
+									byte[] buffer = readBinary(bytes);
+									byte[] decompBuf = Util.decompress(buffer);
+									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
+									try
+									{
+										String className = dataTypeMap.get(map.get("type"));
+										BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
+										ds.fromBinary(bb);
+	//									System.out.println(ds);
+										data = ds;
+									}
+									catch (Exception e)
+									{
+										// TODO: eliminate
+										e.printStackTrace();
+									}
+								}
+								else if (map.get("lines") != null)
+								{
+									int lines = Integer.parseInt(map.get("lines"));
+									List<String> list = new ArrayList<String>();
+									for (int i = 0; i < lines; i++)
+										list.add(readString());
+					
+									data = list;
+								}
+							}
+							else if (rc.equals("error"))
+							{
+								// TODO: eliminate
+								System.out.println(r);
+							}
+							result = data;
+						}
+						catch (Exception e)
+						{
+							logger.warning("VDXClient.getData() exception: " + e.getMessage());
+							return false;
+						}
 						return true;
 					}
 				});
@@ -110,34 +128,6 @@ public class VDXClient extends InternetClient
 	
 	public static void main(String[] args)
 	{
-		VDXClient client = new VDXClient("localhost", 16050);
-		
-		HashMap<String, String> p = new HashMap<String, String>();
-		//get: source=ak_eqs; st=1.578528E8; et=1.734912E8; west=-179; east=-140; south=50; north=80;
-		//minDepth=-1000; maxDepth=1000; minMag=-100; maxMag=100;
-		p.put("source", "ak_eqs");
-		p.put("st", "1.578528E8");
-		p.put("et", "1.778528E8");
-		p.put("west", "-179");
-		p.put("east", "-40");
-		p.put("south", "50");
-		p.put("north", "80");
-		p.put("minDepth", "-1000");
-		p.put("maxDepth", "1000");
-		p.put("minMag", "-100");
-		p.put("maxMag", "100");
-		client.getData(p);
-		
-		
-		/*
-		HashMap<String, String> p = new HashMap<String, String>();
-		//get: source=ak_eqs; st=1.578528E8; et=1.734912E8; west=-179; east=-140; south=50; north=80;
-		//minDepth=-1000; maxDepth=1000; minMag=-100; maxMag=100;
-		p.put("source", "ak_waves");
-		p.put("st", "1.773756E8");
-		p.put("et", "1.773792E8");
-		p.put("selector", "GAEA_SHZ_AK_--");
-		client.getData(p);
-		*/
+//		VDXClient client = new VDXClient(args[0], Integer.parseInt(args[1]));
 	}
 }
