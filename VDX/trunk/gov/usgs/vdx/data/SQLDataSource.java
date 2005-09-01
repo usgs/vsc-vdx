@@ -5,6 +5,7 @@ import gov.usgs.vdx.db.VDXDatabase;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -12,6 +13,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 abstract public class SQLDataSource
@@ -137,7 +141,7 @@ abstract public class SQLDataSource
 	{
 		try
 		{
-			List<String> result = null;
+			List<String> result = new ArrayList<String>();
 			database.useDatabase(db);
 			ResultSet rs = database.executeQuery("SELECT code FROM channels ORDER BY code");
 			if (rs != null)
@@ -151,6 +155,30 @@ abstract public class SQLDataSource
 		catch (SQLException e)
 		{
 			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetSelectors() failed.", e);
+		}
+		return null;
+	}
+	
+	public List<Channel> defaultGetChannels(String db)
+	{
+		try
+		{
+			List<Channel> result = new ArrayList<Channel>();
+			database.useDatabase(db);
+			ResultSet rs = database.executeQuery("SELECT sid, code, name, lon, lat FROM channels ORDER BY code");
+			if (rs != null)
+			{
+				while (rs.next())
+				{
+					Channel ch = new Channel(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getDouble(4), rs.getDouble(5));
+					result.add(ch);
+				}
+			}
+			return result;
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
 		}
 		return null;
 	}
