@@ -6,6 +6,9 @@ import gov.usgs.math.FFT;
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/01 00:29:42  dcervelli
+ * Major refactor.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -31,6 +34,11 @@ public class SliceWave
 		source = sw;
 		position = 0; 
 		limit = source.buffer.length;
+	}
+	
+	public Wave getWave()
+	{
+		return source;
 	}
 	
 	public double[] getDataRange()
