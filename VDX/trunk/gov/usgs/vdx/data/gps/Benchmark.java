@@ -9,6 +9,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 22:51:18  dcervelli
+ * Added new constructor and getCode().
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -59,13 +62,13 @@ public class Benchmark implements Comparable<Object>
 		return bms;
 	}
 
-	public static Map<Integer, Benchmark> fromStringsToMap(List<String> ss)
+	public static Map<String, Benchmark> fromStringsToMap(List<String> ss)
 	{
-		Map<Integer, Benchmark> map = new HashMap<Integer, Benchmark>();
+		Map<String, Benchmark> map = new HashMap<String, Benchmark>();
 		for (String s : ss)
 		{
 			Benchmark bm = new Benchmark(s);
-			map.put(bm.getId(), bm);
+			map.put(Integer.toString(bm.getId()), bm);
 		}
 		return map;
 	}
