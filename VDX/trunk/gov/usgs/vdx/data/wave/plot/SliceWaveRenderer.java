@@ -9,11 +9,15 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 
 /**
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/01 00:30:02  dcervelli
+ * Changes for SliceWave refactor.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -27,9 +31,6 @@ import java.awt.geom.GeneralPath;
  */
 public class SliceWaveRenderer extends FrameRenderer
 {
-//	private Rectangle rectangle = new Rectangle();
-//	private Line2D.Double line = new Line2D.Double();
-	private GeneralPath gp;
 	private SliceWave wave;
 	
 	protected boolean autoScale = true;
@@ -123,42 +124,88 @@ public class SliceWaveRenderer extends FrameRenderer
 			axis.render(g);
 		
         g.clip(new Rectangle(graphX + 1, graphY + 1, graphWidth - 1, graphHeight - 1));
-		
+
 		double st = wave.getStartTime();
 		double step = 1 / wave.getSamplingRate();
-		
-		if (gp == null)
-			gp = new GeneralPath();
-		
-		gp.reset();
 		wave.reset();
-		double y = wave.next();
 		
 		double bias = 0;
 		if (removeBias)
 		    bias = wave.mean();
 		
-		gp.moveTo((float)getXPixel(st), (float)(getYPixel(y - bias)));
-		
 		g.setColor(Color.blue);
-
-		float lastY = (float)getYPixel(y - bias);
-		while (wave.hasNext())
-		{
-			st += step;
-			y = wave.next();
-			if (y == Wave.NO_DATA)
-				gp.moveTo((float)getXPixel(st), lastY);
-			else
+        
+        if (wave.samples() <= graphWidth * 5)
+        {
+        	GeneralPath gp = new GeneralPath();
+			
+			double y = wave.next();
+			gp.moveTo((float)getXPixel(st), (float)(getYPixel(y - bias)));
+			float lastY = (float)getYPixel(y - bias);
+			while (wave.hasNext())
 			{
-				lastY = (float)getYPixel(y - bias);
-				gp.lineTo((float)getXPixel(st), lastY);
+				st += step;
+				y = wave.next();
+				if (y == Wave.NO_DATA)
+					gp.moveTo((float)getXPixel(st), lastY);
+				else
+				{
+					lastY = (float)getYPixel(y - bias);
+					gp.lineTo((float)getXPixel(st), lastY);
+				}
 			}
-		}
-//			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.draw(gp);
-//			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
+			g.draw(gp);
+        }
+        else
+        {
+        	double[][] spans = new double[graphWidth + 1][];
+        	for (int i = 0; i < spans.length; i++)
+        		spans[i] = new double[] { 1E300, -1E300 };
+        	
+        	double span = viewEndTime - viewStartTime;
+        	
+        	wave.reset();
+        	double y;
+        	int i;
+        	while (wave.hasNext())
+        	{
+        		y = wave.next();
+        		i = (int)(((st - viewStartTime) / span) * graphWidth + 0.5);
+        		if (i >= 0 && i < spans.length && y != Wave.NO_DATA)
+        		{
+	        		spans[i][0] = Math.min(y, spans[i][0]);
+	        		spans[i][1] = Math.max(y, spans[i][1]);
+        		}
+        		st += step;
+        	}
+        	
+        	Line2D.Double line = new Line2D.Double();
+        	double minY, maxY;
+        	double lastMinY = -1E300;
+        	double lastMaxY = 1E300;
+        	for (i = 0; i < spans.length; i++)
+        	{
+        		minY = getYPixel(spans[i][0] - bias);
+        		maxY = getYPixel(spans[i][1] - bias);
+        		
+        		if (maxY < lastMinY)
+        		{
+        			line.setLine(graphX + i - 1, lastMinY, graphX + i, maxY);
+            		g.draw(line);
+        		}
+        		else if (minY > lastMaxY)
+        		{
+        			line.setLine(graphX + i - 1, lastMaxY, graphX + i, minY);
+            		g.draw(line);
+        		}
+        		
+        		line.setLine(graphX + i, minY, graphX + i, maxY);
+        		g.draw(line);
+        		lastMinY = minY;
+        		lastMaxY = maxY;
+        	}
+        }
+        
 		g.setClip(origClip);
 	}
 }
