@@ -1,12 +1,15 @@
 <!--
 $Log: not supported by cvs2svn $
+Revision 1.1  2005/08/26 20:39:00  dcervelli
+Initial avosouth commit.
+
 -->
 
 <project name="VDX Classes" default="jar" basedir=".">
 	<description>USGS VDX Source Build File</description>
 
 	<property name="source" location="."/>
-	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar"/>
+	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/contrib/seed-pdcc.jar"/>
 	<property name="jarfile" value="vdx.jar"/>
 
 	<target name="help">
