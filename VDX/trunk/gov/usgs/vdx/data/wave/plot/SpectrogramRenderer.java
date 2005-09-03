@@ -12,6 +12,9 @@ import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SpectrogramRenderer extends ImageDataRenderer
@@ -102,7 +105,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		double maxF = maxFreq;
 		double maxMag = -1E300;
 		double mag, f;
-		double[][] powerBuffer = wave.toSpectrogram(sampleSize, logFreq, logPower, overlap);
+		double[][] powerBuffer = wave.toSpectrogram(sampleSize, logPower, logFreq, overlap);
 		imgYSize = powerBuffer[0].length;
 		imgXSize = powerBuffer.length;
 		
@@ -116,7 +119,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 					maxMag = mag;
 			}
 		}
-
+		
 		if (autoScale)		
 		{
 			if (logPower)
@@ -133,9 +136,17 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		if (imgBuffer.length < imgXSize * imgYSize)
 			imgBuffer = new byte[imgXSize * imgYSize];
 		
+		double logMinMag = maxMag - 3;
 		for (int i = 0; i < imgXSize; i++)
 			for (int j = imgYSize - 1, k = 0; j >= 0; j--, k++)
-				imgBuffer[i + imgXSize * k] = (byte)(spectrum.getColorIndexByRatio(powerBuffer[i][j] / maxMag) + 9);
+			{
+				double ratio = logPower ? (powerBuffer[i][j] - logMinMag) / (maxMag - logMinMag) : powerBuffer[i][j] / maxMag;
+				if (ratio < 0)
+					ratio = 0;
+				if (ratio > 1)
+					ratio = 1;
+				imgBuffer[i + imgXSize * k] = (byte)(spectrum.getColorIndexByRatio(ratio) + 9);
+			}
 
 		if (mis == null || im.getWidth(null) != imgXSize || im.getHeight(null) != imgYSize)
 		{
