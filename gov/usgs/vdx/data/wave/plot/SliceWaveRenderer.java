@@ -15,6 +15,9 @@ import java.awt.geom.Line2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/02 16:19:59  dcervelli
+ * Major optimization for most waves.
+ *
  * Revision 1.2  2005/09/01 00:30:02  dcervelli
  * Changes for SliceWave refactor.
  *
@@ -135,7 +138,9 @@ public class SliceWaveRenderer extends FrameRenderer
 		
 		g.setColor(Color.blue);
         
-        if (wave.samples() <= graphWidth * 5)
+		double ns = wave.samples();
+		double spp = ns / (double)graphWidth;
+        if (spp < 50.0)
         {
         	GeneralPath gp = new GeneralPath();
 			
