@@ -6,6 +6,9 @@ import gov.usgs.math.FFT;
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/02 16:19:35  dcervelli
+ * Added getWave().
+ *
  * Revision 1.2  2005/09/01 00:29:42  dcervelli
  * Major refactor.
  *
@@ -272,30 +275,70 @@ public class SliceWave
 	 * @return the FFT (n rows x 2 column [real/imaginary]) array
 	 * @see FFT
 	 */
+	// TODO: fix Wave.NO_DATA to work with doubles
 	public double[][] fft()
 	{
 		int n = samples();
 		int p2 = (int)Math.ceil(Math.log((double)n) / Math.log(2));
 		int newSize = (int)Math.pow(2, p2);
-		double[][] buf = new double[newSize][2];
-		int m = (int)Math.round(mean());
+		double[] buf = new double[newSize * 2];
+		double m = mean();
 		
-		for (int i = 0; i < newSize; i++)
-				buf[i][0] = m;
 		reset();
+		double d;
 		int i = 0;
 		while (hasNext())
 		{
-			if (source.buffer[i] != Wave.NO_DATA)
-				buf[i][0] = next();
+			d = next();
+			if (d == Wave.NO_DATA)
+				buf[i * 2] = m;
 			else
-				buf[i][0] = m;
-			
+				buf[i * 2] = d;
 			i++;
+		}
+		for (; i < newSize; i++)
+		{
+			buf[i * 2] = m;
 		}
 	
 		FFT.fft(buf);
+		
+		double[][] r = new double[newSize][2];
+		for (i = 0; i < newSize; i++)
+		{
+			r[i][0] = buf[i * 2];
+			r[i][1] = buf[i * 2 + 1];
+		}
+		return r;
+	}
 	
+	public double[] fastFFT()
+	{
+		int n = samples();
+		int p2 = (int)Math.ceil(Math.log((double)n) / Math.log(2));
+		int newSize = (int)Math.pow(2, p2);
+		double[] buf = new double[newSize * 2];
+		double m = mean();
+		
+		reset();
+		double d;
+		int i = 0;
+		while (hasNext())
+		{
+			d = next();
+			if (d == Wave.NO_DATA)
+				buf[i * 2] = m;
+			else
+				buf[i * 2] = d;
+			i++;
+		}
+		for (; i < newSize; i++)
+		{
+			buf[i * 2] = m;
+		}
+	
+		FFT.fft(buf);
+		
 		return buf;
 	}
 	
