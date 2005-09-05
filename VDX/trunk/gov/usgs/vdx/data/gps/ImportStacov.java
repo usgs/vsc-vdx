@@ -16,6 +16,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/05 00:41:32  dcervelli
+ * Fixed covariance calculations.
+ *
  * @author Dan Cervelli
  */
 public class ImportStacov
@@ -24,12 +27,12 @@ public class ImportStacov
 	private Map<String, Benchmark> benchmarks;
 	private SQLGPSDataSource dataSource;
 
-	public ImportStacov()
+	public ImportStacov(String n)
 	{
 		dataSource = new SQLGPSDataSource();
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.name", "v");
+		params.put("vdx.name", n);
 		params.put("vdx.databaseName", "msh");
 		dataSource.initialize(params);
 		List<Benchmark> bms = dataSource.getBenchmarks();
@@ -157,8 +160,8 @@ public class ImportStacov
 
 	public static void main(String args[])
 	{
-		ImportStacov is = new ImportStacov();
-		for (int i = 0; i < args.length; i++)
+		ImportStacov is = new ImportStacov(args[0]);
+		for (int i = 1; i < args.length; i++)
 			is.importFile(args[i]);
 		/*
 		ImportStacov is = new ImportStacov();
