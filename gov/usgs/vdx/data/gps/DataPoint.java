@@ -1,13 +1,15 @@
 package gov.usgs.vdx.data.gps;
 
-import java.nio.ByteBuffer;
-
-import gov.usgs.util.Util;
 import gov.usgs.vdx.data.BinaryDataSet;
+
+import java.nio.ByteBuffer;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class DataPoint implements BinaryDataSet
@@ -26,7 +28,8 @@ public class DataPoint implements BinaryDataSet
 	
 	public String toString()
 	{
-		return t + "/" + Util.j2KToDate(t) + ": " + x + " " + y + " " + z;
+		return String.format("t:%.8f x:%.8f y:%.8f z:%.8f sx:%.8f sy:%.8f sz:%.8f sxy:%.8f sxz:%.8f syz:%.8f", 
+				t, x, y, z, sxx, syy, szz, sxy, sxz, syz);
 	}
 
 	public ByteBuffer toBinary()
