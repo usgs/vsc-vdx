@@ -16,6 +16,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/05 18:37:16  dcervelli
+ * Un-hardcoded database name.
+ *
  * Revision 1.3  2005/09/05 00:41:32  dcervelli
  * Fixed covariance calculations.
  *
@@ -27,13 +30,13 @@ public class ImportStacov
 	private Map<String, Benchmark> benchmarks;
 	private SQLGPSDataSource dataSource;
 
-	public ImportStacov(String n)
+	public ImportStacov(String vdxName, String dbName)
 	{
 		dataSource = new SQLGPSDataSource();
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.name", n);
-		params.put("vdx.databaseName", "msh");
+		params.put("vdx.name", vdxName);
+		params.put("vdx.databaseName", dbName);
 		dataSource.initialize(params);
 		List<Benchmark> bms = dataSource.getBenchmarks();
 		benchmarks = new HashMap<String, Benchmark>();
@@ -160,8 +163,8 @@ public class ImportStacov
 
 	public static void main(String args[])
 	{
-		ImportStacov is = new ImportStacov(args[0]);
-		for (int i = 1; i < args.length; i++)
+		ImportStacov is = new ImportStacov(args[0], args[1]);
+		for (int i = 2; i < args.length; i++)
 			is.importFile(args[i]);
 		/*
 		ImportStacov is = new ImportStacov();
