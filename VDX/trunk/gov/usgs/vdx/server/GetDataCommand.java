@@ -12,6 +12,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/28 19:11:44  dcervelli
+ * Fixes for new CodeTimer.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -28,7 +31,6 @@ public class GetDataCommand extends BaseCommand
 	{
 		CodeTimer ct = new CodeTimer("send");
 		parseParams((String)info);
-		
 		String source = inParams.get("source");
 		if (source == null)
 		{
@@ -47,7 +49,7 @@ public class GetDataCommand extends BaseCommand
 			result.writeHeader(netTools, channel);
 			result.writeBody(netTools, channel);
 			ct.stop(false);
-			handler.log(Level.FINE, String.format("[getdata] %s (%1.2f ms)", inParams.get("source"), ct.getRunTimeMillis()), channel);
+			handler.log(Level.FINE, String.format("%s (%1.2f ms): [%s]", inParams.get("source"), ct.getRunTimeMillis(), info), channel);
 		}
 		else
 		{
