@@ -13,6 +13,11 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+/**
+ * 
+ * $Log: not supported by cvs2svn $
+ * @author Dan Cervelli
+ */
 public class ImportStacov
 {	
 	private Logger logger;
@@ -75,10 +80,13 @@ public class ImportStacov
 				sp.dp.t = (t0 + t1) / 2;
 				sp.dp.x = Double.parseDouble(sx.substring(25, 47).trim());
 				sp.dp.sxx = Double.parseDouble(sx.substring(53, 74).trim());
+				
 				sp.dp.y = Double.parseDouble(sy.substring(25, 47).trim());
 				sp.dp.syy = Double.parseDouble(sy.substring(53, 74).trim());
+				
 				sp.dp.z = Double.parseDouble(sz.substring(25, 47).trim());
 				sp.dp.szz = Double.parseDouble(sz.substring(53, 74).trim());
+				
 				points[i] = sp;
 			}
 			ct.mark("read stations");
@@ -118,6 +126,13 @@ public class ImportStacov
 			ct.mark("read covariance");
 			for (SolutionPoint sp : points)
 			{
+				sp.dp.sxy = sp.dp.sxy * sp.dp.sxx * sp.dp.syy;
+				sp.dp.sxz = sp.dp.sxz * sp.dp.sxx * sp.dp.szz;
+				sp.dp.syz = sp.dp.syz * sp.dp.syy * sp.dp.szz;
+				sp.dp.sxx = sp.dp.sxx * sp.dp.sxx;
+				sp.dp.syy = sp.dp.syy * sp.dp.syy;
+				sp.dp.szz = sp.dp.szz * sp.dp.szz;
+				
 				Benchmark bm = benchmarks.get(sp.benchmark);
 				if (bm == null)
 				{
