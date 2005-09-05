@@ -16,6 +16,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
@@ -87,14 +90,21 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 
 			database.useDatabase(name + "$" + DATABASE_NAME);
 			// TODO: fix -180/180 wrap
-			// TODO: use PreparedStatement
-			String where = "WHERE t>=" + st + " AND t<=" + et +
-						" AND lon>=" + west + " AND lon<=" + east+ " AND lat>=" + south + " AND lat<=" + north +
-						" AND depth>=" + minDepth + " AND depth<=" + maxDepth + " AND mag>=" + minMag + " AND mag<=" + maxMag;
-			
 			List<Hypocenter> result = new ArrayList<Hypocenter>();
-			String sql = "SELECT t, lon, lat, depth, mag FROM hypocenters " + where + " ORDER BY t";
-			ResultSet rs = database.getStatement().executeQuery(sql);
+			String sql = "SELECT t, lon, lat, depth, mag FROM hypocenters WHERE " +
+					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=?";
+			PreparedStatement ps = database.getPreparedStatement(sql);
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
+			ps.setDouble(3, west);
+			ps.setDouble(4, east);
+			ps.setDouble(5, south);
+			ps.setDouble(6, north);
+			ps.setDouble(7, minDepth);
+			ps.setDouble(8, maxDepth);
+			ps.setDouble(9, minMag);
+			ps.setDouble(10, maxMag);
+			ResultSet rs = ps.executeQuery();
 			while (rs.next())
 			{
 				double[] eqd = new double[5];
