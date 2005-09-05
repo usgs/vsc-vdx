@@ -1,20 +1,35 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.vdx.data.GenericDataMatrix;
+
+import java.util.List;
+
 import cern.colt.function.DoubleDoubleFunction;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 
-
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class TiltData extends GenericDataMatrix
 {
+	public TiltData()
+	{
+		super();
+	}
+	
+	public TiltData(List<double[]> pts)
+	{
+		super(pts);
+	}
+	
 	public void setColumnNames()
 	{
 		columnMap.put("time", 0);

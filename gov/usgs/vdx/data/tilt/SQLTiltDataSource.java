@@ -3,10 +3,15 @@ package gov.usgs.vdx.data.tilt;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
+import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
+import gov.usgs.vdx.server.TextResult;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -14,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SQLTiltDataSource extends SQLDataSource implements DataSource
@@ -28,6 +36,14 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 	public void initialize(Map<String, Object> params)
 	{
 		database = (VDXDatabase)params.get("VDXDatabase");
+		if (database == null)
+		{
+			String vdxHost = (String)params.get("vdx.host");
+			String vdxName = (String)params.get("vdx.name");
+			params.put("name", (String)params.get("vdx.databaseName"));
+			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+		}
+		
 		name = (String)params.get("name");
 	}
 
@@ -100,6 +116,107 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 
 	public RequestResult getData(Map<String, String> params)
 	{
+		String action = params.get("action");
+		if (action == null)
+			return null;
+		
+		if (action.equals("selectors"))
+		{
+			List<String> s = getSelectors();
+			return new TextResult(s);
+		}
+		else if (action.equals("data"))
+		{
+			int cid = Integer.parseInt(params.get("cid"));
+			double st = Double.parseDouble(params.get("st"));
+			double et = Double.parseDouble(params.get("et"));
+			TiltData data = getTiltData(cid, st, et);
+			if (data != null)
+				return new BinaryResult(data);
+		}
 		return null;
+	}
+	
+	public TiltData getTiltData(int cid, double st, double et)
+	{
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
+			ps.setInt(1, cid);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			String code = rs.getString(1);
+			ps = database.getPreparedStatement(
+					"SELECT t, x*cx+dx, y*cy+dy FROM " + code +	
+					" INNER JOIN translations ON " + code + ".tid=translations.tid" +
+					" WHERE t>=? AND t<=?");
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
+			rs = ps.executeQuery();
+			List<double[]> pts = new ArrayList<double[]>();
+			while (rs.next())
+				pts.add(new double[] { rs.getDouble(1), rs.getDouble(2), rs.getDouble(3) });
+			
+			TiltData td = null;
+			if (pts.size() > 0)
+				td = new TiltData(pts);
+			
+			if (td != null)
+				System.out.println("tiltdata rows: " + td.rows());
+			else
+				System.out.println("null");
+			return td;
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.insertData() failed.", e);
+		}
+		return null;
+	}
+	
+	public void insertData(String code, double t, double x, double y, double az, double cx, double cy, double dx, double dy)
+	{
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement(
+					"SELECT tid FROM translations WHERE cx=? AND cy=? AND dx=? AND dy=? AND azimuth=?");
+			ps.setDouble(1, cx);
+			ps.setDouble(2, cy);
+			ps.setDouble(3, dx);
+			ps.setDouble(4, dy);
+			ps.setDouble(5, az);
+			ResultSet rs = ps.executeQuery();
+			int tid = -1;
+			if (rs.next())
+				tid = rs.getInt(1);
+			else
+			{
+				ps = database.getPreparedStatement(
+					"INSERT INTO translations (cx, cy, dx, dy, azimuth) VALUES (?,?,?,?,?)");
+				ps.setDouble(1, cx);
+				ps.setDouble(2, cy);
+				ps.setDouble(3, dx);
+				ps.setDouble(4, dy);
+				ps.setDouble(5, az);
+				ps.execute();
+				rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+				rs.next();
+				tid = rs.getInt(1);
+			}
+			rs.close();
+			
+			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " VALUES (?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setDouble(2, x);
+			ps.setDouble(3, y);
+			ps.setInt(4, tid);
+			ps.execute();
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.insertData() failed.", e);
+		}
 	}
 }
