@@ -10,6 +10,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class GenericDataMatrix implements BinaryDataSet
@@ -139,6 +142,30 @@ public class GenericDataMatrix implements BinaryDataSet
 	{
 		for (int i = 0; i < rows(); i++)
 			data.setQuick(i, c, data.getQuick(i, c) * v);
+	}
+
+	public double max(int c)
+	{
+		double m = -1E300;
+		for (int i = 0; i < rows(); i++)
+			m = Math.max(m, data.getQuick(i, c));
+		return m;
+	}
+	
+	public double min(int c)
+	{
+		double m = 1E300;
+		for (int i = 0; i < rows(); i++)
+			m = Math.min(m, data.getQuick(i, c));
+		return m;
+	}
+	
+	public double mean(int c)
+	{
+		double t = 0;
+		for (int i = 0; i < rows(); i++)
+			t += data.getQuick(i, c);
+		return t / (double)rows();
 	}
 	
 	/** Adds a value to the time column (for time zone management).
