@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/05 20:53:48  dcervelli
+ * Continued work on tilt.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -150,7 +153,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 			ps = database.getPreparedStatement(
 					"SELECT t, x*cx+dx, y*cy+dy FROM " + code +	
 					" INNER JOIN translations ON " + code + ".tid=translations.tid" +
-					" WHERE t>=? AND t<=?");
+					" WHERE t>=? AND t<=? ORDER BY t ASC");
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
