@@ -16,6 +16,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/01 00:28:32  dcervelli
+ * Fixes for changes to InternetClient.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -34,12 +37,14 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("rsam", "gov.usgs.vdx.data.rsam.RSAMData");
 		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 		dataTypeMap.put("gps", "gov.usgs.vdx.data.gps.GPSData");
+		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
 	}
 	
 	public VDXClient(String h, int p)
 	{
 		super(h, p);
 		logger = Log.getLogger("gov.usgs.vdx");
+		setTimeout(30000);
 	}
 	
 	public static void addDataType(String t, String c)
