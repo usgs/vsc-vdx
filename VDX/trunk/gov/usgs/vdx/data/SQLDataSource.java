@@ -13,6 +13,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/01 00:28:56  dcervelli
+ * Changes for default channels.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -142,12 +145,14 @@ abstract public class SQLDataSource
 		try
 		{
 			List<String> result = new ArrayList<String>();
-			database.useDatabase(db);
-			ResultSet rs = database.executeQuery("SELECT code FROM channels ORDER BY code");
+			database.useDatabase(name + "$" + db);
+			ResultSet rs = database.executeQuery("SELECT sid, code, name, lon, lat FROM channels ORDER BY code");
 			if (rs != null)
 			{
 				while (rs.next())
-					result.add(rs.getString(1));
+				{
+					result.add(String.format("%d:%f:%f:%s:%s", rs.getInt(1), rs.getDouble(4), rs.getDouble(5), rs.getString(2), rs.getString(3)));
+				}
 			}
 			
 			return result;
