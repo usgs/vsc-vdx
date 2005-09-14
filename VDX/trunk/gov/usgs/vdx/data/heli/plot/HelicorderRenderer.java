@@ -22,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/08/29 22:35:07  dcervelli
+ * Fixed first line color change bug.
+ *
  * Revision 1.2  2005/08/29 22:15:48  dcervelli
  * Optimized forceCenter.
  *
@@ -212,7 +215,7 @@ public class HelicorderRenderer extends FrameRenderer
 		
 		if (axis != null)
 			axis.render(g);
-		
+
 		g.setClip(new Rectangle(graphX + 1, graphY + 1, graphWidth - 1, graphHeight - 1));
 		
 		DoubleMatrix2D j2k = data.getTimes();
@@ -335,7 +338,7 @@ public class HelicorderRenderer extends FrameRenderer
  		}
 
 		axis.createLeftTickLabels(labelPosLR, leftLabelText);
-		axis.addRenderer(new TextRenderer(32, 14, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
+		axis.addRenderer(new TextRenderer(graphX, graphY - 3, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
 		
 		double[] hg = new double[numRows - 1];
 		for(int i = 0; i < numRows - 1; i++)
