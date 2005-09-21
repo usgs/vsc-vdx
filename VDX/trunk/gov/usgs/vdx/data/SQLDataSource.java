@@ -2,6 +2,7 @@ package gov.usgs.vdx.data;
 
 import gov.usgs.vdx.db.VDXDatabase;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,7 +13,12 @@ import java.util.logging.Level;
 
 /**
  * 
+ * TODO: use PreparedStatements.
+ * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/06 21:36:43  dcervelli
+ * Changed defaultGetSelectors() to standard VDX channel format.
+ *
  * Revision 1.2  2005/09/01 00:28:56  dcervelli
  * Changes for default channels.
  *
@@ -186,5 +192,23 @@ abstract public class SQLDataSource
 			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
 		}
 		return null;
+	}
+	
+	public boolean defaultChannelExists(String db, String ch)
+	{
+		try
+		{
+			database.useDatabase(name + "$" + db);
+			PreparedStatement ps = database.getPreparedStatement("SELECT COUNT(*) FROM channels WHERE code=?");
+			ps.setString(1, ch);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			return rs.getInt(1) > 0;	
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
+		}
+		return false;
 	}
 }
