@@ -14,6 +14,8 @@ import java.util.TimeZone;
 /**
  * Program to import Pinnacle series 5000 tiltmeter PTX files.
  *  
+ * $Log: not supported by cvs2svn $
+ * 
  * @author Dan Cervelli
  */
 public class ImportPTX
@@ -29,7 +31,7 @@ public class ImportPTX
 		VDXDatabase database = VDXDatabase.getVDXDatabase("vdx.config");
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("VDXDatabase", database);
-		params.put("name", args[0]);
+		params.put("name", args[1]);
 		dataSource.initialize(params);
 		while (!done)
 		{
@@ -52,7 +54,7 @@ public class ImportPTX
 				double[][] data = ptx.getImportData();
 				for (int i = 0; i < data.length; i++)
 				{
-					dataSource.insertData(args[1], data[i][0], data[i][1], data[i][2], 0, 1, 1, 0, 0);
+					dataSource.insertData(args[2], data[i][0], data[i][1], data[i][2], 0, 1, 1, 0, 0);
 				}
 			}
 			catch (Exception e)
