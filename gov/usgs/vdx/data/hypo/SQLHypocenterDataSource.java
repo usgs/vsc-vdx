@@ -16,6 +16,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/05 00:42:15  dcervelli
+ * Uses PreparedStatements.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -92,7 +95,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			// TODO: fix -180/180 wrap
 			List<Hypocenter> result = new ArrayList<Hypocenter>();
 			String sql = "SELECT t, lon, lat, depth, mag FROM hypocenters WHERE " +
-					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=?";
+					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=? " +
+					"ORDER BY t ASC";
 			PreparedStatement ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
