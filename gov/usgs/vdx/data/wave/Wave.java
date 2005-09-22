@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class Wave implements BinaryDataSet
@@ -862,6 +865,8 @@ public class Wave implements BinaryDataSet
 	 * <code>exportToText()</code>. First column is assumed to be Unix
 	 * millisecond time, second column sample.
 	 * 
+	 * TODO: throw exception
+	 * TODO: get rid of IntVector
 	 * @param fn the import filename
 	 * @return the wave
 	 */
@@ -898,7 +903,7 @@ public class Wave implements BinaryDataSet
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		return null;
 	}
@@ -1028,6 +1033,19 @@ public class Wave implements BinaryDataSet
 	    sac.y = new float[buffer.length];
 	    for (int i = 0; i < buffer.length; i++)
 	        sac.y[i] = buffer[i];
+	    sac.b = 0;
+	    sac.e = (float)buffer.length * sac.delta;
+	    sac.fmt = 2.0f;
+	    sac.iftype = SAC.ITIME;
+	    sac.idep = SAC.IUNKN;
+	    sac.iztype = SAC.IB;
+	    sac.leven = SAC.TRUE;
+	    sac.lpspol = SAC.TRUE;
+	    sac.lovrok = SAC.TRUE;
+	    sac.lcalda = SAC.TRUE;
+	    sac.kevnm = SAC.STRING8_UNDEF;
+	    sac.ko = "origin";
+	    
 	    return sac;
 	}
 }
