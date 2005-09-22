@@ -8,6 +8,7 @@ import gov.usgs.util.Util;
 import gov.usgs.vdx.data.heli.HelicorderData;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -22,6 +23,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/14 20:41:17  dcervelli
+ * Fixed minimum axis channel label position bug (Mantis #0000001).
+ *
  * Revision 1.3  2005/08/29 22:35:07  dcervelli
  * Fixed first line color change bug.
  *
@@ -70,6 +74,7 @@ public class HelicorderRenderer extends FrameRenderer
 	private boolean showClip = false;
 	
 	private String channel;
+	private boolean largeChannelDisplay;
 	
 	public HelicorderRenderer()
 	{
@@ -96,6 +101,11 @@ public class HelicorderRenderer extends FrameRenderer
 	public double getTimeChunk()
 	{
 		return timeChunk;	
+	}
+	
+	public void setLargeChannelDisplay(boolean b)
+	{
+		largeChannelDisplay = b;
 	}
 	
 	public double[] getTranslationInfo(boolean adjTime)
@@ -288,6 +298,22 @@ public class HelicorderRenderer extends FrameRenderer
 		g.setClip(origClip);
 		g.setColor(origColor);
 		g.setTransform(origAT);
+		
+		if (largeChannelDisplay && channel != null)
+		{
+			g.setFont(Font.decode("Arial-BOLD-48"));
+			String c = channel.replace('_', ' ');
+			int width = g.getFontMetrics().stringWidth(c);
+			int lw = width + 20;
+			g.setColor(Color.white);
+			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
+			g.setColor(Color.black);
+			g.drawRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
+			
+			Font oldFont = g.getFont();
+			g.drawString(c, graphX + graphWidth / 2 - width / 2, 46);
+			g.setFont(oldFont);
+		}
 //		ct.stop();
 	}
 	
