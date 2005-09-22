@@ -9,6 +9,9 @@ import java.awt.Color;
  * A class that encapsulated the settings for a HelicorderRenderer.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 19:34:49  tparker
+ * Convert barMult to public float for auto-scale slider mod
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -35,8 +38,6 @@ public class HelicorderSettings
 
 	public int left = 70;
 	public int top = 20;
-	//public int right = 70;
-	//public int bottom = 50;
 
 	public int clipValue = -1;
 	public int barRange = -1;
@@ -47,6 +48,7 @@ public class HelicorderSettings
 	public double timeZoneOffset = 0;
 	
 	public boolean minimumAxis = false;
+	public boolean largeChannelDisplay = false;
 	
 	public void applySettings(HelicorderRenderer hr, HelicorderData hd)
 	{
@@ -71,6 +73,7 @@ public class HelicorderSettings
 		hr.setShowClip(showClip);
 		hr.setTimeZoneAbbr(timeZoneAbbr);
 		hr.setTimeZoneOffset(timeZoneOffset);
+		hr.setLargeChannelDisplay(largeChannelDisplay);
 		if (minimumAxis)
 			hr.createMinimumAxis();
 		else
