@@ -50,6 +50,9 @@ import java.util.TimeZone;
  * A class to read SAC files, adapted from Fissures code.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * Revision 1.2  2005/05/11 22:24:30  cervelli
  * Added getWinstonChannel() and reformatted.
  *
@@ -321,7 +324,6 @@ public class SAC
 	public final static int swapBytes(int val)
 	{
 		return ((val & 0xff000000) >>> 24) + ((val & 0x00ff0000) >> 8) + ((val & 0x0000ff00) << 8) + ((val & 0x000000ff) << 24);
-
 	}
 
 	public final static double swapBytes(double val)
@@ -1292,23 +1294,13 @@ public class SAC
 
 		try
 		{
-
 			data.read(args[0]);
+			data.printHeader();
 			System.out.println(data.getStationInfo());
 			System.out.println(Util.formatDate(data.getStartTime()));
 			System.out.println(data.getSamplingRate());
 			Wave sw = data.toWave();
 			System.out.println(sw);
-			//    data.y = new float[100000];
-			//     for (int i=0; i<100000; i++) {
-			//         data.y[i] = (float)Math.sin(Math.PI*i/18000)/1000000.0f;
-			//         data.y[i] = (float)Math.sin(Math.PI*i/18000);
-			//         //System.out.println("point is " + data.y[i]);
-			//     }
-			//     data.npts = data.y.length;
-
-			//            data.printHeader();
-			//            System.out.println("Done writing");
 		}
 		catch (FileNotFoundException e)
 		{
