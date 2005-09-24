@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/06 21:35:16  dcervelli
+ * Added ORDER BY to getTiltData().
+ *
  * Revision 1.2  2005/09/05 20:53:48  dcervelli
  * Continued work on tilt.
  *
@@ -150,10 +153,14 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = ps.executeQuery();
 			rs.next();
 			String code = rs.getString(1);
+
 			ps = database.getPreparedStatement(
-					"SELECT t, x*cx+dx, y*cy+dy FROM " + code +	
+					"SELECT t, " +
+					"COS(RADIANS(azimuth))*(x*cx+dx)+SIN(RADIANS(azimuth))*(y*cy+dy)," +
+					"-SIN(RADIANS(azimuth))*(x*cx+dx)+COS(RADIANS(azimuth))*(y*cy+dy) FROM " + code +	
 					" INNER JOIN translations ON " + code + ".tid=translations.tid" +
 					" WHERE t>=? AND t<=? ORDER BY t ASC");
+			
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
@@ -165,10 +172,6 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 			if (pts.size() > 0)
 				td = new TiltData(pts);
 			
-			if (td != null)
-				System.out.println("tiltdata rows: " + td.rows());
-			else
-				System.out.println("null");
 			return td;
 		}
 		catch (SQLException e)
