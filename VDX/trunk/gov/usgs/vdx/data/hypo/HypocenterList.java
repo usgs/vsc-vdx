@@ -20,6 +20,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/28 18:45:29  dcervelli
+ * Added several methods for creating histograms.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -88,6 +91,11 @@ public class HypocenterList implements BinaryDataSet
 	public List<Hypocenter> getHypocenters()
 	{
 		return hypocenters;
+	}
+	
+	public int size()
+	{
+		return hypocenters.size();
 	}
 	
 	public double getStartTime()
