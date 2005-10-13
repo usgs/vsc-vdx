@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/24 17:34:36  dcervelli
+ * Returns E/N instead of X/Y.
+ *
  * Revision 1.3  2005/09/06 21:35:16  dcervelli
  * Added ORDER BY to getTiltData().
  *
@@ -32,7 +35,7 @@ import java.util.logging.Level;
  */
 public class SQLTiltDataSource extends SQLDataSource implements DataSource
 {
-	public static final String DATABASE_NAME = "tilt";
+	public static String DATABASE_NAME = "tilt";
 	
 	public String getType()
 	{

@@ -14,12 +14,15 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/09/21 19:25:14  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
  */
 public class ImportPinnServer extends Client
 {
 	private static final String CONFIG_FILE = "PinnClient.config";
-	private SQLTiltDataSource dataSource;
+	private SQLElectronicTiltDataSource dataSource;
 	private String channel;
 	private Logger logger;
 	
@@ -45,7 +48,7 @@ public class ImportPinnServer extends Client
 		String prefix = cf.getString("vdx.prefix");
 		String name = cf.getString("vdx.name");
 		
-		ips.dataSource = new SQLTiltDataSource();
+		ips.dataSource = new SQLElectronicTiltDataSource();
 		
 		VDXDatabase database = new VDXDatabase(driver, url, prefix);
 		Map<String, Object> params = new HashMap<String, Object>();
@@ -59,7 +62,7 @@ public class ImportPinnServer extends Client
 				ips.logger.info("created database.");
 		}
 		
-		if (!ips.dataSource.defaultChannelExists("tilt", ips.channel))
+		if (!ips.dataSource.defaultChannelExists("etilt", ips.channel))
 		{
 			if (ips.dataSource.createChannel(ips.channel, ips.channel, -999, -999))
 				ips.logger.info("created channel.");
@@ -70,12 +73,15 @@ public class ImportPinnServer extends Client
 	public void handleStatusBlock(StatusBlock sb)
 	{
 		System.out.println(sb);
-		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), 0, 1, 1, 0, 0);
+		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), sb.getTemperature(), 0, 1, 1, 0, 0, 1, 0, 1, 0);
 	}
 	
 	public static void main(String[] args)
 	{
-		ImportPinnServer ips = ImportPinnServer.createImportPinnServer(null);
+		String cf = null;
+		if (args.length > 0)
+			cf = args[0];
+		ImportPinnServer ips = ImportPinnServer.createImportPinnServer(cf);
 		ips.startListening();
 	}
 }
