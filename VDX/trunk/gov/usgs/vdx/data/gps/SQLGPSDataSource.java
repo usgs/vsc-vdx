@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 22:51:36  dcervelli
+ * Added insert methods.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -329,14 +332,21 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		try
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
-			PreparedStatement ps = database.getPreparedStatement("INSERT INTO sources (name, hash, t0, t1, stid) VALUES (?,?,?,?,?)");
+			PreparedStatement ps = database.getPreparedStatement("SELECT COUNT(*) FROM sources WHERE hash=?");
+			ps.setString(1, hash);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			int cnt = rs.getInt(1);
+			if (cnt > 0)  // already inserted
+				return -1;
+			ps = database.getPreparedStatement("INSERT INTO sources (name, hash, t0, t1, stid) VALUES (?,?,?,?,?)");
 			ps.setString(1, n);
 			ps.setString(2, hash);
 			ps.setDouble(3, t0);
 			ps.setDouble(4, t1);
 			ps.setInt(5, stid);
 			ps.execute();
-			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			rs.next();
 			result = rs.getInt(1);
 		}
