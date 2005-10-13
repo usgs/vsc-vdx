@@ -26,6 +26,9 @@ import java.util.List;
  * of different ways. 
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/28 18:55:56  dcervelli
+ * Moved from vdx.data.hypo.  Converted to JDK1.5 enums.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -114,6 +117,9 @@ public class HypocenterRenderer implements Renderer
     private static final Spectrum spectrum = Jet.getInstance();
     private static final double[] scales = new double[] 
         {100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02};     
+
+    private Renderer colorScaleRenderer;
+    private Renderer magnitudeScaleRenderer;
     
     /** The shapes that used to render different magnitude earthquakes
 	 */
@@ -192,6 +198,88 @@ public class HypocenterRenderer implements Renderer
     	colorOpt = c;
     }
     
+    public void createMagnitudeScaleRenderer(final double xStart, final double yStart)
+    {
+    	magnitudeScaleRenderer = new Renderer()
+		    	{
+		    		public void render(Graphics2D g)
+		    		{
+		    			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		                g.setColor(Color.BLACK);
+		                g.setStroke(new BasicStroke(2.0f));
+		
+		                g.drawString("Magnitude", (float)xStart - 4, (float)yStart - 40);
+		                g.setFont(new Font("Arial", Font.PLAIN, 10));
+		                
+		    			for (int i = 0; i < HypocenterRenderer.circles.length; i++)
+		                {
+		                    g.translate(xStart - HypocenterRenderer.circles[i].x + 8, HypocenterRenderer.circles[i].y + yStart + circleScaleOffset[i]);
+		                    g.setPaint(Color.WHITE);
+		                    g.fill(HypocenterRenderer.circles[i]);
+		                    g.setPaint(Color.BLACK);
+		                    g.draw(HypocenterRenderer.circles[i]);
+		                    g.translate(-(xStart - HypocenterRenderer.circles[i].x + 8), -(HypocenterRenderer.circles[i].y + yStart + circleScaleOffset[i]));
+		                    g.drawString("" + i, (float)xStart, (float)yStart + circleScaleOffset[i]);
+		                }	
+		    		}
+		    	};
+    }
+    
+    public void createColorScaleRenderer(final double xStart, final double yStart)
+    {
+    	colorScaleRenderer = new Renderer()
+		    	{
+		    		public void render(Graphics2D g)
+		    		{
+		    			g.setStroke(new BasicStroke(1.0f));
+		                g.setFont(new Font("Arial", Font.PLAIN, 10));
+		    			if (colorOpt == ColorOption.DEPTH || axes == Axes.TRIPLE_VIEW)
+		                {
+		    				Rectangle2D.Double rect = new Rectangle2D.Double();
+		                	float dy = 0;
+//		                	if (axes == Axes.TRIPLE_VIEW)
+//		                		dy = -60;
+		                	double yoff = 0;
+		                	double ty = (depths.length - 3) * 13;
+		                    for (int i = 1; i < depths.length - 2; i++)
+		                    {
+		                        rect.setRect(xStart, yStart - ty + yoff + dy, 10, 13);
+		                        g.drawString("" + Math.round(-depths[i]), (float)xStart + 13, (float)(yStart - ty + 4 + dy + yoff));
+		                        g.setPaint(colors[i]);
+		                        g.fill(rect);
+		                        g.setPaint(Color.BLACK);
+		                        g.draw(rect);
+		                        yoff += 13;
+		                    }
+		                    g.drawString("" + Math.round(-depths[depths.length - 2]), (float)xStart + 13, (float)(yStart - ty + yoff + 4 + dy));
+		                    //g.drawString("Depth (km)", (float)xStart + 240, (float)yStart + 15);
+		                    g.drawString("Depth (km)", (float)xStart, (float)(yStart - ty - 9 + dy));
+		                    
+		                }
+		    			
+		                if (colorOpt == ColorOption.TIME || axes == Axes.TRIPLE_VIEW)
+		                {
+//		                	if (axes == Axes.TRIPLE_VIEW)
+//		                		yoff += 45;
+//		                	spectrum.renderScale(g, xoff - 15, yoff, 10, 80, true, true);
+		                	spectrum.renderScale(g, xStart, yStart - 80, 10, 80, true, true);
+		                    Object[] t = SmartTick.autoTimeTick(minTime, maxTime, 6);
+		                    double[] ticks = (double[])t[0];
+		                    String[] labels = (String[])t[1];
+		                    double dt = maxTime - minTime;
+		                    Line2D.Double line = new Line2D.Double();
+		                    for (int i = 0; i < ticks.length; i++)
+		                    {
+		                    	double yl = ((ticks[i] - minTime) / dt) * 80;
+		                        line.setLine(xStart + 10, yStart - 80 + yl, xStart + 13, yStart - 80 + yl);
+		                        g.draw(line);
+		                        g.drawString(labels[i], (float)xStart + 16, (float)(yl + yStart - 80 + 3));
+		                    }
+		                }
+		    		}
+		    	};
+    }
+    
 	/** Gets a renderer that draws the proper scale/key/legend for this
 	 * HypocentererRenderer based on its current settings.  This uses the Jet
 	 * color spectrum in some cases.
@@ -200,7 +288,7 @@ public class HypocenterRenderer implements Renderer
 	 * @param kmPerPixel the value for the spatial scale
 	 * @return a Renderer that draws the corrent scale/key/legend
 	 */
-    public Renderer getScaleRenderer(final double xStart, final double yStart, final double kmPerPixel, final boolean triple)
+    public Renderer getScaleRenderer(final double xStart, final double yStart, final boolean triple)
     {
         return new Renderer() 
         	{
@@ -280,24 +368,6 @@ public class HypocenterRenderer implements Renderer
 	                }
 	                g.setFont(origFont);
 	                g.setStroke(new BasicStroke(2.0f));
-	                if (kmPerPixel != 0.0)
-	                {
-	                    Line2D.Double line = new Line2D.Double();
-	                    double len = 0;
-	                    int index = -1;
-	                    for (int i = 0; i < scales.length; i++)
-	                        if (kmPerPixel * scales[i] < 150)
-	                        {
-	                            len = kmPerPixel * scales[i];
-	                            index = i;
-	                            break;
-	                        }
-	                    //line.setLine(xStart, yStart - 45, xStart + len, yStart - 45);
-	                    line.setLine(xStart, yStart - 75, xStart + len, yStart - 75);
-	                    g.draw(line);
-	                    //g.drawString(scales[index] + " km", (float)xStart, (float)yStart - 49);
-	                    g.drawString(scales[index] + " km", (float)xStart, (float)yStart - 79);
-	                }
 	                
 	                if (axes == Axes.TRIPLE_VIEW)
 	                {
@@ -318,7 +388,7 @@ public class HypocenterRenderer implements Renderer
         Color origColor = g.getColor();
         AffineTransform origAT = g.getTransform();
         Stroke origStroke = g.getStroke();
-        
+        Font origFont = g.getFont();
         Object aa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setStroke(new BasicStroke(2.0f));
@@ -385,9 +455,17 @@ public class HypocenterRenderer implements Renderer
         }
         
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, aa);
-        g.setStroke(origStroke);
+        
         g.setColor(origColor);
         g.setTransform(origAT);
+        
+        if (colorScaleRenderer != null)
+        	colorScaleRenderer.render(g);
+        if (magnitudeScaleRenderer != null)
+        	magnitudeScaleRenderer.render(g);
+        
+        g.setStroke(origStroke);
+        g.setFont(origFont);
     }
     
 }
