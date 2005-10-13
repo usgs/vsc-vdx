@@ -5,6 +5,7 @@ import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,8 +15,13 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 /**
+ *
+ * TODO: un-hardcode "localhost"
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/09/05 18:43:42  dcervelli
+ * Un-hardcoded database name.
+ *
  * Revision 1.4  2005/09/05 18:37:16  dcervelli
  * Un-hardcoded database name.
  *
@@ -29,10 +35,12 @@ public class ImportStacov
 	private Logger logger;
 	private Map<String, Benchmark> benchmarks;
 	private SQLGPSDataSource dataSource;
+	private int typeId;
 
-	public ImportStacov(String vdxName, String dbName)
+	public ImportStacov(String vdxName, String dbName, int tid)
 	{
 		dataSource = new SQLGPSDataSource();
+		typeId = tid;
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
 		params.put("vdx.name", vdxName);
@@ -49,10 +57,10 @@ public class ImportStacov
 		logger = Log.getLogger("gov.usgs.vdx");
 		try
 		{
-			CodeTimer ct = new CodeTimer("ImportStacov");
+//			CodeTimer ct = new CodeTimer("ImportStacov");
 			String md5 = Util.md5Resource(fn);
 			System.out.println("MD5: " + md5);
-			ct.mark("compute md5");
+//			ct.mark("compute md5");
 			ResourceReader rr = ResourceReader.getResourceReader(fn);
 			if (rr == null)
 				return;
@@ -73,8 +81,13 @@ public class ImportStacov
 			double t0 = (((double)fileDate.getTime() / (double)1000) - 946728000);
 			double t1 = t0 + 86400;
 			
-			int sid = dataSource.insertSource(fn, md5, t0, t1, 7);
-			ct.mark("prepare");
+			int sid = dataSource.insertSource(new File(fn).getName(), md5, t0, t1, typeId);
+			if (sid == -1)
+			{
+				System.out.println("This file has already been imported.");
+				return;
+			}
+//			ct.mark("prepare");
 			for (int i = 0; i < numParams / 3; i++)
 			{
 				String sx = rr.nextLine();
@@ -95,7 +108,7 @@ public class ImportStacov
 				
 				points[i] = sp;
 			}
-			ct.mark("read stations");
+//			ct.mark("read stations");
 			boolean done = false;
 			while (!done)
 			{
@@ -129,7 +142,7 @@ public class ImportStacov
 				}
 			}
 			rr.close();
-			ct.mark("read covariance");
+//			ct.mark("read covariance");
 			for (SolutionPoint sp : points)
 			{
 				sp.dp.sxy = sp.dp.sxy * sp.dp.sxx * sp.dp.syy;
@@ -150,10 +163,9 @@ public class ImportStacov
 					System.out.println("Created benchmark: " + sp.benchmark);
 				}
 				dataSource.insertSolution(sid, bm.getId(), sp.dp, 0);
-//				System.out.println(sp.benchmark + " " + sp.dp);
 			}
-			ct.mark("write to database");
-			ct.stop();
+//			ct.mark("write to database");
+//			ct.stop();
 		}
 		catch (Exception e)
 		{
@@ -163,64 +175,14 @@ public class ImportStacov
 
 	public static void main(String args[])
 	{
-		ImportStacov is = new ImportStacov(args[0], args[1]);
-		for (int i = 2; i < args.length; i++)
+		if (args.length < 3)
+		{
+			System.err.println("java gov.usgs.vdx.data.gps.ImportStacov [vdx prefix] [vdx name] [solution id] [files...]");
+			System.exit(-1);
+		}
+		ImportStacov is = new ImportStacov(args[0], args[1], Integer.parseInt(args[2]));
+		for (int i = 3; i < args.length; i++)
 			is.importFile(args[i]);
-		/*
-		ImportStacov is = new ImportStacov();
-		is.importFile(args[0], false);
-		System.exit(1);
-		
-		if (args.length == 0)
-		{
-			System.out.println("specify an input file or directory");	
-			System.exit(1);
-		}
-		String d = null;
-		String u = null;
-		boolean ufd = false;
-		if (args.length == 3)
-		{
-			d = args[1];
-			u = args[2];	
-		}
-		else if (new File("ImportStacov.config").exists())
-		{
-			ConfigFile cf = new ConfigFile("ImportStacov.config");
-			d = cf.getString("driver");
-			u = cf.getString("url");
-			if (cf.getString("useFileDate") != null && cf.getString("useFileDate").equals("true"))
-				ufd = true;
-		}
-		else
-		{
-			System.out.println("you must specify a database driver and url either on the command line after the input file: [input file] [driver] [url]");
-			System.out.println("or in a file called 'ImportStacov.config' with lines like:");
-			System.out.println();
-			System.out.println("driver=driver.class.name");
-			System.out.println("url=jdbc://url");
-			System.out.println("# useFileDate gets the date from the file name, not the stacov file.");
-			System.out.println("# This is for processing more frequent than daily solutions.");
-			System.out.println("useFileDate=false");
-			
-			System.exit(1);
-		}
-		
-		initialize(d, u);
-//		ImportStacov is = new ImportStacov();
-		File f = new File(args[0]);
-		if (f.isDirectory())
-		{
-			File files[] = f.listFiles();
-			for (int i = 0; i < files.length; i++)
-			{
-				if (files[i].getName().endsWith(".stacov"))
-					is.importFile(files[i].getPath(), ufd);
-			}
-		}
-		else
-			is.importFile(args[0], false);
-			*/	
 	}	
 	
 	class SolutionPoint
