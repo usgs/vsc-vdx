@@ -14,6 +14,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/10/13 22:18:14  dcervelli
+ * Changes for etilt.
+ *
  * Revision 1.1  2005/09/21 19:25:14  dcervelli
  * Initial commit.
  *
@@ -25,6 +28,12 @@ public class ImportPinnServer extends Client
 	private SQLElectronicTiltDataSource dataSource;
 	private String channel;
 	private Logger logger;
+	
+	private double azimuth = 0;
+	private double xMult = 1;
+	private double yMult = 1;
+	private double xOffset = 0;
+	private double yOffset = 0;
 	
 	public ImportPinnServer(String h, int p)
 	{
@@ -42,6 +51,11 @@ public class ImportPinnServer extends Client
 		ImportPinnServer ips = new ImportPinnServer(host, port);
 
 		ips.channel = cf.getString("channel");
+		ips.azimuth = Util.stringToDouble(cf.getString("azimuth"), 0);
+		ips.xMult = Util.stringToDouble(cf.getString("xMult"), 0);
+		ips.yMult = Util.stringToDouble(cf.getString("yMult"), 0);
+		ips.xOffset = Util.stringToDouble(cf.getString("xOffset"), 0);
+		ips.yOffset = Util.stringToDouble(cf.getString("yOffset"), 0);
 		
 		String driver = cf.getString("vdx.driver");
 		String url = cf.getString("vdx.url");
@@ -73,7 +87,7 @@ public class ImportPinnServer extends Client
 	public void handleStatusBlock(StatusBlock sb)
 	{
 		System.out.println(sb);
-		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), sb.getTemperature(), 0, 1, 1, 0, 0, 1, 0, 1, 0);
+		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), sb.getTemperature(), azimuth, xMult, yMult, xOffset, yOffset, 1, 0, 1, 0);
 	}
 	
 	public static void main(String[] args)
