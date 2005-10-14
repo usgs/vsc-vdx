@@ -12,6 +12,9 @@ import java.util.Map;
  * Program to import Pinnacle series 5000 tiltmeter PTX files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/14 21:06:26  dcervelli
+ * Now uses SQLElectronicTiltSource.
+ *
  * Revision 1.2  2005/09/21 20:02:08  dcervelli
  * Changed argument order.
  *
@@ -37,6 +40,7 @@ public class ImportPTX
 		for (int j = 2; j < args.length; j++)
 		{
 			System.out.println("file: " + args[j]);
+			done = false;
 			DataInputStream dis = new DataInputStream(new FileInputStream(args[j]));
 			while (!done)
 			{
