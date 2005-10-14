@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/10/13 22:18:02  dcervelli
+ * Changes for etilt.
+ *
  * Revision 1.4  2005/09/24 17:34:36  dcervelli
  * Returns E/N instead of X/Y.
  *
@@ -179,7 +182,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.insertData() failed.", e);
+			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.getTiltData() failed.", e);
 		}
 		return null;
 	}
