@@ -1,14 +1,23 @@
 package gov.usgs.vdx.data.tilt;
 
+import gov.usgs.vdx.server.BinaryResult;
+import gov.usgs.vdx.server.RequestResult;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/10/13 22:17:51  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
  */
 public class SQLElectronicTiltDataSource extends SQLTiltDataSource
@@ -17,6 +26,11 @@ public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 	public SQLElectronicTiltDataSource()
 	{
 		DATABASE_NAME = "etilt";
+	}
+	
+	public String getType()
+	{
+		return "etilt";
 	}
 	
 	public boolean createDatabase()
@@ -71,6 +85,66 @@ public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 			database.getLogger().log(Level.SEVERE, "SQLElectronicTiltDataSource.createChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
 		}
 		return false;
+	}
+	
+	public RequestResult getData(Map<String, String> params)
+	{
+		String action = params.get("action");
+		if (action == null)
+			return null;
+		
+		if (!action.equals("data"))
+			return super.getData(params);
+		else
+		{
+			int cid = Integer.parseInt(params.get("cid"));
+			double st = Double.parseDouble(params.get("st"));
+			double et = Double.parseDouble(params.get("et"));
+			ElectronicTiltData data = getElectronicTiltData(cid, st, et);
+			if (data != null)
+				return new BinaryResult(data);
+		}
+		return null;
+	}
+	
+	public ElectronicTiltData getElectronicTiltData(int cid, double st, double et)
+	{
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
+			ps.setInt(1, cid);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			String code = rs.getString(1);
+
+			ps = database.getPreparedStatement(
+					"SELECT t, " +
+					"COS(RADIANS(azimuth))*(x*cx+dx)+SIN(RADIANS(azimuth))*(y*cy+dy)," +
+					"-SIN(RADIANS(azimuth))*(x*cx+dx)+COS(RADIANS(azimuth))*(y*cy+dy)," + 
+					"voltage*cvoltage+dvoltage, temperature*ctemperature+dtemperature FROM " +
+					code +	
+					" INNER JOIN translations ON " + code + ".tid=translations.tid" +
+					" WHERE t>=? AND t<=? ORDER BY t ASC");
+			
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
+			rs = ps.executeQuery();
+			List<double[]> pts = new ArrayList<double[]>();
+			while (rs.next())
+				pts.add(new double[] { rs.getDouble(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5) });
+			
+			ElectronicTiltData td = null;
+			if (pts.size() > 0)
+				td = new ElectronicTiltData(pts);
+			
+			return td;
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.getTiltData() failed.", e);
+		}
+		return null;
 	}
 	
 	public void insertData(String code, double t, double x, double y, double v, double temp, double az, double cx, double cy, double dx, double dy, double cv, double dv, double ct, double dt)
