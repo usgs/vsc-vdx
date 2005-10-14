@@ -8,6 +8,9 @@ import java.util.TimeZone;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/09/21 19:57:11  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
  */
 public class PTXRecord
@@ -98,7 +101,6 @@ public class PTXRecord
 	public int[][] getData()
 	{
 		int samples = (getNumBytes() - 34) / (2 * 3);
-		System.out.println("samples: " + samples);
 		int[][] result = new int[samples][2];
 		
 		for (int i = 0; i < samples; i++)
@@ -127,8 +129,8 @@ public class PTXRecord
 			result[i][0] = t0 + i * getSecondsPerSample();
 			result[i][1] = (double)data[i][0] * 5000 / MAX_BIT - 2500;
 			result[i][2] = (double)data[i][1] * 5000 / MAX_BIT - 2500;
-			result[i][3] = 1.0;
-			result[i][4] = 1.0;
+			result[i][3] = getVoltage() * 3.2782552e-6;
+			result[i][4] = getTemperature() * 2.980232e-5;
 //			System.out.printf("%s %.2f %.2f %f %f\n", df.format(Util.j2KToDate(result[i][0])), result[i][1], result[i][2], result[i][3], result[i][4]);
 		}
 		
