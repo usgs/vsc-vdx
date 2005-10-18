@@ -15,6 +15,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/10/14 20:45:08  dcervelli
+ * More development.
+ *
  * Revision 1.1  2005/10/13 22:17:51  dcervelli
  * Initial commit.
  *
@@ -117,6 +120,7 @@ public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 			ResultSet rs = ps.executeQuery();
 			rs.next();
 			String code = rs.getString(1);
+			rs.close();
 
 			ps = database.getPreparedStatement(
 					"SELECT t, " +
@@ -133,6 +137,7 @@ public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 			List<double[]> pts = new ArrayList<double[]>();
 			while (rs.next())
 				pts.add(new double[] { rs.getDouble(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5) });
+			rs.close();
 			
 			ElectronicTiltData td = null;
 			if (pts.size() > 0)
@@ -142,7 +147,7 @@ public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLTiltDataSource.getTiltData() failed.", e);
+			database.getLogger().log(Level.SEVERE, "SQLElectronicTiltDataSource.getTiltData() failed.", e);
 		}
 		return null;
 	}
