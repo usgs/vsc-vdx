@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2005/10/14 21:06:38  dcervelli
+ * Fixed typo.
+ *
  * Revision 1.5  2005/10/13 22:18:02  dcervelli
  * Changes for etilt.
  *
@@ -159,7 +162,8 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = ps.executeQuery();
 			rs.next();
 			String code = rs.getString(1);
-
+			rs.close();
+			
 			ps = database.getPreparedStatement(
 					"SELECT t, " +
 					"COS(RADIANS(azimuth))*(x*cx+dx)+SIN(RADIANS(azimuth))*(y*cy+dy)," +
@@ -173,6 +177,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 			List<double[]> pts = new ArrayList<double[]>();
 			while (rs.next())
 				pts.add(new double[] { rs.getDouble(1), rs.getDouble(2), rs.getDouble(3) });
+			rs.close();
 			
 			TiltData td = null;
 			if (pts.size() > 0)

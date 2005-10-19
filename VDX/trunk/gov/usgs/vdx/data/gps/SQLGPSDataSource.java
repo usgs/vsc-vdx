@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/13 20:37:35  dcervelli
+ * Checks for already inserted hashes.
+ *
  * Revision 1.2  2005/08/29 22:51:36  dcervelli
  * Added insert methods.
  *
@@ -273,6 +276,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			rs.next();
 			result = rs.getInt(1);
+			rs.close();
 		}
 		catch (SQLException e)
 		{
@@ -294,6 +298,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			rs.next();
 			result = rs.getInt(1);
+			rs.close();
 		}
 		catch (SQLException e)
 		{
@@ -318,6 +323,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			rs.next();
 			result = rs.getInt(1);
+			rs.close();
 		}
 		catch (SQLException e)
 		{
@@ -337,6 +343,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			ResultSet rs = ps.executeQuery();
 			rs.next();
 			int cnt = rs.getInt(1);
+			rs.close();
 			if (cnt > 0)  // already inserted
 				return -1;
 			ps = database.getPreparedStatement("INSERT INTO sources (name, hash, t0, t1, stid) VALUES (?,?,?,?,?)");
@@ -349,6 +356,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			rs.next();
 			result = rs.getInt(1);
+			rs.close();
 		}
 		catch (SQLException e)
 		{
