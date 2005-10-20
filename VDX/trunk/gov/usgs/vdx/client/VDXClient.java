@@ -16,6 +16,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/10/14 21:07:22  dcervelli
+ * Added etilt.
+ *
  * Revision 1.3  2005/09/06 21:35:54  dcervelli
  * Support for tilt data type, changed timeout to 30 seconds.
  *
@@ -42,6 +45,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("gps", "gov.usgs.vdx.data.gps.GPSData");
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
 		dataTypeMap.put("etilt", "gov.usgs.vdx.data.tilt.ElectronicTiltData");
+		dataTypeMap.put("generic", "gov.usgs.vdx.data.GenericDataMatrix");
 	}
 	
 	public VDXClient(String h, int p)
