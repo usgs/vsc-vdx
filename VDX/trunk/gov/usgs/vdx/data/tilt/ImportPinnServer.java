@@ -14,6 +14,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/14 20:44:29  dcervelli
+ * Added calibration.
+ *
  * Revision 1.2  2005/10/13 22:18:14  dcervelli
  * Changes for etilt.
  *
@@ -52,8 +55,8 @@ public class ImportPinnServer extends Client
 
 		ips.channel = cf.getString("channel");
 		ips.azimuth = Util.stringToDouble(cf.getString("azimuth"), 0);
-		ips.xMult = Util.stringToDouble(cf.getString("xMult"), 0);
-		ips.yMult = Util.stringToDouble(cf.getString("yMult"), 0);
+		ips.xMult = Util.stringToDouble(cf.getString("xMult"), 1);
+		ips.yMult = Util.stringToDouble(cf.getString("yMult"), 1);
 		ips.xOffset = Util.stringToDouble(cf.getString("xOffset"), 0);
 		ips.yOffset = Util.stringToDouble(cf.getString("yOffset"), 0);
 		
