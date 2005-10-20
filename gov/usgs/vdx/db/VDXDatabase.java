@@ -7,6 +7,7 @@ import gov.usgs.util.Retriable;
 import gov.usgs.util.RetryManager;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.SQLDataSource;
+import gov.usgs.vdx.data.generic.SQLGenericDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
@@ -31,6 +32,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/10/13 22:17:13  dcervelli
+ * Added etilt.
+ *
  * Revision 1.3  2005/09/01 00:29:26  dcervelli
  * Added tilt database creation.
  *
@@ -403,6 +407,7 @@ public class VDXDatabase
 				sources.put("creategps", new SQLGPSDataSource());
 				sources.put("createtilt", new SQLTiltDataSource());
 				sources.put("createetilt", new SQLElectronicTiltDataSource());
+				sources.put("creategeneric", new SQLGenericDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null)
 					createDatabase(db, args, sds);
