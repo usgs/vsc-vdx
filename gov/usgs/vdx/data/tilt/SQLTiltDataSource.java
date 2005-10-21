@@ -19,6 +19,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2005/10/19 00:14:17  dcervelli
+ * Closed resultsets.
+ *
  * Revision 1.6  2005/10/14 21:06:38  dcervelli
  * Fixed typo.
  *
@@ -54,9 +57,9 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 		if (database == null)
 		{
 			String vdxHost = (String)params.get("vdx.host");
-			String vdxName = (String)params.get("vdx.name");
+			String vdxPrefix = (String)params.get("vdx.prefix");
 			params.put("name", (String)params.get("vdx.databaseName"));
-			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
 		}
 		
 		name = (String)params.get("name");

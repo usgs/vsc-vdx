@@ -19,6 +19,9 @@ import java.util.logging.Logger;
  * TODO: un-hardcode "localhost"
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2005/10/13 20:38:11  dcervelli
+ * Configurable stid, checks for already inserted hashes. sets filename properly.
+ *
  * Revision 1.5  2005/09/05 18:43:42  dcervelli
  * Un-hardcoded database name.
  *
@@ -37,13 +40,13 @@ public class ImportStacov
 	private SQLGPSDataSource dataSource;
 	private int typeId;
 
-	public ImportStacov(String vdxName, String dbName, int tid)
+	public ImportStacov(String vdxPrefix, String dbName, int tid)
 	{
 		dataSource = new SQLGPSDataSource();
 		typeId = tid;
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.name", vdxName);
+		params.put("vdx.prefix", vdxPrefix);
 		params.put("vdx.databaseName", dbName);
 		dataSource.initialize(params);
 		List<Benchmark> bms = dataSource.getBenchmarks();
