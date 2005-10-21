@@ -40,13 +40,13 @@ public class ImportStacov
 	private SQLGPSDataSource dataSource;
 	private int typeId;
 
-	public ImportStacov(String vdxPrefix, String dbName, int tid)
+	public ImportStacov(String vdxName, String dbName, int tid)
 	{
 		dataSource = new SQLGPSDataSource();
 		typeId = tid;
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.prefix", vdxPrefix);
+		params.put("vdx.name", vdxName);
 		params.put("vdx.databaseName", dbName);
 		dataSource.initialize(params);
 		List<Benchmark> bms = dataSource.getBenchmarks();
