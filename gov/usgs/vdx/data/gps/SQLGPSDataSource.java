@@ -96,9 +96,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		if (database == null)
 		{
 			String vdxHost = (String)params.get("vdx.host");
-			String vdxPrefix = (String)params.get("vdx.prefix");
+			String vdxName = (String)params.get("vdx.name");
 			params.put("name", (String)params.get("vdx.databaseName"));
-			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
+			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
 		}
 		
 		name = (String)params.get("name");

@@ -20,12 +20,12 @@ public class ImportSum
 {
 	private SQLGPSDataSource dataSource;
 
-	public ImportSum(String vdxPrefix, String dbName)
+	public ImportSum(String vdxName, String dbName)
 	{
 		dataSource = new SQLGPSDataSource();
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.prefix", vdxPrefix);
+		params.put("vdx.name", vdxName);
 		params.put("vdx.databaseName", dbName);
 		dataSource.initialize(params);
 	}
