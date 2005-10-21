@@ -8,6 +8,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/05 18:43:54  dcervelli
+ * Un-hardcoded database name.
+ *
  * Revision 1.1  2005/08/29 22:52:12  dcervelli
  * Initial commit.
  *
@@ -17,12 +20,12 @@ public class ImportSum
 {
 	private SQLGPSDataSource dataSource;
 
-	public ImportSum(String vdxName, String dbName)
+	public ImportSum(String vdxPrefix, String dbName)
 	{
 		dataSource = new SQLGPSDataSource();
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("vdx.host", "localhost");
-		params.put("vdx.name", vdxName);
+		params.put("vdx.prefix", vdxPrefix);
 		params.put("vdx.databaseName", dbName);
 		dataSource.initialize(params);
 	}
