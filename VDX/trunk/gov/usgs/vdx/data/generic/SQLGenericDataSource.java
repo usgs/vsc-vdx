@@ -21,6 +21,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/21 21:19:55  tparker
+ * Roll back changes related to Bug #77
+ *
  * Revision 1.1  2005/10/20 05:07:30  dcervelli
  * Initial commit.
  *
@@ -209,11 +212,12 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		String action = params.get("action");
 		if (action == null)
 			return null;
+
+		getColumns();
+		getMetadata();
 		
 		if (action.equals("genericMenu"))
 		{
-			getColumns();
-			getMetadata();
 			List<String> result = new ArrayList<String>(columnStrings.size() + 5);
 			result.add(getTitle());
 			result.add(getDescription());
