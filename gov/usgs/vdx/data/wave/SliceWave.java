@@ -6,6 +6,9 @@ import gov.usgs.math.FFT;
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/04 15:45:35  dcervelli
+ * Uses faster 1-d FFT.
+ *
  * Revision 1.3  2005/09/02 16:19:35  dcervelli
  * Added getWave().
  *
@@ -154,7 +157,7 @@ public class SliceWave
 	 */
 	public double max()
 	{
-		if (max == Integer.MIN_VALUE)
+		if (max == -1E300)
 			deriveStatistics();
 			
 		return max;	
@@ -167,7 +170,7 @@ public class SliceWave
 	 */
 	public double min()
 	{
-		if (min == Integer.MAX_VALUE)
+		if (min == 1E300)
 			deriveStatistics();
 			
 		return min;	
