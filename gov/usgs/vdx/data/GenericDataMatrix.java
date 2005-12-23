@@ -1,5 +1,7 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.util.Util;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/06 21:36:19  dcervelli
+ * Added min(), mean(), max().
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -75,7 +80,7 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 		return bb;
 	}
-	
+		
 	public void fromBinary(ByteBuffer bb)
 	{
 		int rows = bb.getInt();
@@ -86,6 +91,22 @@ public class GenericDataMatrix implements BinaryDataSet
 			for (int j = 0; j < cols; j++)
 				data.setQuick(i, j, bb.getDouble());
 		}		
+	}
+	
+	public String toCSV()
+	{
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < rows(); i++)
+		{
+			sb.append(Util.j2KToDateString(data.getQuick(i, 0)) + ",");
+			for (int j = 1; j < columns(); j++)
+			{
+				sb.append(data.getQuick(i, j));
+				sb.append(",");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
 	}
 	
 	/** Sets the data matrix.
