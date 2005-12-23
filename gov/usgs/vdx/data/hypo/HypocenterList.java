@@ -20,6 +20,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/07 17:03:16  dcervelli
+ * Added size() method.
+ *
  * Revision 1.2  2005/08/28 18:45:29  dcervelli
  * Added several methods for creating histograms.
  *
@@ -30,7 +33,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class HypocenterList implements BinaryDataSet
 {
-	private static final int MAX_BINS = 1000;
+	private static final int MAX_BINS = 1000000;
 	public enum BinSize 
 	{
 		MINUTE("Minute"), HOUR("Hour"), DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
@@ -69,6 +72,28 @@ public class HypocenterList implements BinaryDataSet
 					return null;
 			}
 		}
+		
+		public  int toSeconds()
+		{
+			switch(string.charAt(0))
+			{
+				case 'I':
+					return 60;
+				case 'H':
+					return 60*60;
+				case 'D':
+					return 60*60*24;
+				case 'W':
+					return 60*60*24*7;
+				case 'M':
+					return 60*60*24*7*4;
+				case 'Y':
+					return 60*60*24*7*52;
+				default:
+					return -1;
+			}
+		}
+
 	}
 	
 	private List<Hypocenter> hypocenters;
