@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.heli;
 
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.wave.Wave;
 
@@ -16,6 +17,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * helicorder: 1-sec min/max data.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * Revision 1.9  2005/04/23 15:52:21  cervelli
  * Removed the average rcnt constructor.
  *
@@ -388,6 +392,18 @@ public class HelicorderData extends GenericDataMatrix
 				sb.append(" ");
 			}
 			sb.append("\n");
+		}
+		return sb.toString();
+	}
+	
+	public String toCSV()
+	{
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < rows(); i++)
+		{
+			sb.append(Util.j2KToDateString(data.getQuick(i,0)) + ",");
+			sb.append(data.getQuick(i,1) + ",");
+			sb.append(data.getQuick(i,2) + "\n");
 		}
 		return sb.toString();
 	}
