@@ -1,11 +1,15 @@
 package gov.usgs.vdx.data.wave;
 
 import gov.usgs.math.FFT;
+import gov.usgs.util.Util;
 
 /**
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/12/16 23:30:47  dcervelli
+ * Fixed min() and max() [was breaking remove bias in Swarm].
+ *
  * Revision 1.4  2005/09/04 15:45:35  dcervelli
  * Uses faster 1-d FFT.
  *
@@ -358,6 +362,25 @@ public class SliceWave
 	public double next()
 	{
 		return source.buffer[readPosition++];
+	}
+	
+	public String toCSV()
+	{
+		if (source.buffer == null || source.buffer.length == 0)
+		{
+			return "";	
+		}
+		
+		StringBuffer sb = new StringBuffer();
+		double time = getStartTime();
+		
+		for (int i = position; i < limit; i++)
+		{
+			sb.append(Util.j2KToDateString(time) + ',' + source.buffer[i] + '\n');
+			time += (1 / getSamplingRate());
+		}
+		
+		return sb.toString();
 	}
 	
 }
