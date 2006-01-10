@@ -12,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/12/23 02:09:36  tparker
+ * Add export method for RawData export
+ *
  * Revision 1.2  2005/09/06 21:36:19  dcervelli
  * Added min(), mean(), max().
  *
@@ -187,6 +190,23 @@ public class GenericDataMatrix implements BinaryDataSet
 		for (int i = 0; i < rows(); i++)
 			t += data.getQuick(i, c);
 		return t / (double)rows();
+	}
+	
+	public double getStartTime()
+	{
+		
+		if (data == null || data.size() == 0)
+			return Double.NaN;
+		else
+			return data.get(0,0);
+	}
+	
+	public double getEndTime()
+	{
+		if (data == null || data.size() == 0)
+			return Double.NaN;
+		else
+			return data.get(rows()-1,0);
 	}
 	
 	/** Adds a value to the time column (for time zone management).
