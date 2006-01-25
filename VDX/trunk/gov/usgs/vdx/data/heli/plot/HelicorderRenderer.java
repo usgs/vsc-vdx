@@ -13,9 +13,18 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -23,6 +32,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/09/22 20:54:00  dcervelli
+ * Moved large channel display code from Swarm to here.
+ *
  * Revision 1.4  2005/09/14 20:41:17  dcervelli
  * Fixed minimum axis channel label position bug (Mantis #0000001).
  *
@@ -72,6 +84,11 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	private int clipValue = 3000;
 	private boolean showClip = false;
+	private boolean alertClip = false;
+	private String clipWav;
+	private int alertClipTimeout;
+	private double lastClipAlert;
+	private double lastClipTime;
 	
 	private String channel;
 	private boolean largeChannelDisplay;
@@ -182,6 +199,18 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/**
+	 * @param cw The .wav to play when clipping is detected
+	 */
+	public void setClipWav(String cw)
+	{
+		clipWav = cw;
+	}
+	
+	public void setClipAlertTimeout(int to)
+	{
+		alertClipTimeout = to;
+	}
+	/**
 	 * @param forceCenter The forceCenter to set.
 	 */
 	public void setForceCenter(boolean forceCenter)
@@ -209,6 +238,10 @@ public class HelicorderRenderer extends FrameRenderer
 		showClip = b;
 	}
 	
+	public void setAlertClip(boolean b)
+	{
+		alertClip = b;
+	}
 	public void setClipValue(int i)
 	{
 		clipValue = i;
@@ -232,7 +265,8 @@ public class HelicorderRenderer extends FrameRenderer
 		DoubleMatrix2D min = data.getMin();
 		DoubleMatrix2D max = data.getMax();
 		
-		double t1, t2, x, y, w, h, ymax, ymin;
+		double t1, x, y, w, h, ymax, ymin;
+		double t2 = 0;
 		
 		double bias = Double.NaN;
 		int lastRow = -1;
@@ -272,6 +306,7 @@ public class HelicorderRenderer extends FrameRenderer
 			
 			if (showClip && (ymax >= clipValue || ymin <= -clipValue))
 			{
+				lastClipTime = t1;
 				if (lastColor != Color.red)
 				{
 					g.setColor(Color.red);
@@ -295,6 +330,7 @@ public class HelicorderRenderer extends FrameRenderer
 			g.fillRect((int)(x + 1), (int)(y + 1), (int)(w + 1), hgt);
 		}
 		
+		
 		g.setClip(origClip);
 		g.setColor(origColor);
 		g.setTransform(origAT);
@@ -305,7 +341,18 @@ public class HelicorderRenderer extends FrameRenderer
 			String c = channel.replace('_', ' ');
 			int width = g.getFontMetrics().stringWidth(c);
 			int lw = width + 20;
-			g.setColor(Color.white);
+			if (alertClip && lastClipTime > t2 - alertClipTimeout && clipWav != null)
+			{
+				g.setColor(Color.red);
+				if ((lastClipTime > lastClipAlert + alertClipTimeout))
+				{
+					lastClipAlert = t2;
+					playClipAlert();
+				}
+			}
+			else
+				g.setColor(Color.white);
+				
 			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
 			g.setColor(Color.black);
 			g.drawRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
@@ -483,4 +530,69 @@ public class HelicorderRenderer extends FrameRenderer
 		axis.setBackgroundColor(Color.white);
 	}
 	
+	private void playClipAlert()
+	{
+		File	soundFile = new File(clipWav);
+		AudioInputStream	audioInputStream = null;
+		try
+		{
+			audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+		}
+		catch (Exception e)
+		{
+			/*
+			  In case of an exception, we dump the exception
+			  including the stack trace to the console output.
+			  Then, we exit the program.
+			*/
+			e.printStackTrace();
+			System.exit(1);
+		}
+		AudioFormat	audioFormat = audioInputStream.getFormat();
+		SourceDataLine	line = null;
+		DataLine.Info	info = new DataLine.Info(SourceDataLine.class,
+												 audioFormat);
+		try
+		{
+			line = (SourceDataLine) AudioSystem.getLine(info);
+
+			/*
+			  The line is there, but it is not yet ready to
+			  receive audio data. We have to open the line.
+			*/
+			line.open(audioFormat);
+		}
+		catch (LineUnavailableException e)
+		{
+			e.printStackTrace();
+			System.exit(1);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			System.exit(1);
+		}
+		line.start();
+		int	nBytesRead = 0;
+		byte[]	abData = new byte[1024];
+		while (nBytesRead != -1)
+		{
+			try
+			{
+				nBytesRead = audioInputStream.read(abData, 0, abData.length);
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+			if (nBytesRead >= 0)
+			{
+				int	nBytesWritten = line.write(abData, 0, nBytesRead);
+			}
+		}
+	
+		line.drain();
+		line.close();
+
+	}
 }
