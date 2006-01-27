@@ -12,6 +12,9 @@ import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/03 18:55:14  dcervelli
+ * Change for log power rendering.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -34,6 +37,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected double viewStartTime;
 	protected double viewEndTime;
 	protected double overlap;
+	protected double xLabel;
+	protected double yLabel;
 	
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
@@ -166,11 +171,18 @@ public class SpectrogramRenderer extends ImageDataRenderer
 			ht = graphWidth / 108;
 		if (vTicks == -1)
 			vt = graphHeight / 24;
-		this.createDefaultAxis(ht, vt, false, false);
-		this.getAxis().createDefault();
-		this.setXAxisToTime(ht);
-		this.getAxis().setLeftLabelAsText("Frequency (Hz)", -52);
-		this.getAxis().setBottomLeftLabelAsText("Time");
+		
+		if (xLabel == 0 && yLabel == 2)
+		{
+			this.createDefaultAxis(0, 0, false, false);
+			this.getAxis().createDefault();			
+		} else {			
+			this.createDefaultAxis(ht, vt, false, false);
+			this.getAxis().createDefault();
+			this.setXAxisToTime(ht);
+			this.getAxis().setLeftLabelAsText("Frequency (Hz)", -52);
+			this.getAxis().setBottomLeftLabelAsText("Time");
+		}
 		return maxMag;
 	}
 
@@ -270,5 +282,15 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public void setTimeZoneOffset(double tzo)
 	{
 		timeZoneOffset = tzo;
+	}
+	
+	public void setYLabel(int i)
+	{
+		yLabel = i;
+	}
+
+	public void setXLabel(int i)
+	{
+		xLabel = i;
 	}
 }
