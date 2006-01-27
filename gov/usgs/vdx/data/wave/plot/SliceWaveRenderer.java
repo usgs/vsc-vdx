@@ -15,6 +15,9 @@ import java.awt.geom.Line2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/03 20:31:16  dcervelli
+ * Changed logic for deciding when to use optimized rendering method.
+ *
  * Revision 1.3  2005/09/02 16:19:59  dcervelli
  * Major optimization for most waves.
  *
@@ -43,6 +46,10 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected double highlightX2;
 	protected double viewStartTime;
 	protected double viewEndTime; 
+	
+	protected boolean displayLabels = true;
+	
+	protected Color color = Color.BLUE;
 	
 	public void setHighlight(double x1, double x2)
 	{
@@ -107,16 +114,33 @@ public class SliceWaveRenderer extends FrameRenderer
 	    viewEndTime = t2;
 	}
 	
+	public void setColor(Color c)
+	{
+		color = c;
+	}
+	
+	public void setDisplayLabels(boolean b)
+	{
+		displayLabels = b;
+	}
+	
 	public void update()
 	{
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
-		int hTicks = graphWidth / 108;
-		int vTicks = graphHeight / 24;
-		this.createDefaultAxis(hTicks, vTicks);
-		this.getAxis().createDefault();
-		this.setXAxisToTime(hTicks);
-		this.getAxis().setLeftLabelAsText("Counts", -52);
-		this.getAxis().setBottomLeftLabelAsText("Time");
+		
+
+		if (displayLabels)
+		{
+			int hTicks = graphWidth / 108;
+			int vTicks = graphHeight / 24;
+			this.createDefaultAxis(hTicks, vTicks);
+			this.getAxis().createDefault();
+			this.setXAxisToTime(hTicks);
+			this.getAxis().setLeftLabelAsText("Counts", -52);
+			this.getAxis().setBottomLeftLabelAsText("Time");
+		} else {
+			this.createDefaultAxis(0, 0);
+		}
 	}
 	
 	public void render(Graphics2D g)
@@ -136,7 +160,7 @@ public class SliceWaveRenderer extends FrameRenderer
 		if (removeBias)
 		    bias = wave.mean();
 		
-		g.setColor(Color.blue);
+		g.setColor(color);
         
 		double ns = wave.samples();
 		double spp = ns / (double)graphWidth;
