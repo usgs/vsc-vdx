@@ -14,7 +14,6 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.io.File;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
@@ -23,7 +22,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import cern.colt.matrix.DoubleMatrix2D;
@@ -32,6 +30,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/02/01 18:01:31  tparker
+ * tweak alert
+ *
  * Revision 1.6  2006/01/25 21:46:26  tparker
  * Move clipping alert into the heli renderer.
  *
@@ -535,29 +536,37 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	private void playClipAlert()
 	{
-		File	soundFile = new File(clipWav);
-		AudioInputStream	audioInputStream = null;
-		try
+		Runnable r = new Runnable()
 		{
-			audioInputStream = AudioSystem.getAudioInputStream(soundFile);
-			AudioFormat	audioFormat = audioInputStream.getFormat();
-			DataLine.Info	info = new DataLine.Info(SourceDataLine.class, audioFormat);
-			
-			SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
-			line.open(audioFormat);
-			line.start();
-			
-			int	nBytesRead = 0;
-			byte[]	abData = new byte[1024];
-			while (nBytesRead != -1)
+			public void run() 
 			{
-				nBytesRead = audioInputStream.read(abData, 0, abData.length);
-				if (nBytesRead >= 0)
-					line.write(abData, 0, nBytesRead);
+				File	soundFile = new File(clipWav);
+				AudioInputStream	audioInputStream = null;
+				try
+				{
+					audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+					AudioFormat	audioFormat = audioInputStream.getFormat();
+					DataLine.Info	info = new DataLine.Info(SourceDataLine.class, audioFormat);
+					
+					SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+					line.open(audioFormat);
+					line.start();
+					
+					int	nBytesRead = 0;
+					byte[]	abData = new byte[1024];
+					while (nBytesRead != -1)
+					{
+						nBytesRead = audioInputStream.read(abData, 0, abData.length);
+						if (nBytesRead >= 0)
+							line.write(abData, 0, nBytesRead);
+					}
+				
+					line.drain();
+					line.close();
+				} catch (Exception e) {}
 			}
-		
-			line.drain();
-			line.close();
-		} catch (Exception e) {}
+		};
+		Thread t = new Thread(r);
+		t.start();
 	}
 }
