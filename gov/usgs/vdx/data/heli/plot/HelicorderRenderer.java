@@ -32,6 +32,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/01/25 21:46:26  tparker
+ * Move clipping alert into the heli renderer.
+ *
  * Revision 1.5  2005/09/22 20:54:00  dcervelli
  * Moved large channel display code from Swarm to here.
  *
@@ -537,62 +540,24 @@ public class HelicorderRenderer extends FrameRenderer
 		try
 		{
 			audioInputStream = AudioSystem.getAudioInputStream(soundFile);
-		}
-		catch (Exception e)
-		{
-			/*
-			  In case of an exception, we dump the exception
-			  including the stack trace to the console output.
-			  Then, we exit the program.
-			*/
-			e.printStackTrace();
-			System.exit(1);
-		}
-		AudioFormat	audioFormat = audioInputStream.getFormat();
-		SourceDataLine	line = null;
-		DataLine.Info	info = new DataLine.Info(SourceDataLine.class,
-												 audioFormat);
-		try
-		{
-			line = (SourceDataLine) AudioSystem.getLine(info);
-
-			/*
-			  The line is there, but it is not yet ready to
-			  receive audio data. We have to open the line.
-			*/
+			AudioFormat	audioFormat = audioInputStream.getFormat();
+			DataLine.Info	info = new DataLine.Info(SourceDataLine.class, audioFormat);
+			
+			SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
 			line.open(audioFormat);
-		}
-		catch (LineUnavailableException e)
-		{
-			e.printStackTrace();
-			System.exit(1);
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			System.exit(1);
-		}
-		line.start();
-		int	nBytesRead = 0;
-		byte[]	abData = new byte[1024];
-		while (nBytesRead != -1)
-		{
-			try
+			line.start();
+			
+			int	nBytesRead = 0;
+			byte[]	abData = new byte[1024];
+			while (nBytesRead != -1)
 			{
 				nBytesRead = audioInputStream.read(abData, 0, abData.length);
+				if (nBytesRead >= 0)
+					line.write(abData, 0, nBytesRead);
 			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-			if (nBytesRead >= 0)
-			{
-				int	nBytesWritten = line.write(abData, 0, nBytesRead);
-			}
-		}
-	
-		line.drain();
-		line.close();
-
+		
+			line.drain();
+			line.close();
+		} catch (Exception e) {}
 	}
 }
