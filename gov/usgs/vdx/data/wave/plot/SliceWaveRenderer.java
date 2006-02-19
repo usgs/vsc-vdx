@@ -10,11 +10,15 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 
 /**
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/01/27 20:57:27  tparker
+ * Add configure options for wave plotter
+ *
  * Revision 1.4  2005/09/03 20:31:16  dcervelli
  * Changed logic for deciding when to use optimized rendering method.
  *
@@ -41,6 +45,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	protected boolean autoScale = true;
 	protected boolean removeBias = true;
+	protected boolean drawSamples = false;
 	
 	protected double highlightX1;
 	protected double highlightX2;
@@ -103,6 +108,11 @@ public class SliceWaveRenderer extends FrameRenderer
 	    removeBias = b;
 	}
 	
+	public void setDrawSamples(boolean b)
+	{
+		drawSamples = b;
+	}
+	
 	public void setWave(SliceWave w)
 	{
 		wave = w;
@@ -162,8 +172,9 @@ public class SliceWaveRenderer extends FrameRenderer
 		
 		g.setColor(color);
         
-		double ns = wave.samples();
+		double ns = (double)wave.samples() * (viewEndTime - viewStartTime) / (wave.getEndTime() - wave.getStartTime());
 		double spp = ns / (double)graphWidth;
+		Rectangle2D.Double box = new Rectangle2D.Double();
         if (spp < 50.0)
         {
         	GeneralPath gp = new GeneralPath();
@@ -181,6 +192,11 @@ public class SliceWaveRenderer extends FrameRenderer
 				{
 					lastY = (float)getYPixel(y - bias);
 					gp.lineTo((float)getXPixel(st), lastY);
+					if (drawSamples && (1 / spp) > 2.0)
+					{
+						box.setRect((float)getXPixel(st) - 1.5, lastY - 1.5, 3, 3);
+						g.draw(box);
+					}
 				}
 			}
 			g.draw(gp);
