@@ -19,6 +19,9 @@ import java.util.logging.Logger;
  * TODO: un-hardcode "localhost"
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2005/10/21 21:22:23  tparker
+ * Roll back changes related to Bug #77
+ *
  * Revision 1.6  2005/10/13 20:38:11  dcervelli
  * Configurable stid, checks for already inserted hashes. sets filename properly.
  *
@@ -158,7 +161,8 @@ public class ImportStacov
 				Benchmark bm = benchmarks.get(sp.benchmark);
 				if (bm == null)
 				{
-					int bid = dataSource.insertBenchmark(sp.benchmark, -999, -999, -99999, 1);
+					double llh[] = GPS.xyz2LLH(sp.dp.x, sp.dp.y, sp.dp.z);
+					int bid = dataSource.insertBenchmark(sp.benchmark, llh[0], llh[1], llh[2], 1);
 					bm = new Benchmark();
 					bm.setCode(sp.benchmark);
 					bm.setId(bid);
