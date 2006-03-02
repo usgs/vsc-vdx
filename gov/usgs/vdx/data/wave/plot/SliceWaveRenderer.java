@@ -16,6 +16,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/02/19 00:32:11  dcervelli
+ * Added option for drawing sample boxes.
+ *
  * Revision 1.5  2006/01/27 20:57:27  tparker
  * Add configure options for wave plotter
  *
@@ -55,6 +58,10 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected boolean displayLabels = true;
 	
 	protected Color color = Color.BLUE;
+	
+	protected double yMult = 1;
+	protected double yOffset = 0;
+	protected String yLabel = "Counts";
 	
 	public void setHighlight(double x1, double x2)
 	{
@@ -134,11 +141,15 @@ public class SliceWaveRenderer extends FrameRenderer
 		displayLabels = b;
 	}
 	
+	public void setYLabel(String s)
+	{
+		yLabel = s;
+	}
+	
 	public void update()
 	{
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
 		
-
 		if (displayLabels)
 		{
 			int hTicks = graphWidth / 108;
@@ -146,9 +157,11 @@ public class SliceWaveRenderer extends FrameRenderer
 			this.createDefaultAxis(hTicks, vTicks);
 			this.getAxis().createDefault();
 			this.setXAxisToTime(hTicks);
-			this.getAxis().setLeftLabelAsText("Counts", -52);
+			this.getAxis().setLeftLabelAsText(yLabel, -52);
 			this.getAxis().setBottomLeftLabelAsText("Time");
-		} else {
+		}
+		else
+		{
 			this.createDefaultAxis(0, 0);
 		}
 	}
