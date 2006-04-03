@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/22 20:51:23  dcervelli
+ * Fixed toSAC().
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -788,6 +791,37 @@ public class Wave implements BinaryDataSet
 
 		return new Wave(buffer, wv0.getStartTime(), wv0
 				.getSamplingRate());
+	}
+	
+	/**
+	 * Joins together a list of waves into one large wave.  Forces extent of 
+	 * wave from arguments so sort order does not matter.
+	 * 
+	 * @param waves the list of <code>Wave</code> s
+	 * @return the new joined wave
+	 */
+	public static Wave join(List<Wave> waves, double t1, double t2)
+	{
+		if (waves == null || waves.size() == 0)
+			return null;
+
+//		if (waves.size() == 1)
+//			return waves.get(0);
+
+		Wave wv0 = waves.get(0);
+
+		int samples = (int)((t2 - t1) * wv0.getSamplingRate());
+
+		int[] buffer = new int[samples + 1];
+		Arrays.fill(buffer, NO_DATA);
+
+		for (Wave sw : waves)
+		{
+			int i = (int)Math.round((sw.getStartTime() - t1) * wv0.getSamplingRate());
+			System.arraycopy(sw.buffer, 0, buffer, i, sw.buffer.length);
+		}
+
+		return new Wave(buffer, t1, wv0.getSamplingRate());
 	}
 
 	/**
