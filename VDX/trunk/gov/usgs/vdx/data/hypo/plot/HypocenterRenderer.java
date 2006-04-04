@@ -26,6 +26,9 @@ import java.util.List;
  * of different ways. 
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/10/13 16:43:46  dcervelli
+ * Changes for new scales.
+ *
  * Revision 1.1  2005/08/28 18:55:56  dcervelli
  * Moved from vdx.data.hypo.  Converted to JDK1.5 enums.
  *
@@ -115,8 +118,6 @@ public class HypocenterRenderer implements Renderer
     private double minTime;
     private double maxTime;
     private static final Spectrum spectrum = Jet.getInstance();
-    private static final double[] scales = new double[] 
-        {100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02};     
 
     private Renderer colorScaleRenderer;
     private Renderer magnitudeScaleRenderer;

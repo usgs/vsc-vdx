@@ -1,6 +1,5 @@
 package gov.usgs.vdx.data.gps;
 
-import gov.usgs.util.CodeTimer;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
@@ -19,6 +18,9 @@ import java.util.logging.Logger;
  * TODO: un-hardcode "localhost"
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2006/03/02 20:45:34  cervelli
+ * Adds LLH when creating new benchmark
+ *
  * Revision 1.8  2005/10/21 21:22:23  tparker
  * Roll back changes related to Bug #77
  *
