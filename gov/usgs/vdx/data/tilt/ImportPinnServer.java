@@ -9,18 +9,19 @@ import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.db.VDXDatabase;
 
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.logging.Logger;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/12/28 20:36:59  tparker
+ * Add import from file, and change syntax for specifying the config file at runtime
+ *
  * Revision 1.4  2005/10/20 05:06:06  dcervelli
  * Fixed default xMult, yMult values.
  *
