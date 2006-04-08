@@ -30,6 +30,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2006/02/01 23:26:11  tparker
+ * Play clip alert in a dedicated thread
+ *
  * Revision 1.7  2006/02/01 18:01:31  tparker
  * tweak alert
  *
@@ -75,7 +78,7 @@ public class HelicorderRenderer extends FrameRenderer
 	private boolean forceCenter;
 	private double timeChunk;
 	private int numRows;
-	private double yChunk;
+	private double rowHeight;
 	private double hcMinX;
 	private double hcMaxX;
 	private double hcMinY;
@@ -134,7 +137,7 @@ public class HelicorderRenderer extends FrameRenderer
 		double tzo = 0;
 		if (adjTime)
 			tzo = timeZoneOffset * 3600;
-		return new double[] {graphX, graphX + graphWidth, yChunk, graphY, hcMinX + tzo, hcMaxX + tzo, timeChunk, timeChunk / graphWidth};
+		return new double[] {graphX, graphX + graphWidth, rowHeight, graphY, hcMinX + tzo, hcMaxX + tzo, timeChunk, timeChunk / graphWidth};
 	}
 	
 	/** Gets the x-scale (the graph width / horizontal view extent).
@@ -162,7 +165,7 @@ public class HelicorderRenderer extends FrameRenderer
 	public double helicorderGetYPixel(double x, double y)
 	{
 		int row = numRows - (int)((x - hcMinX) / timeChunk) - 1;
-		return graphY + graphHeight - ((y - hcMinY) * helicorderGetYScale()) - ((double)row * yChunk);
+		return graphY + graphHeight - ((y - hcMinY) * helicorderGetYScale()) - ((double)row * rowHeight);
 	}
 	
 	/** Sets the view extents of the frame.
@@ -178,7 +181,7 @@ public class HelicorderRenderer extends FrameRenderer
 		hcMinX = loX - (loX % timeChunk);
 		hcMaxX = hiX + (timeChunk - (hiX % timeChunk));
 		numRows = (int)((hcMaxX - hcMinX) / timeChunk);
-		yChunk = (double)graphHeight / (double)numRows;
+		rowHeight = (double)graphHeight / (double)numRows;
 		
 		super.setExtents(0, timeChunk, 0, numRows);
 	}
@@ -246,9 +249,15 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		alertClip = b;
 	}
+	
 	public void setClipValue(int i)
 	{
 		clipValue = i;
+	}
+	
+	public double getRowHeight()
+	{
+		return rowHeight;
 	}
 	
 	public void render(Graphics2D g)
