@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/04/03 05:15:28  dcervelli
+ * New join method for better Swarm monitor mode.
+ *
  * Revision 1.2  2005/09/22 20:51:23  dcervelli
  * Fixed toSAC().
  *
@@ -590,7 +593,7 @@ public class Wave implements BinaryDataSet
 	public Wave subset(double t1, double t2)
 	{
 		if (t1 < getStartTime() || t2 > getEndTime())
-			return null;
+			return this;
 
 		int samples = (int)Math.floor((t2 - t1) * samplingRate);
 		int offset = (int)Math.floor((t1 - startTime) * samplingRate);
