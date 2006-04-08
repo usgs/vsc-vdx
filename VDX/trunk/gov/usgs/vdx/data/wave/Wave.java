@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/04/08 01:00:17  dcervelli
+ * Changed subset() for bug #84.
+ *
  * Revision 1.3  2006/04/03 05:15:28  dcervelli
  * New join method for better Swarm monitor mode.
  *
@@ -850,25 +853,18 @@ public class Wave implements BinaryDataSet
 	 * 
 	 * @param fn the output filename
 	 */
-	public void exportToText(String fn)
+	public void exportToText(String fn) throws IOException
 	{
-		try
+		PrintWriter out = new PrintWriter(new BufferedWriter(
+				new FileWriter(fn)));
+		double ct = startTime + 946728000;
+		double ts = 1 / samplingRate;
+		for (int i = 0; i < buffer.length; i++)
 		{
-			PrintWriter out = new PrintWriter(new BufferedWriter(
-					new FileWriter(fn)));
-			double ct = startTime + 946728000;
-			double ts = 1 / samplingRate;
-			for (int i = 0; i < buffer.length; i++)
-			{
-				out.println((long)Math.round(ct * 1000) + " " + buffer[i]);
-				ct += ts;
-			}
-			out.close();
+			out.println((long)Math.round(ct * 1000) + " " + buffer[i]);
+			ct += ts;
 		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		out.close();
 	}
 
 	/**
