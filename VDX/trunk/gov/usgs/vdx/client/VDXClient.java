@@ -3,10 +3,10 @@ package gov.usgs.vdx.client;
 import gov.usgs.net.InternetClient;
 import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
-import gov.usgs.util.RetryManager;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.BinaryDataSet;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +15,12 @@ import java.util.Map;
 
 /**
  * 
+ * TODO: proper logging.
+ * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/10/20 05:07:03  dcervelli
+ * Added generic data type.
+ *
  * Revision 1.4  2005/10/14 21:07:22  dcervelli
  * Added etilt.
  *
@@ -60,10 +65,23 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put(t, c);
 	}
 	
-	public Object getData(final Map<String, String> params)
+	protected String submitCommand(Map<String, String> params) throws IOException
 	{
-		RetryManager rm = new RetryManager();
-		Object finalResult = rm.attempt(new Retriable("VDXClient.getData()", MAX_RETRIES)
+		if (!connected())
+			connect();
+		String cmd = "getdata: " + Util.mapToString(params) + "\n";
+		writeString(cmd);
+		
+		String rs = readString();
+		if (rs == null || rs.length() <= 0 || rs.indexOf(':') == -1)
+			return null;
+		else
+			return rs;
+	}
+	
+	public BinaryDataSet getBinaryData(final Map<String, String> params)
+	{
+		Retriable<BinaryDataSet> rt = new Retriable<BinaryDataSet>("VDXClient.getBinaryData()", MAX_RETRIES)
 				{
 					public void attemptFix()
 					{
@@ -75,18 +93,11 @@ public class VDXClient extends InternetClient
 					{
 						try
 						{
-							if (!connected())
-								connect();
-							String cmd = "getdata: " + Util.mapToString(params) + "\n";
-							writeString(cmd);
-							
-							String rs = readString();
-							if (rs == null || rs.length() <= 0 || rs.indexOf(':') == -1)
-								return false;
+							String rs = submitCommand(params);
 							
 							String rc = rs.substring(0, rs.indexOf(':'));
 							String r = rs.substring(rs.indexOf(':') + 1);
-							Object data = null;
+							result = null;
 							if (rc.equals("ok"))
 							{
 								System.out.println(r);
@@ -103,7 +114,7 @@ public class VDXClient extends InternetClient
 										BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
 										ds.fromBinary(bb);
 	//									System.out.println(ds);
-										data = ds;
+										result = ds;
 									}
 									catch (Exception e)
 									{
@@ -111,14 +122,9 @@ public class VDXClient extends InternetClient
 										e.printStackTrace();
 									}
 								}
-								else if (map.get("lines") != null)
+								else 
 								{
-									int lines = Integer.parseInt(map.get("lines"));
-									List<String> list = new ArrayList<String>();
-									for (int i = 0; i < lines; i++)
-										list.add(readString());
-					
-									data = list;
+									System.out.println("error, expected binary");
 								}
 							}
 							else if (rc.equals("error"))
@@ -126,7 +132,6 @@ public class VDXClient extends InternetClient
 								// TODO: eliminate
 								System.out.println(r);
 							}
-							result = data;
 						}
 						catch (Exception e)
 						{
@@ -135,8 +140,61 @@ public class VDXClient extends InternetClient
 						}
 						return true;
 					}
-				});
-		return finalResult;
+				};
+		return rt.go();
+	}
+	
+	public List<String> getTextData(final Map<String, String> params)
+	{
+		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTestData()", MAX_RETRIES)
+		{
+			public void attemptFix()
+			{
+				close();
+				connect();
+			}
+			
+			public boolean attempt()
+			{
+				try
+				{
+					String rs = submitCommand(params);
+					
+					String rc = rs.substring(0, rs.indexOf(':'));
+					String r = rs.substring(rs.indexOf(':') + 1);
+					result = null;
+					if (rc.equals("ok"))
+					{
+						System.out.println(r);
+						Map<String, String> map = Util.stringToMap(r);
+						if (map.get("lines") != null)
+						{
+							int lines = Integer.parseInt(map.get("lines"));
+							List<String> list = new ArrayList<String>();
+							for (int i = 0; i < lines; i++)
+								list.add(readString());
+							result = list;
+						}
+						else 
+						{
+							System.out.println("error, expected text");
+						}
+					}
+					else if (rc.equals("error"))
+					{
+						// TODO: eliminate
+						System.out.println(r);
+					}
+				}
+				catch (Exception e)
+				{
+					logger.warning("VDXClient.getData() exception: " + e.getMessage());
+					return false;
+				}
+				return true;
+			}
+		};
+		return rt.go();
 	}
 	
 	public static void main(String[] args)
