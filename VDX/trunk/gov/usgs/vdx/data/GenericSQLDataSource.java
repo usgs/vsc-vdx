@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
@@ -10,6 +11,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/21 21:21:39  tparker
+ * Roll back changes related to Bug #77
+ *
  * Revision 1.1  2005/09/24 17:33:28  dcervelli
  * Initial commit.  Unused and experimental at this point.
  *
@@ -36,18 +40,12 @@ public class GenericSQLDataSource extends SQLDataSource
 		return type;
 	}
 	
-	public void initialize(Map<String, Object> params)
+	public void initialize(ConfigFile params)
 	{
-		database = (VDXDatabase)params.get("VDXDatabase");
-		if (database == null)
-		{
-			String vdxHost = (String)params.get("vdx.host");
-			String vdxName = (String)params.get("vdx.name");
-			params.put("name", (String)params.get("vdx.databaseName"));
-			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
-		}
-		
-		name = (String)params.get("name");
+		String vdxHost = params.getString("vdx.host");
+		String vdxName = params.getString("vdx.name");
+		name = params.getString("vdx.databaseName");
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
 	}
 
 	public RequestResult getData(Map<String, String> params)
@@ -62,18 +60,7 @@ public class GenericSQLDataSource extends SQLDataSource
 			return new TextResult(s);
 		}
 		else if (action.equals("data"))
-		{
-			/*
-			int bm = Integer.parseInt(params.get("bm"));
-			double st = Double.parseDouble(params.get("st"));
-			double et = Double.parseDouble(params.get("et"));
-			int stid = Integer.parseInt(params.get("stid"));
-			GPSData data = getGPSData(bm, stid, st, et);
-			if (data != null)
-				return new BinaryResult(data);
-				
-				*/
-		}
+		{}
 		return null;
 	}
 
@@ -94,7 +81,6 @@ public class GenericSQLDataSource extends SQLDataSource
 	
 	public boolean insertData(int cid, double[][] data)
 	{
-		
 		return false;
 	}
 }

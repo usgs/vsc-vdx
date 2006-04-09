@@ -13,6 +13,9 @@ import java.util.logging.Logger;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/08/29 15:55:54  dcervelli
+ * New logging changes.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -42,7 +45,7 @@ public class DataSourceHandler
 			String source = (String)it.next();
 			logger.fine("read data source: " + source);
 			ConfigFile sub = config.getSubConfig(source);
-			DataSourceDescriptor dsd = new DataSourceDescriptor(source, sub.getString("class"), sub.getString("description"), sub.getConfig());
+			DataSourceDescriptor dsd = new DataSourceDescriptor(source, sub.getString("class"), sub.getString("description"), sub);
 			dataSources.put(source, dsd);
 		}
 	}

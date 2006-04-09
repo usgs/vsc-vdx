@@ -1,10 +1,13 @@
 package gov.usgs.vdx.data;
 
-import java.util.Map;
+import gov.usgs.util.ConfigFile;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class DataSourceDescriptor
@@ -13,11 +16,11 @@ public class DataSourceDescriptor
 	private String description;
 	private String dataClassName;
 	
-	private Map<String, Object> params;
+	private ConfigFile params;
 	
 	private DataSource dataSource;
 	
-	public DataSourceDescriptor(String n, String c, String d, Map<String, Object> p)
+	public DataSourceDescriptor(String n, String c, String d, ConfigFile p)
 	{
 		name = n;
 		dataClassName = c;
@@ -41,7 +44,7 @@ public class DataSourceDescriptor
 		return dataClassName;
 	}
 	
-	public Map<String, Object> getParams()
+	public ConfigFile getParams()
 	{
 		return params;
 	}
@@ -51,7 +54,7 @@ public class DataSourceDescriptor
 		try
 		{
 			dataSource = (DataSource)Class.forName(dataClassName).newInstance();
-			Class.forName(dataClassName).getMethod("initialize", new Class[] { Map.class }).invoke(dataSource, new Object[] { params });
+			Class.forName(dataClassName).getMethod("initialize", new Class[] { ConfigFile.class }).invoke(dataSource, new Object[] { params });
 		}
 		catch (Exception ex)
 		{

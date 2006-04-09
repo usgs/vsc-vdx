@@ -1,13 +1,14 @@
 package gov.usgs.vdx.data.gps;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.util.ResourceReader;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/10/21 21:22:59  tparker
+ * Roll back changes related to Bug #77
+ *
  * Revision 1.2  2005/09/05 18:43:54  dcervelli
  * Un-hardcoded database name.
  *
@@ -23,7 +24,7 @@ public class ImportSum
 	public ImportSum(String vdxName, String dbName)
 	{
 		dataSource = new SQLGPSDataSource();
-		Map<String, Object> params = new HashMap<String, Object>();
+		ConfigFile params = new ConfigFile();
 		params.put("vdx.host", "localhost");
 		params.put("vdx.name", vdxName);
 		params.put("vdx.databaseName", dbName);
