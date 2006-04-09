@@ -4,7 +4,6 @@ import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
-import gov.usgs.util.RetryManager;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.generic.SQLGenericDataSource;
@@ -32,6 +31,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/10/20 18:00:48  dcervelli
+ * Added creategeneric.
+ *
  * Revision 1.4  2005/10/13 22:17:13  dcervelli
  * Added etilt.
  *
@@ -57,8 +59,6 @@ public class VDXDatabase
 
 	private boolean connected;
 
-	private RetryManager retryManager;
-	
 	private String dbDriver;
 	private String dbURL;
 	
@@ -75,7 +75,6 @@ public class VDXDatabase
 		dbURL = url;
 		if (db != null)
 			databasePrefix = db;
-		retryManager = new RetryManager();
 		preparedStatements = new HashMap<String, PreparedStatement>();
 		connect();
 	}
@@ -153,18 +152,23 @@ public class VDXDatabase
 
 	public boolean checkConnect()
 	{
+		return checkConnect(true);
+	}
+	
+	public boolean checkConnect(final boolean verbose)
+	{
 		if (connected)
 			return true;
 		else
 		{
-			retryManager.attempt(new Retriable()
+			new Retriable<Object>()
 					{
 						public boolean attempt()
 						{
 							connect();
 							return connected;
 						}
-					});
+					}.go();
 			return connected;
 		}
 	}
@@ -172,11 +176,6 @@ public class VDXDatabase
 	public boolean connected()
 	{
 		return connected;
-	}
-	
-	public RetryManager getRetryManager()
-	{
-		return retryManager;
 	}
 	
 	public Connection getConnection()
@@ -191,59 +190,59 @@ public class VDXDatabase
 
 	public boolean execute(final String sql)
 	{
-		
-		Boolean b = (Boolean)retryManager.attempt(new Retriable()
+		Boolean b = new Retriable<Boolean>()
+		{
+			public void attemptFix()
+			{
+				close();
+				connect();
+			}
+	
+			public boolean attempt()
+			{
+				try
 				{
-					public void attemptFix()
-					{
-						close();
-						connect();
-					}
-			
-					public boolean attempt()
-					{
-						try
-						{
-							statement.execute(sql);
-							result = new Boolean(true);
-							return true;
-						}
-						catch (SQLException e)
-						{
-						    logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
-						}
-						result = new Boolean(false);
-						return false;
-					}
-				});
-		return b.booleanValue();		
+					statement.execute(sql);
+					result = new Boolean(true);
+					return true;
+				}
+				catch (SQLException e)
+				{
+				    logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+				}
+				result = new Boolean(false);
+				return false;
+			}
+		}.go();
+	
+		return b != null && b.booleanValue();
 	}
 	
 	public ResultSet executeQuery(final String sql)
 	{
-		ResultSet rs = null;
-		rs = (ResultSet)retryManager.attempt(new Retriable()
+		ResultSet rs = new Retriable<ResultSet>()
+		{
+			public void attemptFix()
+			{
+				close();
+				connect();
+			}
+	
+			public boolean attempt()
+			{
+				try
 				{
-					public void attemptFix()
-					{
-						close();
-						connect();
-					}
-			
-					public boolean attempt()
-					{
-						try
-						{
-							result = statement.executeQuery(sql);
-							return true;
-						}
-						catch (SQLException e)
-						{
-							logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
-						}
-						return false;
-					}
-				});
+					result = statement.executeQuery(sql);
+					return true;
+				}
+				catch (SQLException e)
+				{
+					logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+				}
+				return false;
+			}
+		}.go();
+		
 		return rs;
 	}
 	
@@ -364,10 +363,8 @@ public class VDXDatabase
 			System.err.println("You must specify the name of the database with '-n'.");
 			System.exit(-1);
 		}
-		HashMap<String, Object> params = new HashMap<String, Object>();
-		params.put("VDXDatabase", db);
-		params.put("name", name);
-		ds.initialize(params);
+		ds.setDatabase(db);
+		ds.setName(name);
 		boolean success = ds.createDatabase();
 		String msg = success ? "Successfully created database." : "Failed to create database.";
 		System.out.println(msg);

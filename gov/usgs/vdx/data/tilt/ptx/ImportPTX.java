@@ -5,13 +5,14 @@ import gov.usgs.vdx.db.VDXDatabase;
 
 import java.io.DataInputStream;
 import java.io.FileInputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Program to import Pinnacle series 5000 tiltmeter PTX files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/10/14 22:47:04  dcervelli
+ * Fixed done bug.
+ *
  * Revision 1.3  2005/10/14 21:06:26  dcervelli
  * Now uses SQLElectronicTiltSource.
  *
@@ -28,11 +29,9 @@ public class ImportPTX
 	{
 		SQLElectronicTiltDataSource dataSource = new SQLElectronicTiltDataSource();
 		VDXDatabase database = VDXDatabase.getVDXDatabase("vdx.config");
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("VDXDatabase", database);
-		params.put("name", args[0]);
 		String channel = args[1];
-		dataSource.initialize(params);
+		dataSource.setDatabase(database);
+		dataSource.setName(args[0]);
 		
 		byte[] buffer = new byte[1024];
 		boolean done = false;

@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.hypo;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
@@ -16,6 +17,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2005/10/21 21:23:59  tparker
+ * Roll back changes related to Bug #77
+ *
  * Revision 1.3  2005/09/21 21:25:00  dcervelli
  * Added ORDER BY to getData().
  *
@@ -65,18 +69,12 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		return "hypocenters";
 	}
 	
-	public void initialize(Map<String, Object> params)
+	public void initialize(ConfigFile params)
 	{
-		database = (VDXDatabase)params.get("VDXDatabase");
-		if (database == null)
-		{
-			String vdxHost = (String)params.get("vdx.host");
-			String vdxName = (String)params.get("vdx.name");
-			params.put("name", (String)params.get("vdx.databaseName"));
-			database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
-		}
-		
-		name = (String)params.get("name");
+		String vdxHost = params.getString("vdx.host");
+		String vdxName = params.getString("vdx.name");
+		name = params.getString("vdx.databaseName");
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
 	}
 	
 	public RequestResult getData(Map<String, String> params)

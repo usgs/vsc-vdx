@@ -9,16 +9,17 @@ import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.db.VDXDatabase;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/04/04 15:50:49  dcervelli
+ * Eliminated warnings.
+ *
  * Revision 1.5  2005/12/28 20:36:59  tparker
  * Add import from file, and change syntax for specifying the config file at runtime
  *
@@ -80,10 +81,8 @@ public class ImportPinnServer extends Client
 		ips.dataSource = new SQLElectronicTiltDataSource();
 		
 		VDXDatabase database = new VDXDatabase(driver, url, prefix);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("VDXDatabase", database);
-		params.put("name", name);
-		ips.dataSource.initialize(params);
+		ips.dataSource.setDatabase(database);
+		ips.dataSource.setName(name);
 		
 		if (!ips.dataSource.databaseExists())
 		{

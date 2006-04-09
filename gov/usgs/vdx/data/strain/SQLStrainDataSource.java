@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.strain;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.RequestResult;
@@ -10,6 +11,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/08/26 20:39:00  dcervelli
+ * Initial avosouth commit.
+ *
  * @author Dan Cervelli
  */
 public class SQLStrainDataSource extends SQLDataSource
@@ -32,10 +36,12 @@ public class SQLStrainDataSource extends SQLDataSource
 		return "strain";
 	}
 	
-	public void initialize(Map<String, Object> params)
+	public void initialize(ConfigFile params)
 	{
-		database = (VDXDatabase)params.get("VDXDatabase");
-		name = (String)params.get("name");
+		String vdxHost = params.getString("vdx.host");
+		String vdxName = params.getString("vdx.name");
+		name = params.getString("vdx.databaseName");
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
 	}
 
 	public RequestResult getData(Map<String, String> params)

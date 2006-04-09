@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.gps;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
@@ -18,6 +19,9 @@ import java.util.logging.Logger;
  * TODO: un-hardcode "localhost"
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2006/04/04 15:50:49  dcervelli
+ * Eliminated warnings.
+ *
  * Revision 1.9  2006/03/02 20:45:34  cervelli
  * Adds LLH when creating new benchmark
  *
@@ -49,7 +53,7 @@ public class ImportStacov
 	{
 		dataSource = new SQLGPSDataSource();
 		typeId = tid;
-		Map<String, Object> params = new HashMap<String, Object>();
+		ConfigFile params = new ConfigFile();
 		params.put("vdx.host", "localhost");
 		params.put("vdx.name", vdxName);
 		params.put("vdx.databaseName", dbName);

@@ -1,14 +1,17 @@
 package gov.usgs.vdx.data.hypo;
 
 import gov.usgs.util.Arguments;
-import gov.usgs.vdx.db.VDXDatabase;
+import gov.usgs.util.ConfigFile;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+/**
+ * 
+ * $Log: not supported by cvs2svn $
+ * @author Dan Cervelli
+ */
 abstract public class Importer
 {
 	protected SQLHypocenterDataSource dataSource;
@@ -38,11 +41,8 @@ abstract public class Importer
 			outputInstructions();
 		
 		SQLHypocenterDataSource ds = new SQLHypocenterDataSource();
-		VDXDatabase database = VDXDatabase.getVDXDatabase(cfn);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("VDXDatabase", database);
-		params.put("name", name);
-		ds.initialize(params);
+		ConfigFile cf = new ConfigFile(cfn);
+		ds.initialize(cf);
 		return ds;
 	}
 	

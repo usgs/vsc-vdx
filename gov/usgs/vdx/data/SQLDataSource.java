@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.db.VDXDatabase;
 
 import java.sql.PreparedStatement;
@@ -8,7 +9,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -16,6 +16,9 @@ import java.util.logging.Level;
  * TODO: use PreparedStatements.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/09/21 18:13:58  dcervelli
+ * Added defaultChannelExists().
+ *
  * Revision 1.3  2005/09/06 21:36:43  dcervelli
  * Changed defaultGetSelectors() to standard VDX channel format.
  *
@@ -37,7 +40,12 @@ abstract public class SQLDataSource
 		database = db;
 	}
 	
-	abstract public void initialize(Map<String, Object> params);
+	public void setName(String n)
+	{
+		name = n;
+	}
+	
+	abstract public void initialize(ConfigFile params);
 	
 	abstract public boolean createDatabase();
 	
