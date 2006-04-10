@@ -7,6 +7,9 @@ import gov.usgs.util.Util;
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2005/12/28 02:12:29  tparker
+ * Add toCSV method to support raw data export
+ *
  * Revision 1.5  2005/12/16 23:30:47  dcervelli
  * Fixed min() and max() [was breaking remove bias in Swarm].
  *
@@ -86,12 +89,12 @@ public class SliceWave
 	
 	public void setSlice(double t1, double t2)
 	{
-		if (t1 < getStartTime() || t2 > getTrueEndTime() || t1 >= t2)
+		if (t1 < source.getStartTime() || t2 > getTrueEndTime() || t1 >= t2)
 			return;
 	
 		invalidateStatistics();
 		
-		position = (int)Math.round((t1 - getStartTime()) * getSamplingRate());
+		position = (int)Math.round((t1 - source.getStartTime()) * getSamplingRate());
 		limit = position + (int)Math.round((t2 - t1) * getSamplingRate());
 		
 		if (limit > source.buffer.length)
