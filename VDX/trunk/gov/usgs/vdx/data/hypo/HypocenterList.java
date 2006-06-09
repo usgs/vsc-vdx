@@ -20,6 +20,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2005/12/23 00:52:13  tparker
+ * avoid labeling issues described in bug id #86
+ *
  * Revision 1.3  2005/10/07 17:03:16  dcervelli
  * Added size() method.
  *
@@ -318,5 +321,14 @@ public class HypocenterList implements BinaryDataSet
 	{
 		for (Hypocenter hc : hypocenters)
 			hc.project(proj);
+	}
+	
+	public String toCSV()
+	{
+		StringBuffer sb = new StringBuffer();
+		for (Hypocenter hc : hypocenters)
+			sb.append(hc.toString() + "\n");
+		
+		return sb.toString();
 	}
 }
