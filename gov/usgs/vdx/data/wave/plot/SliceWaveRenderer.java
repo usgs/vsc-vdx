@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.wave.plot;
 
+import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 import gov.usgs.vdx.data.wave.Wave;
@@ -16,6 +17,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/03/02 23:35:31  dcervelli
+ * Added calibration stuff.
+ *
  * Revision 1.6  2006/02/19 00:32:11  dcervelli
  * Added option for drawing sample boxes.
  *
@@ -62,6 +66,15 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected double yMult = 1;
 	protected double yOffset = 0;
 	protected String yLabel = "Counts";
+	
+	protected String title;
+	
+	protected FrameDecorator decorator;
+	
+	public void setFrameDecorator(FrameDecorator fd)
+	{
+		decorator = fd;
+	}
 	
 	public void setHighlight(double x1, double x2)
 	{
@@ -145,25 +158,41 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		yLabel = s;
 	}
+
+	public void setTitle(String s)
+	{
+		title = s;
+	}
+	
+	protected class DefaultFrameDecorator implements FrameDecorator
+	{
+		public void decorate(FrameRenderer fr)
+		{
+			if (displayLabels)
+			{
+				int hTicks = graphWidth / 108;
+				int vTicks = graphHeight / 24;
+				fr.createDefaultAxis(hTicks, vTicks);
+				fr.setXAxisToTime(hTicks);
+				fr.getAxis().setLeftLabelAsText(yLabel, -52);
+				if (title != null)
+					fr.getAxis().setTopLabelAsText(title);
+				fr.getAxis().setBottomLeftLabelAsText("Time");
+			}
+			else
+			{
+				fr.createDefaultAxis(0, 0);
+			}		
+		}
+	}
 	
 	public void update()
 	{
-		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
+		if (decorator == null)
+			decorator = new DefaultFrameDecorator();
 		
-		if (displayLabels)
-		{
-			int hTicks = graphWidth / 108;
-			int vTicks = graphHeight / 24;
-			this.createDefaultAxis(hTicks, vTicks);
-			this.getAxis().createDefault();
-			this.setXAxisToTime(hTicks);
-			this.getAxis().setLeftLabelAsText(yLabel, -52);
-			this.getAxis().setBottomLeftLabelAsText("Time");
-		}
-		else
-		{
-			this.createDefaultAxis(0, 0);
-		}
+		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
+		decorator.decorate(this);
 	}
 	
 	public void render(Graphics2D g)
@@ -265,5 +294,8 @@ public class SliceWaveRenderer extends FrameRenderer
         }
         
 		g.setClip(origClip);
+		
+		if (axis != null)
+			axis.postRender(g);
 	}
 }

@@ -12,6 +12,9 @@ import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/01/27 22:18:06  tparker
+ * Add configure options for wave plotter
+ *
  * Revision 1.2  2005/09/03 18:55:14  dcervelli
  * Change for log power rendering.
  *
@@ -163,7 +166,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		
 		this.setImage(im);
 		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
-		this.setDataExtents(wave.getStartTime() + timeZoneOffset, wave.getEndTime() + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
+		this.setDataExtents(wave.getStartTime() + timeZoneOffset, wave.getEndTime() + timeZoneOffset, 0, wave.getSamplingRate() / 2);
 		this.setExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, minF, maxF);
 		int ht = hTicks;
 		int vt = vTicks;
