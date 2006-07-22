@@ -4,11 +4,13 @@ import gov.usgs.plot.AxisRenderer;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.plot.SmartTick;
 import gov.usgs.plot.TextRenderer;
+import gov.usgs.util.Time;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.heli.HelicorderData;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -30,6 +32,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2006/04/08 01:50:03  dcervelli
+ * Added getRowHeight() function for bug #17.
+ *
  * Revision 1.8  2006/02/01 23:26:11  tparker
  * Play clip alert in a dedicated thread
  *
@@ -73,6 +78,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class HelicorderRenderer extends FrameRenderer
 {
+	private static final Font LARGE_FONT = Font.decode("Dialog-BOLD-48");
 	private HelicorderData data;
 	
 	private boolean forceCenter;
@@ -86,8 +92,7 @@ public class HelicorderRenderer extends FrameRenderer
 	private Color[] colors = 
 		new Color[] {new Color(0, 0, 255), new Color(0, 0, 205), new Color(0, 0, 155), new Color(0, 0, 105)};
 		
-	private String timeZoneAbbr = "";
-	private double timeZoneOffset = 0;
+	private TimeZone timeZone = TimeZone.getTimeZone("UTC");
 	
 	private int clipValue = 3000;
 	private boolean showClip = false;
@@ -136,7 +141,7 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		double tzo = 0;
 		if (adjTime)
-			tzo = timeZoneOffset * 3600;
+			tzo = Time.getTimeZoneOffset(timeZone, getViewEndTime());
 		return new double[] {graphX, graphX + graphWidth, rowHeight, graphY, hcMinX + tzo, hcMaxX + tzo, timeChunk, timeChunk / graphWidth};
 	}
 	
@@ -166,6 +171,11 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		int row = numRows - (int)((x - hcMinX) / timeChunk) - 1;
 		return graphY + graphHeight - ((y - hcMinY) * helicorderGetYScale()) - ((double)row * rowHeight);
+	}
+	
+	public double getViewEndTime()
+	{
+		return hcMinX + numRows * timeChunk;
 	}
 	
 	/** Sets the view extents of the frame.
@@ -230,14 +240,19 @@ public class HelicorderRenderer extends FrameRenderer
 		return numRows;	
 	}
 
+	public void setTimeZone(TimeZone tz)
+	{
+		timeZone = tz;
+	}
+	
 	public void setTimeZoneAbbr(String s)
 	{
-		timeZoneAbbr = s;
+//		timeZoneAbbr = s;
 	}
 	
 	public void setTimeZoneOffset(double h)
 	{
-		timeZoneOffset = h;
+//		timeZoneOffset = h;
 	}
 	
 	public void setShowClip(boolean b)
@@ -343,16 +358,18 @@ public class HelicorderRenderer extends FrameRenderer
 			g.fillRect((int)(x + 1), (int)(y + 1), (int)(w + 1), hgt);
 		}
 		
-		
 		g.setClip(origClip);
 		g.setColor(origColor);
 		g.setTransform(origAT);
 		
 		if (largeChannelDisplay && channel != null)
 		{
-			g.setFont(Font.decode("Arial-BOLD-48"));
+			Font oldFont = g.getFont();
+			g.setFont(LARGE_FONT);
 			String c = channel.replace('_', ' ');
-			int width = g.getFontMetrics().stringWidth(c);
+			FontMetrics fm = g.getFontMetrics();
+			int width = fm.stringWidth(c);
+			int height = fm.getAscent() + fm.getDescent();
 			int lw = width + 20;
 			if (alertClip && lastClipTime > t2 - alertClipTimeout && clipWav != null)
 			{
@@ -366,12 +383,11 @@ public class HelicorderRenderer extends FrameRenderer
 			else
 				g.setColor(Color.white);
 				
-			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
+			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, height);
 			g.setColor(Color.black);
-			g.drawRect(graphX + graphWidth / 2 - lw / 2, 3, lw, 50);
+			g.drawRect(graphX + graphWidth / 2 - lw / 2, 3, lw, height);
 			
-			Font oldFont = g.getFont();
-			g.drawString(c, graphX + graphWidth / 2 - width / 2, 46);
+			g.drawString(c, graphX + graphWidth / 2 - width / 2, height - fm.getDescent());
 			g.setFont(oldFont);
 		}
 //		ct.stop();
@@ -412,7 +428,9 @@ public class HelicorderRenderer extends FrameRenderer
  		{
  			pixelsPast += pixelsPerRow;
  			labelPosLR[i] = i + 0.5;
- 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeZoneOffset * 3600);
+ 			// TODO: fix
+// 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeZoneOffset * 3600);
+ 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk);
 	 		String ftl = timeFormat.format(dtz);
 	 		
 			leftLabelText[i] = null;
@@ -485,6 +503,10 @@ public class HelicorderRenderer extends FrameRenderer
 		DateFormat dayFormat = new SimpleDateFormat("MM-dd");
 		timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		dayFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
+		boolean dst = timeZone.inDaylightTime(Util.j2KToDate(getViewEndTime()));
+		double timeOffset = Time.getTimeZoneOffset(timeZone, dst);
+		
 		double pixelsPast = 0;
 		double pixelsPerRow = graphHeight / numRows;
 		String lastDayL = "";
@@ -493,11 +515,13 @@ public class HelicorderRenderer extends FrameRenderer
  		{
  			pixelsPast += pixelsPerRow;
  			labelPosLR[i] = i + 0.5;
- 			java.util.Date dtz = gov.usgs.util.Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeZoneOffset * 3600);
+ 			double j2ks = hcMaxX - (i + 1) * timeChunk;
+ 			double j2ke = j2ks + timeChunk;
+ 			java.util.Date dtz = Util.j2KToDate(j2ks + timeOffset);
 	 		String ftl = timeFormat.format(dtz);
 	 		String fdl = dayFormat.format(dtz);
 	 		
-	 		java.util.Date dutc = gov.usgs.util.Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeChunk);
+	 		java.util.Date dutc = Util.j2KToDate(j2ke);
 	 		String ftr = timeFormat.format(dutc);
 	 		String fdr = dayFormat.format(dutc);
 
@@ -505,7 +529,7 @@ public class HelicorderRenderer extends FrameRenderer
 			if (!fdl.equals(lastDayL))
  				leftLabelText[i] = fdl + "           ";
 	 			
-	 		if (timeZoneOffset != 0 && !fdr.equals(lastDayR))
+	 		if (timeOffset != 0 && !fdr.equals(lastDayR))
 	 			rightLabelText[i] = "           " + fdr;
 	 			
 	 		lastDayL = fdl;
@@ -518,7 +542,7 @@ public class HelicorderRenderer extends FrameRenderer
 	 			else
 	 				leftLabelText[i] = ftl;
 	 			
-	 			if (timeZoneOffset != 0)
+	 			if (timeOffset != 0)
 	 			{
 		 			if (rightLabelText[i] != null)
 		 				rightLabelText[i] = ftr + " " + fdr;
@@ -531,8 +555,8 @@ public class HelicorderRenderer extends FrameRenderer
 
 		axis.createLeftTickLabels(labelPosLR, leftLabelText);
 		axis.createRightTickLabels(labelPosLR, rightLabelText);
-		axis.setBottomLeftLabelAsText("Time (" + timeZoneAbbr + ")");
-		if (timeZoneOffset != 0)
+		axis.setBottomLeftLabelAsText("Time (" + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")");
+		if (timeOffset != 0)
 			axis.setBottomRightLabelAsText("Time (UTC)");
 		
 		double[] hg = new double[numRows - 1];
