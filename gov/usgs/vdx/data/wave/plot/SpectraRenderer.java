@@ -1,6 +1,8 @@
 package gov.usgs.vdx.data.wave.plot;
 
 import gov.usgs.math.FFT;
+import gov.usgs.plot.FrameDecorator;
+import gov.usgs.plot.FrameRenderer;
 import gov.usgs.plot.MatrixRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 import cern.colt.matrix.DoubleFactory2D;
@@ -10,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * 
  * TODO: different axis labeling schemes.
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/09/04 18:13:34  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
  */
 public class SpectraRenderer extends MatrixRenderer
@@ -23,18 +28,47 @@ public class SpectraRenderer extends MatrixRenderer
 	private double maxPower;
 	private boolean autoScale;
 	
+	protected FrameDecorator decorator;
+	
 	public SpectraRenderer()
 	{}
+
+	public void setFrameDecorator(FrameDecorator fd)
+	{
+		decorator = fd;
+	}
 	
 	public void setWave(SliceWave sw)
 	{
 		wave = sw;
 	}
 	
+	protected class DefaultFrameDecorator implements FrameDecorator
+	{
+		public void decorate(FrameRenderer fr)
+		{
+			int hTicks = graphWidth / 92;
+			int vTicks = graphHeight / 24;
+			createDefaultAxis(hTicks, vTicks, false, false);
+			if (logFreq)
+				createDefaultLogXAxis(5);	
+			if (logPower)
+				createDefaultLogYAxis(5);
+				
+			createDefaultLineRenderers();
+			getAxis().setLeftLabelAsText("Power", -52);
+			getAxis().setBottomLeftLabelAsText("Frequency");
+//			TextRenderer tr = (TextRenderer)getAxis().getBottomLeftRenderer();
+//			tr.y -= 16;
+//			tr.x -= 4;
+		}
+	}
+	
 	public double update(double oldMaxPower)
 	{
-		int hTicks = graphWidth / 92;
-		int vTicks = graphHeight / 24;
+		if (decorator == null)
+			decorator = new DefaultFrameDecorator();
+
 		double[] data = wave.fastFFT();
 		FFT.fastToPowerFreq(data, wave.getSamplingRate(), logPower, logFreq);
 		if (logFreq)
@@ -80,15 +114,18 @@ public class SpectraRenderer extends MatrixRenderer
 		if (logPower)
 			maxp = Math.log(maxp) / Math.log(10);
 		setExtents(minFreq, maxFreq, 0, maxp);
-		createDefaultAxis(hTicks, vTicks, false, false);
-		if (logFreq)
-			createDefaultLogXAxis(5);	
-		if (logPower)
-			createDefaultLogYAxis(2);
-			
-		createDefaultLineRenderers();
-		getAxis().setLeftLabelAsText("Power", -52);
-		getAxis().setBottomLeftLabelAsText("Freq.");
+		
+//		createDefaultAxis(hTicks, vTicks, false, false);
+//		if (logFreq)
+//			createDefaultLogXAxis(5);	
+//		if (logPower)
+//			createDefaultLogYAxis(5);
+//			
+//		createDefaultLineRenderers();
+//		getAxis().setLeftLabelAsText("Power", -52);
+//		getAxis().setBottomLeftLabelAsText("Freq.");
+
+		decorator.decorate(this);
 		
 		return maxp;
 	}
