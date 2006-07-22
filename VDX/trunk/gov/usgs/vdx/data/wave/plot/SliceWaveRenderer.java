@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.wave.plot;
 
+import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
@@ -17,6 +18,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2006/06/15 14:29:55  dcervelli
+ * Swarm 1.3.4 changes.
+ *
  * Revision 1.7  2006/03/02 23:35:31  dcervelli
  * Added calibration stuff.
  *
@@ -63,8 +67,6 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	protected Color color = Color.BLUE;
 	
-	protected double yMult = 1;
-	protected double yOffset = 0;
 	protected String yLabel = "Counts";
 	
 	protected String title;
@@ -164,27 +166,27 @@ public class SliceWaveRenderer extends FrameRenderer
 		title = s;
 	}
 	
-	protected class DefaultFrameDecorator implements FrameDecorator
-	{
-		public void decorate(FrameRenderer fr)
-		{
-			if (displayLabels)
-			{
-				int hTicks = graphWidth / 108;
-				int vTicks = graphHeight / 24;
-				fr.createDefaultAxis(hTicks, vTicks);
-				fr.setXAxisToTime(hTicks);
-				fr.getAxis().setLeftLabelAsText(yLabel, -52);
-				if (title != null)
-					fr.getAxis().setTopLabelAsText(title);
-				fr.getAxis().setBottomLeftLabelAsText("Time");
-			}
-			else
-			{
-				fr.createDefaultAxis(0, 0);
-			}		
-		}
-	}
+//	protected class DefaultFrameDecoratorSW implements FrameDecorator
+//	{
+//		public void decorate(FrameRenderer fr)
+//		{
+//			if (displayLabels)
+//			{
+//				int hTicks = graphWidth / 108;
+//				int vTicks = graphHeight / 24;
+//				fr.createDefaultAxis(hTicks, vTicks);
+//				fr.setXAxisToTime(hTicks);
+//				fr.getAxis().setLeftLabelAsText(yLabel, -52);
+//				if (title != null)
+//					fr.getAxis().setTopLabelAsText(title);
+//				fr.getAxis().setBottomLeftLabelAsText("Time");
+//			}
+//			else
+//			{
+//				fr.createDefaultAxis(0, 0);
+//			}		
+//		}
+//	}
 	
 	public void update()
 	{
