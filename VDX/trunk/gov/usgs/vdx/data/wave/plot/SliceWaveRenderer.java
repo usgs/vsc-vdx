@@ -18,6 +18,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2006/07/22 20:15:45  cervelli
+ * Interim changes for conversion to FrameDecorators.
+ *
  * Revision 1.8  2006/06/15 14:29:55  dcervelli
  * Swarm 1.3.4 changes.
  *
@@ -165,33 +168,25 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		title = s;
 	}
+
+	public void createDefaultFrameDecorator()
+	{
+		decorator = new DefaultWaveFrameDecorator();
+	}
 	
-//	protected class DefaultFrameDecoratorSW implements FrameDecorator
-//	{
-//		public void decorate(FrameRenderer fr)
-//		{
-//			if (displayLabels)
-//			{
-//				int hTicks = graphWidth / 108;
-//				int vTicks = graphHeight / 24;
-//				fr.createDefaultAxis(hTicks, vTicks);
-//				fr.setXAxisToTime(hTicks);
-//				fr.getAxis().setLeftLabelAsText(yLabel, -52);
-//				if (title != null)
-//					fr.getAxis().setTopLabelAsText(title);
-//				fr.getAxis().setBottomLeftLabelAsText("Time");
-//			}
-//			else
-//			{
-//				fr.createDefaultAxis(0, 0);
-//			}		
-//		}
-//	}
+	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
+	{
+		public DefaultWaveFrameDecorator()
+		{
+			yAxisLabel = yLabel;
+			// TODO: should probably have x-axis label be "time"
+		}
+	}
 	
 	public void update()
 	{
 		if (decorator == null)
-			decorator = new DefaultFrameDecorator();
+			createDefaultFrameDecorator();
 		
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
 		decorator.decorate(this);
