@@ -1,26 +1,15 @@
 package gov.usgs.vdx.data.nwis;
 
 import gov.usgs.vdx.data.GenericDataMatrix;
-import gov.usgs.vdx.server.BinaryResult;
-import gov.usgs.vdx.server.RequestResult;
-import gov.usgs.vdx.server.TextResult;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-
-import cern.colt.function.DoubleDoubleFunction;
-import cern.colt.matrix.DoubleFactory2D;
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
 
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2006/08/01 19:54:47  tparker
+ * Create NWIS data source
+ *
  *
  * @author Tom Parker
  */
