@@ -4,7 +4,6 @@ import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,6 +19,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.1  2006/08/01 19:54:47  tparker
+  * Create NWIS data source
+  *
  *
  * @author Tom Parker
  */
