@@ -9,6 +9,7 @@ import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.generic.SQLGenericDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
+import gov.usgs.vdx.data.nwis.SQLNWISDataSource;
 import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 
@@ -31,6 +32,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.5  2005/10/20 18:00:48  dcervelli
  * Added creategeneric.
  *
@@ -370,6 +374,21 @@ public class VDXDatabase
 		System.out.println(msg);
 	}
 	
+	public boolean tableExists(String db, String table)
+	{
+		try
+		{
+			ResultSet rs = getStatement().executeQuery(
+					String.format("SELECT COUNT(*) FROM %s_%s.%s", databasePrefix, db, table));
+			boolean result = rs.next();
+			rs.close();
+			return result;
+		}
+		catch (Exception e)
+		{}
+		return false;
+	}	
+	
 	public static void main(String[] as)
 	{
 		Set<String> flags = new HashSet<String>();
@@ -405,9 +424,13 @@ public class VDXDatabase
 				sources.put("createtilt", new SQLTiltDataSource());
 				sources.put("createetilt", new SQLElectronicTiltDataSource());
 				sources.put("creategeneric", new SQLGenericDataSource());
+				sources.put("createnwis", new SQLNWISDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null)
 					createDatabase(db, args, sds);
+				else
+					System.out.println("I don't know how to " + action);
+					
 			}
 		}
 	}
