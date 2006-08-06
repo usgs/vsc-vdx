@@ -1,6 +1,8 @@
 package gov.usgs.vdx.data.wave.plot;
 
 import gov.usgs.plot.AxisRenderer;
+import gov.usgs.plot.DefaultFrameDecorator;
+import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.ImageDataRenderer;
 import gov.usgs.plot.Jet;
 import gov.usgs.plot.Spectrum;
@@ -12,6 +14,9 @@ import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/06/15 14:29:56  dcervelli
+ * Swarm 1.3.4 changes.
+ *
  * Revision 1.3  2006/01/27 22:18:06  tparker
  * Add configure options for wave plotter
  *
@@ -53,6 +58,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	protected double timeZoneOffset;
 	
+	protected FrameDecorator decorator;
+	
 	public SpectrogramRenderer()
 	{
 		axis = new AxisRenderer(this);
@@ -76,8 +83,29 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		wave = w;
 	}
 
+	public void setFrameDecorator(FrameDecorator fd)
+	{
+		decorator = fd;
+	}
+	
+	public void createDefaultFrameDecorator()
+	{
+		decorator = new DefaultWaveFrameDecorator();
+	}
+	
+	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
+	{
+		public DefaultWaveFrameDecorator()
+		{
+			yAxisLabel = "Frequency (Hz)";
+		}
+	}
+	
 	public double update(double oldMaxPower)
 	{
+		if (decorator == null)
+			createDefaultFrameDecorator();
+		
 		wave.setSlice(viewStartTime, viewEndTime);
 		
 		int sampleSize = 128;
@@ -168,24 +196,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
 		this.setDataExtents(wave.getStartTime() + timeZoneOffset, wave.getEndTime() + timeZoneOffset, 0, wave.getSamplingRate() / 2);
 		this.setExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, minF, maxF);
-		int ht = hTicks;
-		int vt = vTicks;
-		if (hTicks == -1)
-			ht = graphWidth / 108;
-		if (vTicks == -1)
-			vt = graphHeight / 24;
-		
-		if (xLabel == 0 && yLabel == 2)
-		{
-			this.createDefaultAxis(0, 0, false, false);
-			this.getAxis().createDefault();			
-		} else {			
-			this.createDefaultAxis(ht, vt, false, false);
-			this.getAxis().createDefault();
-			this.setXAxisToTime(ht);
-			this.getAxis().setLeftLabelAsText("Frequency (Hz)", -52);
-			this.getAxis().setBottomLeftLabelAsText("Time");
-		}
+		decorator.decorate(this);
+
 		return maxMag;
 	}
 
