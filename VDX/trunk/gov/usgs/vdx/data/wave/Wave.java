@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/04/08 01:27:11  dcervelli
+ * Changed exportToText() to throw exceptions for bug #34.
+ *
  * Revision 1.4  2006/04/08 01:00:17  dcervelli
  * Changed subset() for bug #84.
  *
@@ -44,7 +47,7 @@ import java.util.TimeZone;
  *
  * @author Dan Cervelli
  */
-public class Wave implements BinaryDataSet
+public class Wave implements BinaryDataSet, Comparable<Wave>
 {
 	/**
 	 * A value that indicates that this sample is not an actual data sample.
@@ -778,25 +781,37 @@ public class Wave implements BinaryDataSet
 		if (waves.size() == 1)
 			return waves.get(0);
 
-		Wave wv0 = waves.get(0);
-		Wave wvn = waves.get(waves.size() - 1);
+		double mint = 1E300;
+		double maxt = -1E300;
+		double sr = -1;
+		for (Wave sw : waves)
+		{
+			mint = Math.min(mint, sw.getStartTime());
+			maxt = Math.max(maxt, sw.getEndTime());
+			sr = sw.getSamplingRate();
+		}
+		
+//		Wave wv0 = waves.get(0);
+//		Wave wvn = waves.get(waves.size() - 1);
 
-		int samples = (int)((wvn.getEndTime() - wv0.getStartTime()) * wv0
-				.getSamplingRate());
+//		int samples = (int)((wvn.getEndTime() - wv0.getStartTime()) * wv0
+//				.getSamplingRate());
+		int samples = (int)((maxt - mint) * sr);
 
 		int[] buffer = new int[samples + 1];
 		Arrays.fill(buffer, NO_DATA);
 
 		for (Wave sw : waves)
 		{
-			//System.out.println(sw);
-			int i = (int)Math.round((sw.getStartTime() - wv0.getStartTime())
-					* wv0.getSamplingRate());
+//			System.out.println(sw);
+//			int i = (int)Math.round((sw.getStartTime() - wv0.getStartTime())
+//					* wv0.getSamplingRate());
+			int i = (int)Math.round((sw.getStartTime() - mint) * sr);
+//			System.out.println("join: " + i + " " + buffer.length + " " + sw.buffer.length);
 			System.arraycopy(sw.buffer, 0, buffer, i, sw.buffer.length);
 		}
 
-		return new Wave(buffer, wv0.getStartTime(), wv0
-				.getSamplingRate());
+		return new Wave(buffer, mint, sr);//, wv0.getSamplingRate());
 	}
 	
 	/**
@@ -1080,5 +1095,10 @@ public class Wave implements BinaryDataSet
 	    sac.ko = "origin";
 	    
 	    return sac;
+	}
+
+	public int compareTo(Wave o) 
+	{
+		return (int)Math.round(getStartTime() - o.getStartTime());
 	}
 }
