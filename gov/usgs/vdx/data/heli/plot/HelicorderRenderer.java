@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.heli.plot;
 
 import gov.usgs.plot.AxisRenderer;
+import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.plot.SmartTick;
 import gov.usgs.plot.TextRenderer;
@@ -32,6 +33,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2006/07/22 20:15:02  cervelli
+ * Changes for time zones.
+ *
  * Revision 1.9  2006/04/08 01:50:03  dcervelli
  * Added getRowHeight() function for bug #17.
  *
@@ -105,6 +109,8 @@ public class HelicorderRenderer extends FrameRenderer
 	private String channel;
 	private boolean largeChannelDisplay;
 	
+	private FrameDecorator decorator;
+	
 	public HelicorderRenderer()
 	{
 		forceCenter = false;
@@ -171,6 +177,16 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		int row = numRows - (int)((x - hcMinX) / timeChunk) - 1;
 		return graphY + graphHeight - ((y - hcMinY) * helicorderGetYScale()) - ((double)row * rowHeight);
+	}
+	
+	public double getHelicorderMaxX()
+	{
+		return hcMaxX;
+	}
+	
+	public double getHelicorderMinX()
+	{
+		return hcMinX;
 	}
 	
 	public double getViewEndTime()
@@ -275,11 +291,20 @@ public class HelicorderRenderer extends FrameRenderer
 		return rowHeight;
 	}
 	
+	public void setFrameDecorator(FrameDecorator d)
+	{
+		decorator = d;
+	}
+	
 	public void render(Graphics2D g)
 	{
 //		CodeTimer ct = new CodeTimer("render");
 		if (data == null)
 			return;
+		
+		if (decorator != null)
+			decorator.decorate(this);
+		
 		AffineTransform origAT = g.getTransform();
 		Color origColor = g.getColor();
 		Shape origClip = g.getClip();
@@ -362,6 +387,9 @@ public class HelicorderRenderer extends FrameRenderer
 		g.setColor(origColor);
 		g.setTransform(origAT);
 		
+		if (axis != null)
+			axis.postRender(g);
+		
 		if (largeChannelDisplay && channel != null)
 		{
 			Font oldFont = g.getFont();
@@ -395,62 +423,181 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	public void createMinimumAxis()
 	{
-		axis = new AxisRenderer(this);
-		axis.createDefault();
-		
-		int minutes = (int)Math.round(timeChunk / 60.0);
-		int majorTicks = minutes;
-		if (minutes > 30 && minutes < 180)
-			majorTicks = minutes / 5;
-		else if (minutes >= 180 && minutes < 360)
-			majorTicks = minutes / 10;
-		else if (minutes >= 360)
-			majorTicks = minutes / 20;
-		double[] mjt = SmartTick.intervalTick(minX, maxX, majorTicks);
-		
-		axis.createBottomTicks(null, mjt);
-		axis.createTopTicks(null, mjt);
-		axis.createVerticalGridLines(mjt);
-		
-		String[] btl = new String[mjt.length];
-		for (int i = 0; i < mjt.length; i++)
-			btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
+		decorator = new MinimumDecorator();
+	}
+	
+	class MinimumDecorator extends FrameDecorator
+	{
+		public void decorate(FrameRenderer fr)
+		{
+			axis = new AxisRenderer(fr);
+			axis.createDefault();
 			
- 		double[] labelPosLR = new double[numRows];
- 		String[] leftLabelText = new String[numRows];
-		DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-		DateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd");
-		timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		dayFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		double pixelsPast = 0;
-		double pixelsPerRow = graphHeight / numRows;
- 		for (int i = numRows - 1; i >= 0; i--)
- 		{
- 			pixelsPast += pixelsPerRow;
- 			labelPosLR[i] = i + 0.5;
- 			// TODO: fix
-// 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeZoneOffset * 3600);
- 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk);
-	 		String ftl = timeFormat.format(dtz);
-	 		
-			leftLabelText[i] = null;
- 			if (pixelsPast > 20)
- 			{
- 				leftLabelText[i] = ftl;
-	 			pixelsPast = 0;
+			int minutes = (int)Math.round(timeChunk / 60.0);
+			int majorTicks = minutes;
+			if (minutes > 30 && minutes < 180)
+				majorTicks = minutes / 5;
+			else if (minutes >= 180 && minutes < 360)
+				majorTicks = minutes / 10;
+			else if (minutes >= 360)
+				majorTicks = minutes / 20;
+			double[] mjt = SmartTick.intervalTick(minX, maxX, majorTicks);
+			
+			axis.createBottomTicks(null, mjt);
+			axis.createTopTicks(null, mjt);
+			axis.createVerticalGridLines(mjt);
+			
+			String[] btl = new String[mjt.length];
+			for (int i = 0; i < mjt.length; i++)
+				btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
+				
+	 		double[] labelPosLR = new double[numRows];
+	 		String[] leftLabelText = new String[numRows];
+			DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+			DateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd");
+			timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+			dayFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+			double pixelsPast = 0;
+			double pixelsPerRow = graphHeight / numRows;
+	 		for (int i = numRows - 1; i >= 0; i--)
+	 		{
+	 			pixelsPast += pixelsPerRow;
+	 			labelPosLR[i] = i + 0.5;
+	 			// TODO: fix
+//	 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk + timeZoneOffset * 3600);
+	 			java.util.Date dtz = Util.j2KToDate(hcMaxX - (i + 1) * timeChunk);
+		 		String ftl = timeFormat.format(dtz);
+		 		
+				leftLabelText[i] = null;
+	 			if (pixelsPast > 20)
+	 			{
+	 				leftLabelText[i] = ftl;
+		 			pixelsPast = 0;
+		 		}
 	 		}
- 		}
 
-		axis.createLeftTickLabels(labelPosLR, leftLabelText);
-		axis.addRenderer(new TextRenderer(graphX, graphY - 3, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
-		
-		double[] hg = new double[numRows - 1];
-		for(int i = 0; i < numRows - 1; i++)
-			hg[i] = i + 1.0;
+			axis.createLeftTickLabels(labelPosLR, leftLabelText);
+			axis.addRenderer(new TextRenderer(graphX, graphY - 3, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
 			
-		axis.createHorizontalGridLines(hg); 
+			double[] hg = new double[numRows - 1];
+			for(int i = 0; i < numRows - 1; i++)
+				hg[i] = i + 1.0;
+				
+			axis.createHorizontalGridLines(hg); 
 
-		axis.setBackgroundColor(Color.white);
+			axis.setBackgroundColor(Color.white);
+		}
+	}
+	
+	class StandardDecorator extends FrameDecorator
+	{
+		public void decorate(FrameRenderer fr)
+		{
+			axis = new AxisRenderer(fr);
+			axis.createDefault();
+//			if (numRows <= 0)
+//				return;
+			
+			int minutes = (int)Math.round(timeChunk / 60.0);
+			int majorTicks = minutes;
+			if (minutes > 30 && minutes < 180)
+				majorTicks = minutes / 5;
+			else if (minutes >= 180 && minutes < 360)
+				majorTicks = minutes / 10;
+			else if (minutes >= 360)
+				majorTicks = minutes / 20;
+			double[] mjt = SmartTick.intervalTick(minX, maxX, majorTicks);
+			
+			int minorTicks = 0;
+			if (minutes <= 30)
+				minorTicks = (int)Math.round(timeChunk / 10.0);
+			else if (minutes > 30 && minutes <= 180)
+				minorTicks = minutes;
+			else if (minutes > 180)
+				minorTicks = minutes / 5;
+			double[] mnt = SmartTick.intervalTick(minX, maxX, minorTicks);
+			
+			axis.createBottomTicks(mjt, mnt);
+			axis.createTopTicks(mjt, mnt);
+			axis.createVerticalGridLines(mjt);
+			
+			String[] btl = new String[mjt.length];
+			for (int i = 0; i < mjt.length; i++)
+				btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
+				
+			axis.createBottomTickLabels(mjt, btl);
+			axis.setBottomLabelAsText("+ Minutes");
+			
+	 		double[] labelPosLR = new double[numRows];
+	 		String[] leftLabelText = new String[numRows];
+			String[] rightLabelText = new String[numRows]; 		
+			DateFormat timeFormat = new SimpleDateFormat("HH:mm");
+			DateFormat dayFormat = new SimpleDateFormat("MM-dd");
+			timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+			dayFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+			
+			boolean dst = timeZone.inDaylightTime(Util.j2KToDate(getViewEndTime()));
+			double timeOffset = Time.getTimeZoneOffset(timeZone, dst);
+			
+			double pixelsPast = 0;
+			double pixelsPerRow = graphHeight / numRows;
+			String lastDayL = "";
+			String lastDayR = "";
+	 		for (int i = numRows - 1; i >= 0; i--)
+	 		{
+	 			pixelsPast += pixelsPerRow;
+	 			labelPosLR[i] = i + 0.5;
+	 			double j2ks = hcMaxX - (i + 1) * timeChunk;
+	 			double j2ke = j2ks + timeChunk;
+	 			java.util.Date dtz = Util.j2KToDate(j2ks + timeOffset);
+		 		String ftl = timeFormat.format(dtz);
+		 		String fdl = dayFormat.format(dtz);
+		 		
+		 		java.util.Date dutc = Util.j2KToDate(j2ke);
+		 		String ftr = timeFormat.format(dutc);
+		 		String fdr = dayFormat.format(dutc);
+
+				leftLabelText[i] = null;
+				if (!fdl.equals(lastDayL))
+	 				leftLabelText[i] = fdl + "           ";
+		 			
+		 		if (timeOffset != 0 && !fdr.equals(lastDayR))
+		 			rightLabelText[i] = "           " + fdr;
+		 			
+		 		lastDayL = fdl;
+		 		lastDayR = fdr;
+		 		
+	 			if (pixelsPast > 20)
+	 			{
+	 				if (leftLabelText[i] != null)
+		 				leftLabelText[i] = fdl + " " + ftl;
+		 			else
+		 				leftLabelText[i] = ftl;
+		 			
+		 			if (timeOffset != 0)
+		 			{
+			 			if (rightLabelText[i] != null)
+			 				rightLabelText[i] = ftr + " " + fdr;
+			 			else
+			 				rightLabelText[i] = ftr;
+			 		}
+		 			pixelsPast = 0;
+		 		}
+	 		}
+
+			axis.createLeftTickLabels(labelPosLR, leftLabelText);
+			axis.createRightTickLabels(labelPosLR, rightLabelText);
+			axis.setBottomLeftLabelAsText("Time (" + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")");
+			if (timeOffset != 0)
+				axis.setBottomRightLabelAsText("Time (UTC)");
+			
+			double[] hg = new double[numRows - 1];
+			for(int i = 0; i < numRows - 1; i++)
+				hg[i] = i + 1.0;
+				
+			axis.createHorizontalGridLines(hg); 
+			axis.setBackgroundColor(Color.white);
+		}
 	}
 	
 	/** Creates the default axis using SmartTick.
@@ -461,110 +608,7 @@ public class HelicorderRenderer extends FrameRenderer
 	 */
 	public void createDefaultAxis()
 	{
-		axis = new AxisRenderer(this);
-		axis.createDefault();
-//		if (numRows <= 0)
-//			return;
-		
-		int minutes = (int)Math.round(timeChunk / 60.0);
-		int majorTicks = minutes;
-		if (minutes > 30 && minutes < 180)
-			majorTicks = minutes / 5;
-		else if (minutes >= 180 && minutes < 360)
-			majorTicks = minutes / 10;
-		else if (minutes >= 360)
-			majorTicks = minutes / 20;
-		double[] mjt = SmartTick.intervalTick(minX, maxX, majorTicks);
-		
-		int minorTicks = 0;
-		if (minutes <= 30)
-			minorTicks = (int)Math.round(timeChunk / 10.0);
-		else if (minutes > 30 && minutes <= 180)
-			minorTicks = minutes;
-		else if (minutes > 180)
-			minorTicks = minutes / 5;
-		double[] mnt = SmartTick.intervalTick(minX, maxX, minorTicks);
-		
-		axis.createBottomTicks(mjt, mnt);
-		axis.createTopTicks(mjt, mnt);
-		axis.createVerticalGridLines(mjt);
-		
-		String[] btl = new String[mjt.length];
-		for (int i = 0; i < mjt.length; i++)
-			btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
-			
-		axis.createBottomTickLabels(mjt, btl);
-		axis.setBottomLabelAsText("+ Minutes");
-		
- 		double[] labelPosLR = new double[numRows];
- 		String[] leftLabelText = new String[numRows];
-		String[] rightLabelText = new String[numRows]; 		
-		DateFormat timeFormat = new SimpleDateFormat("HH:mm");
-		DateFormat dayFormat = new SimpleDateFormat("MM-dd");
-		timeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		dayFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-		
-		boolean dst = timeZone.inDaylightTime(Util.j2KToDate(getViewEndTime()));
-		double timeOffset = Time.getTimeZoneOffset(timeZone, dst);
-		
-		double pixelsPast = 0;
-		double pixelsPerRow = graphHeight / numRows;
-		String lastDayL = "";
-		String lastDayR = "";
- 		for (int i = numRows - 1; i >= 0; i--)
- 		{
- 			pixelsPast += pixelsPerRow;
- 			labelPosLR[i] = i + 0.5;
- 			double j2ks = hcMaxX - (i + 1) * timeChunk;
- 			double j2ke = j2ks + timeChunk;
- 			java.util.Date dtz = Util.j2KToDate(j2ks + timeOffset);
-	 		String ftl = timeFormat.format(dtz);
-	 		String fdl = dayFormat.format(dtz);
-	 		
-	 		java.util.Date dutc = Util.j2KToDate(j2ke);
-	 		String ftr = timeFormat.format(dutc);
-	 		String fdr = dayFormat.format(dutc);
-
-			leftLabelText[i] = null;
-			if (!fdl.equals(lastDayL))
- 				leftLabelText[i] = fdl + "           ";
-	 			
-	 		if (timeOffset != 0 && !fdr.equals(lastDayR))
-	 			rightLabelText[i] = "           " + fdr;
-	 			
-	 		lastDayL = fdl;
-	 		lastDayR = fdr;
-	 		
- 			if (pixelsPast > 20)
- 			{
- 				if (leftLabelText[i] != null)
-	 				leftLabelText[i] = fdl + " " + ftl;
-	 			else
-	 				leftLabelText[i] = ftl;
-	 			
-	 			if (timeOffset != 0)
-	 			{
-		 			if (rightLabelText[i] != null)
-		 				rightLabelText[i] = ftr + " " + fdr;
-		 			else
-		 				rightLabelText[i] = ftr;
-		 		}
-	 			pixelsPast = 0;
-	 		}
- 		}
-
-		axis.createLeftTickLabels(labelPosLR, leftLabelText);
-		axis.createRightTickLabels(labelPosLR, rightLabelText);
-		axis.setBottomLeftLabelAsText("Time (" + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")");
-		if (timeOffset != 0)
-			axis.setBottomRightLabelAsText("Time (UTC)");
-		
-		double[] hg = new double[numRows - 1];
-		for(int i = 0; i < numRows - 1; i++)
-			hg[i] = i + 1.0;
-			
-		axis.createHorizontalGridLines(hg); 
-		axis.setBackgroundColor(Color.white);
+		decorator = new StandardDecorator();
 	}
 	
 	private void playClipAlert()
