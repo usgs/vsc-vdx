@@ -30,6 +30,9 @@ import java.util.TimeZone;
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/08/10 14:31:44  cervelli
+ * Changed join().
+ *
  * Revision 1.5  2006/04/08 01:27:11  dcervelli
  * Changed exportToText() to throw exceptions for bug #34.
  *
@@ -598,7 +601,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>
 	 */
 	public Wave subset(double t1, double t2)
 	{
-		if (t1 < getStartTime() || t2 > getEndTime())
+		if (t1 < getStartTime() || t2 > getEndTime() || t2 < t1)
 			return this;
 
 		int samples = (int)Math.floor((t2 - t1) * samplingRate);
