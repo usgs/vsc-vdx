@@ -50,6 +50,9 @@ import java.util.TimeZone;
  * A class to read SAC files, adapted from Fissures code.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2005/09/22 20:50:56  dcervelli
+ * main() prints SAC header.
+ *
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
  * Initial avosouth commit.
  *
@@ -1288,7 +1291,7 @@ public class SAC
 
 		if (args.length != 1)
 		{
-			System.out.println("Usage: java gov.usgs.data.wave.SAC sacsourcefile ");
+			System.out.println("Usage: java gov.usgs.vdx.data.wave.SAC sacsourcefile ");
 			return;
 		}
 
