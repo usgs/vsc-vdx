@@ -33,6 +33,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.11  2006/08/12 01:13:32  dcervelli
+ * Uses decorators now.
+ *
  * Revision 1.10  2006/07/22 20:15:02  cervelli
  * Changes for time zones.
  *
@@ -82,7 +85,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class HelicorderRenderer extends FrameRenderer
 {
-	private static final Font LARGE_FONT = Font.decode("Dialog-BOLD-48");
+	private static final Font LARGE_FONT = Font.decode("Dialog-BOLD-40");
 	private HelicorderData data;
 	
 	private boolean forceCenter;
@@ -409,7 +412,8 @@ public class HelicorderRenderer extends FrameRenderer
 				}
 			}
 			else
-				g.setColor(Color.white);
+//				g.setColor(Color.white);
+				g.setColor(new Color(255,255,255,192));
 				
 			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, height);
 			g.setColor(Color.black);
