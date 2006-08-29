@@ -18,6 +18,9 @@ import java.util.Map;
  * TODO: proper logging.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/04/09 18:20:34  dcervelli
+ * Broke out getData into getTextData and getBinaryData.
+ *
  * Revision 1.5  2005/10/20 05:07:03  dcervelli
  * Added generic data type.
  *
@@ -51,6 +54,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
 		dataTypeMap.put("etilt", "gov.usgs.vdx.data.tilt.ElectronicTiltData");
 		dataTypeMap.put("generic", "gov.usgs.vdx.data.GenericDataMatrix");
+		dataTypeMap.put("nwis", "gov.usgs.vdx.data.GenericDataMatrix");
 	}
 	
 	public VDXClient(String h, int p)

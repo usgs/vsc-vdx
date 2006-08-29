@@ -3,6 +3,9 @@ package gov.usgs.vdx.data.nwis;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2006/08/01 19:54:47  tparker
+ * Create NWIS data source
+ *
  *
  * @author Tom Parker
  */
@@ -35,5 +38,10 @@ public class DataType
 	public String toString()
 	{
 		return name;
+	}
+	
+	public boolean equals(int i)
+	{
+		return i == stid ? true : false;
 	}
 }
