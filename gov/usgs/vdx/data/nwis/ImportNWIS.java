@@ -19,6 +19,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.2  2006/08/01 21:36:29  tparker
+  * Cleanup imports
+  *
   * Revision 1.1  2006/08/01 19:54:47  tparker
   * Create NWIS data source
   *
@@ -39,7 +42,7 @@ public class ImportNWIS
 		params = new ConfigFile(cf);
 		
 		dataSource.initialize(params);
-		dataSource.setName(params.getString("vdx.name"));
+		//dataSource.setName(params.getString("vdx.name"));
 		stations = dataSource.getStations();
 	}
 	
@@ -47,7 +50,6 @@ public class ImportNWIS
 	{
 		List<DataType> dataTypes = new ArrayList<DataType>();
 		logger = Log.getLogger("gov.usgs.vdx");
-
 		String fn = params.getString("url") + "&period=" + period + "&site_no=" + st.getSiteNo();
 		
 		try
@@ -62,26 +64,80 @@ public class ImportNWIS
 			dateIn.setTimeZone(TimeZone.getTimeZone(st.getTz()));
 			
 			String s = rr.nextLine();
-			while (s != null)
+			boolean next = false;
+			Pattern p;
+			Matcher m;
+			
+			// match header
+			p = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
+			Pattern p1 = Pattern.compile("^#.*$");
+			while (s != null && next == false)
 			{
-				Pattern typePattern = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
-				Matcher typeMatcher = typePattern.matcher(s);
-				
-				String pattern = "^" + st.getOrg() + "\\s+" + st.getSiteNo() + "\\s+";
-				pattern += "(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2})\\s+";
-				for (int i = 0; i < dataTypes.size(); i++)
-					pattern += "([\\d.]+)\\s+";
-
-				Pattern recordPattern = Pattern.compile(pattern);
-				Matcher recordMatcher = recordPattern.matcher(s);
-				
-				if (typeMatcher.matches())
+				m = p.matcher(s);
+				if (m.matches())
 				{
-					int dataType = Integer.parseInt(typeMatcher.group(2));
-					String name = typeMatcher.group(3);
+					int dataType = Integer.parseInt(m.group(2));
+					String name = m.group(3);
 					dataTypes.add(new DataType(dataType, name));
 				}
-				else if (recordMatcher.matches())
+				
+				s = rr.nextLine();
+				Matcher m1 = p1.matcher(s);
+				if (!m1.matches())
+					next = true;
+			}
+			next = false;
+			
+			//match key
+			String pattern = "^agency_cd\\s+site_no\\s+datetime";
+			for (int i = 0; i < dataTypes.size(); i++)
+				pattern += "\\s+\\d{2}_(\\d{5})\\s+\\d{2}_\\d{5}_cd";
+			pattern += ".*$";
+			p = Pattern.compile(pattern);
+			
+			while(s != null && next == false)
+			{
+				m = p.matcher(s);
+				
+				if (m.matches())
+				{
+					for (int i = 0; i < dataTypes.size(); i++)
+					{
+						int id = Integer.parseInt(m.group(i+1));
+						if (dataTypes.get(i).getId() != id)
+						{
+							DataType t;
+							for (int j = i; j < dataTypes.size(); j++)
+							{
+								if (dataTypes.get(j).getId() == id)
+								{
+									t = dataTypes.get(i);
+									dataTypes.set(i, dataTypes.get(j));
+									dataTypes.set(j, t);
+								}
+										
+							}
+						}							
+					}
+					next = true;
+				}
+				s = rr.nextLine();
+			}
+			
+			// match records
+			next = false;
+			pattern = "^" + st.getOrg() + "\\s+" + st.getSiteNo() + "\\s+";
+			pattern += "(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2})\\s+";
+			for (int i = 0; i < dataTypes.size(); i++)
+				pattern += "([\\d.]+)\\s+";
+
+			Pattern recordPattern = Pattern.compile(pattern);
+
+			while (s != null)
+			{
+				Matcher recordMatcher = recordPattern.matcher(s);
+				
+				if (recordMatcher.matches())
 				{
 					Date date = dateIn.parse(recordMatcher.group(1));
 					for (int i = 0; i < dataTypes.size(); i++)
