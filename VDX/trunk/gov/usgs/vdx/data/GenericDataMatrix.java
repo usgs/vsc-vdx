@@ -12,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/01/10 20:55:04  tparker
+ * Add start/end time methods
+ *
  * Revision 1.3  2005/12/23 02:09:36  tparker
  * Add export method for RawData export
  *
@@ -168,6 +171,16 @@ public class GenericDataMatrix implements BinaryDataSet
 			data.setQuick(i, c, data.getQuick(i, c) * v);
 	}
 
+	public void sum(int c)
+	{
+		for (int i=1; i<rows(); i++)
+		{
+			double d = data.getQuick(i-1,c);
+			d += data.getQuick(i,c);
+			data.setQuick(i,c,d);
+		}
+	}
+	
 	public double max(int c)
 	{
 		double m = -1E300;
