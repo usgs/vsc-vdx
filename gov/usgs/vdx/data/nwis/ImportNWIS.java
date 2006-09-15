@@ -19,6 +19,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.3  2006/08/28 23:58:42  tparker
+  * Initial NWIS commit
+  *
   * Revision 1.2  2006/08/01 21:36:29  tparker
   * Cleanup imports
   *
@@ -69,7 +72,8 @@ public class ImportNWIS
 			Matcher m;
 			
 			// match header
-			p = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
+			//p = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
+			p = Pattern.compile("^#\\s+(\\d+)\\s+(\\d+)\\s+(.*)$");
 			Pattern p1 = Pattern.compile("^#.*$");
 			while (s != null && next == false)
 			{
@@ -145,6 +149,9 @@ public class ImportNWIS
 						double reading = Double.parseDouble(recordMatcher.group(i+2));
 						dataSource.insertRecord(date, st, dataTypes.get(i), reading);
 					}
+				} else {
+					System.out.println("Looking for " + pattern);
+					System.out.println("no match on " + s);
 				}
 				s = rr.nextLine();
 			}
