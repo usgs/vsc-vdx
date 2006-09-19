@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/08/28 23:58:42  tparker
+ * Initial NWIS commit
+ *
  * Revision 1.1  2006/08/01 19:54:47  tparker
  * Create NWIS data source
  *
@@ -41,8 +44,8 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		{
 			Statement st = database.getStatement();
 			database.useRootDatabase();
-			//String db = database.getDatabasePrefix() + "_" + name + "$" + DATABASE_NAME;
-			String db = name + "$" + DATABASE_NAME;
+			String db = database.getDatabasePrefix() + "_" + name + "$" + DATABASE_NAME;
+			//String db = name + "$" + DATABASE_NAME;
 			st.execute("CREATE DATABASE " + db);
 			st.execute("USE " + db);
 			st.execute(
