@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/09/19 18:02:50  tparker
+ * tweak db creation name
+ *
  * Revision 1.2  2006/08/28 23:58:42  tparker
  * Initial NWIS commit
  *
@@ -51,7 +54,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			st.execute(
 					"CREATE TABLE channels (sid INT PRIMARY KEY AUTO_INCREMENT," +
 					"org VARCHAR(4) NOT NULL," +
-					"site_no VARCHAR(12) UNIQUE NOT NULL," +
+					"site_no VARCHAR(32) UNIQUE NOT NULL," +
 					"name VARCHAR(255), " + 
 					"lon DOUBLE, lat DOUBLE, tz VARCHAR(12))");
 			st.execute(
