@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.7  2006/09/20 22:51:34  tparker
+  * Fix null reading bug
+  *
   * Revision 1.6  2006/09/20 22:35:48  tparker
   * Allow for sparse results from NWIS
   *
@@ -179,6 +182,9 @@ public class ImportNWIS
 	
 	public void importWeb(Station st, int period)
 	{
+		if (!st.getActive())
+			return;
+		
 		List<DataType> dataTypes = new ArrayList<DataType>();
 		logger = Log.getLogger("gov.usgs.vdx");
 		String fn = params.getString("url") + "&period=" + period + "&site_no=" + st.getSiteNo();
