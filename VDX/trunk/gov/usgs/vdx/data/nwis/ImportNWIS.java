@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -19,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.4  2006/09/15 00:33:27  tparker
+  * update pattern for NWIS matching
+  *
   * Revision 1.3  2006/08/28 23:58:42  tparker
   * Initial NWIS commit
   *
@@ -49,7 +53,7 @@ public class ImportNWIS
 		stations = dataSource.getStations();
 	}
 	
-	public void importWeb(Station st, int period)
+	public void importWeb2(Station st, int period)
 	{
 		List<DataType> dataTypes = new ArrayList<DataType>();
 		logger = Log.getLogger("gov.usgs.vdx");
@@ -159,6 +163,102 @@ public class ImportNWIS
 			for (DataType dt : dataTypes)
 				dataSource.insertDataType(dt);
 
+			System.out.println();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();	
+		}
+	}
+	
+	public void importWeb(Station st, int period)
+	{
+		List<DataType> dataTypes = new ArrayList<DataType>();
+		logger = Log.getLogger("gov.usgs.vdx");
+		String fn = params.getString("url") + "&period=" + period + "&site_no=" + st.getSiteNo();
+		
+		try
+		{
+			ResourceReader rr = ResourceReader.getResourceReader(fn);
+			if (rr == null)
+				return;
+			logger.info("importing: " + fn);
+			SimpleDateFormat dateIn;
+			
+			dateIn = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+			dateIn.setTimeZone(TimeZone.getTimeZone(st.getTz()));
+			
+			String s = rr.nextLine();
+			Pattern p;
+			Matcher m;
+			
+			// match header
+			//p = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
+			p = Pattern.compile("^#\\s+(\\d+)\\s+(\\d+)\\s+(.*)$");
+			Pattern p1 = Pattern.compile("^#.*$");
+			while (s != null && p1.matcher(s).matches())
+			{
+				m = p.matcher(s);
+				if (m.matches())
+				{
+					int dataType = Integer.parseInt(m.group(2));
+					String name = m.group(3);
+					dataTypes.add(new DataType(dataType, name));
+				}
+				
+				s = rr.nextLine();
+			}
+			
+			// parse column name row 
+			String[] ss = s.split("\t");
+			for (int i = 0; i < dataTypes.size(); i++)
+			{
+				int index = i * 2 + 3;
+				int id = Integer.parseInt(ss[index].substring(3));
+				
+				if (dataTypes.get(i).getId() != id)
+				{
+					DataType t;
+					for (int j = i; j < dataTypes.size(); j++)
+					{
+						if (dataTypes.get(j).getId() == id)
+						{
+							t = dataTypes.get(i);
+							dataTypes.set(i, dataTypes.get(j));
+							dataTypes.set(j, t);
+						}
+						
+					}
+				}										
+				i++; // discard _cd column
+			}
+			
+			s = rr.nextLine(); // discard collumn definition row
+
+			// match records
+			s = rr.nextLine();
+			
+			while (s != null)
+			{
+				ss = s.split("\t");
+				
+				// assume midnight if no time given
+				if (!ss[2].contains(" "))
+					ss[2] += " 00:00";
+				
+				Date date = dateIn.parse(ss[2]);
+				for (int i=0; i < dataTypes.size(); i++)
+				{
+					int index = i * 2 + 3;
+					double reading = Double.parseDouble(ss[index]);
+					dataSource.insertRecord(date, st, dataTypes.get(i), reading);
+				}
+				s = rr.nextLine();
+			}
+			
+			for (DataType dt : dataTypes)
+				dataSource.insertDataType(dt);
+			
 			System.out.println();
 		}
 		catch (Exception e)
