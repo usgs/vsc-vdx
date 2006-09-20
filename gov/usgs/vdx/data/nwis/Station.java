@@ -9,6 +9,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/09/20 23:14:38  tparker
+ * Add active column to DB
+ *
  * Revision 1.1  2006/08/01 19:54:47  tparker
  * Create NWIS data source
  *
@@ -135,6 +138,11 @@ public class Station implements Comparable<Object>
 	public String getTz()
 	{
 		return tz;
+	}
+	
+	public boolean getActive()
+	{
+		return active;
 	}
 	
 	public Point2D.Double getLonLat()
