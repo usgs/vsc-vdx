@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.5  2006/09/20 21:17:38  tparker
+  * rewrite rdb parser
+  *
   * Revision 1.4  2006/09/15 00:33:27  tparker
   * update pattern for NWIS matching
   *
@@ -237,10 +240,9 @@ public class ImportNWIS
 
 			// match records
 			s = rr.nextLine();
-			
 			while (s != null)
 			{
-				ss = s.split("\t");
+				ss = s.split("\t", -1);
 				
 				// assume midnight if no time given
 				if (!ss[2].contains(" "))
@@ -250,7 +252,9 @@ public class ImportNWIS
 				for (int i=0; i < dataTypes.size(); i++)
 				{
 					int index = i * 2 + 3;
-					double reading = Double.parseDouble(ss[index]);
+					String r = (ss[index].length() > 0) ? ss[index] : "0";
+					
+					double reading = Double.parseDouble(r);
 					dataSource.insertRecord(date, st, dataTypes.get(i), reading);
 				}
 				s = rr.nextLine();
