@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/09/19 21:41:23  tparker
+ * lengthen site_no field
+ *
  * Revision 1.3  2006/09/19 18:02:50  tparker
  * tweak db creation name
  *
@@ -98,7 +101,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		try
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
-			PreparedStatement ps = database.getPreparedStatement("SELECT sid, org, site_no, name, lon, lat, tz FROM channels");
+			PreparedStatement ps = database.getPreparedStatement("SELECT sid, org, site_no, name, lon, lat, tz, active FROM channels");
 			ResultSet rs = ps.executeQuery();
 			while (rs.next())
 			{
@@ -109,7 +112,8 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 				double ln = rs.getDouble(5);
 				double lt = rs.getDouble(6);
 				String tz = rs.getString(7);
-				Station s = new Station(id, org, siteNo, name, ln, lt, tz);
+				boolean a = rs.getInt(8) == 0 ? false : true;
+				Station s = new Station(id, org, siteNo, name, ln, lt, tz, a);
 				result.add(s);
 			}
 			rs.close();
