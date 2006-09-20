@@ -9,6 +9,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2006/08/01 19:54:47  tparker
+ * Create NWIS data source
+ *
  *
  * @author Tom Parker
  */
@@ -21,6 +24,7 @@ public class Station implements Comparable<Object>
 	private double lon;
 	private double lat;
 	private String tz;
+	private boolean active;
 	
 	public Station()
 	{
@@ -31,6 +35,7 @@ public class Station implements Comparable<Object>
 		lon = -999;
 		lat = -999;
 		tz = "GMT";
+		active = true;
 	}
 	
 	public Station(String s)
@@ -42,9 +47,10 @@ public class Station implements Comparable<Object>
 		name = parts[6];
 		lon = Double.parseDouble(parts[1]);
 		lat = Double.parseDouble(parts[2]);
+		active = true;
 	}
 	
-	public Station(int id, String o, String s, String n, double ln, double lt, String t)
+	public Station(int id, String o, String s, String n, double ln, double lt, String t, boolean a)
 	{
 		sid = id;
 		org = o;
@@ -53,6 +59,7 @@ public class Station implements Comparable<Object>
 		lon = ln;
 		lat = lt;
 		tz = t;
+		active = a;
 	}
 	
 	public static List<Station> fromStringsToList(List<String> ss)
