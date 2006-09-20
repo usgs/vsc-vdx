@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.6  2006/09/20 22:35:48  tparker
+  * Allow for sparse results from NWIS
+  *
   * Revision 1.5  2006/09/20 21:17:38  tparker
   * rewrite rdb parser
   *
@@ -252,10 +255,8 @@ public class ImportNWIS
 				for (int i=0; i < dataTypes.size(); i++)
 				{
 					int index = i * 2 + 3;
-					String r = (ss[index].length() > 0) ? ss[index] : "0";
-					
-					double reading = Double.parseDouble(r);
-					dataSource.insertRecord(date, st, dataTypes.get(i), reading);
+					if (ss[index].length() > 0)
+						dataSource.insertRecord(date, st, dataTypes.get(i), Double.parseDouble(ss[index]));
 				}
 				s = rr.nextLine();
 			}
