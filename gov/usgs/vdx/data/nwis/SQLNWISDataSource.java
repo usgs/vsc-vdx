@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/09/20 23:14:38  tparker
+ * Add active column to DB
+ *
  * Revision 1.4  2006/09/19 21:41:23  tparker
  * lengthen site_no field
  *
@@ -406,6 +409,9 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		{
 			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getGenericData()", e);
 		}
+		
+		if (result != null)
+			result.fillSparse();
 		
 		return result;
 	}

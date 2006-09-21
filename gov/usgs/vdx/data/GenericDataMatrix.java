@@ -12,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/09/14 18:09:38  tparker
+ * Add sum method for cumulative plotting
+ *
  * Revision 1.4  2006/01/10 20:55:04  tparker
  * Add start/end time methods
  *
@@ -276,4 +279,20 @@ public class GenericDataMatrix implements BinaryDataSet
 		return (data.rows() * data.columns() * 8);	
 	}
 
+	public void fillSparse()
+	{
+		for (int i = 0; i < data.columns(); i++)
+		{
+			int j=0;
+			
+			// fill row 0 with first non-zero value
+			while (j < data.rows() && data.getQuick(j,i) == 0)
+				j++;
+			data.setQuick(0, i, data.getQuick(j, i));
+			
+			for (j=1; j < data.rows(); j++ )
+				if (data.getQuick(j, i) == 0)
+					data.setQuick(j, i, data.getQuick(j-1, i));
+		}
+	}
 }
