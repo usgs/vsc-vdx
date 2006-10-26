@@ -5,6 +5,9 @@ import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.MatrixRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
+
+import java.awt.Color;
+
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -12,6 +15,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * 
  * TODO: different axis labeling schemes.
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/07/25 16:23:33  cervelli
+ * Changes for new DefaultFrameDecorator.
+ *
  * Revision 1.2  2006/07/22 20:15:45  cervelli
  * Interim changes for conversion to FrameDecorators.
  *
@@ -30,6 +36,7 @@ public class SpectraRenderer extends MatrixRenderer
 	private boolean logPower;
 	private double maxPower;
 	private boolean autoScale;
+	private String channelTitle;
 	
 	protected FrameDecorator decorator;
 	
@@ -46,10 +53,18 @@ public class SpectraRenderer extends MatrixRenderer
 		wave = sw;
 	}
 	
+	public void setTitle(String t)
+	{
+		channelTitle = t;
+	}
+	
 	protected class DefaultSpectraFrameDecorator extends DefaultFrameDecorator
 	{
 		public DefaultSpectraFrameDecorator()
-		{}
+		{
+			this.title = channelTitle;
+			this.titleBackground = Color.WHITE;
+		}
 		
 		public void update()
 		{
