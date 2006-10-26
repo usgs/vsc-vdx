@@ -8,12 +8,16 @@ import gov.usgs.plot.Jet;
 import gov.usgs.plot.Spectrum;
 import gov.usgs.vdx.data.wave.SliceWave;
 
+import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/08/06 20:02:31  cervelli
+ * Switched to decorators.
+ *
  * Revision 1.4  2006/06/15 14:29:56  dcervelli
  * Swarm 1.3.4 changes.
  *
@@ -60,6 +64,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	protected FrameDecorator decorator;
 	
+	protected String channelTitle;
+	
 	public SpectrogramRenderer()
 	{
 		axis = new AxisRenderer(this);
@@ -93,11 +99,18 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		decorator = new DefaultWaveFrameDecorator();
 	}
 	
+	public void setTitle(String t)
+	{
+		channelTitle = t;
+	}
+	
 	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
 	{
 		public DefaultWaveFrameDecorator()
 		{
 			yAxisLabel = "Frequency (Hz)";
+			this.title = channelTitle;
+			this.titleBackground = Color.WHITE;
 		}
 	}
 	
