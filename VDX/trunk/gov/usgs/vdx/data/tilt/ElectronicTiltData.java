@@ -14,6 +14,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/11/10 01:11:42  tparker
+ * add toCSV
+ *
  * Revision 1.1  2005/10/14 20:44:07  dcervelli
  * Initial commit.
  *
@@ -153,7 +156,7 @@ public class ElectronicTiltData implements BinaryDataSet
 			sb.append(Util.j2KToDateString(tm.getQuick(i, 0)) + ",");
 			sb.append(tm.getQuick(i, 1) + ",");			
 			sb.append(vm.getQuick(i, 1) + ",");
-			sb.append(thm.getQuick(i, 1));
+			sb.append(thm.getQuick(i, 1) + "\n");
 		}
 			
 		return sb.toString();
