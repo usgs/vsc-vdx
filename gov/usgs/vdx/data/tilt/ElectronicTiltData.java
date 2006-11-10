@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.tilt;
 
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.BinaryDataSet;
 import gov.usgs.vdx.data.other.VoltageData;
 import gov.usgs.vdx.data.thermal.ThermalData;
@@ -13,6 +14,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2005/10/14 20:44:07  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
  */
 public class ElectronicTiltData implements BinaryDataSet
@@ -135,5 +139,23 @@ public class ElectronicTiltData implements BinaryDataSet
 				data.setQuick(i, j, bb.getDouble());
 		}
 		setFromFullMatrix(data);
+	}
+
+	public String toCSV()
+	{
+		DoubleMatrix2D tm = tiltData.getData();
+		DoubleMatrix2D thm = thermalData.getData();
+		DoubleMatrix2D vm = voltageData.getData();
+
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < tiltData.rows(); i++)
+		{
+			sb.append(Util.j2KToDateString(tm.getQuick(i, 0)) + ",");
+			sb.append(tm.getQuick(i, 1) + ",");			
+			sb.append(vm.getQuick(i, 1) + ",");
+			sb.append(thm.getQuick(i, 1));
+		}
+			
+		return sb.toString();
 	}
 }
