@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing hypo71 format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2006/11/18 00:49:45  tparker
+ * initial commit
+ *
  *
  *
  *
@@ -61,7 +64,7 @@ public class ImportH71 extends Importer
 
 				// LAT
 				double latdeg = Double.parseDouble(s.substring(19, 22).trim());
-				double latmin = Double.parseDouble(s.substring(23, 28).trim()) / 100;
+				double latmin = Double.parseDouble(s.substring(23, 28).trim());
 				double lat = latdeg + latmin / 60.0d;
 				char ns = s.charAt(22);
 				if (ns == 'S')
@@ -71,9 +74,9 @@ public class ImportH71 extends Importer
 				// LON
 				double londeg = Double.parseDouble(s.substring(28, 32).trim());
 				char ew = s.charAt(32);
-				double lonmin = Double.parseDouble(s.substring(33, 38).trim()) / 100;
+				double lonmin = Double.parseDouble(s.substring(33, 38).trim());
 				double lon = londeg + lonmin / 60.0d;
-				if (ew == 'W')
+				if (ew != 'W')
 					lon *= -1;
 				
 				// DEPTH
@@ -85,6 +88,7 @@ public class ImportH71 extends Importer
 				if (!s.substring(45,46).equals(" "))
 					throw new Exception("corrupt data at column 46");
 
+				System.out.println("HC: " + j2ksec + " : " + lon + " : " + lat + " : " + depth + " : " + mag);
 				Hypocenter hc = new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
 				hypos.add(hc);
 			}
