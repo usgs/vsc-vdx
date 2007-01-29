@@ -1,5 +1,8 @@
 <!--
 $Log: not supported by cvs2svn $
+Revision 1.3  2005/09/21 19:26:09  dcervelli
+Added pinnacle.jar.
+
 Revision 1.2  2005/09/03 21:10:41  dcervelli
 Fixed classpath.
 
@@ -28,7 +31,7 @@ jar -- generates new ${jarfile}
 	</target>
 
 	<target name="compile" depends="init" description="compile the source">
-		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" debug="on"/>
+		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" target="1.5" debug="on"/>
 	</target>
 
 	<target name="jar" depends="compile">
