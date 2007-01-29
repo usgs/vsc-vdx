@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/09/21 18:41:02  tparker
+ * kludge to deal with sparse data
+ *
  * Revision 1.5  2006/09/20 23:14:38  tparker
  * Add active column to DB
  *
@@ -62,11 +65,12 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 					"org VARCHAR(4) NOT NULL," +
 					"site_no VARCHAR(32) UNIQUE NOT NULL," +
 					"name VARCHAR(255), " + 
-					"lon DOUBLE, lat DOUBLE, tz VARCHAR(12))");
+					"lon DOUBLE, lat DOUBLE, tz VARCHAR(12), active TINYINT(1))");
 			st.execute(
 					"CREATE TABLE data_types (type INT PRIMARY KEY," +
 					"name VARCHAR(50))");
 			return true;
+			
 		}
 		catch (SQLException e)
 		{
@@ -124,6 +128,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		catch (Exception e)
 		{
 			database.getLogger().log(Level.SEVERE, "Could not get station list.");
+			database.getLogger().log(Level.SEVERE, e.toString());
 		}
 		return result;
 	}
@@ -410,8 +415,8 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getGenericData()", e);
 		}
 		
-		if (result != null)
-			result.fillSparse();
+//		if (result != null)
+//			result.fillSparse();
 		
 		return result;
 	}
