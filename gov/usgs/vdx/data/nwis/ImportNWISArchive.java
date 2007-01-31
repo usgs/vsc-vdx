@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.2  2007/01/31 06:42:26  tparker
+  * fix data pattern and EOF detection
+  *
   * Revision 1.1  2007/01/31 00:03:26  tparker
   * Add ingestor for NWIS archive style data
   *
@@ -110,7 +113,7 @@ public class ImportNWISArchive
 			
 			SimpleDateFormat dateIn = new SimpleDateFormat("yyyyMMdd HHmmss");
 			dateIn.setTimeZone(TimeZone.getTimeZone(st.getTz()));
-			Pattern dataPattern = Pattern.compile("^(\\d{8})\\s+(\\d{6})\\s+\\w{3}\\s+([\\d.]+)\\s+.*$");
+			Pattern dataPattern = Pattern.compile("^(\\d{8})\\s+(\\d{6})\\s+\\w{3}\\s+([\\d\\.]+)\\s+.*$");
 			Matcher dataMatcher = dataPattern.matcher(s);
 			while (s != null && dataMatcher.matches())
 			{
