@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2007/01/29 21:55:56  tparker
+ * Disable filling sparse data. Causes trouble for precip
+ *
  * Revision 1.6  2006/09/21 18:41:02  tparker
  * kludge to deal with sparse data
  *
@@ -132,6 +135,39 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		}
 		return result;
 	}
+
+	public Station getStation(String orgIn, String siteNoIn)
+	{
+		Station s = null;
+		try
+		{
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement(
+					"SELECT sid, org, site_no, name, lon, lat, tz, active FROM channels"
+					+ " where org='" + orgIn + "' and site_no='" + siteNoIn + "';"
+					);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			
+			int id = rs.getInt(1);
+			String org = rs.getString(2);
+			String siteNo = rs.getString(3);
+			String name = rs.getString(4);
+			double ln = rs.getDouble(5);
+			double lt = rs.getDouble(6);
+			String tz = rs.getString(7);
+			boolean a = rs.getInt(8) == 0 ? false : true;
+
+			s = new Station(id, org, siteNo, name, ln, lt, tz, a);
+			rs.close();
+		}
+		catch (Exception e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not get station list.");
+			database.getLogger().log(Level.SEVERE, e.toString());
+		}
+		return s;
+	}
 	
 	public List<DataType> getDataTypes()
 	{
@@ -217,19 +253,31 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 	
 	public void insertRecord(Date d, Station station, DataType dt, double dd)
 	{
+		insertRecord(d, station, dt, dd, false);
+	}
+	
+	public void insertRecord(Date d, Station station, DataType dt, double dd, boolean r)
+	{
 		
 		System.out.print(".");
-	
+		
 		String stationTable = station.getOrg()+station.getSiteNo();
 		String dbName = name + "$" + DATABASE_NAME;
 		
 		if (! database.tableExists(dbName, stationTable))
 			createStationTable(stationTable);
-
+		
 		try
 		{
 			database.useDatabase(dbName);
-			PreparedStatement ps = database.getPreparedStatement("INSERT IGNORE INTO " + stationTable + " (date, dataType, value) VALUES (?,?,?)");
+			String sql;
+			if (r)
+				sql = "REPLACE INTO ";
+			else
+				sql = "INSERT IGNORE INTO ";
+			
+			sql +=  stationTable + " (date, dataType, value) VALUES (?,?,?)";
+			PreparedStatement ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, Util.dateToJ2K(d));
 			ps.setInt(2, dt.getId());
 			ps.setDouble(3, dd);
@@ -239,7 +287,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 		{
 			database.getLogger().log(Level.SEVERE, "Could not insert record.", e);
 		}
-
+		
 	}
 	
 	public int insertChannel(String code, String name, double lon, double lat)
