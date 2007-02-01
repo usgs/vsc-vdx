@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.8  2006/09/20 23:30:19  tparker
+  * only import active stations
+  *
   * Revision 1.7  2006/09/20 22:51:34  tparker
   * Fix null reading bug
   *
@@ -307,6 +310,10 @@ public class ImportNWIS
 			period = Integer.parseInt(args.get("-p"));
 		
 		ImportNWIS in = new ImportNWIS(cf);
+		List<String> files = args.unused();
+
+		if (files.size() > 0)
+			
 		for (Station station : in.stations)
 			in.importWeb(station, period);
 

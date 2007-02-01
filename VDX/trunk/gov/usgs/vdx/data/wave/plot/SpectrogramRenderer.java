@@ -15,6 +15,9 @@ import java.awt.image.MemoryImageSource;
 
 /**
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/10/26 01:04:44  dcervelli
+ * Changes for labeling.
+ *
  * Revision 1.5  2006/08/06 20:02:31  cervelli
  * Switched to decorators.
  *
@@ -111,6 +114,11 @@ public class SpectrogramRenderer extends ImageDataRenderer
 			yAxisLabel = "Frequency (Hz)";
 			this.title = channelTitle;
 			this.titleBackground = Color.WHITE;
+		}
+		
+		public void setYAxisLabel(String s)
+		{
+			yAxisLabel = s;
 		}
 	}
 	
@@ -315,6 +323,12 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public void setYLabel(int i)
 	{
 		yLabel = i;
+	}
+
+	public void setYAxisLabel(String s)
+	{
+		if (decorator instanceof DefaultWaveFrameDecorator)
+			((DefaultWaveFrameDecorator)decorator).setYAxisLabel(s);
 	}
 
 	public void setXLabel(int i)
