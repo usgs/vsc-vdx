@@ -4,11 +4,15 @@ import gov.usgs.plot.Plot;
 import gov.usgs.vdx.data.heli.HelicorderData;
 
 import java.awt.Color;
+import java.util.TimeZone;
 
 /**
  * A class that encapsulated the settings for a HelicorderRenderer.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/09/22 20:53:24  dcervelli
+ * Added largeChannelDisplay.
+ *
  * Revision 1.2  2005/08/29 19:34:49  tparker
  * Convert barMult to public float for auto-scale slider mod
  *
@@ -46,6 +50,7 @@ public class HelicorderSettings
 
 	public String timeZoneAbbr = "GMT";
 	public double timeZoneOffset = 0;
+	public TimeZone timeZone = TimeZone.getTimeZone("GMT");
 	
 	public boolean minimumAxis = false;
 	public boolean largeChannelDisplay = false;
@@ -71,8 +76,9 @@ public class HelicorderSettings
 		hr.setHelicorderExtents(startTime, endTime, -1 * Math.abs(barRange), Math.abs(barRange));
 		hr.setClipValue(clipValue);
 		hr.setShowClip(showClip);
-		hr.setTimeZoneAbbr(timeZoneAbbr);
-		hr.setTimeZoneOffset(timeZoneOffset);
+		hr.setTimeZone(timeZone);
+//		hr.setTimeZoneAbbr(timeZoneAbbr);
+//		hr.setTimeZoneOffset(timeZoneOffset);
 		hr.setLargeChannelDisplay(largeChannelDisplay);
 		if (minimumAxis)
 			hr.createMinimumAxis();

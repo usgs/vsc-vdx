@@ -33,6 +33,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  2006/08/16 18:10:05  cervelli
+ * Added transparency to kiosk labels, made font slightly smaller
+ *
  * Revision 1.11  2006/08/12 01:13:32  dcervelli
  * Uses decorators now.
  *
@@ -100,6 +103,9 @@ public class HelicorderRenderer extends FrameRenderer
 		new Color[] {new Color(0, 0, 255), new Color(0, 0, 205), new Color(0, 0, 155), new Color(0, 0, 105)};
 		
 	private TimeZone timeZone = TimeZone.getTimeZone("UTC");
+	
+//	private double timeZoneOffset;
+//	private String timeZoneAbbr;
 	
 	private int clipValue = 3000;
 	private boolean showClip = false;
@@ -261,7 +267,8 @@ public class HelicorderRenderer extends FrameRenderer
 
 	public void setTimeZone(TimeZone tz)
 	{
-		timeZone = tz;
+		if (tz != null)
+			timeZone = tz;
 	}
 	
 	public void setTimeZoneAbbr(String s)
