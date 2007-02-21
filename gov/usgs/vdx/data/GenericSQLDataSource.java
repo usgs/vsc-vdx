@@ -11,6 +11,9 @@ import java.util.Map;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2006/04/09 18:22:29  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.3  2005/10/21 21:21:39  tparker
  * Roll back changes related to Bug #77
  *
@@ -45,7 +48,13 @@ public class GenericSQLDataSource extends SQLDataSource
 		String vdxHost = params.getString("vdx.host");
 		String vdxName = params.getString("vdx.name");
 		name = params.getString("vdx.databaseName");
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+		String user = params.getString("vdx.user");
+		if (user == null)
+			user = "vdx";
+		String password = params.getString("vdx.password");
+		if (password == null)
+			password = "vdx";
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=" + user + "&password=" + password, vdxName);
 	}
 
 	public RequestResult getData(Map<String, String> params)
