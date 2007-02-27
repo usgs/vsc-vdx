@@ -18,6 +18,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.11  2006/10/26 01:04:44  dcervelli
+ * Changes for labeling.
+ *
  * Revision 1.10  2006/07/25 16:23:22  cervelli
  * Changes for new DefaultFrameDecorator.
  *
@@ -192,7 +195,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		if (decorator == null)
 			createDefaultFrameDecorator();
-		
+		((DefaultFrameDecorator)decorator).yAxisLabel = yLabel;
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
 		decorator.decorate(this);
 	}
