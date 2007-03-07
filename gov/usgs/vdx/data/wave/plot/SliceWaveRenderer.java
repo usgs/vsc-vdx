@@ -18,6 +18,9 @@ import java.awt.geom.Rectangle2D;
  * A renderer for wave time series.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.15  2007/03/06 21:07:47  tparker
+ * tweak title catch
+ *
  * Revision 1.14  2007/03/06 20:05:43  tparker
  * Gracefully deal with lack of title
  *
@@ -194,15 +197,8 @@ public class SliceWaveRenderer extends FrameRenderer
 		public DefaultWaveFrameDecorator()
 		{
 			yAxisLabel = yLabel;
-			try
-			{
-				title = SliceWaveRenderer.this.title;
-			}
-			catch (Throwable t)
-			{
-				title = "";
-			}
-				titleBackground = Color.WHITE;
+			title = SliceWaveRenderer.this.title;
+			titleBackground = Color.WHITE;
 			// TODO: should probably have x-axis label be "time"
 		}
 	}
