@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.9  2007/02/01 20:22:44  tparker
+  * correct axis labeling
+  *
   * Revision 1.8  2006/09/20 23:30:19  tparker
   * only import active stations
   *
@@ -63,125 +66,7 @@ public class ImportNWIS
 		dataSource.initialize(params);
 		//dataSource.setName(params.getString("vdx.name"));
 		stations = dataSource.getStations();
-	}
-	
-	public void importWeb2(Station st, int period)
-	{
-		List<DataType> dataTypes = new ArrayList<DataType>();
-		logger = Log.getLogger("gov.usgs.vdx");
-		String fn = params.getString("url") + "&period=" + period + "&site_no=" + st.getSiteNo();
-		
-		try
-		{
-			ResourceReader rr = ResourceReader.getResourceReader(fn);
-			if (rr == null)
-				return;
-			logger.info("importing: " + fn);
-			SimpleDateFormat dateIn;
-			
-			dateIn = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-			dateIn.setTimeZone(TimeZone.getTimeZone(st.getTz()));
-			
-			String s = rr.nextLine();
-			boolean next = false;
-			Pattern p;
-			Matcher m;
-			
-			// match header
-			//p = Pattern.compile("^#\\s+\\*(\\d+)\\s+(\\d+)\\s+-\\s+(.*)$");
-			p = Pattern.compile("^#\\s+(\\d+)\\s+(\\d+)\\s+(.*)$");
-			Pattern p1 = Pattern.compile("^#.*$");
-			while (s != null && next == false)
-			{
-				m = p.matcher(s);
-				if (m.matches())
-				{
-					int dataType = Integer.parseInt(m.group(2));
-					String name = m.group(3);
-					dataTypes.add(new DataType(dataType, name));
-				}
-				
-				s = rr.nextLine();
-				Matcher m1 = p1.matcher(s);
-				if (!m1.matches())
-					next = true;
-			}
-			next = false;
-			
-			//match key
-			String pattern = "^agency_cd\\s+site_no\\s+datetime";
-			for (int i = 0; i < dataTypes.size(); i++)
-				pattern += "\\s+\\d{2}_(\\d{5})\\s+\\d{2}_\\d{5}_cd";
-			pattern += ".*$";
-			p = Pattern.compile(pattern);
-			
-			while(s != null && next == false)
-			{
-				m = p.matcher(s);
-				
-				if (m.matches())
-				{
-					for (int i = 0; i < dataTypes.size(); i++)
-					{
-						int id = Integer.parseInt(m.group(i+1));
-						if (dataTypes.get(i).getId() != id)
-						{
-							DataType t;
-							for (int j = i; j < dataTypes.size(); j++)
-							{
-								if (dataTypes.get(j).getId() == id)
-								{
-									t = dataTypes.get(i);
-									dataTypes.set(i, dataTypes.get(j));
-									dataTypes.set(j, t);
-								}
-										
-							}
-						}							
-					}
-					next = true;
-				}
-				s = rr.nextLine();
-			}
-			
-			// match records
-			next = false;
-			pattern = "^" + st.getOrg() + "\\s+" + st.getSiteNo() + "\\s+";
-			pattern += "(\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2})\\s+";
-			for (int i = 0; i < dataTypes.size(); i++)
-				pattern += "([\\d.]+)\\s+";
-
-			Pattern recordPattern = Pattern.compile(pattern);
-
-			while (s != null)
-			{
-				Matcher recordMatcher = recordPattern.matcher(s);
-				
-				if (recordMatcher.matches())
-				{
-					Date date = dateIn.parse(recordMatcher.group(1));
-					for (int i = 0; i < dataTypes.size(); i++)
-					{
-						double reading = Double.parseDouble(recordMatcher.group(i+2));
-						dataSource.insertRecord(date, st, dataTypes.get(i), reading);
-					}
-				} else {
-					System.out.println("Looking for " + pattern);
-					System.out.println("no match on " + s);
-				}
-				s = rr.nextLine();
-			}
-
-			for (DataType dt : dataTypes)
-				dataSource.insertDataType(dt);
-
-			System.out.println();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();	
-		}
-	}
+	}	
 	
 	public void importWeb(Station st, int period)
 	{
@@ -312,8 +197,6 @@ public class ImportNWIS
 		ImportNWIS in = new ImportNWIS(cf);
 		List<String> files = args.unused();
 
-		if (files.size() > 0)
-			
 		for (Station station : in.stations)
 			in.importWeb(station, period);
 
