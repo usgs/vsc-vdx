@@ -10,6 +10,7 @@ import gov.usgs.vdx.data.generic.SQLGenericDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.vdx.data.nwis.SQLNWISDataSource;
+import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
 import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 
@@ -32,6 +33,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/08/01 17:52:35  tparker
+ * Add tableExist method
+ *
  * Revision 1.6  2006/04/09 18:26:05  dcervelli
  * ConfigFile/type safety changes.
  *
@@ -425,6 +429,7 @@ public class VDXDatabase
 				sources.put("createetilt", new SQLElectronicTiltDataSource());
 				sources.put("creategeneric", new SQLGenericDataSource());
 				sources.put("createnwis", new SQLNWISDataSource());
+				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null)
 					createDatabase(db, args, sds);
