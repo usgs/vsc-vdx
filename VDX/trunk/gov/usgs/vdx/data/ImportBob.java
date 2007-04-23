@@ -11,6 +11,9 @@ import java.util.GregorianCalendar;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2007/04/23 22:36:22  dcervelli
+ * Only keeps good samples.
+ *
  * Revision 1.2  2007/04/23 22:14:58  dcervelli
  * Fixed dt computation.
  *
@@ -18,7 +21,7 @@ import java.util.GregorianCalendar;
  * Initial commit.
  *
  * @author Dan Cervelli
- * @version $Id: ImportBob.java,v 1.3 2007-04-23 22:36:22 dcervelli Exp $
+ * @version $Id: ImportBob.java,v 1.4 2007-04-23 22:37:19 dcervelli Exp $
  */
 public class ImportBob
 {
@@ -54,7 +57,7 @@ public class ImportBob
 		    for (int i = 0; i < numRecords * samplesPerRecord; i++)
 		    {
 		    	float value = Float.intBitsToFloat(Util.swap(dis.readInt()));
-		    	if (value == -998.0f)
+		    	if (value != -998.0f)
 		    	{
 					t[goodCount] = time;
 					d[goodCount] = value;
