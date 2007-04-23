@@ -11,14 +11,18 @@ import java.util.GregorianCalendar;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2007/04/23 22:14:58  dcervelli
+ * Fixed dt computation.
+ *
  * Revision 1.1  2007/04/23 21:54:04  dcervelli
  * Initial commit.
  *
  * @author Dan Cervelli
- * @version $Id: ImportBob.java,v 1.2 2007-04-23 22:14:58 dcervelli Exp $
+ * @version $Id: ImportBob.java,v 1.3 2007-04-23 22:36:22 dcervelli Exp $
  */
 public class ImportBob
 {
+	public int goodCount;
 	public double[] t;
 	public float[] d;
 	
@@ -44,14 +48,22 @@ public class ImportBob
 		    d = new float[numRecords * samplesPerRecord];
 		    System.err.println("records: " + numRecords);
 		    System.err.println("record size: " + absoluteRecordSize);
+		    System.err.println("expected samples: " + numRecords * samplesPerRecord);
 		    System.err.println("expected filesize: " + absoluteRecordSize * (numRecords + 1));
+		    goodCount = 0;
 		    for (int i = 0; i < numRecords * samplesPerRecord; i++)
 		    {
-				t[i] = time;
-				d[i] = Float.intBitsToFloat(Util.swap(dis.readInt()));
+		    	float value = Float.intBitsToFloat(Util.swap(dis.readInt()));
+		    	if (value == -998.0f)
+		    	{
+					t[goodCount] = time;
+					d[goodCount] = value;
+					goodCount++;
+//					System.out.println(t[i] + "," + d[i]);
+		    	}
 				time += dt;
-//				System.out.println(t[i] + "," + d[i]);
 			}
+		    System.err.println("good count: " + goodCount);
 		    dis.close();
 		}
 		catch (Exception e)
