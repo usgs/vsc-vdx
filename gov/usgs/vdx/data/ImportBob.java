@@ -11,8 +11,11 @@ import java.util.GregorianCalendar;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/04/23 21:54:04  dcervelli
+ * Initial commit.
+ *
  * @author Dan Cervelli
- * @version $Id: ImportBob.java,v 1.1 2007-04-23 21:54:04 dcervelli Exp $
+ * @version $Id: ImportBob.java,v 1.2 2007-04-23 22:14:58 dcervelli Exp $
  */
 public class ImportBob
 {
@@ -27,7 +30,7 @@ public class ImportBob
 			int absoluteRecordSize = Util.swap(dis.readShort());
 			int samplesPerRecord = absoluteRecordSize / 4;
 			
-			double dt = 86400.0 / absoluteRecordSize;
+			double dt = 86400.0 / samplesPerRecord;
 			double time = Time.parse("yyyyMMDD", year + "0101");
 			dis.readShort(); // skip remaining 16-bits
 			dis.skip(absoluteRecordSize - 4);
