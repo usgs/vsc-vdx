@@ -22,6 +22,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/04/22 06:42:26  tparker
+ * Initial ewrsam commit
+ *
  * Revision 1.5  2006/04/09 18:26:05  dcervelli
  * ConfigFile/type safety changes.
  *
@@ -55,28 +58,6 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	{
 			String db = name + "$" + DATABASE_NAME;
 			return (createDefaultDatabase(db, 0, true, false));
-			
-//		String sql = "";
-//		try
-//		{
-//			String db = name + "$" + DATABASE_NAME;
-//			if (!createDefaultDatabase(db, 0, true, false))
-//				return false;
-//			
-//			Statement st = database.getStatement();
-//			database.useDatabase(db);
-//			sql = 
-//				"CREATE TABLE channels (sid INT PRIMARY KEY AUTO_INCREMENT," +
-//				"code varchar(50) default NULL," +
-//				"lon DOUBLE, lat DOUBLE, tz VARCHAR(12), active TINYINT(1))";			
-//			st.execute(sql);
-//			return true;
-//		}
-//		catch (SQLException e)
-//		{
-//			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.createDatabase() failed. SQL: " + sql, e);
-//		}
-//		return false;
 	}
 
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
@@ -112,7 +93,6 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	public RequestResult getData(Map<String, String> params)
 	{
 		
-		System.out.println("Here I am...");
 		System.out.println(params.toString());
 		String action = params.get("action");
 		
@@ -120,7 +100,6 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		if (action == null)
 			action = "data";
 		
-		System.out.println("Action = " + action);
 		if (action.equals("selectors"))
 		{
 			List<String> s = getSelectors();
