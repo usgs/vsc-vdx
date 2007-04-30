@@ -1,9 +1,11 @@
 package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
+import gov.usgs.vdx.data.nwis.DataType;
+import gov.usgs.vdx.data.nwis.Station;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -12,32 +14,24 @@ import gov.usgs.vdx.server.TextResult;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import cern.colt.matrix.DoubleMatrix2D;
+
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2007/04/25 08:03:16  tparker
+ * cleanup
+ *
  * Revision 1.1  2007/04/22 06:42:26  tparker
  * Initial ewrsam commit
  *
- * Revision 1.5  2006/04/09 18:26:05  dcervelli
- * ConfigFile/type safety changes.
- *
- * Revision 1.4  2005/11/04 18:50:28  dcervelli
- * Fixed bug where columns and metadata not loaded before query.
- *
- * Revision 1.3  2005/10/21 21:19:55  tparker
- * Roll back changes related to Bug #77
- *
- * Revision 1.1  2005/10/20 05:07:30  dcervelli
- * Initial commit.
- *
- * @author Dan Cervelli
+ * @author Tom Parker
  */
 public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 {
@@ -48,10 +42,16 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	
 	public void initialize(ConfigFile params)
 	{
+		String url = params.getString("vdx.url");
 		String vdxHost = params.getString("vdx.host");
 		String vdxName = params.getString("vdx.name");
 		name = params.getString("vdx.databaseName");
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+		
+		if (url == null)
+			url = "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx";
+		
+		System.out.println("Connecting to " + url);
+		database = new VDXDatabase("com.mysql.jdbc.Driver", url, vdxName);
 	}
 	
 	public boolean createDatabase()
@@ -63,9 +63,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 
-		String[] cols = new String[2];
-		cols[0] = "t";
-		cols[1] = "d";
+		String[] cols = new String[1];
+//		cols[0] = "t";
+		cols[0] = "d";
 		
 		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
 	}
@@ -113,7 +113,6 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			double st = Double.parseDouble(params.get("st"));
 			double et = Double.parseDouble(params.get("et"));
 			RSAMData data = getEWRSAMData(cid, p, st, et);
-System.out.println("Getting data for " + cid);
 			if (data != null)
 				return new BinaryResult(data);
 		}
@@ -159,5 +158,37 @@ System.out.println("Getting data for " + cid);
 			database.getLogger().log(Level.SEVERE, "SQLEWRSAMDataSource.getEWRSAMData()", e);
 		}
 		return result;
+	}
+	
+	public void insertData(String channel, DoubleMatrix2D data, boolean r)
+	{
+		String dbName = name + "$" + DATABASE_NAME;
+
+		System.out.println("dbName = " + dbName);
+		if (! database.tableExists(dbName, channel))
+			createChannel(channel, channel, -999, -999);
+		
+		try
+		{
+			database.useDatabase(dbName);
+			String sql;
+			if (r)
+				sql = "REPLACE INTO ";
+			else
+				sql = "INSERT IGNORE INTO ";
+			
+			sql +=  channel + " (t, d) VALUES (?,?)";
+			PreparedStatement ps = database.getPreparedStatement(sql);
+			for (int i=0; i < data.rows(); i++)
+			{
+				ps.setDouble(1, data.getQuick(i, 0));
+				ps.setDouble(2, data.getQuick(i, 1));
+				ps.execute();
+			}
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "Could not insert data.", e);
+		}
 	}
 }
