@@ -11,11 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import cern.colt.matrix.DoubleMatrix2D;
+
 /**
  * 
  * TODO: use PreparedStatements.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.4  2005/09/21 18:13:58  dcervelli
  * Added defaultChannelExists().
  *
@@ -144,12 +149,14 @@ abstract public class SQLDataSource
 				sql += ",tid INT DEFAULT 1 NOT NULL)";
 			else
 				sql += ")";
+
 			st.execute(sql);
 			return true;
 		}
 		catch (SQLException e)
 		{
 			database.getLogger().log(Level.SEVERE, "SQLDataSource.createDefaultChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
+			e.printStackTrace();
 		}
 		return false;
 	}
@@ -219,4 +226,15 @@ abstract public class SQLDataSource
 		}
 		return false;
 	}
+	
+	public void insertData(String channel, DoubleMatrix2D data)
+	{
+		insertData(channel, data, false);
+	}
+
+	public void insertData(String channel, DoubleMatrix2D data, boolean b)
+	{
+		System.out.println("Data import not available for this source.");
+	}
+
 }
