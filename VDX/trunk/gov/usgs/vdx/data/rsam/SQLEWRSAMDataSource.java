@@ -26,6 +26,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2007/06/06 20:23:11  tparker
+ * EWRSAM rewrite
+ *
  * Revision 1.3  2007/04/30 05:28:12  tparker
  * initial commit for rsam SQL Bob importer
  *
@@ -42,6 +45,11 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	private static final String DATABASE_NAME = "ewrsam";
 	
 	private String tableSuffix;
+	public SQLEWRSAMDataSource()
+	{
+		super();
+	}
+	
 	public SQLEWRSAMDataSource(String s)
 	{
 		super();
