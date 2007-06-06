@@ -14,6 +14,7 @@ import gov.usgs.vdx.server.TextResult;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,6 +26,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2007/04/30 05:28:12  tparker
+ * initial commit for rsam SQL Bob importer
+ *
  * Revision 1.2  2007/04/25 08:03:16  tparker
  * cleanup
  *
@@ -37,9 +41,18 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 {
 	private static final String DATABASE_NAME = "ewrsam";
 	
-	private RSAMData rd;
-	private String querySQL;
-	
+	private String tableSuffix;
+	public SQLEWRSAMDataSource(String s)
+	{
+		super();
+		
+		if (s.equals("Events"))
+			tableSuffix = "_events";
+		else if (s.equals("Values"))
+			tableSuffix = "_values";
+	}
+
+
 	public void initialize(ConfigFile params)
 	{
 		String url = params.getString("vdx.url");
@@ -62,12 +75,34 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
+		if (channelName == null)
+			channelName = "";
 
-		String[] cols = new String[1];
-//		cols[0] = "t";
-		cols[0] = "d";
+		try
+		{
+			Statement st = database.getStatement();
+			database.useDatabase(name + "$" + DATABASE_NAME);
+
+			st.execute("INSERT INTO channels (code, name, lon, lat)" +
+				" VALUES ('" + channel + "','" + channelName + "'," + 
+				lon + "," + lat + ")");
 		
-		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
+			st.execute("CREATE TABLE " + channel + "_values" + 
+				" (t DOUBLE PRIMARY KEY," +
+				" d DOUBLE DEFAULT 0 NOT NULL)");
+
+			st.execute("CREATE TABLE " + channel + "_events" + 
+				" (t DOUBLE PRIMARY KEY," +
+				" d DOUBLE DEFAULT 0 NOT NULL)");
+			
+			return true;
+		}
+		catch (SQLException e)
+		{
+			database.getLogger().log(Level.SEVERE, "SQLDataSource.createDefaultChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	public boolean databaseExists()
@@ -77,7 +112,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 
 	public String getType()
 	{
-		return "rsam";
+		return "ewrsam";
 	}
 
 	public List<String> getSelectors()
@@ -112,16 +147,17 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			int p = pd.intValue();
 			double st = Double.parseDouble(params.get("st"));
 			double et = Double.parseDouble(params.get("et"));
-			RSAMData data = getEWRSAMData(cid, p, st, et);
+			EWRSAMData data = getEWRSAMData(cid, p, st, et);
+			
 			if (data != null)
 				return new BinaryResult(data);
 		}
 		return null;
 	}
 
-	public RSAMData getEWRSAMData(int cid, int p, double st, double et)
+	public EWRSAMData getEWRSAMData(int cid, int p, double st, double et)
 	{
-		RSAMData result = null;
+		EWRSAMData result = null;
 		try
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
@@ -132,10 +168,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			String code = rs.getString(1);
 			rs.close();
 
-			String sql = "SELECT t+?/2,avg(d) FROM " + code + " where t >= ? and t <= ? group by floor(t/?);";
+			String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t/?);";
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, p);
-//			ps.setString(2, code);
 			ps.setDouble(2, st);
 			ps.setDouble(3, et);
 			ps.setDouble(4, p);
@@ -149,9 +184,42 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 				pts.add(d);
 			}
 			rs.close();
+			System.out.println("Found " + pts.size() + " values");
 			
-			if (pts.size() > 0)
-				result = new RSAMData(pts);
+			sql = "SELECT t, d FROM " + code + "_events" + " where t >= ? and t <= ? and d != 0;";
+			ps = database.getPreparedStatement(sql);
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
+			rs = ps.executeQuery();
+			List<double[]> events = new ArrayList<double[]>();
+			double count = 0;
+
+			double[] d = new double[2];
+			d[0] = st;
+			d[1] = count;
+			events.add(d);
+		
+			while (rs.next())
+			{
+				double c = rs.getDouble(2);
+				double t = rs.getDouble(1);
+				for (int i = 0; i < c; i++)
+				{
+					d = new double[2];
+					d[0] = t;
+					d[1] = ++count;
+					events.add(d);
+				}
+			}
+			rs.close();
+
+			d = new double[2];
+			d[0] = et;
+			d[1] = count;
+			events.add(d);
+
+			if (pts.size() > 0 || events.size() > 0)
+				result = new EWRSAMData(pts, events);
 		}
 		catch (Exception e)
 		{
@@ -177,14 +245,17 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			else
 				sql = "INSERT IGNORE INTO ";
 			
-			sql +=  channel + " (t, d) VALUES (?,?)";
+			sql +=  channel + tableSuffix + " (t, d) VALUES (?,?)";
 			PreparedStatement ps = database.getPreparedStatement(sql);
 			for (int i=0; i < data.rows(); i++)
 			{
+				if (i % 100 == 0)
+					System.out.print(".");
 				ps.setDouble(1, data.getQuick(i, 0));
 				ps.setDouble(2, data.getQuick(i, 1));
 				ps.execute();
 			}
+			System.out.println();
 		}
 		catch (SQLException e)
 		{

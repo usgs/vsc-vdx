@@ -18,6 +18,9 @@ import java.util.Map;
  * TODO: proper logging.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/08/28 23:57:47  tparker
+ * Initial NWIS commit
+ *
  * Revision 1.6  2006/04/09 18:20:34  dcervelli
  * Broke out getData into getTextData and getBinaryData.
  *
@@ -49,6 +52,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("hypocenters", "gov.usgs.vdx.data.hypo.HypocenterList");
 		dataTypeMap.put("helicorder", "gov.usgs.vdx.data.heli.HelicorderData");
 		dataTypeMap.put("rsam", "gov.usgs.vdx.data.rsam.RSAMData");
+		dataTypeMap.put("ewrsam", "gov.usgs.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 		dataTypeMap.put("gps", "gov.usgs.vdx.data.gps.GPSData");
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
@@ -114,10 +118,10 @@ public class VDXClient extends InternetClient
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
 									try
 									{
+										System.out.println(":VDX client got type " + map.get("type"));
 										String className = dataTypeMap.get(map.get("type"));
 										BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
 										ds.fromBinary(bb);
-	//									System.out.println(ds);
 										result = ds;
 									}
 									catch (Exception e)

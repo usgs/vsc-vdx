@@ -4,6 +4,7 @@ import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Time;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.data.generic.SQLGenericDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
 
 import java.io.BufferedInputStream;
@@ -22,6 +23,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2007/04/30 05:27:32  tparker
+ * initial commit for rsam SQL Bob importer
+ *
  * Revision 1.4  2007/04/23 22:37:19  dcervelli
  * Flipped value boolean test.
  *
@@ -35,7 +39,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * Initial commit.
  *
  * @author Dan Cervelli
- * @version $Id: ImportBob.java,v 1.5 2007-04-30 05:27:32 tparker Exp $
+ * @version $Id: ImportBob.java,v 1.6 2007-06-06 20:22:55 tparker Exp $
  */
 public class ImportBob
 {
@@ -46,13 +50,14 @@ public class ImportBob
 	private static final String CONFIG_FILE = "vdx.config";
 	public ConfigFile params;
 	
-	public ImportBob(String cf, int y, String n)
+	public ImportBob(String cf, int y, String n, String t)
 	{
 		year = y;
 		params = new ConfigFile(cf);
 		params.put("vdx.databaseName", n);
 		if (params == null)
 			System.out.println("Can't parse config file " + cf);
+		params.put("type", t);
 	}
 	
 	public DoubleMatrix2D parseFile(String fn)
@@ -139,25 +144,29 @@ public class ImportBob
 		if (args.contains("-t"))
 			type = args.get("-t");
 				
-		if (args.contains("-h") || type == null)
+		if (args.contains("-h") || type == null || type == "")
 		{
-			System.err.println("java gov.usgs.vdx.data.gps.ImportNWIS [-c configFile] [-p period]");
+			System.err.println("java gov.usgs.vdx.data.gps.ImportBob [-c configFile] -n <name> -s <station> -y <year> -t <type>");
+			System.err.println("Known types: \n\tewrsamEvents \n\tewreamValues \n\tnull");
 			System.exit(-1);
 		}
 		
 		List<String> files = args.unused();
-		ImportBob in = new ImportBob(cf, year, name);
+		ImportBob in = new ImportBob(cf, year, name, type);
 		
 		Map<String, SQLDataSource> sources = new HashMap<String, SQLDataSource>();
-		sources.put("ewrsam", new SQLEWRSAMDataSource());
-		
+		sources.put("ewrsamEvents", new SQLEWRSAMDataSource("Events"));
+		sources.put("ewrsamValues", new SQLEWRSAMDataSource("Values"));
+		sources.put("null", new SQLNullDataSource());
+
 		SQLDataSource sds = sources.get(type);
+		
 		if (sds == null)
 		{
-			System.out.println("I don't know what to do with source " + type);
+			System.out.println("I don't know what to do with type " + type);
 			System.exit(-1);
 		}
-		
+
 		sds.initialize(in.params);
 		for (String f : files)
 			sds.insertData(channel, in.parseFile(f));
