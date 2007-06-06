@@ -26,6 +26,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2007/06/06 21:53:22  tparker
+ * Add constructor
+ *
  * Revision 1.4  2007/06/06 20:23:11  tparker
  * EWRSAM rewrite
  *
@@ -176,7 +179,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			String code = rs.getString(1);
 			rs.close();
 
-			String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t/?);";
+			String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t / ?);";
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, p);
 			ps.setDouble(2, st);
