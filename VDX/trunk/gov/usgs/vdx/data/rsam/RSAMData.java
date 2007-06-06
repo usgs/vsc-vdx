@@ -21,6 +21,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2006/04/04 15:50:49  dcervelli
+ * Eliminated warnings.
+ *
  * Revision 1.2  2006/01/10 20:55:20  tparker
  * Add RSAM event counts
  *
@@ -38,8 +41,8 @@ import cern.colt.matrix.DoubleMatrix2D;
 public class RSAMData extends GenericDataMatrix
 {
 	
-	private static final int MAX_BINS = 1000000;
-	DoubleMatrix2D events;
+	protected static final int MAX_BINS = 1000000;
+	protected DoubleMatrix2D events;
 
 	/** Generic empty constructor
 	 */
@@ -74,7 +77,7 @@ public class RSAMData extends GenericDataMatrix
 		return data.viewPart(0, 1, rows(), 1);
 	}
 	
-	private IAxis getHistogramAxis(BinSize bin)
+	protected IAxis getHistogramAxis(BinSize bin)
 	{
 		double startTime = getStartTime();
 		double endTime = getEndTime();
@@ -219,7 +222,6 @@ public class RSAMData extends GenericDataMatrix
 		
 		events.setQuick(eventCount+1, 0, data.get(data.rows()-1,0));
 		events.setQuick(eventCount+1, 1, eventCount);
-System.out.println("eventCount " + eventCount);
 	}
 	
 	public DoubleMatrix2D getCumulativeCounts()
