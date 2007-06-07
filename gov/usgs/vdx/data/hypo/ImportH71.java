@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing hypo71 format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2006/11/18 03:39:18  tparker
+ * Fix coord translation
+ *
  * Revision 1.1  2006/11/18 00:49:45  tparker
  * initial commit
  *
@@ -21,7 +24,7 @@ import java.util.TimeZone;
  *
  *
  * 20060913 1910 59.02 19 59.26 155 48.83   5.35 D 1.70  4 143 24.  0.01  1.0  2.1 CW      20363
- * @author Dan Cervelli
+ * @author Tom Parker
  */
 public class ImportH71 extends Importer
 {
