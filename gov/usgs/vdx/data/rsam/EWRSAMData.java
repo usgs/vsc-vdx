@@ -1,16 +1,9 @@
 package gov.usgs.vdx.data.rsam;
 
-import gov.usgs.util.Util;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.hypo.HypocenterList.BinSize;
-import hep.aida.IAxis;
-import hep.aida.ref.FixedAxis;
 import hep.aida.ref.Histogram1D;
-import hep.aida.ref.VariableAxis;
 
 import java.nio.ByteBuffer;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import cern.colt.matrix.DoubleFactory2D;
@@ -21,6 +14,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * the first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/06/06 20:23:11  tparker
+ * EWRSAM rewrite
+ *
  *
  * @author Tom Parker
  */
