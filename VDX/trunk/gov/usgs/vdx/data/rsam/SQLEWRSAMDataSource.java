@@ -26,6 +26,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2007/06/07 08:58:00  tparker
+ * Fix plot title again
+ *
  * Revision 1.7  2007/06/07 08:20:27  tparker
  * FIx plot title problem
  *
@@ -252,7 +255,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		String dbName = name + "$" + DATABASE_NAME;
 
 		System.out.println("dbName = " + dbName);
-		if (! database.tableExists(dbName, channel))
+		if (! database.tableExists(dbName, channel + "_events"))
 			createChannel(channel, channel, -999, -999);
 		
 		try
