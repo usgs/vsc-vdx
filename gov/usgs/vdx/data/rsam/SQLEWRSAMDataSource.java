@@ -26,6 +26,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2007/06/07 08:20:27  tparker
+ * FIx plot title problem
+ *
  * Revision 1.6  2007/06/06 22:48:41  tparker
  * tweak sql
  *
@@ -156,7 +159,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		}
 		else if (action.equals("data"))
 		{
-			String ch = params.get("selector");
+			int ch = Integer.parseInt(params.get("selector"));
 			Double pd = Double.parseDouble(params.get("period"));
 			int p = pd.intValue();
 			double st = Double.parseDouble(params.get("st"));
@@ -169,20 +172,28 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 
-	public EWRSAMData getEWRSAMData(String code, int p, double st, double et)
+	public EWRSAMData getEWRSAMData(int cid, int p, double st, double et)
 	{
+		
 		EWRSAMData result = null;
 		try
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
 
+			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
+			ps.setInt(1, cid);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			String code = rs.getString(1);
+			rs.close();
+
 			String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t / ?);";
-			PreparedStatement ps = database.getPreparedStatement(sql);
+			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, p);
 			ps.setDouble(2, st);
 			ps.setDouble(3, et);
 			ps.setDouble(4, p);
-			ResultSet rs = ps.executeQuery();
+			rs = ps.executeQuery();
 			List<double[]> pts = new ArrayList<double[]>();
 			while (rs.next())
 			{
