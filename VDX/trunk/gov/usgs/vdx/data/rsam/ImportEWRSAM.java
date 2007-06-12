@@ -4,16 +4,10 @@ import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.ImportBob;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.nwis.DataType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -23,20 +17,17 @@ import java.util.regex.Pattern;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/06/12 17:09:58  tparker
+ * initial commit
+ *
  * @author Tom Parker
- * @version $Id: ImportEWRSAM.java,v 1.1 2007-06-12 17:09:58 tparker Exp $
+ * @version $Id: ImportEWRSAM.java,v 1.2 2007-06-12 20:29:35 tparker Exp $
  */
 public class ImportEWRSAM 
 {
-	
-	public int goodCount;
-	public double[] t;
-	public float[] d;
-	private int year;
 	private static final String CONFIG_FILE = "importEWRSAM.config";
+	private int year;
 	public ConfigFile params;
-	Map<String, SQLDataSource> sources;
-	private String vdxConfig;
 	
 	public ImportEWRSAM(String cf, int y)
 	{
@@ -91,6 +82,7 @@ public class ImportEWRSAM
 			channel = channel.substring(0, 3);
 
 		channel = params.getString(channel);
+		
 		int fileYear = Integer.parseInt(m.group(2));
 		if ((year != -1) && (fileYear != year))
 			return;
