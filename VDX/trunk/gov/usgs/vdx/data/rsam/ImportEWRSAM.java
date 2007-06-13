@@ -3,12 +3,11 @@ package gov.usgs.vdx.data.rsam;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.ImportBob;
-import gov.usgs.vdx.data.SQLDataSource;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,11 +16,14 @@ import java.util.regex.Pattern;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2007/06/12 20:29:35  tparker
+ * cleanup
+ *
  * Revision 1.1  2007/06/12 17:09:58  tparker
  * initial commit
  *
  * @author Tom Parker
- * @version $Id: ImportEWRSAM.java,v 1.2 2007-06-12 20:29:35 tparker Exp $
+ * @version $Id: ImportEWRSAM.java,v 1.3 2007-06-13 15:44:53 tparker Exp $
  */
 public class ImportEWRSAM 
 {
@@ -106,14 +108,18 @@ public class ImportEWRSAM
  
 	public static void main(String[] as)
 	{
+		Calendar startTime = Calendar.getInstance();
 		String cf = CONFIG_FILE;
 		int y = -2;
+		
+		System.out.println("Starting import at " + startTime.toString());
 		
 		Set<String> flags = new HashSet<String>();
 		Set<String> kvs = new HashSet<String>();
 		kvs.add("-c");
 		kvs.add("-y");
 		flags.add("-a");
+		flags.add("-Y");
 
 		Arguments args = new Arguments(as, flags, kvs);
 		
@@ -122,13 +128,16 @@ public class ImportEWRSAM
 		
 		if (args.contains("-y"))
 			y = Integer.parseInt(args.get("-y"));
+		else if (args.flagged("-Y"))
+			y = startTime.get(Calendar.YEAR);
 		else if (args.flagged("-a"))
 			y = -1;
 		
 		if (args.contains("-h") || y == -2)
 		{
-			System.err.println("java gov.usgs.vdx.data.rsam.ImportEWRSAM [-c <configFile>] [-y <year> | -a]");
+			System.err.println("java gov.usgs.vdx.data.rsam.ImportEWRSAM [-c <configFile>] [-Y | -y <year> | -a]");
 			System.err.println("\t-c <configFile>\tconfig to use, Default: importEWRSAM.config");
+			System.err.println("\t-Y\timport data for this year");
 			System.err.println("\t-y <year>\timport data for given year");
 			System.err.println("\t-a\timport all data");
 			System.exit(-1);
@@ -136,5 +145,10 @@ public class ImportEWRSAM
 
 		ImportEWRSAM in = new ImportEWRSAM(cf, y);
 		in.process();
+		
+		Calendar endTime = Calendar.getInstance();
+		double ellapsedTime = (endTime.getTimeInMillis() - startTime.getTimeInMillis()) / 1000;
+		System.out.println("Import finished at " + endTime.toString());
+		System.out.println("Elapsed time: " + ellapsedTime + " seconds");
 	}
 }
