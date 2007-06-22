@@ -1,5 +1,8 @@
 <!--
 $Log: not supported by cvs2svn $
+Revision 1.6  2007/06/22 21:45:43  tparker
+Add seed-pdcc.jar
+
 Revision 1.5  2007/06/22 21:30:46  tparker
 initial commit
 
@@ -85,7 +88,7 @@ jar -- generates new ${jarfile}
 			</fileset>
 		</copy>
 		
-		<jar destfile="${bin-dir}/${dirname}/lib/vdx-bin.jar">
+		<jar destfile="${bin-dir}/${dirname}/lib/vdx.jar">
 			<fileset dir="${source}">
 				<include name="**/**.class" />	
 			</fileset>
@@ -108,8 +111,6 @@ jar -- generates new ${jarfile}
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
-		
-		<jar manifest="Manifest.txt" destfile="${bin-dir}/${dirname}/lib/vdx.jar" />
 		
 		<tar destfile="${source}/vdx-bin.tar.gz" basedir="${bin-dir}" compression="gzip" />
 		<zip destfile="${source}/vdx-bin.zip" basedir="${bin-dir}" />
