@@ -17,13 +17,14 @@ public class ImportHypoInverse extends Importer
 	public ImportHypoInverse(SQLHypocenterDataSource ds)
 	{
 		super(ds);
-		dateIn = new SimpleDateFormat("yyyyMMddHHmmsss.SS");// ss.SS");
+		dateIn = new SimpleDateFormat("yyyyMMddHHmmss.SS");
 		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 	
 	public List<Hypocenter> importResource(String resource)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(resource);
+		System.out.println("reading file:" + resource);
 		if (rr == null)
 			return null;
 		
@@ -41,8 +42,9 @@ public class ImportHypoInverse extends Importer
 				String monthDay	= s.substring(4,8);
 				String hourMin	= s.substring(8,12);
 				String sec		= s.substring(12,14);
+				String secDec	= s.substring(14,16);
 				
-				Date date		= dateIn.parse(year+monthDay+hourMin+sec);
+				Date date		= dateIn.parse(year+monthDay+hourMin+sec+"."+secDec);
 				double j2ksec	= Util.dateToJ2K(date);
 
 				// LAT
