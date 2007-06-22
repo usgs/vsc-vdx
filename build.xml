@@ -1,5 +1,8 @@
 <!--
 $Log: not supported by cvs2svn $
+Revision 1.5  2007/06/22 21:30:46  tparker
+initial commit
+
 Revision 1.4  2007/01/29 22:43:06  dcervelli
 Added JVM 1.5 target.
 
@@ -78,6 +81,7 @@ jar -- generates new ${jarfile}
 			<fileset dir="${source}/../USGS/contrib">
 				<include name="colt.jar" />
 				<include name="mysql.jar" />
+				<include name="seed-pdcc.jar" />
 			</fileset>
 		</copy>
 		
