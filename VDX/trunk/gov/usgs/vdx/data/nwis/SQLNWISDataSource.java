@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2007/01/31 00:03:26  tparker
+ * Add ingestor for NWIS archive style data
+ *
  * Revision 1.7  2007/01/29 21:55:56  tparker
  * Disable filling sparse data. Causes trouble for precip
  *
@@ -72,6 +75,10 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			st.execute(
 					"CREATE TABLE data_types (type INT PRIMARY KEY," +
 					"name VARCHAR(50))");
+			st.execute(
+					"CREATE TABLE channel_data_types (" +
+					"channel INT NOT NULL, type INT NOT NULL, " + 
+					"PRIMARY KEY channel (channel, type))");
 			return true;
 			
 		}
@@ -282,6 +289,10 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			ps.setInt(2, dt.getId());
 			ps.setDouble(3, dd);
 			ps.execute();
+			
+			Statement st = database.getStatement();
+			st.execute("INSERT IGNORE INTO channel_data_types (channel, type) " +
+					" values (0, " + station.getId() + ", " + dt.getId() + ")");
 		}
 		catch (SQLException e)
 		{
@@ -358,10 +369,14 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 					Statement st = database.getConnection().createStatement();
 					try
 					{
-						ResultSet rs2 = st.executeQuery("SELECT DISTINCT dataType, name FROM " +  org + site_no + " inner join data_types ON dataType=data_types.type;");
+						//ResultSet rs2 = st.executeQuery("SELECT DISTINCT dataType, name FROM " +  org + site_no + " inner join data_types ON dataType=data_types.type;");
+						ResultSet rs2 = st.executeQuery("SELECT type, name FROM channel_data_types join data_types using (type) where channel = " + sid + ";");
+//						ResultSet rs2 = st.executeQuery("SELECT channel_data_types.type, data_types.name " +
+//								"FROM channel_data_types, data_types where channel_data_types.channel = " + sid +
+//								"and channel_data_types.type = data_types.type order by data_types.type)");
 						while (rs2.next())
 						{
-							types.append( rs2.getInt("dataType") + "=" + rs2.getString("name") + "$");
+							types.append( rs2.getInt("channel_data_types.dataType") + "=" + rs2.getString("data_types.name") + "$");
 						}
 						rs2.close();
 					}
