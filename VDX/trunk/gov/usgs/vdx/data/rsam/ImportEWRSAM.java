@@ -16,6 +16,9 @@ import java.util.regex.Pattern;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2007/06/13 15:44:53  tparker
+ * Add timer and -Y option
+ *
  * Revision 1.2  2007/06/12 20:29:35  tparker
  * cleanup
  *
@@ -23,7 +26,7 @@ import java.util.regex.Pattern;
  * initial commit
  *
  * @author Tom Parker
- * @version $Id: ImportEWRSAM.java,v 1.3 2007-06-13 15:44:53 tparker Exp $
+ * @version $Id: ImportEWRSAM.java,v 1.4 2007-07-02 22:58:59 tparker Exp $
  */
 public class ImportEWRSAM 
 {
@@ -40,7 +43,6 @@ public class ImportEWRSAM
 			System.exit(1);
 		}
 		year = y;
-		
 	}
 	
 	public void process()
@@ -69,27 +71,42 @@ public class ImportEWRSAM
 	
 	private void process(File f, String t)
 	{
-		Matcher m;
+		String channel;
+		int fileYear;
 		
-		Pattern p = Pattern.compile("(\\w{4})(\\d{4})\\.DAT$");
-		m = p.matcher(f.getName());
-		if (!m.matches())
+		// look for standard bob filename
+		Pattern p1 = Pattern.compile("(\\w{4})(\\d{4})\\.DAT$");
+		Matcher m1 = p1.matcher(f.getName());
+		
+		// look for non-bob-compliant full SCN in filename. 
+		// allow for non-standard UAF style EHZ4 component
+		Pattern p2 = Pattern.compile("(\\w{4}):(\\w{3}4?):(\\w{2})(\\d{4})\\.DAT$");
+		Matcher m2 = p2.matcher(f.getName());
+		
+		if (m1.matches())
+		{
+			channel = m1.group(1);
+			if (channel.matches("\\w{3}_"))
+				channel = channel.substring(0, 3);
+			
+			channel = params.getString(channel);
+			fileYear = Integer.parseInt(m1.group(2));
+		}
+		else if (m2.matches())
+		{
+			channel = m2.group(1) + "$" + m2.group(2) + "$" + m2.group(3);
+			fileYear = Integer.parseInt(m2.group(4));
+		}
+		else
 		{
 			System.out.println("ignoring poorly named file " + f);
 			return;
 		}
 		
-		String channel = m.group(1);
-		if (channel.matches("\\w{3}_"))
-			channel = channel.substring(0, 3);
-
-		channel = params.getString(channel);
-		
-		int fileYear = Integer.parseInt(m.group(2));
 		if ((year != -1) && (fileYear != year))
 			return;
-		
-		System.out.println ("importing " + t + " data for " + channel + " from the year " + fileYear + " from file " + f.getAbsolutePath());
+		 
+		System.out.println ("importing " + channel + " " + t + " data for the year " + fileYear + " from file " + f.getAbsolutePath());
 		ImportBob ib = new ImportBob(params.getString("vdxConfig"), fileYear, params.getString("vdxName"), t);	    		
 		ib.process(channel, f.getAbsolutePath());
 	}
@@ -126,7 +143,9 @@ public class ImportEWRSAM
 		if (args.contains("-c"))
 			cf = args.get("-c");
 		
-		if (args.contains("-y"))
+		
+		
+		if (args.contains("-y")) 
 			y = Integer.parseInt(args.get("-y"));
 		else if (args.flagged("-Y"))
 			y = startTime.get(Calendar.YEAR);
