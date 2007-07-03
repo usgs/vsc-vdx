@@ -24,7 +24,6 @@ public class ImportHypoInverse extends Importer
 	public List<Hypocenter> importResource(String resource)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(resource);
-		System.out.println("reading file:" + resource);
 		if (rr == null)
 			return null;
 		
