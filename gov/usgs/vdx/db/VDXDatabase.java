@@ -33,6 +33,9 @@ import java.util.logging.Logger;
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2007/04/22 06:43:35  tparker
+ * Initial ewrsam commit
+ *
  * Revision 1.7  2006/08/01 17:52:35  tparker
  * Add tableExist method
  *
@@ -361,6 +364,8 @@ public class VDXDatabase
 	protected static void outputInstructions()
 	{
 		System.out.println("<VDXDatabase> [-c configfile] -a <action> [other args]");
+		System.out.print("Known actions: \n\tcreatehypocenters \n\tcreategps \n\tcreatetilt");
+		System.out.println("\n\tcreateetilt \n\tcreategeneric \n\tcreatenwis \n\tcreateewrsam");
 	}
 	
 	protected static void createDatabase(VDXDatabase db, Arguments args, SQLDataSource ds)
