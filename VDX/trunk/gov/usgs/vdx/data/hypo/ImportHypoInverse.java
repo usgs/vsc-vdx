@@ -13,12 +13,15 @@ import java.util.TimeZone;
 public class ImportHypoInverse extends Importer 
 {
 	private SimpleDateFormat dateIn;
+	private SimpleDateFormat dateOut;
 	
 	public ImportHypoInverse(SQLHypocenterDataSource ds)
 	{
 		super(ds);
 		dateIn = new SimpleDateFormat("yyyyMMddHHmmss.SS");
 		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
+		dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 	
 	public List<Hypocenter> importResource(String resource)
@@ -65,6 +68,7 @@ public class ImportHypoInverse extends Importer
 				
 				// DEPTH
 				double depth	= Double.parseDouble(s.substring(31, 34).trim() + "." + s.substring(34, 36).trim());
+				depth *= -1;
 				
 				// MAGNITUDE
 				double mag		= -99.99;
@@ -73,7 +77,7 @@ public class ImportHypoInverse extends Importer
 				if (!s.substring(45,46).equals(" "))
 					throw new Exception("corrupt data at column 46");
 
-				System.out.println("HC: " + j2ksec + " : " + lon + " : " + lat + " : " + depth + " : " + mag);
+				System.out.println("HC: " + j2ksec + " : " + dateOut.format(date) + " : " + lon + " : " + lat + " : " + depth + " : " + mag);
 				Hypocenter hc	= new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
 				hypos.add(hc);
 			}
