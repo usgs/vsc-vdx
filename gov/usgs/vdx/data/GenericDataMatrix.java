@@ -12,6 +12,10 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2007/07/24 20:37:35  tparker
+ * remove fillSparse. It was a bad idea.
+ * Add mutator method for column names
+ *
  * Revision 1.7  2006/12/05 22:05:23  tparker
  * fix 1 off bug in fillSparse
  *
@@ -140,6 +144,15 @@ public class GenericDataMatrix implements BinaryDataSet
 		int i = 0;
 		for (String name : s)
 			columnMap.put(name, i++);
+	}
+	
+	public String[] getColumnNames()
+	{
+		String[] c = new String[columnMap.size()];
+		for (String s : columnMap.keySet())
+			c[columnMap.get(s)] = s;
+		
+		return c;
 	}
 	
 	/** Gets the number of rows in the data.
@@ -291,5 +304,4 @@ public class GenericDataMatrix implements BinaryDataSet
 	{
 		return (data.rows() * data.columns() * 8);	
 	}
-
 }
