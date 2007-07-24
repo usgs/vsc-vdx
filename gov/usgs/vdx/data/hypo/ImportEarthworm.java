@@ -10,6 +10,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+/**
+ * Class for importing earthworm format catalog files.
+ *  
+ * $Log: not supported by cvs2svn $
+ *
+ * @author Loren Antolik
+ */
+
 public class ImportEarthworm extends Importer 
 {
 	private SimpleDateFormat dateIn;
