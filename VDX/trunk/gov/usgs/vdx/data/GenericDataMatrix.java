@@ -12,6 +12,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/12/05 22:05:23  tparker
+ * fix 1 off bug in fillSparse
+ *
  * Revision 1.6  2006/09/21 18:41:02  tparker
  * kludge to deal with sparse data
  *
@@ -131,6 +134,13 @@ public class GenericDataMatrix implements BinaryDataSet
 
 	public void setColumnNames()
 	{}
+
+	public void setColumnNames(String[] s)
+	{
+		int i = 0;
+		for (String name : s)
+			columnMap.put(name, i++);
+	}
 	
 	/** Gets the number of rows in the data.
 	 * @return the row count
@@ -282,20 +292,4 @@ public class GenericDataMatrix implements BinaryDataSet
 		return (data.rows() * data.columns() * 8);	
 	}
 
-	public void fillSparse()
-	{
-		for (int i = 0; i < data.columns(); i++)
-		{
-			int j=0;
-			
-			// fill row 0 with first non-zero value
-			while (j < (data.rows() - 1))
-				j++;
-			data.setQuick(0, i, data.getQuick(j, i));
-			
-			for (j=1; j < data.rows(); j++ )
-				if (data.getQuick(j, i) == 0)
-					data.setQuick(j, i, data.getQuick(j-1, i));
-		}
-	}
 }
