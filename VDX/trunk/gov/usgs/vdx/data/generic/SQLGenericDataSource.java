@@ -19,9 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import cern.colt.matrix.DoubleMatrix2D;
+
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2007/07/24 17:51:22  tparker
+ * rename getColumns and expand default time shortcuts
+ *
  * Revision 1.5  2006/04/09 18:26:05  dcervelli
  * ConfigFile/type safety changes.
  *
@@ -44,13 +49,16 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	private List<String> columnStrings;
 	private Map<String, String> metadata;
 	private String querySQL;
+	private String vdxName;
+	private String vdxPrefix;
 	
 	public void initialize(ConfigFile params)
 	{
 		String vdxHost = params.getString("vdx.host");
-		String vdxName = params.getString("vdx.name");
-		name = params.getString("vdx.databaseName");
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+		vdxName = params.getString("vdx.name");
+		vdxPrefix = params.getString("vdx.prefix");
+		//vdxName = params.getString("vdx.databaseName");
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
 	}
 
 	private void getMetadata()
@@ -285,6 +293,43 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 	
+	public void insertData(String table, GenericDataMatrix d)
+	{
+		String[] colNames = d.getColumnNames();
+		DoubleMatrix2D data = d.getData();
+
+		database.useDatabase(vdxName + "$" + DATABASE_NAME);
+//		System.out.println(database.tableExists(vdxName + "$" + DATABASE_NAME, "yell_yt"));
+//		if (1==1) System.exit(1);
+		Statement st = database.getStatement();
+
+		for (int i=0; i<d.rows(); i++)
+		{
+			StringBuffer names = new StringBuffer();
+			StringBuffer values = new StringBuffer();
+			for (int j=0; j<colNames.length; j++)
+			{
+				names.append(colNames[j] + ",");
+				values.append(data.getQuick(i, j) + ",");
+			}
+			names.deleteCharAt(names.length()-1);
+			values.deleteCharAt(values.length()-1);
+			
+			StringBuffer sql = new StringBuffer();
+			sql.append("INSERT IGNORE INTO " + table + " (" + names + ") ");
+			sql.append("VALUES (" + values + ")");
+			System.out.println(sql);
+			
+			try
+			{
+				st.execute(sql.toString());
+			}
+			catch (SQLException e)
+			{
+				database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.insertData() failed.", e);
+			}
+		}
+	}
 	public List<GenericColumn> getColumns()
 	{
 		return columns;
