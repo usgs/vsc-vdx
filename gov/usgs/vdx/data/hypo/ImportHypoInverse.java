@@ -10,6 +10,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+/**
+ * Class for importing hypo71 format catalog files.
+ *  
+ * $Log: not supported by cvs2svn $
+ * @author Loren Antolik
+ */
 public class ImportHypoInverse extends Importer 
 {
 	private SimpleDateFormat dateIn;
