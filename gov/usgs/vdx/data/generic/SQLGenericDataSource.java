@@ -22,6 +22,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.4  2005/11/04 18:50:28  dcervelli
  * Fixed bug where columns and metadata not loaded before query.
  *
@@ -69,7 +72,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		}
 	}
 	
-	private void getColumns()
+	private void queryColumnData()
 	{
 		if (columns != null)
 			return;
@@ -106,7 +109,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getColumns()", e);
+			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.queryColumnData()", e);
 		}
 	}
 	
@@ -120,7 +123,6 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			
 			Statement st = database.getStatement();
 			database.useDatabase(db);
-//			st.execute("USE " + db);
 			st.execute(
 					"CREATE TABLE cols (idx INT PRIMARY KEY," +
 					"name VARCHAR(255) UNIQUE," +
@@ -142,7 +144,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
-		getColumns();
+		queryColumnData();
 		String[] cols = new String[columns.size()];
 		for (int i = 0; i < cols.length; i++)
 			cols[i] = columns.get(i).name;
@@ -201,7 +203,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		String ts = metadata.get("timeShortcuts");
 		if (ts == null)
-			return "-1h,-2h,-6h,-12h,-24h,-3d,-1w";
+			return "-6h,-24h,-3d,-1w,-1m,-1y";
 		else
 			return ts;
 	}
@@ -212,7 +214,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		if (action == null)
 			return null;
 
-		getColumns();
+		queryColumnData();
 		getMetadata();
 		
 		if (action.equals("genericMenu"))
@@ -281,5 +283,10 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getGenericData()", e);
 		}
 		return result;
+	}
+	
+	public List<GenericColumn> getColumns()
+	{
+		return columns;
 	}
 }
