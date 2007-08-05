@@ -33,6 +33,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.13  2007/02/01 01:23:17  dcervelli
+ * Fixes for time zones in WWS helicorders.
+ *
  * Revision 1.12  2006/08/16 18:10:05  cervelli
  * Added transparency to kiosk labels, made font slightly smaller
  *
@@ -85,6 +88,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * Fixed bug where NO_DATA samples were plotting.
  *
  * @author Dan Cervelli
+ * @version $Id: HelicorderRenderer.java,v 1.14 2007-08-05 19:58:39 dcervelli Exp $
  */
 public class HelicorderRenderer extends FrameRenderer
 {
@@ -304,6 +308,11 @@ public class HelicorderRenderer extends FrameRenderer
 	public void setFrameDecorator(FrameDecorator d)
 	{
 		decorator = d;
+	}
+	
+	public void setColors(Color[] cs)
+	{
+		colors = cs;
 	}
 	
 	public void render(Graphics2D g)
