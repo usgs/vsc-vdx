@@ -33,6 +33,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.14  2007/08/05 19:58:39  dcervelli
+ * Added a method for settings the helicorder colors.
+ *
  * Revision 1.13  2007/02/01 01:23:17  dcervelli
  * Fixes for time zones in WWS helicorders.
  *
@@ -88,7 +91,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * Fixed bug where NO_DATA samples were plotting.
  *
  * @author Dan Cervelli
- * @version $Id: HelicorderRenderer.java,v 1.14 2007-08-05 19:58:39 dcervelli Exp $
+ * @version $Id: HelicorderRenderer.java,v 1.15 2007-08-16 17:28:53 tparker Exp $
  */
 public class HelicorderRenderer extends FrameRenderer
 {
@@ -428,7 +431,6 @@ public class HelicorderRenderer extends FrameRenderer
 				}
 			}
 			else
-//				g.setColor(Color.white);
 				g.setColor(new Color(255,255,255,192));
 				
 			g.fillRect(graphX + graphWidth / 2 - lw / 2, 3, lw, height);
@@ -437,6 +439,14 @@ public class HelicorderRenderer extends FrameRenderer
 			
 			g.drawString(c, graphX + graphWidth / 2 - width / 2, height - fm.getDescent());
 			g.setFont(oldFont);
+		}
+		else if (alertClip && lastClipTime > t2 - alertClipTimeout && clipWav != null)
+		{
+			if ((lastClipTime > lastClipAlert + alertClipTimeout))
+			{
+				lastClipAlert = t2;
+				playClipAlert();
+			}
 		}
 //		ct.stop();
 	}
