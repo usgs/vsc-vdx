@@ -20,6 +20,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2006/06/09 00:48:56  tparker
+ * Add toCSV for data export
+ *
  * Revision 1.4  2005/12/23 00:52:13  tparker
  * avoid labeling issues described in bug id #86
  *
@@ -39,7 +42,7 @@ public class HypocenterList implements BinaryDataSet
 	private static final int MAX_BINS = 1000000;
 	public enum BinSize 
 	{
-		MINUTE("Minute"), HOUR("Hour"), DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
+		MINUTE("Minute"), TENMINUTE("Ten Minute"), HOUR("Hour"), DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
 		
 		private String string;
 		
@@ -61,6 +64,8 @@ public class HypocenterList implements BinaryDataSet
 			{
 				case 'I':
 					return MINUTE;
+				case 'a':
+					return TENMINUTE;
 				case 'H':
 					return HOUR;
 				case 'D':
@@ -82,6 +87,8 @@ public class HypocenterList implements BinaryDataSet
 			{
 				case 'I':
 					return 60;
+				case 'a':
+					return 600;
 				case 'H':
 					return 60*60;
 				case 'D':
@@ -183,6 +190,16 @@ public class HypocenterList implements BinaryDataSet
 			startTime -= (startTime - 43200) % 60;
 			endTime -= (endTime - 43200) % 60 - 60;
 			bins = (int)(endTime - startTime) / 60;
+			if (bins > MAX_BINS)
+				bin = BinSize.HOUR;
+			else
+				axis = new FixedAxis(bins, startTime, endTime);
+		}
+		if (bin == BinSize.TENMINUTE)
+		{
+			startTime -= (startTime - 43200) % 600;
+			endTime -= (endTime - 43200) % 600 - 600;
+			bins = (int)(endTime - startTime) / 600;
 			if (bins > MAX_BINS)
 				bin = BinSize.HOUR;
 			else

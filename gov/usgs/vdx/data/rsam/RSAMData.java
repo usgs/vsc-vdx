@@ -21,6 +21,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2007/06/06 20:23:11  tparker
+ * EWRSAM rewrite
+ *
  * Revision 1.3  2006/04/04 15:50:49  dcervelli
  * Eliminated warnings.
  *
@@ -89,6 +92,16 @@ public class RSAMData extends GenericDataMatrix
 			startTime -= (startTime - 43200) % 60;
 			endTime -= (endTime - 43200) % 60 - 60;
 			bins = (int)(endTime - startTime) / 60;
+			if (bins > MAX_BINS)
+				bin = BinSize.HOUR;
+			else
+				axis = new FixedAxis(bins, startTime, endTime);
+		}
+		if (bin == BinSize.TENMINUTE)
+		{
+			startTime -= (startTime - 43200) % 600;
+			endTime -= (endTime - 43200) % 600 - 600;
+			bins = (int)(endTime - startTime) / 600;
 			if (bins > MAX_BINS)
 				bin = BinSize.HOUR;
 			else
