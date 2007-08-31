@@ -20,6 +20,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2007/08/31 04:36:09  tparker
+ * Add 10 minute bin size
+ *
  * Revision 1.5  2006/06/09 00:48:56  tparker
  * Add toCSV for data export
  *
@@ -42,7 +45,7 @@ public class HypocenterList implements BinaryDataSet
 	private static final int MAX_BINS = 1000000;
 	public enum BinSize 
 	{
-		MINUTE("Minute"), TENMINUTE("Ten Minute"), HOUR("Hour"), DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
+		MINUTE("Minute"), TENMINUTE("TenMinute"), HOUR("Hour"), DAY("Day"), WEEK("Week"), MONTH("Month"), YEAR("Year");
 		
 		private String string;
 		
