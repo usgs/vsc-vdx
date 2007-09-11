@@ -9,6 +9,7 @@ import hep.aida.ref.Histogram1D;
 import hep.aida.ref.VariableAxis;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -21,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2007/08/31 04:37:08  tparker
+ * Add 10 minute bin size
+ *
  * Revision 1.4  2007/06/06 20:23:11  tparker
  * EWRSAM rewrite
  *
@@ -235,6 +239,37 @@ public class RSAMData extends GenericDataMatrix
 		
 		events.setQuick(eventCount+1, 0, data.get(data.rows()-1,0));
 		events.setQuick(eventCount+1, 1, eventCount);
+	}
+	
+	public RSAMData getRatSAM(RSAMData d)
+	{
+		DoubleMatrix2D other = d.getData();
+		ArrayList<double[]>ratList = new ArrayList<double[]>();
+		
+		int i = 0;
+		int j = 0;
+		while (i < rows() && j < other.rows())
+		{
+			double t1 = data.getQuick(i, 0);
+			double t2 = other.getQuick(j, 0);
+			if (t1 < t2)
+				i++;
+			else if (t1 > t2)
+				j++;
+			else
+			{
+				try
+				{
+					double[] pt = new double[2];
+					pt[0] = t1;
+					pt[1] = data.getQuick(i++, 1) / other.getQuick(j++, 1);
+					ratList.add(pt);
+				}
+				catch (ArithmeticException e)
+				{}
+			}
+		}
+		return new RSAMData(ratList);
 	}
 	
 	public DoubleMatrix2D getCumulativeCounts()
