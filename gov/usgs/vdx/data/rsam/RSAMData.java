@@ -22,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2007/09/11 18:43:39  tparker
+ * Initial RatSAM commit
+ *
  * Revision 1.5  2007/08/31 04:37:08  tparker
  * Add 10 minute bin size
  *
@@ -275,6 +278,22 @@ public class RSAMData extends GenericDataMatrix
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
 		return events;
+	}
+	
+	public String getCountsCSV()
+	{
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < rows(); i++)
+		{
+			sb.append(Util.j2KToDateString(events.getQuick(i, 0)) + ",");
+			for (int j = 1; j < columns(); j++)
+			{
+				sb.append(events.getQuick(i, j));
+				sb.append(",");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
 	}
 	
 	public Histogram1D getCountsHistogram(BinSize bin)
