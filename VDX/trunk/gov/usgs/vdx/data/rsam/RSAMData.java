@@ -22,6 +22,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * first column is the time (j2ksec), the second is the data.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2007/09/21 19:34:41  tparker
+ * Add toCSV for event counts
+ *
  * Revision 1.6  2007/09/11 18:43:39  tparker
  * Initial RatSAM commit
  *
@@ -283,10 +286,10 @@ public class RSAMData extends GenericDataMatrix
 	public String getCountsCSV()
 	{
 		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < rows(); i++)
+		for (int i = 0; i < events.rows(); i++)
 		{
 			sb.append(Util.j2KToDateString(events.getQuick(i, 0)) + ",");
-			for (int j = 1; j < columns(); j++)
+			for (int j = 1; j < events.columns(); j++)
 			{
 				sb.append(events.getQuick(i, j));
 				sb.append(",");
