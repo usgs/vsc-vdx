@@ -29,35 +29,36 @@ public class Scheduler {
 	private static ConfigFile	configFile;
 	private static String		importClassName;
 	private static List<String>	importParameters;
-	private static String		sourceFileDirectory;
+	private static String		sourceFileDirectoryName;
 	private static String		sourceFileLookupExpression;
 	private static int			pollingCycleSeconds;
 	private static boolean		archiveProcessedFile;
-	private static String		archiveDirectory;
+	private static String		archiveDirectoryName;
 	private static boolean		renameProcessedFile;
 	private static String		renameValue;
+	private static File			sourceFileDirectory;
+	private static File			archiveDirectory;
 	protected Logger			logger;
+	private static boolean		PROCESSOR_AVAILABLE;
 	
 	// constructor
 	public Scheduler(String configFileName) {
-		logger		= Log.getLogger("gov.usgs.vdx");
-		configFile	= new ConfigFile(configFileName);
+		logger				= Log.getLogger("gov.usgs.vdx");
+		configFile			= new ConfigFile(configFileName);
 		processConfigFile();
+		PROCESSOR_AVAILABLE	= true;
 	}
 	
 	private void processConfigFile() {
 		
-		// default some variables
-		boolean exists;
-		
 		// read the config file
 		importClassName				= Util.stringToString(configFile.getString("importClassName"),"");
 		importParameters			= configFile.getList("importParameters");
-		sourceFileDirectory			= Util.stringToString(configFile.getString("sourceFileDirectory"),"");
+		sourceFileDirectoryName		= Util.stringToString(configFile.getString("sourceFileDirectoryName"),"");
 		sourceFileLookupExpression	= Util.stringToString(configFile.getString("sourceFileLookupExpression"),"");
 		pollingCycleSeconds			= Util.stringToInt(configFile.getString("pollingCycleSeconds"), 3600);
 		archiveProcessedFile		= Util.stringToBoolean(configFile.getString("archiveProcessedFile"));
-		archiveDirectory			= Util.stringToString(configFile.getString("archiveDirectory"),"");
+		archiveDirectoryName		= Util.stringToString(configFile.getString("archiveDirectoryName"),"");
 		renameProcessedFile			= Util.stringToBoolean(configFile.getString("renameProcessedFile"));
 		renameValue					= Util.stringToString(configFile.getString("renameValue"),"");
 		
@@ -73,10 +74,15 @@ public class Scheduler {
 		}
 		
 		// check to make sure that the source file directory exists
-		exists	= (new File(sourceFileDirectory)).isDirectory();
-		if (!exists) {
-			System.err.println("configFile:sourceFileDirectory: Directory does not exist");
+		sourceFileDirectory	= new File(sourceFileDirectoryName);
+		if (!sourceFileDirectory.isDirectory()) {
+			System.err.println("configFile:sourceFileDirectoryName: Directory does not exist");
 			System.exit(-1);
+		
+		// if it exists then make sure it is readable
+		} else if (!sourceFileDirectory.canRead()){
+			System.err.println("configFile:sourceFileDirectoryName: Directory is not readable");
+			System.exit(-1);			
 		}
 		
 		// check to make sure that there is a lookup expression
@@ -88,10 +94,14 @@ public class Scheduler {
 		if (archiveProcessedFile) {
 			
 			// if the directive is true then check to make sure that the directory to archive to exists
-			exists	= (new File(archiveDirectory)).isDirectory();
-			if (!exists) {
-				System.err.println("configFile:archiveDirectory: Directory does not exist");
+			if (!archiveDirectory.isDirectory()) {
+				System.err.println("configFile:archiveDirectoryName: Directory does not exist");
 				System.exit(-1);
+				
+			// if archive directory does exist then make sure it is writable
+			} else if (!archiveDirectory.canWrite()) {
+				System.err.println("configFile:archiveDirectoryName: Directory is not writeable");
+				System.exit(-1);				
 			}
 			
 		}
@@ -102,6 +112,10 @@ public class Scheduler {
 			// if the directive is true then check to make sure that the rename mask is set
 			if (renameValue.length() == 0) {
 				System.err.println("configFile:renameValue: Not specified");
+				
+			// if we do have a value to rename the file to, then make sure the file is writable
+			} else {
+				
 			}
 			
 		}		
@@ -111,17 +125,45 @@ public class Scheduler {
 	
 	private void process() {
 		
+		// lock the processor
+		PROCESSOR_AVAILABLE	= false;
+		
+		// get a list of all the files that we wish to process
+		fileList	= ls sourceFileDirectory/sourceFileLookupExpression
+		
+		// for each one of the files, process it based on the import class
+		foreach (currentFile in fileList) {
+			
+			// instatiate the class and process the file
+			instantiate ImportClass(importParameters, currentFile)
+			
+			// archive the file if requested
+			if (archiveProcessedFile) {
+				
+				// copy the file to its archive location
+			}
+			
+			// rename the file if requested
+			if (renameProcessedFile) {
+				
+				// rename the file
+			}
+		}
+		
+		// unlock the processor
+		PROCESSOR_AVAILABLE	= true;
+		
 	}
 	
 	private void displayDefaultParameters(String currentState) {
 		System.out.println("--- Value : " + currentState + " ---");
 		System.out.println("importClassName:            " + importClassName);
 		System.out.println("importParameters:           " + importParameters);
-		System.out.println("sourceFileDirectory:        " + sourceFileDirectory);
+		System.out.println("sourceFileDirectoryName:    " + sourceFileDirectoryName);
 		System.out.println("sourceFileLookupExpression: " + sourceFileLookupExpression);
 		System.out.println("pollingCycleSeconds:        " + pollingCycleSeconds);
 		System.out.println("archiveProcessedFile:       " + archiveProcessedFile);
-		System.out.println("archiveDirectory:           " + archiveDirectory);
+		System.out.println("archiveDirectoryName:       " + archiveDirectoryName);
 		System.out.println("renameProcessedFile:        " + renameProcessedFile);
 		System.out.println("renameValue:                " + renameValue);
 	}
@@ -146,9 +188,18 @@ public class Scheduler {
 		// instantiate this scheduler class
 		Scheduler schedule	= new Scheduler(configFileName);
 		
-		// call the process method
-		// this method runs continously, doing the processing and timing work
-		schedule.process();
+		// enter into a continuous loop and begin processing
+		while (true) {
+			
+			// start the timer
+			
+			// process the current batch, if the processor is available
+			if (PROCESSOR_AVAILABLE) {
+				schedule.process();
+			}
+			
+			// check the current time, and wait if need be
+		}
 		
 		// build a thread to run the program in
 		// Process process			= new ProcessBuilder(args).start();
