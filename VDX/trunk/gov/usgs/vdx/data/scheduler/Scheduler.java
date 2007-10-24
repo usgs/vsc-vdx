@@ -1,31 +1,58 @@
 package gov.usgs.vdx.data.scheduler;
 
-import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.*;
-import java.lang.Class.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
 /**
 *
 * @author Loren Antolik
 */
+
+//inner class, run method will be invoked when time is up
+class SchedulerTask extends TimerTask {
+	
+	public void run() {
+		
+		// this is where we put the work that we want to run periodically
+		System.out.println("i'm doing something ...");
+	}
+	
+/*	
+	public void whatever() {
+		
+		// get a list of all the files that we wish to process
+		fileList	= ls sourceFileDirectory/sourceFileLookupExpression
+		
+		// for each one of the files, process it based on the import class
+		foreach (currentFile in fileList) {
+			
+			// instatiate the class and process the file
+			instantiate ImportClass(importParameters, currentFile)
+			
+			// archive the file if requested
+			if (archiveProcessedFile) {
+			}
+			
+			// rename the file if requested
+			if (renameProcessedFile) {
+			}
+		}
+		
+	}
+*/
+}
+
 public class Scheduler {
 	
 	// class variable declarations
 	private static String		configFileName;
-	private static String		commandOutput;
 	private static ConfigFile	configFile;
 	private static String		importClassName;
 	private static List<String>	importParameters;
@@ -39,14 +66,14 @@ public class Scheduler {
 	private static File			sourceFileDirectory;
 	private static File			archiveDirectory;
 	protected Logger			logger;
-	private static boolean		PROCESSOR_AVAILABLE;
+	private static Timer		timer;
 	
 	// constructor
 	public Scheduler(String configFileName) {
 		logger				= Log.getLogger("gov.usgs.vdx");
 		configFile			= new ConfigFile(configFileName);
 		processConfigFile();
-		PROCESSOR_AVAILABLE	= true;
+		timer				= new Timer();
 	}
 	
 	private void processConfigFile() {
@@ -123,38 +150,6 @@ public class Scheduler {
 		displayDefaultParameters("processConfigFile:validated input");
 	}
 	
-	private void process() {
-		
-		// lock the processor
-		PROCESSOR_AVAILABLE	= false;
-		
-		// get a list of all the files that we wish to process
-		fileList	= ls sourceFileDirectory/sourceFileLookupExpression
-		
-		// for each one of the files, process it based on the import class
-		foreach (currentFile in fileList) {
-			
-			// instatiate the class and process the file
-			instantiate ImportClass(importParameters, currentFile)
-			
-			// archive the file if requested
-			if (archiveProcessedFile) {
-				
-				// copy the file to its archive location
-			}
-			
-			// rename the file if requested
-			if (renameProcessedFile) {
-				
-				// rename the file
-			}
-		}
-		
-		// unlock the processor
-		PROCESSOR_AVAILABLE	= true;
-		
-	}
-	
 	private void displayDefaultParameters(String currentState) {
 		System.out.println("--- Value : " + currentState + " ---");
 		System.out.println("importClassName:            " + importClassName);
@@ -169,7 +164,7 @@ public class Scheduler {
 	}
 	
 	// main class
-	public static void main(String args[]) {
+	public static void main (String args[]) {
 		
 		// check to make sure there are command line arguments
 		if (args.length != 1) {
@@ -185,21 +180,11 @@ public class Scheduler {
 			System.exit(-1);
 		}
 		
-		// instantiate this scheduler class
+		// instantiate this scheduler class by processing the config file and it's contents
 		Scheduler schedule	= new Scheduler(configFileName);
 		
-		// enter into a continuous loop and begin processing
-		while (true) {
-			
-			// start the timer
-			
-			// process the current batch, if the processor is available
-			if (PROCESSOR_AVAILABLE) {
-				schedule.process();
-			}
-			
-			// check the current time, and wait if need be
-		}
+		// the config file processed okay, so go ahead and start scheduling imports
+		timer.scheduleAtFixedRate(new SchedulerTask(), 0, pollingCycleSeconds * 1000);
 		
 		// build a thread to run the program in
 		// Process process			= new ProcessBuilder(args).start();
