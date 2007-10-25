@@ -10,50 +10,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
-/**
-*
+/*
 * @author Loren Antolik
 */
 
-//inner class, run method will be invoked when time is up
-class SchedulerTask extends TimerTask {
-	
-	public void run() {
-		
-		// this is where we put the work that we want to run periodically
-		System.out.println("i'm doing something ...");
-	}
-	
-/*	
-	public void whatever() {
-		
-		// get a list of all the files that we wish to process
-		fileList	= ls sourceFileDirectory/sourceFileLookupExpression
-		
-		// for each one of the files, process it based on the import class
-		foreach (currentFile in fileList) {
-			
-			// instatiate the class and process the file
-			instantiate ImportClass(importParameters, currentFile)
-			
-			// archive the file if requested
-			if (archiveProcessedFile) {
-			}
-			
-			// rename the file if requested
-			if (renameProcessedFile) {
-			}
-		}
-		
-	}
-*/
-}
-
 public class Scheduler {
 	
-	// class variable declarations
-	private static String		configFileName;
-	private static ConfigFile	configFile;
+	// config file variables
 	private static String		importClassName;
 	private static List<String>	importParameters;
 	private static String		sourceFileDirectoryName;
@@ -63,22 +26,23 @@ public class Scheduler {
 	private static String		archiveDirectoryName;
 	private static boolean		renameProcessedFile;
 	private static String		renameValue;
+	
+	// class variables
+	private static String		configFileName;
+	private static ConfigFile	configFile;
+	private static Class		importClass;
 	private static File			sourceFileDirectory;
 	private static File			archiveDirectory;
 	protected Logger			logger;
-	private static Timer		timer;
 	
 	// constructor
-	public Scheduler(String configFileName) {
+	public Scheduler() {
 		logger				= Log.getLogger("gov.usgs.vdx");
-		configFile			= new ConfigFile(configFileName);
-		processConfigFile();
-		timer				= new Timer();
 	}
 	
-	private void processConfigFile() {
+	public static void parseConfigFileVals(ConfigFile configFile) {
 		
-		// read the config file
+		// read the config file and give defaults
 		importClassName				= Util.stringToString(configFile.getString("importClassName"),"");
 		importParameters			= configFile.getList("importParameters");
 		sourceFileDirectoryName		= Util.stringToString(configFile.getString("sourceFileDirectoryName"),"");
@@ -89,19 +53,19 @@ public class Scheduler {
 		renameProcessedFile			= Util.stringToBoolean(configFile.getString("renameProcessedFile"));
 		renameValue					= Util.stringToString(configFile.getString("renameValue"),"");
 		
-		displayDefaultParameters("processConfigFile:read config file");
+	}
+	
+	public static void validateSchedulerVars() {
 		
-		// check to make sure that the class exists
+		// check to make sure that the class exists, don't instantiate it yet though
 		try {
-			Class importClass	= Class.forName(importClassName);
+			importClass	= Class.forName(importClassName);
 		} catch (ClassNotFoundException e) {
-			System.err.println("java gov.usgs.vdx.data.scheduler.Scheduler configFile");
 			System.err.println("configFile:importClassName:ClassNotFoundException");
 			System.exit(-1);			
 		}
 		
 		// check to make sure that the source file directory exists
-		sourceFileDirectory	= new File(sourceFileDirectoryName);
 		if (!sourceFileDirectory.isDirectory()) {
 			System.err.println("configFile:sourceFileDirectoryName: Directory does not exist");
 			System.exit(-1);
@@ -139,18 +103,11 @@ public class Scheduler {
 			// if the directive is true then check to make sure that the rename mask is set
 			if (renameValue.length() == 0) {
 				System.err.println("configFile:renameValue: Not specified");
-				
-			// if we do have a value to rename the file to, then make sure the file is writable
-			} else {
-				
-			}
-			
-		}		
-		
-		displayDefaultParameters("processConfigFile:validated input");
+			}			
+		}	
 	}
 	
-	private void displayDefaultParameters(String currentState) {
+	public static void displayDefaultParameters(String currentState) {
 		System.out.println("--- Value : " + currentState + " ---");
 		System.out.println("importClassName:            " + importClassName);
 		System.out.println("importParameters:           " + importParameters);
@@ -174,30 +131,97 @@ public class Scheduler {
 		
 		// get the config file name and make sure that it exists
 		configFileName	= args[0];
-		boolean exists	= (new File(configFileName)).isFile();
-		if (!exists) {
-			System.err.printf("%s does not exist\n", configFileName);
+		configFile		= new ConfigFile(configFileName);
+		if (!configFile.wasSuccessfullyRead()) {
+			System.err.printf("%s was not successfully read.\n", configFileName);
 			System.exit(-1);
 		}
 		
+		// parse out the values from the config file
+		parseConfigFileVals(configFile);
+		
+		// setup the proper data structures based on the default vals
+		sourceFileDirectory			= new File(sourceFileDirectoryName);
+		archiveDirectory			= new File(archiveDirectoryName);
+		
+		// validate the variables that were gathered from the config file
+		validateSchedulerVars();
+		
 		// instantiate this scheduler class by processing the config file and it's contents
-		Scheduler schedule	= new Scheduler(configFileName);
+		Scheduler scheduler	= new Scheduler();
+		Timer timer			= new Timer();
 		
 		// the config file processed okay, so go ahead and start scheduling imports
-		timer.scheduleAtFixedRate(new SchedulerTask(), 0, pollingCycleSeconds * 1000);
-		
-		// build a thread to run the program in
-		// Process process			= new ProcessBuilder(args).start();
-		// InputStream is			= process.getInputStream();
-		// InputStreamReader isr	= new InputStreamReader(is);
-		// BufferedReader br		= new BufferedReader(isr);
+		timer.scheduleAtFixedRate(scheduler.new SchedulerTimerTask(), 0, pollingCycleSeconds * 1000);
+	}
 	
-		// display program output
-		// System.out.printf("Output of running %s is:\n", Arrays.toString(args));
+	// extension of class for getting the proper file listing
+	class SchedulerFileFilter implements FileFilter {
 		
-		// display command output
-		// while ((commandOutput = br.readLine()) != null) {
-			// System.out.println(commandOutput);
-		// }
+		// constructor
+		public SchedulerFileFilter () {
+			System.out.println("SchedulerFileFilter initialized with filter " + sourceFileLookupExpression);
+		}
+		
+		// inherited method
+		public boolean accept(File file) {
+			return file.getName().toLowerCase().endsWith(sourceFileLookupExpression);
+		}
+	}
+	
+	//	 extension of class for timing the importing
+	class SchedulerTimerTask extends TimerTask {
+		
+		// instance variables
+		private SchedulerFileFilter		schedulerFileFilter;
+		private File[]					filesToProcess;
+		
+		// constructor
+		public SchedulerTimerTask () {
+			schedulerFileFilter			= new SchedulerFileFilter();
+		}
+		
+		// inherited method
+		public void run() {
+			
+			// check for new files
+			filesToProcess	= sourceFileDirectory.listFiles(schedulerFileFilter);
+			
+			// if there are new file
+			if (filesToProcess != null) {
+				
+				// check to make sure that the class exists, don't instantiate it yet though
+				try {
+					importClass	= Class.forName(importClassName);
+				} catch (ClassNotFoundException e) {
+					System.err.println("configFile:importClassName:ClassNotFoundException");
+					System.exit(-1);			
+				}
+				
+				// for each of the files we are processing
+				for (File file : filesToProcess) {
+					
+					// this is where we put the work that we want to run periodically
+					System.out.println(file.getAbsolutePath());
+			
+					// process the file through the import classes process method
+					// importClass.process(file)
+			
+					// archive the file if requested
+					if (archiveProcessedFile) {
+						
+					}
+			
+					// rename the file if requested
+					if (renameProcessedFile) {
+						
+					}
+				}
+			
+				// close the class and the db connection
+				// class.close();
+			
+			}
+		}
 	}
 }
