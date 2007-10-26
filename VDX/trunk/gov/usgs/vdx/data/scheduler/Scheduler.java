@@ -19,19 +19,18 @@ public class Scheduler {
 	// config file variables
 	private static String		importClassName;
 	private static List<String>	importParameters;
-	private static String		sourceFileDirectoryName;
-	private static String		sourceFileLookupExpression;
+	private static String		sourceDirectoryName;
+	private static String		sourceFileType;
 	private static int			pollingCycleSeconds;
 	private static boolean		archiveProcessedFile;
 	private static String		archiveDirectoryName;
-	private static boolean		renameProcessedFile;
-	private static String		renameValue;
+	private static boolean		deleteProcessedFile;
 	
 	// class variables
 	private static String		configFileName;
 	private static ConfigFile	configFile;
 	private static Class		importClass;
-	private static File			sourceFileDirectory;
+	private static File			sourceDirectory;
 	private static File			archiveDirectory;
 	protected Logger			logger;
 	
@@ -45,13 +44,12 @@ public class Scheduler {
 		// read the config file and give defaults
 		importClassName				= Util.stringToString(configFile.getString("importClassName"),"");
 		importParameters			= configFile.getList("importParameters");
-		sourceFileDirectoryName		= Util.stringToString(configFile.getString("sourceFileDirectoryName"),"");
-		sourceFileLookupExpression	= Util.stringToString(configFile.getString("sourceFileLookupExpression"),"");
+		sourceDirectoryName			= Util.stringToString(configFile.getString("sourceDirectoryName"),"");
+		sourceFileType				= Util.stringToString(configFile.getString("sourceFileType"),"");
 		pollingCycleSeconds			= Util.stringToInt(configFile.getString("pollingCycleSeconds"), 3600);
 		archiveProcessedFile		= Util.stringToBoolean(configFile.getString("archiveProcessedFile"));
 		archiveDirectoryName		= Util.stringToString(configFile.getString("archiveDirectoryName"),"");
-		renameProcessedFile			= Util.stringToBoolean(configFile.getString("renameProcessedFile"));
-		renameValue					= Util.stringToString(configFile.getString("renameValue"),"");
+		deleteProcessedFile			= Util.stringToBoolean(configFile.getString("deleteProcessedFile"));
 		
 	}
 	
@@ -66,19 +64,19 @@ public class Scheduler {
 		}
 		
 		// check to make sure that the source file directory exists
-		if (!sourceFileDirectory.isDirectory()) {
-			System.err.println("configFile:sourceFileDirectoryName: Directory does not exist");
+		if (!sourceDirectory.isDirectory()) {
+			System.err.println("configFile:sourceDirectoryName: Directory does not exist");
 			System.exit(-1);
 		
 		// if it exists then make sure it is readable
-		} else if (!sourceFileDirectory.canRead()){
-			System.err.println("configFile:sourceFileDirectoryName: Directory is not readable");
+		} else if (!sourceDirectory.canRead()){
+			System.err.println("configFile:sourceDirectoryName: Directory is not readable");
 			System.exit(-1);			
 		}
 		
 		// check to make sure that there is a lookup expression
-		if (sourceFileLookupExpression.length() == 0) {
-			System.err.println("configFile:sourceFileLookupExpression: Not specified");
+		if (sourceFileType.length() == 0) {
+			System.err.println("configFile:sourceFileType: Not specified");
 		}
 		
 		// check to make sure that there is a directive for archiving files
@@ -96,28 +94,18 @@ public class Scheduler {
 			}
 			
 		}
-		
-		// check to make sure that there is a directive for renaming files
-		if (renameProcessedFile) {
-			
-			// if the directive is true then check to make sure that the rename mask is set
-			if (renameValue.length() == 0) {
-				System.err.println("configFile:renameValue: Not specified");
-			}			
-		}	
 	}
 	
 	public static void displayDefaultParameters(String currentState) {
 		System.out.println("--- Value : " + currentState + " ---");
 		System.out.println("importClassName:            " + importClassName);
 		System.out.println("importParameters:           " + importParameters);
-		System.out.println("sourceFileDirectoryName:    " + sourceFileDirectoryName);
-		System.out.println("sourceFileLookupExpression: " + sourceFileLookupExpression);
+		System.out.println("sourceDirectoryName:        " + sourceDirectoryName);
+		System.out.println("sourceFileType:             " + sourceFileType);
 		System.out.println("pollingCycleSeconds:        " + pollingCycleSeconds);
 		System.out.println("archiveProcessedFile:       " + archiveProcessedFile);
 		System.out.println("archiveDirectoryName:       " + archiveDirectoryName);
-		System.out.println("renameProcessedFile:        " + renameProcessedFile);
-		System.out.println("renameValue:                " + renameValue);
+		System.out.println("deleteProcessedFile:        " + deleteProcessedFile);
 	}
 	
 	// main class
@@ -141,7 +129,7 @@ public class Scheduler {
 		parseConfigFileVals(configFile);
 		
 		// setup the proper data structures based on the default vals
-		sourceFileDirectory			= new File(sourceFileDirectoryName);
+		sourceDirectory				= new File(sourceDirectoryName);
 		archiveDirectory			= new File(archiveDirectoryName);
 		
 		// validate the variables that were gathered from the config file
@@ -160,12 +148,12 @@ public class Scheduler {
 		
 		// constructor
 		public SchedulerFileFilter () {
-			System.out.println("SchedulerFileFilter initialized with filter " + sourceFileLookupExpression);
+			System.out.println("SchedulerFileFilter initialized with filter " + sourceFileType);
 		}
 		
 		// inherited method
 		public boolean accept(File file) {
-			return file.getName().toLowerCase().endsWith(sourceFileLookupExpression);
+			return file.getName().toLowerCase().endsWith(sourceFileType);
 		}
 	}
 	
@@ -184,8 +172,12 @@ public class Scheduler {
 		// inherited method
 		public void run() {
 			
+			// declare variables
+			String	fileName;
+			File	archiveFile;
+			
 			// check for new files
-			filesToProcess	= sourceFileDirectory.listFiles(schedulerFileFilter);
+			filesToProcess	= sourceDirectory.listFiles(schedulerFileFilter);
 			
 			// sort the files
 			
@@ -211,12 +203,20 @@ public class Scheduler {
 			
 					// archive the file if requested
 					if (archiveProcessedFile) {
-						
+						archiveFile	= new File(archiveDirectory, file.getName());
+						CopyFile copyFile = new CopyFile();
+						try {
+							copyFile.copyFile(file, archiveFile);
+						} catch (IOException e) {
+							System.err.println("error copying file to archive directory");
+						}
 					}
 			
 					// rename the file if requested
-					if (renameProcessedFile) {
-						
+					if (deleteProcessedFile) {
+						if (!file.delete()) {
+							System.err.println("error deleting source file " + file.getName());
+						}
 					}
 				}
 			
