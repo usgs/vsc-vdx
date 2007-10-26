@@ -187,6 +187,8 @@ public class Scheduler {
 			// check for new files
 			filesToProcess	= sourceFileDirectory.listFiles(schedulerFileFilter);
 			
+			// sort the files
+			
 			// if there are new file
 			if (filesToProcess != null) {
 				
