@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing earthworm format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/10/26 19:30:07  uid894
+ * Initial Commit
+ *
  * Revision 1.2  2007/07/24 23:10:27  tparker
  * add header
  *
@@ -21,11 +24,12 @@ import java.util.TimeZone;
  * @author Loren Antolik
  */
 
-public class SchedulerImportEarthworm extends Importer 
+public class SchedulerImportEarthworm extends SchedulerImporter 
 {
 	private SimpleDateFormat dateIn;
 	private SimpleDateFormat dateOut;
-	
+
+/*
 	public SchedulerImportEarthworm(SQLHypocenterDataSource ds)
 	{
 		super(ds);
@@ -33,6 +37,28 @@ public class SchedulerImportEarthworm extends Importer
 		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 		dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+	}
+*/
+	
+	// all this constructor does is handle direct calls to this class from
+	// the command line, thus through the main class
+	public SchedulerImportEarthworm(String[] args) {
+		init(args);
+	}
+	
+	// this constructor gets called when we dynamically instantiate this
+	// class from another class.  we can explicitly call the init class from 
+	// the calling class
+	public SchedulerImportEarthworm() {
+	}
+	
+	// this function does the bulk of the work for instantiation.
+	// it is programmed to be accessible either from running independently
+	// or from instantiating this class from another class
+	public void init(String[] args) {
+		Arguments arguments			= new Arguments(args, flags, keys);	
+		SQLHypocenterDataSource ds	= SchedulerImporter.getDataSource(arguments);	
+		process(arguments, new ImportEarthworm(ds));
 	}
 	
 	public List<Hypocenter> importResource(String resource)
@@ -86,16 +112,12 @@ public class SchedulerImportEarthworm extends Importer
 		return hypos;
 	}
 	
-	public static void init(String parameters[]) {
-		Arguments args = new Arguments(parameters, flags, keys);
-		SQLHypocenterDataSource ds = Importer.getDataSource(args);
-		process(args, new ImportEarthworm(ds));		
-	}
-	
-	public static void main(String as[])
-	{
-		Arguments args = new Arguments(as, flags, keys);
-		SQLHypocenterDataSource ds = Importer.getDataSource(args);
-		process(args, new ImportEarthworm(ds));
+	public static void main(String args[])	{
+		
+		// the only thing we are doing here is getting the command line arguments
+		// we'll let the rest of the program do the majority of the work, because
+		// it may be accessed from other classes as well that only have access to 
+		// this class through a constructor with no arguments
+		SchedulerImportEarthworm sie	= new SchedulerImportEarthworm(args);
 	}	
 }
