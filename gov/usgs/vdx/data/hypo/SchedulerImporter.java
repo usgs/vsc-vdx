@@ -10,6 +10,9 @@ import java.util.Set;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2007/11/13 21:32:50  uid894
+ * Initial Commit
+ *
  * Revision 1.1  2007/10/26 19:30:07  uid894
  * Initial Commit
  *
@@ -40,6 +43,10 @@ abstract public class SchedulerImporter
 	
 	public SchedulerImporter() {
 		
+	}
+	
+	public void setDataSource(SQLHypocenterDataSource ds) {
+		dataSource = ds;
 	}
 	
 	public static SQLHypocenterDataSource getDataSource(Arguments args)
