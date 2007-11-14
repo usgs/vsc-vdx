@@ -10,6 +10,9 @@ import java.util.Set;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2007/11/13 22:03:01  uid894
+ * Secondary Commit
+ *
  * Revision 1.2  2007/11/13 21:32:50  uid894
  * Initial Commit
  *
@@ -78,7 +81,7 @@ abstract public class SchedulerImporter
 		System.exit(-1);
 	}
 	
-	protected static void process(Arguments args, Importer impt)
+	protected static void process(Arguments args, SchedulerImporter impt)
 	{
 		if (args.size() == 0)
 			outputInstructions();
