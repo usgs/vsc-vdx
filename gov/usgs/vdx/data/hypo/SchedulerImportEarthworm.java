@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing earthworm format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2007/11/13 22:02:49  uid894
+ * Secondary Commit
+ *
  * Revision 1.2  2007/11/13 21:32:37  uid894
  * Initial Commit
  *
@@ -61,7 +64,7 @@ public class SchedulerImportEarthworm extends SchedulerImporter
 	public void init(String[] args) {
 		Arguments arguments			= new Arguments(args, flags, keys);	
 		setDataSource(getDataSource(arguments));
-		process(arguments, sie);
+		process(arguments, this);
 	}
 	
 	public List<Hypocenter> importResource(String resource)
