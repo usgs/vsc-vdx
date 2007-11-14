@@ -5,6 +5,7 @@ import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.*;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -18,7 +19,8 @@ public class Scheduler {
 	
 	// config file variables
 	private static String		importClassName;
-	private static List<String>	importParameters;
+	//private static List<String>	importParameters;
+	private static String		importParameters;
 	private static String		sourceDirectoryName;
 	private static String		sourceFileType;
 	private static int			pollingCycleSeconds;
@@ -33,17 +35,20 @@ public class Scheduler {
 	private static File			sourceDirectory;
 	private static File			archiveDirectory;
 	protected Logger			logger;
+	private static File			vdxDirectory;
 	
 	// constructor
 	public Scheduler() {
 		logger				= Log.getLogger("gov.usgs.vdx");
+		vdxDirectory		= new File("/hvo_cluster/software/vdx");
 	}
 	
 	public static void parseConfigFileVals(ConfigFile configFile) {
 		
 		// read the config file and give defaults
 		importClassName				= Util.stringToString(configFile.getString("importClassName"),"");
-		importParameters			= configFile.getList("importParameters");
+		// importParameters			= configFile.getList("importParameters");
+		importParameters			= Util.stringToString(configFile.getString("importParameters"), "");
 		sourceDirectoryName			= Util.stringToString(configFile.getString("sourceDirectoryName"),"");
 		sourceFileType				= Util.stringToString(configFile.getString("sourceFileType"),"");
 		pollingCycleSeconds			= Util.stringToInt(configFile.getString("pollingCycleSeconds"), 3600);
@@ -163,6 +168,17 @@ public class Scheduler {
 		// instance variables
 		private SchedulerFileFilter		schedulerFileFilter;
 		private File[]					filesToProcess;
+		private String					fileName;
+		private File					archiveFile;
+		private Object					classObject;
+		private ProcessBuilder			processBuilder;
+		private Process					process;
+		private String					command;
+		private InputStream				is;
+		private InputStreamReader		isr;
+		private BufferedReader			br;
+		private String 					line;
+		private Map<String,String>		environment;
 		
 		// constructor
 		public SchedulerTimerTask () {
@@ -170,39 +186,86 @@ public class Scheduler {
 		}
 		
 		// inherited method
-		public void run() {
-			
-			// declare variables
-			String	fileName;
-			File	archiveFile;
+		public void run(){
 			
 			// check for new files
 			filesToProcess	= sourceDirectory.listFiles(schedulerFileFilter);
 			
-			// sort the files
-			
 			// if there are new file
-			if (filesToProcess != null) {
+			if (filesToProcess.length > 0) {
 				
-				// check to make sure that the class exists, don't instantiate it yet though
+				// set up the process builder
+				processBuilder	= new ProcessBuilder();
+				processBuilder.directory(vdxDirectory);
+				
+				environment			= processBuilder.environment();
+				Set keys			= environment.keySet(); 
+			    Iterator keyIter	= keys.iterator();
+			    System.out.println("The map contains the following associations:");
+			    while (keyIter.hasNext()) {
+			    	Object key = keyIter.next();
+			    	Object value = environment.get(key);
+			    	System.out.println( "   (" + key + "," + value + ")" );
+			    }
+				
+				// lets see what we are running as
 				try {
-					importClass	= Class.forName(importClassName);
-				} catch (ClassNotFoundException e) {
-					System.err.println("configFile:importClassName:ClassNotFoundException");
-					System.exit(-1);			
+					command = "pwd";
+					processBuilder.command(command);
+					process = processBuilder.start();
+					is		= process.getInputStream();
+					isr		= new InputStreamReader(is);
+					br		= new BufferedReader(isr);
+					System.out.println("pwd");
+					while ((line = br.readLine()) != null) {
+						System.out.println(line);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
+				
+				// instantiate the import class
+				// try {
+					// importClass	= Class.forName(importClassName);
+				// } catch (ClassNotFoundException e) {
+					// System.err.println("configFile:importClassName:ClassNotFoundException");
+					// System.exit(-1);			
+				// }
+				
+				// this will call the default constructor of the class
+				// try {
+					// classObject	= importClass.newInstance();
+				// } catch (InstantiationException e) {
+					// System.err.println("configFile:importClassName:InstantiationException");
+					// System.exit(-1);			
+				// } catch (IllegalAccessException e) {
+					// System.err.println("configFile:importClassName:IllegalAccessException");
+					// System.exit(-1);			
+				// }
 				
 				// for each of the files we are processing
 				for (File file : filesToProcess) {
 					
-					// this is where we put the work that we want to run periodically
-					System.out.println(file.getAbsolutePath());
-			
-					// process the file through the import classes process method
+					// define the command for the process builder					
+					try {
+						command		= "/usr/java/default/bin/java " +
+						              "-cp lib/usgs.jar:contrib/mysql.jar:contrib/colt.jar " +
+						              importClassName + " " + 
+						              importParameters + " " +
+						              file.getAbsolutePath();
+						processBuilder.command(command);
+						process		= processBuilder.start();	
+						process.waitFor();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 					// importClass.process(file)
 			
 					// archive the file if requested
 					if (archiveProcessedFile) {
+						System.out.println("archiving " + file.getAbsolutePath());
 						archiveFile	= new File(archiveDirectory, file.getName());
 						CopyFile copyFile = new CopyFile();
 						try {
@@ -214,6 +277,7 @@ public class Scheduler {
 			
 					// rename the file if requested
 					if (deleteProcessedFile) {
+						System.out.println("deleting " + file.getAbsolutePath());
 						if (!file.delete()) {
 							System.err.println("error deleting source file " + file.getName());
 						}
