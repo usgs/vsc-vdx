@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing earthworm format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2007/11/14 00:21:47  uid894
+ * restructured to be able to call from another class
+ *
  * Revision 1.3  2007/11/13 22:02:49  uid894
  * Secondary Commit
  *
@@ -30,21 +33,10 @@ import java.util.TimeZone;
  * @author Loren Antolik
  */
 
-public class SchedulerImportEarthworm extends SchedulerImporter 
+public class SchedulerImportEarthworm extends SchedulerImporter implements gov.usgs.vdx.data.scheduler.Importer
 {
 	private SimpleDateFormat dateIn;
 	private SimpleDateFormat dateOut;
-
-/*
-	public SchedulerImportEarthworm(SQLHypocenterDataSource ds)
-	{
-		super(ds);
-		dateIn = new SimpleDateFormat("yyyyMMdd HHmm ss.SSS");
-		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
-		dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
-	}
-*/
 	
 	// all this constructor does is handle direct calls to this class from
 	// the command line, thus through the main class
@@ -62,8 +54,13 @@ public class SchedulerImportEarthworm extends SchedulerImporter
 	// it is programmed to be accessible either from running independently
 	// or from instantiating this class from another class
 	public void init(String[] args) {
+		System.out.println("SchedulerImportEarthworm:init");
 		Arguments arguments			= new Arguments(args, flags, keys);	
 		setDataSource(getDataSource(arguments));
+		dateIn = new SimpleDateFormat("yyyyMMdd HHmm ss.SSS");
+		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
+		dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		process(arguments, this);
 	}
 	
