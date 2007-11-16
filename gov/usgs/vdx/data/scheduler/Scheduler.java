@@ -22,7 +22,7 @@ public class Scheduler {
 	
 	// config file variables
 	private static String		importClassName;
-	private static List<String>	importParameters;
+	private static String		importParameters;
 	private static String		sourceDirectoryName;
 	private static String		sourceFileType;
 	private static int			pollingCycleSeconds;
@@ -51,7 +51,7 @@ public class Scheduler {
 	// initialization method.  initializes all values and runs the program
 	public void init(String[] args) {
 		
-		System.out.println("Scheduler:init");
+		System.out.println("Scheduler:init:1");
 		
 		// get the config file name and make sure that it exists
 		configFileName	= args[0];
@@ -61,19 +61,23 @@ public class Scheduler {
 			System.exit(-1);
 		}
 		
+		System.out.println("Scheduler:init:2");
+		
 		// parse out the values from the config file
 		parseConfigFileVals(configFile);
-		
-		// validate the variables that were gathered from the config file
-		validateSchedulerVars();
-		
-		// define the logger
-		logger				= Log.getLogger("gov.usgs.vdx");
-		vdxDirectory		= new File("/hvo_cluster/software/vdx");
 		
 		// setup the proper data structures based on the default vals
 		sourceDirectory				= new File(sourceDirectoryName);
 		archiveDirectory			= new File(archiveDirectoryName);
+		vdxDirectory				= new File("/hvo_cluster/software/vdx");
+		logger						= Log.getLogger("gov.usgs.vdx");
+		
+		System.out.println("Scheduler:init:3");
+		
+		// validate the variables that were gathered from the config file
+		validateSchedulerVars();
+		
+		System.out.println("Scheduler:init:4");
 		
 		// instantiate this scheduler class by processing the config file and it's contents
 		Scheduler scheduler	= new Scheduler();
@@ -87,7 +91,7 @@ public class Scheduler {
 		
 		// read the config file and give defaults
 		importClassName				= Util.stringToString(configFile.getString("importClassName"),"");
-		importParameters			= configFile.getList("importParameters");
+		importParameters			= Util.stringToString(configFile.getString("importParameters"),"");
 		sourceDirectoryName			= Util.stringToString(configFile.getString("sourceDirectoryName"),"");
 		sourceFileType				= Util.stringToString(configFile.getString("sourceFileType"),"");
 		pollingCycleSeconds			= Util.stringToInt(configFile.getString("pollingCycleSeconds"), 3600);
@@ -195,6 +199,7 @@ public class Scheduler {
 		public void run(){
 			
 			System.out.println("run:checking for new files");
+			String argString;
 			
 			// check for new files
 			filesToProcess	= sourceDirectory.listFiles(importFileFilter);
@@ -230,9 +235,11 @@ public class Scheduler {
 					
 					System.out.println("run:working on " + file.getAbsolutePath());
 					
+					
 					// add the file name to the import parameters list
-					importParameters.add(file.getAbsolutePath());
-					arguments = (String[])importParameters.toArray();
+					argString	= "";
+					argString	= importParameters + " " + file.getAbsolutePath();
+					arguments 	= argString.split(" ");
 					
 					System.out.println("run:calling init");
 					importer.init(arguments);
