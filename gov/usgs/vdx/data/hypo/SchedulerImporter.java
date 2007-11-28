@@ -10,6 +10,9 @@ import java.util.Set;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2007/11/14 00:21:48  uid894
+ * restructured to be able to call from another class
+ *
  * Revision 1.3  2007/11/13 22:03:01  uid894
  * Secondary Commit
  *
@@ -41,7 +44,6 @@ abstract public class SchedulerImporter
 	public SchedulerImporter(SQLHypocenterDataSource ds)
 	{
 		dataSource = ds;
-		System.out.println("SchedulerImporter");
 	}
 	
 	public SchedulerImporter() {
@@ -75,6 +77,10 @@ abstract public class SchedulerImporter
 			dataSource.insertHypocenter(hc);
 	}
 	
+	protected void disconnect() {
+		dataSource.disconnect();
+	}
+	
 	protected static void outputInstructions()
 	{
 		System.out.println("<importer> -c [vdx config] -n [database name] files...");
@@ -96,6 +102,6 @@ abstract public class SchedulerImporter
 		{
 			System.out.println("Reading resource: " + res);
 			impt.insert(impt.importResource(res));
-		}	
+		}
 	}
 }
