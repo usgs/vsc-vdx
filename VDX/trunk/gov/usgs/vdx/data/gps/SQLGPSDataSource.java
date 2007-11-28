@@ -20,6 +20,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.6  2005/10/21 21:23:25  tparker
  * Roll back changes related to Bug #77
  *
@@ -87,6 +90,10 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(DATABASE_NAME);
+	}
+	
+	public void disconnect() {
+		database.close();
 	}
 
 	public String getType()
