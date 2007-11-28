@@ -17,6 +17,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.6  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.5  2005/10/21 21:23:59  tparker
  * Roll back changes related to Bug #77
  *
@@ -75,6 +78,10 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		String vdxName = params.getString("vdx.name");
 		name = params.getString("vdx.databaseName");
 		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+	}
+	
+	public void disconnect() {
+		database.close();
 	}
 	
 	public RequestResult getData(Map<String, String> params)
