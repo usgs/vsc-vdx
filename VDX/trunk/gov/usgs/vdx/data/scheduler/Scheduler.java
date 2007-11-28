@@ -51,8 +51,6 @@ public class Scheduler {
 	// initialization method.  initializes all values and runs the program
 	public void init(String[] args) {
 		
-		System.out.println("Scheduler:init:1");
-		
 		// get the config file name and make sure that it exists
 		configFileName	= args[0];
 		configFile		= new ConfigFile(configFileName);
@@ -60,8 +58,6 @@ public class Scheduler {
 			System.err.printf("%s was not successfully read.\n", configFileName);
 			System.exit(-1);
 		}
-		
-		System.out.println("Scheduler:init:2");
 		
 		// parse out the values from the config file
 		parseConfigFileVals(configFile);
@@ -72,12 +68,8 @@ public class Scheduler {
 		vdxDirectory				= new File("/hvo_cluster/software/vdx");
 		logger						= Log.getLogger("gov.usgs.vdx");
 		
-		System.out.println("Scheduler:init:3");
-		
 		// validate the variables that were gathered from the config file
 		validateSchedulerVars();
-		
-		System.out.println("Scheduler:init:4");
 		
 		// instantiate this scheduler class by processing the config file and it's contents
 		Scheduler scheduler	= new Scheduler();
@@ -171,7 +163,6 @@ public class Scheduler {
 		
 		// constructor
 		public ImportFileFilter () {
-			System.out.println("SchedulerFileFilter initialized with filter " + sourceFileType);
 		}
 		
 		// inherited method
@@ -198,7 +189,6 @@ public class Scheduler {
 		// inherited method
 		public void run(){
 			
-			System.out.println("run:checking for new files");
 			String argString;
 			
 			// check for new files
@@ -208,8 +198,6 @@ public class Scheduler {
 			// only try and make a db connection if we need one, no need having a connection open
 			// all day long if we only use it for five seconds a day.
 			if (filesToProcess.length > 0) {
-				
-				System.out.println("run:new files exist");
 				
 				// instantiate the import class
 				try {
@@ -231,22 +219,19 @@ public class Scheduler {
 				}
 				
 				// for each of the files we are processing
-				for (File file : filesToProcess) {
-					
-					System.out.println("run:working on " + file.getAbsolutePath());
-					
+				for (File file : filesToProcess) {					
 					
 					// add the file name to the import parameters list
 					argString	= "";
 					argString	= importParameters + " " + file.getAbsolutePath();
 					arguments 	= argString.split(" ");
-					
-					System.out.println("run:calling init");
+
+					// call the init function to add the data in the file
 					importer.init(arguments);
 			
 					// archive the file if requested
 					if (archiveProcessedFile) {
-						System.out.println("run:archiving " + file.getAbsolutePath());
+						System.out.println("archiving " + file.getAbsolutePath() + " to " + archiveDirectory);
 						archiveFile	= new File(archiveDirectory, file.getName());
 						CopyFile copyFile = new CopyFile();
 						try {
@@ -258,7 +243,7 @@ public class Scheduler {
 			
 					// rename the file if requested
 					if (deleteProcessedFile) {
-						System.out.println("run:deleting " + file.getAbsolutePath());
+						System.out.println("deleting " + file.getAbsolutePath());
 						if (!file.delete()) {
 							System.err.println("error deleting source file " + file.getName());
 						}

@@ -42,7 +42,7 @@ public class CopyFile {
 		in.close();
 		if (clock) {
 			millis = System.currentTimeMillis() - millis;
-			System.out.println("Second(s): " + (millis/1000L));
+			// System.out.println("Second(s): " + (millis/1000L));
 		}
 		if (verify) {
 			return new Long(checksum.getValue());
@@ -64,7 +64,7 @@ public class CopyFile {
 		in.close();
 		if (clock) {
 			millis = System.currentTimeMillis() - millis;
-			System.out.println("Second(s): " + (millis/1000L));
+			// System.out.println("Second(s): " + (millis/1000L));
 		}
 		return new Long(checksum.getValue());
 	}
