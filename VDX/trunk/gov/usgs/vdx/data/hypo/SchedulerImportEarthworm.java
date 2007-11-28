@@ -14,6 +14,9 @@ import java.util.TimeZone;
  * Class for importing earthworm format catalog files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2007/11/15 20:48:54  uid894
+ * *** empty log message ***
+ *
  * Revision 1.4  2007/11/14 00:21:47  uid894
  * restructured to be able to call from another class
  *
@@ -38,30 +41,34 @@ public class SchedulerImportEarthworm extends SchedulerImporter implements gov.u
 	private SimpleDateFormat dateIn;
 	private SimpleDateFormat dateOut;
 	
-	// all this constructor does is handle direct calls to this class from
-	// the command line, thus through the main class
+	// constructor used from calling classes
+	public SchedulerImportEarthworm() {
+	}
+	
+	// constructor used from main
 	public SchedulerImportEarthworm(String[] args) {
 		init(args);
 	}
 	
-	// this constructor gets called when we dynamically instantiate this
-	// class from another class.  we can explicitly call the init class from 
-	// the calling class
-	public SchedulerImportEarthworm() {
-	}
-	
-	// this function does the bulk of the work for instantiation.
-	// it is programmed to be accessible either from running independently
-	// or from instantiating this class from another class
-	public void init(String[] args) {
-		System.out.println("SchedulerImportEarthworm:init");
-		Arguments arguments			= new Arguments(args, flags, keys);	
-		setDataSource(getDataSource(arguments));
+	// initialization
+	public void init(String[] args) {		
+
 		dateIn = new SimpleDateFormat("yyyyMMdd HHmm ss.SSS");
 		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 		dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
+		// parse the arguments and figure out which ones are flags and which ones are files
+		Arguments arguments	= new Arguments(args, flags, keys);	
+		
+		// set the data source based on the values in the specified config file
+		setDataSource(getDataSource(arguments));
+		
+		// process the file
 		process(arguments, this);
+		
+		// disconnect from the database
+		disconnect();
 	}
 	
 	public List<Hypocenter> importResource(String resource)
