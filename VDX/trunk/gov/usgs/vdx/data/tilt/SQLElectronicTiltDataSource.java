@@ -15,6 +15,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2005/10/18 20:25:43  dcervelli
+ * Closed resultsets, changed a typo.
+ *
  * Revision 1.2  2005/10/14 20:45:08  dcervelli
  * More development.
  *
@@ -25,11 +28,9 @@ import java.util.logging.Level;
  */
 public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 {
+	public static String DATABASE_NAME = "etilt";
 
-	public SQLElectronicTiltDataSource()
-	{
-		DATABASE_NAME = "etilt";
-	}
+	public SQLElectronicTiltDataSource() {}
 	
 	public String getType()
 	{
