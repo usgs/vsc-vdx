@@ -4,9 +4,8 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.scheduler.CopyFile;
+
 import java.io.*;
-import java.util.*;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
@@ -36,8 +35,8 @@ public class Scheduler {
 	private static Class		importClass;
 	private static File			sourceDirectory;
 	private static File			archiveDirectory;
-	protected Logger			logger;
 	private static File			vdxDirectory;
+	protected Logger			logger;
 	
 	// constructor for no arguments (for use by a calling class)
 	public Scheduler() {
