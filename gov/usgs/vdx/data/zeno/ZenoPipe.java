@@ -423,7 +423,7 @@ public class ZenoPipe extends Pipe
 		 */
 		public Station(String c, String s)
 		{
-			code = c;
+			code = c.toLowerCase();
 			StringTokenizer st = new StringTokenizer(s, ";");
 			sid = Integer.parseInt(st.nextToken());
 			host = st.nextToken();
