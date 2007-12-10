@@ -20,6 +20,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2006/04/09 18:26:05  dcervelli
+ * ConfigFile/type safety changes.
+ *
  * Revision 1.9  2005/10/21 21:24:51  tparker
  * Roll back changes related to Bug #77
  *
@@ -49,6 +52,8 @@ import java.util.logging.Level;
 public class SQLTiltDataSource extends SQLDataSource implements DataSource
 {
 	public static String DATABASE_NAME = "tilt";
+
+	public SQLTiltDataSource() {}
 	
 	public String getType()
 	{
