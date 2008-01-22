@@ -501,11 +501,11 @@ public class ZenoPipe extends Pipe
 						GasDataManager.getDataManager().addCO2Data(j2ksec, 1, dateString, co2);
 					}
 					else if (outputType.equals("co2high"))
-                                        {
-                                                double co2high = Double.parseDouble(msg.get("co2high"));
-                                                System.out.println("test " + j2ksec + " " + dateString + " " + co2high);
-                                                GasDataManager.getDataManager().addCO2Data(j2ksec, 2, dateString, co2high);
-                                        }
+                    {
+						double co2high = Double.parseDouble(msg.get("co2high"));
+                     	System.out.println("test " + j2ksec + " " + dateString + " " + co2high);
+                    	GasDataManager.getDataManager().addCO2Data(j2ksec, 2, dateString, co2high);
+                    }
 
 					else if (outputType.equals("strain"))
 					{
