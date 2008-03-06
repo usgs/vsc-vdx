@@ -24,6 +24,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2007/07/24 23:00:17  tparker
+ * add support for data insert
+ *
  * Revision 1.6  2007/07/24 17:51:22  tparker
  * rename getColumns and expand default time shortcuts
  *
@@ -56,8 +59,8 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		String vdxHost = params.getString("vdx.host");
 		vdxName = params.getString("vdx.name");
+		setName(params.getString("vdx.name"));
 		vdxPrefix = params.getString("vdx.prefix");
-		//vdxName = params.getString("vdx.databaseName");
 		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
 	}
 
@@ -68,7 +71,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		try
 		{
 			metadata = new HashMap<String, String>();
-			database.useDatabase(name + "$" + DATABASE_NAME);
+			database.useDatabase(vdxName + "$" + DATABASE_NAME);
 			ResultSet rs = database.getStatement().executeQuery("SELECT meta_key, meta_value FROM metadata");
 			while (rs.next())
 				metadata.put(rs.getString(1), rs.getString(2));
@@ -89,7 +92,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			columns = new ArrayList<GenericColumn>();
 			columnStrings = new ArrayList<String>();
 			Statement st = database.getStatement();
-			database.useDatabase(name + "$" + DATABASE_NAME);
+			database.useDatabase(vdxName + "$" + DATABASE_NAME);
 			ResultSet rs = st.executeQuery("SELECT idx, name, description, unit, checked FROM cols ORDER BY idx ASC");
 			while (rs.next())
 			{
@@ -125,7 +128,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		try
 		{
-			String db = name + "$" + DATABASE_NAME;
+			String db = vdxName + "$" + DATABASE_NAME;
 			if (!createDefaultDatabase(db, 0, true, false))
 				return false;
 			
@@ -157,12 +160,12 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		for (int i = 0; i < cols.length; i++)
 			cols[i] = columns.get(i).name;
 		
-		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
+		return createDefaultChannel(vdxName + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
 	}
 	
 	public boolean databaseExists()
 	{
-		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
+		return defaultDatabaseExists(vdxName + "$" + DATABASE_NAME);
 	}
 
 	public String getType()
@@ -259,7 +262,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		GenericDataMatrix result = null;
 		try
 		{
-			database.useDatabase(name + "$" + DATABASE_NAME);
+			database.useDatabase(vdxName + "$" + DATABASE_NAME);
 			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
 			ps.setInt(1, cid);
 			ResultSet rs = ps.executeQuery();
@@ -299,8 +302,6 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		DoubleMatrix2D data = d.getData();
 
 		database.useDatabase(vdxName + "$" + DATABASE_NAME);
-//		System.out.println(database.tableExists(vdxName + "$" + DATABASE_NAME, "yell_yt"));
-//		if (1==1) System.exit(1);
 		Statement st = database.getStatement();
 
 		for (int i=0; i<d.rows(); i++)
@@ -318,7 +319,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			StringBuffer sql = new StringBuffer();
 			sql.append("INSERT IGNORE INTO " + table + " (" + names + ") ");
 			sql.append("VALUES (" + values + ")");
-			System.out.println(sql);
+			//System.out.println(sql);
 			
 			try
 			{
