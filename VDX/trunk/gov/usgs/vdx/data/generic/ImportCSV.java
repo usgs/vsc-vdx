@@ -24,6 +24,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * Class for importing CSV format files.
  *  
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2007/07/24 22:59:24  tparker
+ * initial commit
+ *
  *
  * @author Tom Parker
  */
@@ -37,6 +40,7 @@ public class ImportCSV
 	private int timeZoneIndex;
 	private int headerRows;
 	private String table;
+	private Double lon, lat;
 	private static final String CONFIG_FILE = "importGenericCSV.config";
 	private ConfigFile params;
 	private ConfigFile vdxParams;
@@ -60,8 +64,12 @@ public class ImportCSV
 		
 		vdxParams = new ConfigFile(params.getString("vdxConfig"));
 		headerRows = Integer.parseInt(params.getString("headerRows"));
-		table = params.getString("table");
+		table = params.getString("channel");
 	
+		sub = params.getSubConfig(table);
+		lon = Double.parseDouble(sub.getString("lon"));
+		lat = Double.parseDouble(sub.getString("lat"));
+		
 		sub = params.getSubConfig("tz");
 		timeZoneIndex = Integer.parseInt(sub.getString("index"));
 		dateIn = new SimpleDateFormat(sub.getString("format"));
@@ -224,25 +232,37 @@ public class ImportCSV
 		return hypos;
 	}
 	
+	public void create ()
+	{
+		System.out.println("Creating channel " + table + "...");
+		dataSource.createChannel(table, table, lon, lat);
+	}
 	public static void main(String as[])
 	{
 		
 		String cf = CONFIG_FILE;
 		Set<String> flags;
 		Set<String> keys;
-
+		boolean createDatabase=false;
+		
 		flags = new HashSet<String>();
 		keys = new HashSet<String>();
 		keys.add("-c");
-		keys.add("-h");
-
+		flags.add("-h");
+		flags.add("--help");
+		flags.add("-g");
+		flags.add("--generate");
+		
 		Arguments args = new Arguments(as, flags, keys);
 		
-		if (args.contains("-h"))
+		if (args.flagged("-h") || args.flagged("--help"))
 		{
-			System.err.println("java gov.usgs.vdx.data.generic.ImportCSV [-c configFile]");
+			System.err.println("java gov.usgs.vdx.data.generic.ImportCSV [-c configFile] [-g]");
 			System.exit(-1);
 		}
+		
+		if (args.flagged("-g") || args.flagged("--generate"))
+			createDatabase=true;
 		
 		if (args.contains("-c"))
 			cf = args.get("-c");
@@ -250,6 +270,9 @@ public class ImportCSV
 		ImportCSV in = new ImportCSV(cf);
 		List<String> files = args.unused();
 
+		if (createDatabase)
+			in.create();
+		
 		for (String file : files)
 			in.process(file);
 	}
