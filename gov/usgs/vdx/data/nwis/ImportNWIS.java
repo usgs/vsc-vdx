@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.10  2007/03/19 01:14:31  tparker
+  * cleanup
+  *
   * Revision 1.9  2007/02/01 20:22:44  tparker
   * correct axis labeling
   *
@@ -149,8 +152,10 @@ public class ImportNWIS
 				for (int i=0; i < dataTypes.size(); i++)
 				{
 					int index = i * 2 + 3;
-					if (ss[index].length() > 0)
+					// ignore values that are empty or have embeded qualification codes
+					if (ss[index].length() > 0 && ss[index].indexOf('_') == 0)
 						dataSource.insertRecord(date, st, dataTypes.get(i), Double.parseDouble(ss[index]));
+
 				}
 				s = rr.nextLine();
 			}
