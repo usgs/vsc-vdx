@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 /**
  *
   * $Log: not supported by cvs2svn $
+  * Revision 1.11  2008/04/07 17:41:20  tparker
+  * ignore RDB values with qualification codes
+  *
   * Revision 1.10  2007/03/19 01:14:31  tparker
   * cleanup
   *
@@ -153,11 +156,12 @@ public class ImportNWIS
 				{
 					int index = i * 2 + 3;
 					// ignore values that are empty or have embeded qualification codes
-					if (ss[index].length() > 0 && ss[index].indexOf('_') == 0)
+					if (ss[index].length() > 0 && ss[index].indexOf('_') == -1)
 						dataSource.insertRecord(date, st, dataTypes.get(i), Double.parseDouble(ss[index]));
-
-				}
+					else
+						System.out.println ("skipping " + ss[index] + " idex: " + ss[index].indexOf('_'));
 				s = rr.nextLine();
+				}
 			}
 			
 			for (DataType dt : dataTypes)
