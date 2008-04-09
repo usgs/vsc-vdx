@@ -384,7 +384,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 //								"and channel_data_types.type = data_types.type order by data_types.type)");
 						while (rs2.next())
 						{
-							types.append( rs2.getInt("channel_data_types.dataType") + "=" + rs2.getString("data_types.name") + "$");
+							types.append( rs2.getInt("channel_data_types.type") + "=" + rs2.getString("data_types.name") + "$");
 						}
 						rs2.close();
 					}
