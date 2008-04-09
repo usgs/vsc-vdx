@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.12  2008/04/09 20:09:26  tparker
+ * tweak table naming
+ *
  * Revision 1.10  2008/04/07 23:14:14  tparker
  * update create channel_data_types
  *
@@ -299,7 +302,7 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			ps.execute();
 			
 			Statement st = database.getStatement();
-			st.execute("INSERT IGNORE INTO channel_data_types (channel, type) " +
+			st.execute("INSERT IGNORE INTO channel_data_types (sid, channel, type) " +
 					" values (0, " + station.getId() + ", " + dt.getId() + ")");
 		}
 		catch (SQLException e)
