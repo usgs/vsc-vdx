@@ -24,6 +24,9 @@ import java.util.logging.Level;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.10  2008/04/07 23:14:14  tparker
+ * update create channel_data_types
+ *
  * Revision 1.9  2007/06/29 07:29:17  tparker
  * Add channel_data_type table
  *
@@ -81,8 +84,9 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 			st.execute(
 					"CREATE TABLE channel_data_types (" +
 					"sid INT NOT NULL auto_increment, " +
-					"channel INT NOT NULL, type INT NOT NULL, " + 
-					"PRIMARY KEY channel (channel, type))");
+					"channel INT NOT NULL, type INT NOT NULL, " +
+					"PRIMARY KEY (sid), " +
+					"UNIQUE KEY channel (channel, type))");
 			return true;
 			
 		}
