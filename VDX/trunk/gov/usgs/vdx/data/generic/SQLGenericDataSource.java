@@ -24,6 +24,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.8  2008/03/06 00:24:08  tparker
+ * maybe unstable?
+ *
  * Revision 1.7  2007/07/24 23:00:17  tparker
  * add support for data insert
  *
@@ -59,6 +62,8 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		String vdxHost = params.getString("vdx.host");
 		vdxName = params.getString("vdx.name");
+		if (vdxName == null)
+			vdxName = params.getString("vdx.databaseName");
 		setName(params.getString("vdx.name"));
 		vdxPrefix = params.getString("vdx.prefix");
 		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
