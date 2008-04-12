@@ -28,9 +28,11 @@ import java.util.logging.Level;
  */
 public class SQLElectronicTiltDataSource extends SQLTiltDataSource
 {
-	public static String DATABASE_NAME = "etilt";
 
-	public SQLElectronicTiltDataSource() {}
+	public SQLElectronicTiltDataSource()
+	{
+		DATABASE_NAME = "etilt";
+	}
 	
 	public String getType()
 	{
