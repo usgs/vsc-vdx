@@ -24,6 +24,9 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.9  2008/04/12 01:17:47  tparker
+ * Allow both vdx.name and vdx.databaseName
+ *
  * Revision 1.8  2008/03/06 00:24:08  tparker
  * maybe unstable?
  *
@@ -62,9 +65,9 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		String vdxHost = params.getString("vdx.host");
 		vdxName = params.getString("vdx.name");
-		if (vdxName == null)
+		if (vdxName == null || vdxName.equals(""))
 			vdxName = params.getString("vdx.databaseName");
-		setName(params.getString("vdx.name"));
+		setName(vdxName);
 		vdxPrefix = params.getString("vdx.prefix");
 		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
 	}
