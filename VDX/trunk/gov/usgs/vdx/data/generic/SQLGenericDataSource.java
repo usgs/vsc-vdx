@@ -58,18 +58,25 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	private List<String> columnStrings;
 	private Map<String, String> metadata;
 	private String querySQL;
+	private String name;
 	private String vdxName;
-	private String vdxPrefix;
 	
 	public void initialize(ConfigFile params)
 	{
-		String vdxHost = params.getString("vdx.host");
-		vdxName = params.getString("vdx.name");
-		if (vdxName == null || vdxName.equals(""))
-			vdxName = params.getString("vdx.databaseName");
-		setName(vdxName);
-		vdxPrefix = params.getString("vdx.prefix");
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
+		String vdxUrl = params.getString("vdx.url");
+		if (vdxUrl == null)
+			throw new RuntimeException("config parameter vdx.url not found");
+			
+		name = params.getString("vdx.name");		
+		if (name == null)
+			throw new RuntimeException("config parameter vdx.name not found");
+		
+		setName(name);
+		vdxName = params.getString("vdx.databaseName");
+		if (vdxName == null)
+			throw new RuntimeException("config parameter vdx.vdxName not found");
+
+		database = new VDXDatabase("com.mysql.jdbc.Driver", vdxUrl, vdxName);
 	}
 
 	private void getMetadata()
@@ -79,7 +86,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		try
 		{
 			metadata = new HashMap<String, String>();
-			database.useDatabase(vdxName + "$" + DATABASE_NAME);
+			database.useDatabase(name + "$" + DATABASE_NAME);
 			ResultSet rs = database.getStatement().executeQuery("SELECT meta_key, meta_value FROM metadata");
 			while (rs.next())
 				metadata.put(rs.getString(1), rs.getString(2));
@@ -100,7 +107,10 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			columns = new ArrayList<GenericColumn>();
 			columnStrings = new ArrayList<String>();
 			Statement st = database.getStatement();
-			database.useDatabase(vdxName + "$" + DATABASE_NAME);
+
+			String db = name + "$" + DATABASE_NAME;
+			if (!database.useDatabase(db))
+				throw new RuntimeException("Can't connect to database");
 			ResultSet rs = st.executeQuery("SELECT idx, name, description, unit, checked FROM cols ORDER BY idx ASC");
 			while (rs.next())
 			{
@@ -136,7 +146,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	{
 		try
 		{
-			String db = vdxName + "$" + DATABASE_NAME;
+			String db = name + "$" + DATABASE_NAME;
 			if (!createDefaultDatabase(db, 0, true, false))
 				return false;
 			
@@ -168,12 +178,12 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		for (int i = 0; i < cols.length; i++)
 			cols[i] = columns.get(i).name;
 		
-		return createDefaultChannel(vdxName + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
+		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
 	}
 	
 	public boolean databaseExists()
 	{
-		return defaultDatabaseExists(vdxName + "$" + DATABASE_NAME);
+		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
 	}
 
 	public String getType()
@@ -270,7 +280,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		GenericDataMatrix result = null;
 		try
 		{
-			database.useDatabase(vdxName + "$" + DATABASE_NAME);
+			database.useDatabase(name + "$" + DATABASE_NAME);
 			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
 			ps.setInt(1, cid);
 			ResultSet rs = ps.executeQuery();
@@ -309,7 +319,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		String[] colNames = d.getColumnNames();
 		DoubleMatrix2D data = d.getData();
 
-		database.useDatabase(vdxName + "$" + DATABASE_NAME);
+		database.useDatabase(name + "$" + DATABASE_NAME);
 		Statement st = database.getStatement();
 
 		for (int i=0; i<d.rows(); i++)
@@ -327,7 +337,6 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			StringBuffer sql = new StringBuffer();
 			sql.append("INSERT IGNORE INTO " + table + " (" + names + ") ");
 			sql.append("VALUES (" + values + ")");
-			//System.out.println(sql);
 			
 			try
 			{
