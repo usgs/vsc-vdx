@@ -15,10 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import cern.colt.matrix.DoubleFactory2D;
-import cern.colt.matrix.DoubleMatrix2D;
 
 /**
  * Class for importing CSV format files.
@@ -51,10 +49,13 @@ public class ImportCSV
 	{
 		logger = Log.getLogger("gov.usgs.vdx");
 		params = new ConfigFile(cf);
+		logger.finer("Processing config file");
 		processConfigFile();
 		dataSource = new SQLGenericDataSource();
+		logger.finer("initalizing VDX params");
 		dataSource.initialize(vdxParams);
 		dbCols = dataSource.getColumns();
+		logger.finest("exiting constructor");
 	}
 	
 	private void processConfigFile()
@@ -76,10 +77,12 @@ public class ImportCSV
 		dateIn.setTimeZone(TimeZone.getTimeZone(sub.getString("zone")));		
 		
 		List<String> columns = params.getList("column");
-		for (Iterator it = columns.iterator(); it.hasNext(); )
+		
+		Iterator<String> it = columns.iterator();
+		while (it.hasNext())
 		{
-			String column = (String)it.next();
-			logger.fine("found column: " + column);
+			String column = it.next();
+			logger.finest("found column: " + column);
 			sub = params.getSubConfig(column);
 			int index = Integer.parseInt(sub.getString("index"));
 			String description = sub.getString("description");
@@ -93,6 +96,7 @@ public class ImportCSV
 	
 	public void process(String f)
 	{
+		logger.fine("processing " + f);
 		List<double[]> pts = new ArrayList<double[]>();
 		
 		try
@@ -234,11 +238,13 @@ public class ImportCSV
 	
 	public void create ()
 	{
-		System.out.println("Creating channel " + table + "...");
+		logger.info("Creating channel " + table);
 		dataSource.createChannel(table, table, lon, lat);
 	}
 	public static void main(String as[])
 	{
+		Logger 	logger = Log.getLogger("gov.usgs.vdx");
+		logger.setLevel(Level.INFO);
 		
 		String cf = CONFIG_FILE;
 		Set<String> flags;
@@ -252,6 +258,7 @@ public class ImportCSV
 		flags.add("--help");
 		flags.add("-g");
 		flags.add("--generate");
+		flags.add("-v");
 		
 		Arguments args = new Arguments(as, flags, keys);
 		
@@ -266,6 +273,9 @@ public class ImportCSV
 		
 		if (args.contains("-c"))
 			cf = args.get("-c");
+		
+		if (args.flagged("-v"))
+			logger.setLevel(Level.ALL);
 		
 		ImportCSV in = new ImportCSV(cf);
 		List<String> files = args.unused();
