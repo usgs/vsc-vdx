@@ -10,6 +10,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -119,6 +120,10 @@ abstract public class SQLDataSource
 	
 	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, String[] cols, boolean channels, boolean translations)
 	{
+		
+		Logger logger = database.getLogger();
+		
+		logger.info("Creating channel " + name);
 		try
 		{
 			if (channelName == null)
@@ -155,7 +160,7 @@ abstract public class SQLDataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLDataSource.createDefaultChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.createDefaultChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
 			e.printStackTrace();
 		}
 		return false;
