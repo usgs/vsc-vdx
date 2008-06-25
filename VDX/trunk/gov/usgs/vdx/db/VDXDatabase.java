@@ -120,6 +120,7 @@ public class VDXDatabase
 	
 	public void connect()
 	{
+		logger.fine("Connecting to " + dbURL);
 		connected = false;
 		try
 		{
@@ -283,6 +284,7 @@ public class VDXDatabase
 	
 	public boolean useDatabase(String db)
 	{
+		db = databasePrefix + "_" + db;
 		if (!checkConnect())
 			return false;
 		
@@ -290,7 +292,7 @@ public class VDXDatabase
 		{
 			try
 			{
-				statement.execute("USE " + databasePrefix + "_" + db);
+				statement.execute("USE " + db);
 			}
 			catch (SQLException e)
 			{
@@ -298,7 +300,7 @@ public class VDXDatabase
 				close();
 				connect();
 			}
-			statement.execute("USE " + databasePrefix + "_" + db);
+			statement.execute("USE " + db);
 			return true;
 		}
 		catch (SQLException e)
