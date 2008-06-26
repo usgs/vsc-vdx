@@ -32,30 +32,6 @@ import java.util.logging.Logger;
  * 
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.8  2007/04/22 06:43:35  tparker
- * Initial ewrsam commit
- *
- * Revision 1.7  2006/08/01 17:52:35  tparker
- * Add tableExist method
- *
- * Revision 1.6  2006/04/09 18:26:05  dcervelli
- * ConfigFile/type safety changes.
- *
- * Revision 1.5  2005/10/20 18:00:48  dcervelli
- * Added creategeneric.
- *
- * Revision 1.4  2005/10/13 22:17:13  dcervelli
- * Added etilt.
- *
- * Revision 1.3  2005/09/01 00:29:26  dcervelli
- * Added tilt database creation.
- *
- * Revision 1.2  2005/08/29 15:56:04  dcervelli
- * New logging changes.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
  *
  * @author Dan Cervelli
  */

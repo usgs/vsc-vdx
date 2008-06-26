@@ -15,25 +15,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.6  2006/04/04 15:50:49  dcervelli
- * Eliminated warnings.
- *
- * Revision 1.5  2005/12/28 20:36:59  tparker
- * Add import from file, and change syntax for specifying the config file at runtime
- *
- * Revision 1.4  2005/10/20 05:06:06  dcervelli
- * Fixed default xMult, yMult values.
- *
- * Revision 1.3  2005/10/14 20:44:29  dcervelli
- * Added calibration.
- *
- * Revision 1.2  2005/10/13 22:18:14  dcervelli
- * Changes for etilt.
- *
- * Revision 1.1  2005/09/21 19:25:14  dcervelli
- * Initial commit.
  *
  * @author Dan Cervelli
  */
