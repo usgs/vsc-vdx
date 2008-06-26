@@ -21,11 +21,6 @@ import java.util.logging.Logger;
 /**
  * Class for importing CSV format files.
  *  
- * $Log: not supported by cvs2svn $
- * Revision 1.1  2007/07/24 22:59:24  tparker
- * initial commit
- *
- *
  * @author Tom Parker
  */
 public class ImportCSV

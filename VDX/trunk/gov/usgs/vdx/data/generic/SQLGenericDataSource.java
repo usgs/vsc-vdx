@@ -22,32 +22,6 @@ import java.util.logging.Level;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.9  2008/04/12 01:17:47  tparker
- * Allow both vdx.name and vdx.databaseName
- *
- * Revision 1.8  2008/03/06 00:24:08  tparker
- * maybe unstable?
- *
- * Revision 1.7  2007/07/24 23:00:17  tparker
- * add support for data insert
- *
- * Revision 1.6  2007/07/24 17:51:22  tparker
- * rename getColumns and expand default time shortcuts
- *
- * Revision 1.5  2006/04/09 18:26:05  dcervelli
- * ConfigFile/type safety changes.
- *
- * Revision 1.4  2005/11/04 18:50:28  dcervelli
- * Fixed bug where columns and metadata not loaded before query.
- *
- * Revision 1.3  2005/10/21 21:19:55  tparker
- * Roll back changes related to Bug #77
- *
- * Revision 1.1  2005/10/20 05:07:30  dcervelli
- * Initial commit.
- *
  * @author Dan Cervelli
  */
 public class SQLGenericDataSource extends SQLDataSource implements DataSource
