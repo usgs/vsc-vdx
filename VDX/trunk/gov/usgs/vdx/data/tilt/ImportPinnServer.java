@@ -75,7 +75,9 @@ public class ImportPinnServer extends Client
 		
 		String driver = cf.getString("vdx.driver");
 		String url = cf.getString("vdx.url");
-		String prefix = cf.getString("vdx.prefix");
+		String prefix = cf.getString("vdx.vdxName");
+		if (prefix == null)
+			throw new RuntimeException("can't find config parameter vdx.vdxName. Update config file if using vdx.prefix");
 		String name = cf.getString("vdx.name");
 		
 		ips.dataSource = new SQLElectronicTiltDataSource();
