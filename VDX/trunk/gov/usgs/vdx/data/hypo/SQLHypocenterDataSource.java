@@ -57,7 +57,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		}
 		catch (Exception e)
 		{
-			database.getLogger().log(Level.SEVERE, "Could not create database tables properly.", e);
+			logger.log(Level.SEVERE, "Could not create database tables properly.", e);
 		}
 		return false;
 	}
@@ -84,6 +84,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.databaseName");
 		
 		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
+		logger = database.getLogger();
 	}
 	
 	public void disconnect() {
@@ -112,6 +113,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=? " +
 					"ORDER BY t ASC";
 			PreparedStatement ps = database.getPreparedStatement(sql);
+			System.out.println("SQL: " + sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			ps.setDouble(3, west);

@@ -39,11 +39,13 @@ import cern.colt.matrix.DoubleMatrix2D;
 abstract public class SQLDataSource
 {
 	protected VDXDatabase database;
+	protected Logger logger;
 	protected String name = "default";
 	
 	public void setDatabase(VDXDatabase db)
 	{
 		database = db;
+		logger = database.getLogger();
 	}
 	
 	public void setName(String n)
@@ -98,7 +100,7 @@ abstract public class SQLDataSource
 		catch (SQLException e)
 		{
 			e.printStackTrace();
-			database.getLogger().log(Level.SEVERE, "SQLDataSource.createDatabase() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.createDatabase() failed.", e);
 		}
 		return false;
 	}
@@ -120,8 +122,6 @@ abstract public class SQLDataSource
 	
 	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, String[] cols, boolean channels, boolean translations)
 	{
-		
-		Logger logger = database.getLogger();
 		
 		logger.info("Creating channel " + name);
 		try
@@ -185,7 +185,7 @@ abstract public class SQLDataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetSelectors() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetSelectors() failed.", e);
 		}
 		return null;
 	}
@@ -209,7 +209,7 @@ abstract public class SQLDataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
 		}
 		return null;
 	}
@@ -227,7 +227,7 @@ abstract public class SQLDataSource
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
 		}
 		return false;
 	}
