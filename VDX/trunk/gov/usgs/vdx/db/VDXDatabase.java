@@ -74,10 +74,10 @@ public class VDXDatabase
 			ConfigFile config = new ConfigFile(cf);
 			String driver = config.getString("vdx.driver");
 			String url = config.getString("vdx.url");
-			String prefix = config.getString("vdx.vdxName");
-			if (prefix == null)
-				throw new RuntimeException("Can't find config parameter vdx.vdxName. Update config file if using vdx.prefix");
-			db = new VDXDatabase(driver, url, prefix);
+			String vdxPrefix = config.getString("vdx.vdxPrefix");
+			if (vdxPrefix == null)
+				throw new RuntimeException("Can't find config parameter vdx.vdxPrefix. Update config file if using vdx.prefix");
+			db = new VDXDatabase(driver, url, vdxPrefix);
 		}
 		catch (Exception e)
 		{

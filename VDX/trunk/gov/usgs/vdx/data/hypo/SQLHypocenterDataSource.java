@@ -75,9 +75,15 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public void initialize(ConfigFile params)
 	{
 		String vdxHost = params.getString("vdx.host");
-		String vdxName = params.getString("vdx.name");
-		name = params.getString("vdx.databaseName");
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxName);
+		String vdxPrefix = params.getString("vdx.vdxPrefix");
+		if (vdxPrefix == null)
+			throw new RuntimeException("config parameter vdx.vdxPrefix not found. Update config is using vdx.name");
+
+		name = params.getString("vdx.name");
+		if (name == null)
+			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.databaseName");
+		
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
 	}
 	
 	public void disconnect() {

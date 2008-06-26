@@ -46,15 +46,21 @@ public class GenericSQLDataSource extends SQLDataSource
 	public void initialize(ConfigFile params)
 	{
 		String vdxHost = params.getString("vdx.host");
-		String vdxName = params.getString("vdx.name");
-		name = params.getString("vdx.databaseName");
+		String vdxPrefix = params.getString("vdx.vdxPrefix");
+		if (vdxPrefix == null)
+			throw new RuntimeException("config parameter vdx.vdxPrefix not found. Update config if using vdx.name.");
+
+		name = params.getString("vdx.name");
+		if (name == null)
+			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.dabaseName.");
+
 		String user = params.getString("vdx.user");
 		if (user == null)
 			user = "vdx";
 		String password = params.getString("vdx.password");
 		if (password == null)
 			password = "vdx";
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=" + user + "&password=" + password, vdxName);
+		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=" + user + "&password=" + password, vdxPrefix);
 	}
 
 	public RequestResult getData(Map<String, String> params)

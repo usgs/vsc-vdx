@@ -33,7 +33,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	private Map<String, String> metadata;
 	private String querySQL;
 	private String name;
-	private String vdxName;
+	private String vdxPrefix;
 	
 	public void initialize(ConfigFile params)
 	{
@@ -46,11 +46,11 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 			throw new RuntimeException("config parameter vdx.name not found");
 		
 		setName(name);
-		vdxName = params.getString("vdx.databaseName");
-		if (vdxName == null)
-			throw new RuntimeException("config parameter vdx.vdxName not found");
+		vdxPrefix = params.getString("vdx.vdxPrefix");
+		if (vdxPrefix == null)
+			throw new RuntimeException("config parameter vdx.vdxPrefix not found.");
 
-		database = new VDXDatabase("com.mysql.jdbc.Driver", vdxUrl, vdxName);
+		database = new VDXDatabase("com.mysql.jdbc.Driver", vdxUrl, vdxPrefix);
 	}
 
 	private void getMetadata()

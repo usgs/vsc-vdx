@@ -57,7 +57,7 @@ public class ImportBob
 	{
 		year = y;
 		params = new ConfigFile(cf);
-		params.put("vdx.databaseName", n);
+		params.put("vdx.name", n);
 		if (params == null)
 			System.out.println("Can't parse config file " + cf);
 		params.put("type", t);
