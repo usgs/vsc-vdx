@@ -41,7 +41,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		if (vdxUrl == null)
 			throw new RuntimeException("config parameter vdx.url not found");
 			
-		name = params.getString("vdx.name");		
+		name = params.getString("vdx.name");
 		if (name == null)
 			throw new RuntimeException("config parameter vdx.name not found");
 		
