@@ -25,6 +25,9 @@ public class VDX extends Server
 {
 	protected String configFilename = "VDX.config";
 	protected int numHandlers;
+	private String driver;
+	private String url;
+	private String vdxPrefix;
 	
 	public VDX(String cf)
 	{
@@ -71,12 +74,42 @@ public class VDX extends Server
 		numHandlers = h;
 		logger.info("config: vdx.handlers=" + numHandlers + ".");
 
+		driver = cf.getString("vdx.driver"); 
+		if (driver == null)
+			fatalError(configFilename + ": bad or missing 'vdx.driver' setting.");
+		logger.info("config: vdx.driver=" + driver + ".");
+		
+		url = cf.getString("vdx.url"); 
+		if (url == null)
+			fatalError(configFilename + ": bad or missing 'vdx.url' setting.");
+		logger.info("config: vdx.url=" + url + ".");
+		
+		vdxPrefix = cf.getString("vdx.vdxPrefix"); 
+		if (vdxPrefix == null)
+			fatalError(configFilename + ": bad or missing 'vdx.vdxPrefex' setting.");
+		logger.info("config: vdx.vdxPrefix=" + vdxPrefix + ".");
+
 		int m = Util.stringToInt(cf.getString("vdx.maxConnections"), -1);
 		if (m < 0)
 			fatalError(configFilename + ": bad or missing 'vdx.maxConnections' setting.");
 			
 		maxConnections = m;
 		logger.info("config: vdx.maxConnections=" + maxConnections + ".");
+	}
+	
+	public String getDbDriver() 
+	{
+		return driver;
+	}
+	
+	public String getDbUrl() 
+	{
+		return url;
+	}
+	
+	public String getPrefix() 
+	{
+		return vdxPrefix;
 	}
 	
 	public static void main(final String[] args) throws IOException

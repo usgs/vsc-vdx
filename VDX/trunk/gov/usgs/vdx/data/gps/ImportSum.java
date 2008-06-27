@@ -5,29 +5,20 @@ import gov.usgs.util.ResourceReader;
 
 /**
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.4  2005/10/21 21:22:59  tparker
- * Roll back changes related to Bug #77
- *
- * Revision 1.2  2005/09/05 18:43:54  dcervelli
- * Un-hardcoded database name.
- *
- * Revision 1.1  2005/08/29 22:52:12  dcervelli
- * Initial commit.
- *
  * @author Dan Cervelli
  */
 public class ImportSum
 {
 	private SQLGPSDataSource dataSource;
 
-	public ImportSum(String vdxName, String dbName)
+	public ImportSum(String vdxPrefix, String name)
 	{
 		dataSource = new SQLGPSDataSource();
 		ConfigFile params = new ConfigFile();
-		params.put("vdx.host", "localhost");
-		params.put("vdx.name", vdxName);
-		params.put("vdx.databaseName", dbName);
+		params.put("vdx.driver", "com.mysql.jdbc.Driver");
+		params.put("vdx.url", "jdbc:mysql://localhost/?user=vdx&password=vdx");
+		params.put("vdx.vdxPrefix", vdxPrefix);
+		params.put("vdx.name", name);
 		dataSource.initialize(params);
 	}
 	

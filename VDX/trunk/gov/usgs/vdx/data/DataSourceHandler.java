@@ -23,14 +23,21 @@ import java.util.logging.Logger;
  */
 public class DataSourceHandler
 {
-	private static final String CONFIG_FILE = "data.config";
+	private static final String CONFIG_FILE = "vdxSources.config";
 	
 	protected Logger logger;
 	protected Map<String, DataSourceDescriptor> dataSources;
 	private ConfigFile config;
+	private String driver;
+	private String url;
+	private String vdxPrefix;
 	
-	public DataSourceHandler()
+	public DataSourceHandler(String d, String u, String p)
 	{
+		driver = d;
+		url = u;
+		vdxPrefix = p;
+		
 		logger = Log.getLogger("gov.usgs.vdx");
 		dataSources = new HashMap<String, DataSourceDescriptor>();
 		processConfigFile();
@@ -45,6 +52,9 @@ public class DataSourceHandler
 			String source = (String)it.next();
 			logger.fine("read data source: " + source);
 			ConfigFile sub = config.getSubConfig(source);
+			sub.put("vdx.driver", driver);
+			sub.put("vdx.url", url);
+			sub.put("vdx.vdxPrefix", vdxPrefix);
 			DataSourceDescriptor dsd = new DataSourceDescriptor(source, sub.getString("class"), sub.getString("description"), sub);
 			dataSources.put(source, dsd);
 		}

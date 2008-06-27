@@ -30,7 +30,7 @@ public class ServerHandler extends CommandHandler
 		super(s, "VDX/ServerHandler-" + instances++);
 		vdx = s;
 		netTools = new NetTools();
-		dataSourceHandler = new DataSourceHandler();
+		dataSourceHandler = new DataSourceHandler(vdx.getDbDriver(), vdx.getDbUrl(), vdx.getPrefix());
 		setupCommandHandlers();
 	}
 

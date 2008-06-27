@@ -74,7 +74,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	
 	public void initialize(ConfigFile params)
 	{
-		String vdxHost = params.getString("vdx.host");
+		String driver = params.getString("vdx.driver");
+		String url = params.getString("vdx.url");
 		String vdxPrefix = params.getString("vdx.vdxPrefix");
 		if (vdxPrefix == null)
 			throw new RuntimeException("config parameter vdx.vdxPrefix not found. Update config is using vdx.name");
@@ -83,7 +84,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		if (name == null)
 			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.databaseName");
 		
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
+		database = new VDXDatabase(driver, url, vdxPrefix);
 		logger = database.getLogger();
 	}
 	
@@ -113,7 +114,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=? " +
 					"ORDER BY t ASC";
 			PreparedStatement ps = database.getPreparedStatement(sql);
-			System.out.println("SQL: " + sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			ps.setDouble(3, west);
@@ -124,6 +124,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(8, maxDepth);
 			ps.setDouble(9, minMag);
 			ps.setDouble(10, maxMag);
+			logger.finest("SQL: " + sql);
+			logger.finest("Parameters: " + st + "," + et + "," + west + "," + east + "," + south + "," + north + "," + minDepth + "," + maxDepth + "," + minMag + "," + maxMag);
 			ResultSet rs = ps.executeQuery();
 			while (rs.next())
 			{
@@ -136,6 +138,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				result.add(new Hypocenter(eqd));
 			}
 			rs.close();
+			logger.finest("Found " + result.size() + " results");
 			if (result != null && result.size() > 0)
 				return new BinaryResult(new HypocenterList(result));
 		}

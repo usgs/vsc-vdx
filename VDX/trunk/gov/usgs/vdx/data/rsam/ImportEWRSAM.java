@@ -107,7 +107,7 @@ public class ImportEWRSAM
 			return;
 		 
 		System.out.println ("importing " + channel + " " + t + " data for the year " + fileYear + " from file " + f.getAbsolutePath());
-		ImportBob ib = new ImportBob(params.getString("vdxConfig"), fileYear, params.getString("vdxName"), t);	    		
+		ImportBob ib = new ImportBob(params.getString("vdxConfig"), fileYear, params.getString("vdxPrefix"), t);	    		
 		ib.process(channel, f.getAbsolutePath());
 	}
 	

@@ -62,7 +62,8 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 	
 	public void initialize(ConfigFile params)
 	{
-		String vdxHost = params.getString("vdx.host");
+		String driver = params.getString("vdx.driver");
+		String url = params.getString("vdx.url");
 		String vdxPrefix = params.getString("vdx.vdxPrefix");
 		if (vdxPrefix == null)
 			throw new RuntimeException("config parameter vdx.vdxPrefix not found. Update config if using vdx.name");
@@ -71,7 +72,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource
 		if (name == null)
 			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.databaseName");
 		
-		database = new VDXDatabase("com.mysql.jdbc.Driver", "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx", vdxPrefix);
+		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 
 	public boolean databaseExists()

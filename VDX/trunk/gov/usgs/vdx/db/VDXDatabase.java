@@ -58,6 +58,7 @@ public class VDXDatabase
 	public VDXDatabase(String driver, String url, String db)
 	{
 	    logger = Log.getLogger("gov.usgs.vdx");
+	    logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + db);
 		dbDriver = driver;
 		dbURL = url;
 		if (db != null)

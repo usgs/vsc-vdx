@@ -76,15 +76,12 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	public void initialize(ConfigFile params)
 	{
 		String url = params.getString("vdx.url");
-		String vdxHost = params.getString("vdx.host");
-		String vdxName = params.getString("vdx.name");
-		name = params.getString("vdx.databaseName");
-		
-		if (url == null)
-			url = "jdbc:mysql://" + vdxHost + "/?user=vdx&password=vdx";
-		
+		String driver = params.getString("vdx.driver");
+		String vdxPrefix = params.getString("vdx.vdxPrefix");
+		name = params.getString("vdx.name");
+				
 		System.out.println("Connecting to " + url);
-		database = new VDXDatabase("com.mysql.jdbc.Driver", url, vdxName);
+		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 	
 	public boolean createDatabase()

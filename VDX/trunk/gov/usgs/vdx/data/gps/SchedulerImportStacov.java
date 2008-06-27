@@ -40,9 +40,10 @@ public class SchedulerImportStacov implements gov.usgs.vdx.data.scheduler.Import
 		// parse the command line arguments
 		typeId		= Integer.parseInt(args[2]);
 		ConfigFile params = new ConfigFile();
-		params.put("vdx.host", "localhost");
-		params.put("vdx.name", args[0]);
-		params.put("vdx.databaseName", args[1]);
+		params.put("vdx.driver", "com.mysql.jdbc.Driver");
+		params.put("vdx.url", "jdbc:mysql://localhost/?user=vdx&password=vdx");
+		params.put("vdx.vdxPrefix", args[0]);
+		params.put("vdx.name", args[1]);
 		
 		// instantiate the data source
 		dataSource	= new SQLGPSDataSource();

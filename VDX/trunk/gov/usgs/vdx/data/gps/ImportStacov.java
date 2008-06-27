@@ -18,27 +18,6 @@ import java.util.logging.Logger;
  *
  * TODO: un-hardcode "localhost"
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.10  2006/04/04 15:50:49  dcervelli
- * Eliminated warnings.
- *
- * Revision 1.9  2006/03/02 20:45:34  cervelli
- * Adds LLH when creating new benchmark
- *
- * Revision 1.8  2005/10/21 21:22:23  tparker
- * Roll back changes related to Bug #77
- *
- * Revision 1.6  2005/10/13 20:38:11  dcervelli
- * Configurable stid, checks for already inserted hashes. sets filename properly.
- *
- * Revision 1.5  2005/09/05 18:43:42  dcervelli
- * Un-hardcoded database name.
- *
- * Revision 1.4  2005/09/05 18:37:16  dcervelli
- * Un-hardcoded database name.
- *
- * Revision 1.3  2005/09/05 00:41:32  dcervelli
- * Fixed covariance calculations.
  *
  * @author Dan Cervelli
  */
@@ -49,14 +28,15 @@ public class ImportStacov
 	private SQLGPSDataSource dataSource;
 	private int typeId;
 
-	public ImportStacov(String vdxName, String dbName, int tid)
+	public ImportStacov(String vdxPrefix, String name, int tid)
 	{
 		dataSource = new SQLGPSDataSource();
 		typeId = tid;
 		ConfigFile params = new ConfigFile();
-		params.put("vdx.host", "localhost");
-		params.put("vdx.name", vdxName);
-		params.put("vdx.databaseName", dbName);
+		params.put("vdx.driver", "com.mysql.jdbc.Driver");
+		params.put("vdx.url", "jdbc:mysql://localhost/?user=vdx&password=vdx");
+		params.put("vdx.vdxPrefix", vdxPrefix);
+		params.put("vdx.name", name);
 		dataSource.initialize(params);
 		List<Benchmark> bms = dataSource.getBenchmarks();
 		benchmarks = new HashMap<String, Benchmark>();

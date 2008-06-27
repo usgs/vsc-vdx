@@ -114,10 +114,10 @@ public class SQLNWISDataSource extends SQLDataSource implements DataSource
 	{
 		String driver = params.getString("vdx.driver");
 		String url = params.getString("vdx.url");
-		String vdxName = params.getString("vdx.name");
+		String vdxPrefix = params.getString("vdx.vdxPrefix");
 		
-		name = params.getString("vdx.databaseName");
-		database = new VDXDatabase(driver, url, vdxName);
+		name = params.getString("vdx.name");
+		database = new VDXDatabase(driver, url, vdxPrefix);
 	
 	}
 

@@ -41,6 +41,9 @@ abstract public class SQLDataSource
 	protected VDXDatabase database;
 	protected Logger logger;
 	protected String name = "default";
+	protected String driver;
+	protected String url;
+	protected String vdxPrefix;
 	
 	public void setDatabase(VDXDatabase db)
 	{
