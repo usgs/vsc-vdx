@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * 
@@ -62,6 +63,13 @@ public class VDX extends Server
 		if (!cf.wasSuccessfullyRead())
 			fatalError(configFilename + ": could not read config file.");
 		
+		int l = Util.stringToInt(cf.getString("vdx.logLevel"), -1);
+		if (l > 1)
+			logger.setLevel(Level.ALL);
+		else
+			logger.setLevel(Level.INFO);
+		logger.info("config: vdx.logLevel=" + l + ".");
+
 		int p = Util.stringToInt(cf.getString("vdx.port"), -1);
 		if (p < 0 || p > 65535)
 			fatalError(configFilename + ": bad or missing 'vdx.port' setting.");
