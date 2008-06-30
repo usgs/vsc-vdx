@@ -37,10 +37,14 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 	public void initialize(ConfigFile params)
 	{
 		
-		String vdxUrl = params.getString("vdx.url");
-		if (vdxUrl == null)
+		url = params.getString("vdx.url");
+		if (url == null)
 			throw new RuntimeException("config parameter vdx.url not found");
 			
+		driver = params.getString("vdx.driver");
+		if (driver == null)
+			throw new RuntimeException("config parameter vdx.driver not found");
+		
 		name = params.getString("vdx.name");
 		if (name == null)
 			throw new RuntimeException("config parameter vdx.name not found");
@@ -50,7 +54,7 @@ public class SQLGenericDataSource extends SQLDataSource implements DataSource
 		if (vdxPrefix == null)
 			throw new RuntimeException("config parameter vdx.vdxPrefix not found.");
 
-		database = new VDXDatabase(driver, vdxUrl, vdxPrefix);
+		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 
 	private void getMetadata()
