@@ -94,7 +94,7 @@ public class VDX extends Server
 		
 		vdxPrefix = cf.getString("vdx.vdxPrefix"); 
 		if (vdxPrefix == null)
-			fatalError(configFilename + ": bad or missing 'vdx.vdxPrefex' setting.");
+			fatalError(configFilename + ": bad or missing 'vdx.vdxPrefix' setting.");
 		logger.info("config: vdx.vdxPrefix=" + vdxPrefix + ".");
 
 		int m = Util.stringToInt(cf.getString("vdx.maxConnections"), -1);
