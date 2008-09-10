@@ -45,16 +45,15 @@ public class ImportEWRSAM
 		year = y;
 	}
 	
-	public void process()
+	private void processDir(String dirName, String fileType)
 	{
-		File valueDir = new File(params.getString("valueDir"));
-		File eventDir = new File(params.getString("eventDir"));
-    	
+		File dir = null;
+		
+		dir = new File(dirName);
 		try
-    	{
-    		validateDirectory(valueDir);
-    		validateDirectory(eventDir);
-    	}
+		{
+			validateDirectory(dir);
+		}
     	catch (FileNotFoundException e)
     	{
     		System.out.println(e.getMessage());
@@ -62,11 +61,21 @@ public class ImportEWRSAM
     		System.exit(1);
     	}
     	
-	    for (File f: valueDir.listFiles())
-	    	process(f, "ewrsamValues");
-	    
-	    for (File f: eventDir.listFiles())
-	    	process(f, "ewrsamEvents");
+	    for (File f: dir.listFiles())
+	    	process(f, fileType);
+	}
+
+	public void process()
+	{
+		String dirName;
+		
+		dirName = params.getString("valueDir");
+		if (dirName != null)
+			processDir(dirName, "ewrsamValues");
+
+		dirName = params.getString("eventDir");
+		if (dirName != null)
+			processDir(dirName, "ewrsamEvents");
 	}
 	
 	private void process(File f, String t)

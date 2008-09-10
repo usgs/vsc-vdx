@@ -61,24 +61,54 @@ public class EWRSAMData extends RSAMData
 
 	public ByteBuffer toBinary()
 	{
-		int rows = data.rows() + events.rows();
-		int cols = data.columns() + events.columns();
-		ByteBuffer bb = ByteBuffer.allocate(6 + (rows * cols) * 8);
-		bb.putInt(data.rows());
-		bb.putInt(data.columns());
-		for (int i = 0; i < data.rows(); i++)
+		ByteBuffer dataBb;
+		ByteBuffer eventsBb;
+		ByteBuffer bb;
+		
+		if (data != null && data.size() != 0)
 		{
-			for (int j = 0; j < data.columns(); j++)
-				bb.putDouble(data.getQuick(i, j));
+			int rows = data.rows();
+			int cols = data.columns();
+			dataBb = ByteBuffer.allocate(3 + (rows * cols) * 8);
+			
+			dataBb.putInt(rows);
+			dataBb.putInt(cols);
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < cols; j++)
+					dataBb.putDouble(data.getQuick(i, j));
+			}
+		}
+		else
+		{
+			dataBb = ByteBuffer.allocate(3);
+			dataBb.putInt(0);
+			dataBb.putInt(0);
+		}
+
+		if (events != null && events.size() != 0)
+		{
+			int rows = events.rows();
+			int cols = events.columns();
+			eventsBb = ByteBuffer.allocate(3 + (rows * cols) * 8);
+			
+			eventsBb.putInt(rows);
+			eventsBb.putInt(cols);
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < cols; j++)
+					eventsBb.putDouble(events.getQuick(i, j));
+			}
+		}
+		else
+		{
+			eventsBb = ByteBuffer.allocate(3);
+			eventsBb.putInt(0);
+			eventsBb.putInt(0);
 		}
 		
-		bb.putInt(events.rows());
-		bb.putInt(events.columns());
-		for (int i = 0; i < events.rows(); i++)
-		{
-			for (int j = 0; j < events.columns(); j++)
-				bb.putDouble(events.getQuick(i, j));
-		}
+		bb = ByteBuffer.allocate(dataBb.capacity() + eventsBb.capacity());
+
 		return bb;
 	}
 		
@@ -86,20 +116,27 @@ public class EWRSAMData extends RSAMData
 	{
 		int rows = bb.getInt();
 		int cols = bb.getInt();
-		data = DoubleFactory2D.dense.make(rows, cols);
-		for (int i = 0; i < rows; i++)
+		if (rows > 0)
 		{
-			for (int j = 0; j < cols; j++)
-				data.setQuick(i, j, bb.getDouble());
-		}		
+			data = DoubleFactory2D.dense.make(rows, cols);
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < cols; j++)
+					data.setQuick(i, j, bb.getDouble());
+			}		
+		}
+		
 		rows = bb.getInt();
 		cols = bb.getInt();
-		events = DoubleFactory2D.dense.make(rows, cols);
-		for (int i = 0; i < rows; i++)
+		if (rows > 0)
 		{
-			for (int j = 0; j < cols; j++)
-				events.setQuick(i, j, bb.getDouble());
-		}		
+			events = DoubleFactory2D.dense.make(rows, cols);
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < cols; j++)
+					events.setQuick(i, j, bb.getDouble());
+			}		
+		}
 	}
 	
 	public DoubleMatrix2D getCumulativeCounts()
