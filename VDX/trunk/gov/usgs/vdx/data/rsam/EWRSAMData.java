@@ -13,11 +13,6 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class that deals with precomputed RSAM data.  The data are stored in a 2-D matrix, 
  * the first column is the time (j2ksec), the second is the data.
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  2007/06/06 20:23:11  tparker
- * EWRSAM rewrite
- *
- *
  * @author Tom Parker
  */
 public class EWRSAMData extends RSAMData
@@ -46,17 +41,20 @@ public class EWRSAMData extends RSAMData
 	{
 		super(list);
 
-		int rows = e.size();
-		int cols = e.get(0).length;
-		
-		events = DoubleFactory2D.dense.make(rows, cols);
-		for (int i = 0; i < rows; i++)
+		if (e != null)
 		{
-			double[] d = (double[])e.get(i);
-			for (int j = 0; j < cols; j++)
-				events.setQuick(i, j, d[j]);
+			int rows = e.size();
+			int cols = e.get(0).length;
+			
+			events = DoubleFactory2D.dense.make(rows, cols);
+			for (int i = 0; i < rows; i++)
+			{
+				double[] d = (double[])e.get(i);
+				for (int j = 0; j < cols; j++)
+					events.setQuick(i, j, d[j]);
+			}
+			System.out.println("Events is " + events.size());
 		}
-		System.out.println("Events is " + events.size());
 	}
 
 	public ByteBuffer toBinary()
@@ -108,6 +106,8 @@ public class EWRSAMData extends RSAMData
 		}
 		
 		bb = ByteBuffer.allocate(dataBb.capacity() + eventsBb.capacity());
+		bb.put(dataBb.array(), 0, dataBb.array().length);
+		bb.put(eventsBb.array(), 0, eventsBb.array().length);
 
 		return bb;
 	}
@@ -125,6 +125,10 @@ public class EWRSAMData extends RSAMData
 					data.setQuick(i, j, bb.getDouble());
 			}		
 		}
+		else
+		{
+			System.out.println(":: FOUND NO VALUES IN " + bb.capacity());
+		}
 		
 		rows = bb.getInt();
 		cols = bb.getInt();
@@ -136,6 +140,10 @@ public class EWRSAMData extends RSAMData
 				for (int j = 0; j < cols; j++)
 					events.setQuick(i, j, bb.getDouble());
 			}		
+		}
+		else
+		{
+			System.out.println(":: FOUND NO EVENTS");
 		}
 	}
 	

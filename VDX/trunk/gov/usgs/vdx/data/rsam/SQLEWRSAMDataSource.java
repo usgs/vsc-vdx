@@ -25,30 +25,6 @@ import cern.colt.matrix.DoubleMatrix2D;
 
 /**
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.8  2007/06/07 08:58:00  tparker
- * Fix plot title again
- *
- * Revision 1.7  2007/06/07 08:20:27  tparker
- * FIx plot title problem
- *
- * Revision 1.6  2007/06/06 22:48:41  tparker
- * tweak sql
- *
- * Revision 1.5  2007/06/06 21:53:22  tparker
- * Add constructor
- *
- * Revision 1.4  2007/06/06 20:23:11  tparker
- * EWRSAM rewrite
- *
- * Revision 1.3  2007/04/30 05:28:12  tparker
- * initial commit for rsam SQL Bob importer
- *
- * Revision 1.2  2007/04/25 08:03:16  tparker
- * cleanup
- *
- * Revision 1.1  2007/04/22 06:42:26  tparker
- * Initial ewrsam commit
  *
  * @author Tom Parker
  */
@@ -164,7 +140,8 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			int p = pd.intValue();
 			double st = Double.parseDouble(params.get("st"));
 			double et = Double.parseDouble(params.get("et"));
-			EWRSAMData data = getEWRSAMData(ch, p, st, et);
+			String type = params.get("type");
+			EWRSAMData data = getEWRSAMData(ch, p, type, st, et);
 			
 			if (data != null)
 				return new BinaryResult(data);
@@ -172,10 +149,13 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 
-	public EWRSAMData getEWRSAMData(int cid, int p, double st, double et)
+	public EWRSAMData getEWRSAMData(int cid, int p, String type, double st, double et)
 	{
 		
 		EWRSAMData result = null;
+		List<double[]> pts = null;
+		List<double[]> events = null;
+		
 		try
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
@@ -187,58 +167,63 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			String code = rs.getString(1);
 			rs.close();
 
-			String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t / ?);";
-			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, p);
-			ps.setDouble(2, st);
-			ps.setDouble(3, et);
-			ps.setDouble(4, p);
-			rs = ps.executeQuery();
-			List<double[]> pts = new ArrayList<double[]>();
-			while (rs.next())
+			if (type.equals("VALUES"))
 			{
-				double[] d = new double[2];
-				d[0] = rs.getDouble(1);
-				d[1] = rs.getDouble(2);
-				pts.add(d);
-			}
-			rs.close();
-			System.out.println("Found " + pts.size() + " values");
-			
-			sql = "SELECT t, d FROM " + code + "_events" + " where t >= ? and t <= ? and d != 0;";
-			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			rs = ps.executeQuery();
-			List<double[]> events = new ArrayList<double[]>();
-			double count = 0;
-
-			double[] d = new double[2];
-			d[0] = st;
-			d[1] = count;
-			events.add(d);
-		
-			while (rs.next())
-			{
-				double c = rs.getDouble(2);
-				double t = rs.getDouble(1);
-				for (int i = 0; i < c; i++)
+				String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t / ?);";
+				ps = database.getPreparedStatement(sql);
+				ps.setDouble(1, p);
+				ps.setDouble(2, st);
+				ps.setDouble(3, et);
+				ps.setDouble(4, p);
+				rs = ps.executeQuery();
+				pts = new ArrayList<double[]>();
+				while (rs.next())
 				{
-					d = new double[2];
-					d[0] = t;
-					d[1] = ++count;
-					events.add(d);
+					double[] d = new double[2];
+					d[0] = rs.getDouble(1);
+					d[1] = rs.getDouble(2);
+					pts.add(d);
 				}
+				rs.close();
+				System.out.println("Found " + pts.size() + " values");
 			}
-			rs.close();
-
-			d = new double[2];
-			d[0] = et;
-			d[1] = count;
-			events.add(d);
-
-			if (pts.size() > 0 || events.size() > 0)
-				result = new EWRSAMData(pts, events);
+			else if (type.equals("EVENTS"))
+			{
+				String sql = "SELECT t, d FROM " + code + "_events" + " where t >= ? and t <= ? and d != 0;";
+				ps = database.getPreparedStatement(sql);
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				rs = ps.executeQuery();
+				events = new ArrayList<double[]>();
+				double count = 0;
+	
+				double[] d = new double[2];
+				d[0] = st;
+				d[1] = count;
+				events.add(d);
+			
+				while (rs.next())
+				{
+					double c = rs.getDouble(2);
+					double t = rs.getDouble(1);
+					for (int i = 0; i < c; i++)
+					{
+						d = new double[2];
+						d[0] = t;
+						d[1] = ++count;
+						events.add(d);
+					}
+				}
+				rs.close();
+	
+				d = new double[2];
+				d[0] = et;
+				d[1] = count;
+				events.add(d);
+	
+			}
+				if (pts.size() > 0 || events.size() > 0)
+					result = new EWRSAMData(pts, events);
 		}
 		catch (Exception e)
 		{
