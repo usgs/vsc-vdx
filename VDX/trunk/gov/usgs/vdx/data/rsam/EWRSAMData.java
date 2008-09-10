@@ -69,7 +69,7 @@ public class EWRSAMData extends RSAMData
 		{
 			int rows = data.rows();
 			int cols = data.columns();
-			dataBb = ByteBuffer.allocate(3 + (rows * cols) * 8);
+			dataBb = ByteBuffer.allocate(8 + (rows * cols) * 8);
 			
 			dataBb.putInt(rows);
 			dataBb.putInt(cols);
@@ -81,7 +81,7 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			dataBb = ByteBuffer.allocate(3);
+			dataBb = ByteBuffer.allocate(8);
 			dataBb.putInt(0);
 			dataBb.putInt(0);
 		}
@@ -90,7 +90,7 @@ public class EWRSAMData extends RSAMData
 		{
 			int rows = events.rows();
 			int cols = events.columns();
-			eventsBb = ByteBuffer.allocate(3 + (rows * cols) * 8);
+			eventsBb = ByteBuffer.allocate(8 + (rows * cols) * 8);
 			
 			eventsBb.putInt(rows);
 			eventsBb.putInt(cols);
@@ -102,7 +102,7 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			eventsBb = ByteBuffer.allocate(3);
+			eventsBb = ByteBuffer.allocate(8);
 			eventsBb.putInt(0);
 			eventsBb.putInt(0);
 		}
