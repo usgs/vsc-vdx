@@ -61,12 +61,12 @@ public class ImportNWIS
 	private static final String CONFIG_FILE = "NWIS.config";
 	private Logger logger;
 	private List<Station> stations;
-	private SQLNWISDataSource dataSource;
+	private SQLGenericVariableDataSource dataSource;
 	private ConfigFile params;
 
 	public ImportNWIS(String cf)
 	{
-		dataSource = new SQLNWISDataSource();
+		dataSource = new SQLGenericVariableDataSource();
 		params = new ConfigFile(cf);
 		
 		dataSource.initialize(params);

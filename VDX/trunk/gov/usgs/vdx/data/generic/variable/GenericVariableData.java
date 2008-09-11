@@ -13,14 +13,14 @@ import java.util.List;
  *
  * @author Tom Parker
  */
-public class NWISData extends GenericDataMatrix
+public class GenericVariableData extends GenericDataMatrix
 {
-	public NWISData()
+	public GenericVariableData()
 	{
 		super();
 	}
 	
-	public NWISData(List<double[]> pts)
+	public GenericVariableData(List<double[]> pts)
 	{
 		super(pts);
 	}

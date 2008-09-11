@@ -36,12 +36,12 @@ public class ImportNWISArchive
 	private Logger logger;
 	private Station st;
 	private DataType dt;
-	private SQLNWISDataSource dataSource;
+	private SQLGenericVariableDataSource dataSource;
 	private ConfigFile params;
 
 	public ImportNWISArchive(String cf)
 	{
-		dataSource = new SQLNWISDataSource();
+		dataSource = new SQLGenericVariableDataSource();
 		params = new ConfigFile(cf);
 		
 		dataSource.initialize(params);
