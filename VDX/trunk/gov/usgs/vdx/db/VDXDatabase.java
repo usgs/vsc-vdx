@@ -6,10 +6,10 @@ import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.generic.SQLGenericDataSource;
+import gov.usgs.vdx.data.generic.fixed.SQLGenericFixedDataSource;
+import gov.usgs.vdx.data.generic.variable.SQLGenericVariableDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
-import gov.usgs.vdx.data.nwis.SQLNWISDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
 import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
@@ -413,8 +413,8 @@ public class VDXDatabase
 				sources.put("creategps", new SQLGPSDataSource());
 				sources.put("createtilt", new SQLTiltDataSource());
 				sources.put("createetilt", new SQLElectronicTiltDataSource());
-				sources.put("creategeneric", new SQLGenericDataSource());
-				sources.put("createnwis", new SQLNWISDataSource());
+				sources.put("creategenericfixed", new SQLGenericFixedDataSource());
+				sources.put("creategenericvariable", new SQLGenericVariableDataSource());
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null)
