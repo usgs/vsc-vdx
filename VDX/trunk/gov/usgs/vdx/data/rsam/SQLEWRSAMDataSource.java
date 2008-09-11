@@ -2,11 +2,8 @@ package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
-import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.nwis.DataType;
-import gov.usgs.vdx.data.nwis.Station;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -17,11 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
