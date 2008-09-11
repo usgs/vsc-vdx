@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -20,11 +21,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
  * 
+ * SQL class for file-based RSAM data
  *
  * @author Tom Parker
  */
@@ -113,6 +116,42 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return defaultGetSelectors(DATABASE_NAME);
 	}
 
+	public List<String> getTypes()
+	{
+		List<String> result = new ArrayList<String>();
+		ResultSet rs;
+		
+		logger.info("Entering SQLEWRSAMDataSource.getTypes()");
+		
+		logger.info("SQLEWRSAMDataSource.getTypes() using " + name + "$" + DATABASE_NAME);
+		database.useDatabase(name + "$" + DATABASE_NAME);
+		rs = database.executeQuery("SHOW TABLES LIKE '%_events'");
+		try 
+		{
+			rs.next();
+			logger.info("SQLEWRSAMDataSource.getTypes(): Found events table " + rs.getString(1));
+			result.add("EVENTS");
+		}
+		catch (SQLException e) 
+		{
+			logger.info("SQLEWRSAMDataSource.getTypes(): No events tables found");
+		}
+		
+		rs = database.executeQuery("SHOW TABLES LIKE '%_values'");
+		try
+		{
+			rs.next();
+			logger.info("SQLEWRSAMDataSource.getTypes(): Found values table " + rs.getString(1));
+			result.add("VALUES");
+		}
+		catch (SQLException e)
+		{
+			logger.info("SQLEWRSAMDataSource.getTypes(): No values tables found ");
+		}
+
+		return result;
+	}
+
 	public String getSelectorName(boolean plural)
 	{
 		return plural ? "Stations" : "Station";
@@ -121,9 +160,10 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	public RequestResult getData(Map<String, String> params)
 	{
 		
-		System.out.println(params.toString());
+		logger = Log.getLogger("gov.usgs.vdx");
+			
+		logger.info("SQLEWRSAMDataSource.getData(): params = " + params.toString());
 		String action = params.get("action");
-		
 		
 		if (action == null)
 			action = "data";
@@ -146,6 +186,16 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			if (data != null)
 				return new BinaryResult(data);
 		}
+		else if (action.equals("ewRsamMenu"))
+		{
+			List<String> t = getTypes();
+			return new TextResult(t);
+		}
+		else
+		{
+			logger.info("SQLEWRSAMDataSource.getData(): unknown action " + action);
+		}
+		logger.info("SQLEWRSAMDataSource.getData(): returning null data");
 		return null;
 	}
 
@@ -236,7 +286,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	{
 		String dbName = name + "$" + DATABASE_NAME;
 
-		System.out.println("dbName = " + dbName);
+		logger.info("SQLEWRSAMDataSource.insertData: dbName = " + dbName);
 		if (! database.tableExists(dbName, channel + "_events"))
 			createChannel(channel, channel, -999, -999);
 		

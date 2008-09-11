@@ -12,32 +12,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * 
- * TODO: proper logging.
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.7  2006/08/28 23:57:47  tparker
- * Initial NWIS commit
- *
- * Revision 1.6  2006/04/09 18:20:34  dcervelli
- * Broke out getData into getTextData and getBinaryData.
- *
- * Revision 1.5  2005/10/20 05:07:03  dcervelli
- * Added generic data type.
- *
- * Revision 1.4  2005/10/14 21:07:22  dcervelli
- * Added etilt.
- *
- * Revision 1.3  2005/09/06 21:35:54  dcervelli
- * Support for tilt data type, changed timeout to 30 seconds.
- *
- * Revision 1.2  2005/09/01 00:28:32  dcervelli
- * Fixes for changes to InternetClient.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
  *
  * @author Dan Cervelli
  */
@@ -166,14 +145,17 @@ public class VDXClient extends InternetClient
 			{
 				try
 				{
+					logger.info("VDXClient.getData(): params = " + params);
 					String rs = submitCommand(params);
 					
 					String rc = rs.substring(0, rs.indexOf(':'));
 					String r = rs.substring(rs.indexOf(':') + 1);
 					result = null;
+					logger.info("VDXClient.getData(): rc = " + rc);
+					logger.info("VDXClient.getData(): r = " + r);
+				
 					if (rc.equals("ok"))
 					{
-						System.out.println(r);
 						Map<String, String> map = Util.stringToMap(r);
 						if (map.get("lines") != null)
 						{
@@ -185,13 +167,8 @@ public class VDXClient extends InternetClient
 						}
 						else 
 						{
-							System.out.println("error, expected text");
+							logger.warning("VDXClient.getData(): error, expected text");
 						}
-					}
-					else if (rc.equals("error"))
-					{
-						// TODO: eliminate
-						System.out.println(r);
 					}
 				}
 				catch (Exception e)
