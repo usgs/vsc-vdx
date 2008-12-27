@@ -11,8 +11,7 @@ import gov.usgs.vdx.data.generic.variable.SQLGenericVariableDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
-import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
-import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
+import gov.usgs.vdx.data.tilt.SQLTiltStationDataSource;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -411,8 +410,7 @@ public class VDXDatabase
 				Map<String, SQLDataSource> sources = new HashMap<String, SQLDataSource>();
 				sources.put("createhypocenters", new SQLHypocenterDataSource());
 				sources.put("creategps", new SQLGPSDataSource());
-				sources.put("createtilt", new SQLTiltDataSource());
-				sources.put("createetilt", new SQLElectronicTiltDataSource());
+				sources.put("createtilt", new SQLTiltStationDataSource());
 				sources.put("creategenericfixed", new SQLGenericFixedDataSource());
 				sources.put("creategenericvariable", new SQLGenericVariableDataSource());
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
