@@ -34,8 +34,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("ewrsam", "gov.usgs.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 		dataTypeMap.put("gps", "gov.usgs.vdx.data.gps.GPSData");
-		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
-		dataTypeMap.put("etilt", "gov.usgs.vdx.data.tilt.ElectronicTiltData");
+		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltStationData");
 		dataTypeMap.put("generic", "gov.usgs.vdx.data.GenericDataMatrix");
 		dataTypeMap.put("nwis", "gov.usgs.vdx.data.GenericDataMatrix");
 	}
