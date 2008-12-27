@@ -21,15 +21,9 @@ import java.util.logging.Logger;
 public class ImportPinnServer extends Client
 {
 	private static final String CONFIG_FILE = "PinnClient.config";
-	private SQLElectronicTiltDataSource dataSource;
+	private SQLTiltStationDataSource dataSource;
 	private String channel;
 	private Logger logger;
-	
-	private double azimuth = 0;
-	private double xMult = 1;
-	private double yMult = 1;
-	private double xOffset = 0;
-	private double yOffset = 0;
 	
 		
 	public ImportPinnServer(String h, int p)
@@ -48,11 +42,6 @@ public class ImportPinnServer extends Client
 		ImportPinnServer ips = new ImportPinnServer(host, port);
 
 		ips.channel = cf.getString("channel");
-		ips.azimuth = Util.stringToDouble(cf.getString("azimuth"), 0);
-		ips.xMult = Util.stringToDouble(cf.getString("xMult"), 1);
-		ips.yMult = Util.stringToDouble(cf.getString("yMult"), 1);
-		ips.xOffset = Util.stringToDouble(cf.getString("xOffset"), 0);
-		ips.yOffset = Util.stringToDouble(cf.getString("yOffset"), 0);
 		
 		String driver = cf.getString("vdx.driver");
 		String url = cf.getString("vdx.url");
@@ -62,7 +51,7 @@ public class ImportPinnServer extends Client
 
 		String name = cf.getString("vdx.name");
 		
-		ips.dataSource = new SQLElectronicTiltDataSource();
+		ips.dataSource = new SQLTiltStationDataSource();
 		
 		VDXDatabase database = new VDXDatabase(driver, url, vdxPrefix);
 		ips.dataSource.setDatabase(database);
@@ -85,7 +74,7 @@ public class ImportPinnServer extends Client
 	public void handleStatusBlock(StatusBlock sb)
 	{
 		System.out.println(sb);
-		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), sb.getTemperature(), azimuth, xMult, yMult, xOffset, yOffset, 1, 0, 1, 0);
+		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), 0, sb.getTemperature(), 0, 0);
 	}
 	
 	public void importFile(String fn)
