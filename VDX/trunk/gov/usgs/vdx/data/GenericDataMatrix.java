@@ -210,6 +210,24 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 	}
 	
+	public void detrend(int c) {
+
+        double xm	= mean(0);
+		double ym	= mean(c);
+        double ssxx	= 0;
+        double ssxy	= 0;        
+        for (int i = 0; i < rows(); i++) {
+            ssxy += (data.getQuick(i, 0) - xm) * (data.getQuick(i, c) - ym);
+            ssxx += (data.getQuick(i, 0) - xm) * (data.getQuick(i, 0) - xm);
+        }
+        
+        double m	= ssxy / ssxx;
+        double b	= ym - m * xm;
+        for (int i = 0; i < rows(); i++) {
+            data.setQuick(i, c, data.getQuick(i, c) - (data.getQuick(i, 0) * m + b));
+        }
+	}
+	
 	public double max(int c)
 	{
 		double m = -1E300;
