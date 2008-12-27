@@ -1,6 +1,6 @@
 package gov.usgs.vdx.data.tilt.ptx;
 
-import gov.usgs.vdx.data.tilt.SQLElectronicTiltDataSource;
+import gov.usgs.vdx.data.tilt.SQLTiltStationDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
 
 import java.io.DataInputStream;
@@ -27,7 +27,7 @@ public class ImportPTX
 
 	public static void main(String[] args) throws Exception
 	{
-		SQLElectronicTiltDataSource dataSource = new SQLElectronicTiltDataSource();
+		SQLTiltStationDataSource dataSource = new SQLTiltStationDataSource();
 		VDXDatabase database = VDXDatabase.getVDXDatabase("vdx.config");
 		String channel = args[1];
 		dataSource.setDatabase(database);
@@ -54,7 +54,7 @@ public class ImportPTX
 					double[][] data = ptx.getImportData();
 					for (int i = 0; i < data.length; i++)
 					{
-						dataSource.insertData(channel, data[i][0], data[i][1], data[i][2], data[i][3], data[i][4], 0, 1, 1, 0, 0, 1, 0, 1, 0);
+						dataSource.insertData(channel, data[i][0], data[i][1], data[i][2], data[i][3], data[i][4], 0, 0, 0);
 					}
 				}
 				catch (Exception e)
