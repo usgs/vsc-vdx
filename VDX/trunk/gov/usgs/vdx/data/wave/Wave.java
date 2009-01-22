@@ -50,7 +50,7 @@ import java.util.TimeZone;
  *
  * @author Dan Cervelli
  */
-public class Wave implements BinaryDataSet, Comparable<Wave>
+public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 {
 	/**
 	 * A value that indicates that this sample is not an actual data sample.
@@ -979,6 +979,16 @@ public class Wave implements BinaryDataSet, Comparable<Wave>
 
 		return d;
 	}
+	
+	public double[] removeMean()
+	{
+		double[] d = new double[this.buffer.length];
+		double mean = mean();
+		for (int i = 0; i < this.buffer.length; i++)
+			d[i] = (double)buffer[i] - mean;
+		
+		return d;
+	}
 
 	public void filter(Butterworth bw, boolean zeroPhaseShift)
 	{
@@ -1103,5 +1113,11 @@ public class Wave implements BinaryDataSet, Comparable<Wave>
 	public int compareTo(Wave o) 
 	{
 		return (int)Math.round(getStartTime() - o.getStartTime());
+	}
+	
+	public Wave clone() {
+		Wave w = new Wave(this);
+		
+		return w;
 	}
 }
