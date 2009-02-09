@@ -204,8 +204,9 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
 			List<double[]> pts = new ArrayList<double[]>();
-			while (rs.next())
+			while (rs.next()) {
 				pts.add(new double[] { rs.getDouble(1), rs.getDouble(2), rs.getDouble(3), rs.getDouble(4), rs.getDouble(5), rs.getDouble(6), rs.getDouble(7), rs.getDouble(8) });
+			}
 			rs.close();
 			
 			TiltStationData td = null;
