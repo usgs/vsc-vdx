@@ -1,7 +1,7 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.Util;
-import gov.usgs.vdx.data.BinaryDataSet;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.other.VoltageData;
 import gov.usgs.vdx.data.other.RainfallData;
 import gov.usgs.vdx.data.thermal.ThermalData;
@@ -12,7 +12,7 @@ import java.util.List;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
-public class TiltStationData implements BinaryDataSet {
+public class TiltStationData extends GenericDataMatrix {
 	
 	private TiltData tiltData;
 	private ThermalData holeTempData;
