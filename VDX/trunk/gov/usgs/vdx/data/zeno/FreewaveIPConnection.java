@@ -210,7 +210,7 @@ public class FreewaveIPConnection extends IPConnection
 		}
 
 		lockQueue = true;
-		msgQueue.insertElementAt (new String (msg), 0);
+		msgQueue.insertElementAt(new String (msg), 0);
 		lockQueue = false;
 
 		return true;
