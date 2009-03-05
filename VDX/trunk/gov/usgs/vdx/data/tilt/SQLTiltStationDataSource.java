@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.Date;
 
 /**
  * 
@@ -157,6 +159,50 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.getNominalAzimuth() failed.", e);
 		}
 		return result;
+	}
+	
+	public synchronized Date getLastDataTime (String station) {
+		Date lastDataTime = null;
+        try {
+        	database.useDatabase(name + "$" + DATABASE_NAME);
+            PreparedStatement ps = database.getPreparedStatement("SELECT max(t) FROM ?");
+            ps.setString(1, station);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            double result = rs.getDouble(1);
+            rs.close();
+            lastDataTime = Util.j2KToDate(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+		return lastDataTime;
+	}
+	
+	public double getLastSyncTime (String station) {
+		double lastSyncTime = 0.0;
+        try {
+        	database.useDatabase(name + "$" + DATABASE_NAME);
+            PreparedStatement ps = database.getPreparedStatement("SELECT lastSyncTime FROM channels WHERE code = ?");
+            ps.setString(1, station);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            lastSyncTime = rs.getDouble(1);
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+		return lastSyncTime;
+	}
+	
+	public void setLastSyncTime (String station, double j2ksec) {
+        try {
+        	database.useDatabase(name + "$" + DATABASE_NAME);
+            PreparedStatement ps = database.getPreparedStatement("UPDATE channels SET lastSyncTime = " + j2ksec + " WHERE code = '" + station + "'");
+            ResultSet rs = ps.executeQuery();
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 	
 	public RequestResult getData(Map<String, String> params) {
