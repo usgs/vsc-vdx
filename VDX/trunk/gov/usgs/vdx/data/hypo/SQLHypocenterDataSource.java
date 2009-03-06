@@ -39,6 +39,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public static final String DATABASE_NAME = "hypocenters";
 	public static final String[] DATA_COLUMNS = new String[] {"lon", "lat", "depth", "mag"};
 	
+	/**
+	 * Create 'hypocenters' database
+	 */
 	public boolean createDatabase()
 	{
 		String db = name + "$" + DATABASE_NAME;
@@ -62,16 +65,25 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		return false;
 	}
 
+	/**
+	 * Get flag if database exist
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(DATABASE_NAME);
 	}
 
+	/**
+	 * Get data source type, "hypocenters" for this class
+	 */
 	public String getType()
 	{
 		return "hypocenters";
 	}
 	
+	/**
+	 * Initialize data source from configuration file
+	 */
 	public void initialize(ConfigFile params)
 	{
 		String driver = params.getString("vdx.driver");
@@ -88,10 +100,29 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		logger = database.getLogger();
 	}
 	
+	/**
+	 * Close database connection
+	 */
 	public void disconnect() {
 		database.close();
 	}
 	
+	/**
+	 * Getter for data. 
+	 * Search value of following parameters and retrieve corresponding data:
+	 * "st" - start time
+	 * "et" - end time
+	 * "west" - minimum longitude
+	 * "east" - maximum longitude
+	 * "south" - minimum latitude
+	 * "north" -  maximum latitude
+	 * "minDepth" - minimum depth
+	 * "maxDepth" - maximum depth
+	 * "minMag" - minimum magnitude
+	 * "maxMag" - maximum magnitude
+	 * 
+	 * @param command to execute, map of parameter-value pairs.
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		try
@@ -149,6 +180,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 	
+	/**
+	 * Insert hyposenter into database
+	 */
 	public void insertHypocenter(Hypocenter hc)
 	{
 		try

@@ -12,6 +12,10 @@ import java.util.List;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
+/**
+ * Container class which holds all possible information for station:
+ * tilt, hole temperature, box temperature, voltage, rainfall
+ */
 public class TiltStationData extends GenericDataMatrix {
 	
 	private TiltData tiltData;
@@ -21,9 +25,21 @@ public class TiltStationData extends GenericDataMatrix {
 	private VoltageData gndVoltData;
 	private RainfallData rainfallData;
 
+	/**
+	 * Default constructor
+	 */
 	public TiltStationData()
 	{}
 	
+	/**
+	 * Constructor
+	 * @param td tilt data
+	 * @param htd hole temperature
+	 * @param btd box temperature
+	 * @param ivd voltage
+	 * @param gvd ground voltage
+	 * @param rd rainfall
+	 */
 	public TiltStationData(TiltData td, ThermalData htd, ThermalData btd, VoltageData ivd, VoltageData gvd, RainfallData rd) {
 		tiltData		= td;
 		holeTempData	= htd;
@@ -33,6 +49,18 @@ public class TiltStationData extends GenericDataMatrix {
 		rainfallData	= rd;
 	}
 
+	/**
+	 * Constructor
+	 * @param pts list of raws, each of them is double[8]:
+	 * 0     - time
+	 * 1     - tilt east
+	 * 2     - tilt north
+	 * 3     - hole temperature
+	 * 4     - box temperature
+	 * 5     - voltage
+	 * 6     - ground voltage
+	 * 7     - rainfall
+	 */
 	public TiltStationData(List<double[]> pts) {
 		
 		DoubleMatrix2D tm	= DoubleFactory2D.dense.make(pts.size(), 3);
@@ -76,6 +104,18 @@ public class TiltStationData extends GenericDataMatrix {
 		rainfallData.setData(rm);
 	}
 	
+	/**
+	 * Constructor
+	 * @param dm 2-d matrix with 8 columns:
+	 * 0     - time
+	 * 1     - tilt east
+	 * 2     - tilt north
+	 * 3     - hole temperature
+	 * 4     - box temperature
+	 * 5     - voltage
+	 * 6     - ground voltage
+	 * 7     - rainfall
+	 */
 	public void setFromFullMatrix(DoubleMatrix2D dm) {
 		
 		DoubleMatrix2D tm	= DoubleFactory2D.dense.make(dm.rows(), 3);
@@ -118,30 +158,51 @@ public class TiltStationData extends GenericDataMatrix {
 		rainfallData.setData(rm);
 	}
 
+	/**
+	 * Get tilt data
+	 */
 	public TiltData getTiltData() {
 		return tiltData;
 	}
 	
+	/**
+	 * Get hole temperature data
+	 */
 	public ThermalData getHoleTempData() {
 		return holeTempData;
 	}
 	
+	/**
+	 * Get box temperature data
+	 */
 	public ThermalData getBoxTempData() {
 		return boxTempData;
 	}
 
+	/**
+	 * Get voltage data
+	 */
 	public VoltageData getInstVoltData() {
 		return instVoltData;
 	}
 
+	/**
+	 * Get ground voltage data
+	 */
 	public VoltageData getGndVoltData() {
 		return gndVoltData;
 	}
 	
+	/**
+	 * Get rainfall data
+	 */
 	public RainfallData getRainfallData() {
 		return rainfallData;
 	}
 
+	/**
+	 * Dump content as ByteBuffer
+	 */
 	public ByteBuffer toBinary() {
 		int rows = tiltData.rows();
 		int cols = 8;
@@ -167,6 +228,9 @@ public class TiltStationData extends GenericDataMatrix {
 		return bb;
 	}
 
+	/**
+	 * Restore content from ByteBuffer
+	 */
 	public void fromBinary(ByteBuffer bb) {
 		int rows = bb.getInt();
 		int cols = ((bb.limit() - 4) / rows) / 8;
@@ -178,6 +242,9 @@ public class TiltStationData extends GenericDataMatrix {
 		setFromFullMatrix(data);
 	}
 
+	/**
+	 * Dump content as CSV string
+	 */
 	public String toCSV() {
 		DoubleMatrix2D tm	= tiltData.getData();
 		DoubleMatrix2D htm	= holeTempData.getData();

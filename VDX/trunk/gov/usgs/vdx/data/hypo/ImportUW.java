@@ -23,6 +23,10 @@ public class ImportUW extends Importer
 {
 	private SimpleDateFormat dateIn;
 	
+	/**
+	 * Constructor
+	 * @param ds data source to import in
+	 */
 	public ImportUW(SQLHypocenterDataSource ds)
 	{
 		super(ds);
@@ -30,6 +34,10 @@ public class ImportUW extends Importer
 		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 	
+	/**
+	 * Parse UW file from url (resource locator or file name)
+	 * @return Hypocenters list
+	 */
 	public List<Hypocenter> importResource(String resource)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(resource);
@@ -83,7 +91,13 @@ public class ImportUW extends Importer
 		rr.close();
 		return hypos;
 	}
-	
+
+	/**
+	 * Main method.
+	 * Initialize data source using command line arguments and make import.
+	 * Syntax is:
+	 * "<importer> -c [vdx config] -n [database name] files..."
+	 */
 	public static void main(String as[])
 	{
 		Arguments args = new Arguments(as, flags, keys);

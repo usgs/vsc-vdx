@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Abstract class for importing data files.
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.4  2007/11/14 00:21:48  uid894
@@ -41,19 +42,32 @@ abstract public class SchedulerImporter
 		keys.add("-c");
 	}
 	
+	/**
+	 * Constructor
+	 * @param ds data source to import in
+	 */
 	public SchedulerImporter(SQLHypocenterDataSource ds)
 	{
 		dataSource = ds;
 	}
 	
+	/**
+	 * Default constructor
+	 */
 	public SchedulerImporter() {
 		
 	}
 	
+	/**
+	 * Setter for hypocenters data source
+	 */
 	public void setDataSource(SQLHypocenterDataSource ds) {
 		dataSource = ds;
 	}
 	
+	/**
+	 * Fabric method for hypocenters data source
+	 */
 	public static SQLHypocenterDataSource getDataSource(Arguments args)
 	{
 		String cfn = args.get("-c");
@@ -69,24 +83,42 @@ abstract public class SchedulerImporter
 		return ds;
 	}
 	
+	/**
+	 * Abstract method to parse data from url (resource locator or file name)
+	 * @return Hypocenters list
+	 */
 	abstract public List<Hypocenter> importResource(String resource);
 
+	/**
+	 * Insert hypocenters list into database
+	 */
 	protected void insert(List<Hypocenter> hypos)
 	{
 		for (Hypocenter hc : hypos)
 			dataSource.insertHypocenter(hc);
 	}
 	
+	/**
+	 * Close database connection
+	 */
 	protected void disconnect() {
 		dataSource.disconnect();
 	}
 	
+	/**
+	 * Print usage instructions on stdout
+	 */
 	protected static void outputInstructions()
 	{
 		System.out.println("<importer> -c [vdx config] -n [database name] files...");
 		System.exit(-1);
 	}
 	
+	/**
+	 * Parse files from command line and insert hypocenters list into database
+	 * @param args command line arguments
+	 * @param impt importer to process
+	 */
 	protected static void process(Arguments args, SchedulerImporter impt)
 	{
 		if (args.size() == 0)

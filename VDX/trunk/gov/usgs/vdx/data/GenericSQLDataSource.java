@@ -33,16 +33,25 @@ public class GenericSQLDataSource extends SQLDataSource
 		return createDefaultDatabase(name + "$" + databaseName, dataColumns.length, true, true);
 	}
 
+	/**
+	 * Get flag if database exists
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(name + "$" + databaseName);
 	}
 
+	/**
+	 * Getter for type
+	 */
 	public String getType()
 	{
 		return type;
 	}
 	
+	/**
+	 * Initialize this data source from given configuration
+	 */
 	public void initialize(ConfigFile params)
 	{
 		String vdxPrefix = params.getString("vdx.vdxPrefix");
@@ -56,6 +65,11 @@ public class GenericSQLDataSource extends SQLDataSource
 		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 
+	/**
+	 * Retrieve data from data source
+	 * @param params command as map of strings for 'parameter-value' pairs to specify query
+	 * @return retrieved result of command execution
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		String action = params.get("action");
@@ -72,21 +86,37 @@ public class GenericSQLDataSource extends SQLDataSource
 		return null;
 	}
 
+	/**
+	 * Get channels list in format "sid:code:name:lon:lat" from database
+	 */
 	public List<String> getSelectors()
 	{
 		return defaultGetSelectors(databaseName);
 	}
 
+	/**
+	 * Get selector name
+	 * @param plural if we need selector name in the plural form
+	 */
 	public String getSelectorName(boolean plural)
 	{
 		return plural ? "Stations" : "Station";
 	}
 	
+	/**
+	 * Create channel
+	 */
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 		return createDefaultChannel(name + "$" + databaseName, dataColumns.length, channel, channelName, lon, lat, dataColumns, true, true);
 	}
 	
+	/**
+	 * Not realized in this version
+	 * @param cid
+	 * @param data
+	 * @return
+	 */
 	public boolean insertData(int cid, double[][] data)
 	{
 		return false;

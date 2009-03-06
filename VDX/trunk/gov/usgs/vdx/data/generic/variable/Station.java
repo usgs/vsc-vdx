@@ -29,6 +29,9 @@ public class Station implements Comparable<Object>
 	private String tz;
 	private boolean active;
 	
+	/**
+	 * Default constructor
+	 */
 	public Station()
 	{
 		sid = -1;
@@ -41,6 +44,10 @@ public class Station implements Comparable<Object>
 		active = true;
 	}
 	
+	/**
+	 * Station description in the text form: 'sid:org:siteNo:name:lon:lat:active'
+	 * @param s
+	 */
 	public Station(String s)
 	{
 		String[] parts = s.split(":");
@@ -53,6 +60,17 @@ public class Station implements Comparable<Object>
 		active = true;
 	}
 	
+	/**
+	 * Constructor
+	 * @param id station id
+	 * @param o 
+	 * @param s site number
+	 * @param n station name
+	 * @param ln longitude
+	 * @param lt latitude
+	 * @param t time zone
+	 * @param a is active
+	 */
 	public Station(int id, String o, String s, String n, double ln, double lt, String t, boolean a)
 	{
 		sid = id;
@@ -65,6 +83,10 @@ public class Station implements Comparable<Object>
 		active = a;
 	}
 	
+	/**
+	 * Construct station list from strings list 
+	 * @see Station(String s)
+	 */
 	public static List<Station> fromStringsToList(List<String> ss)
 	{
 		List<Station> stations = new ArrayList<Station>();
@@ -74,6 +96,11 @@ public class Station implements Comparable<Object>
 		return stations;
 	}
 
+	/**
+	 * Construct station map (id - station) from strings list 
+	 * @param ss
+	 * @return
+	 */
 	public static Map<String, Station> fromStringsToMap(List<String> ss)
 	{
 		Map<String, Station> map = new HashMap<String, Station>();
@@ -85,11 +112,17 @@ public class Station implements Comparable<Object>
 		return map;
 	}
 	
+	/**
+	 * Setter for id
+	 */
 	public void setId(int i)
 	{
 		sid = i;
 	}
-	
+
+	/**
+	 * Getter for id
+	 */
 	public int getId()
 	{
 		return sid;
@@ -105,61 +138,97 @@ public class Station implements Comparable<Object>
 		return org;
 	}
 	
+	/**
+	 * Setter for site number
+	 */
 	public void setSiteNo(String s)
 	{
 		siteNo = s;
 	}
 	
+	/**
+	 * Getter for site number
+	 */
 	public String getSiteNo()
 	{
 		return siteNo;
 	}
 	
+	/**
+	 * Setter for station name
+	 */
 	public void setName(String n)
 	{
 		name = n;
 	}
-	
+
+	/**
+	 * Getter for station name
+	 */
 	public String getName()
 	{
 		return name;
 	}
 	
+	/**
+	 * Getter for longitude
+	 */
 	public double getLon()
 	{
 		return lon;
 	}
 	
+	/**
+	 * Getter for latitude
+	 */
 	public double getLat()
 	{
 		return lat;
 	}
 
+	/**
+	 * Getter for time zone
+	 */
 	public String getTz()
 	{
 		return tz;
 	}
 	
+	/**
+	 * Get flag if station active
+	 */
 	public boolean getActive()
 	{
 		return active;
 	}
 	
+	/**
+	 * Get station coordinates as Point2D
+	 */
 	public Point2D.Double getLonLat()
 	{
 		return new Point2D.Double(lon, lat);
 	}
 	
+	/**
+	 * Get short string representation of station
+	 */
 	public String toString()
 	{
 		return org + siteNo;
 	}
 
+	/**
+	 * 'sid:org:siteNo:name:lon:lat:active'
+	 */
 	public String toFullString()
 	{
 		return sid + ":" + lon + ":" + lat + ":" + tz + ":" + org + ":" + siteNo + ":" + name;
 	}
 	
+	/**
+	 * Compares station by site numbers
+	 */
 	public int compareTo(Object s)
 	{
 		if (s instanceof String)

@@ -20,6 +20,10 @@ public class CopyFile {
 	private static boolean verify = true;
 	private static int override = OVERWRITE_ASK;
 
+	/**
+	 * Copy source file into destination file with checksum verification
+	 * @return computed checksum or null if unsuccessful
+	 */
 	public static Long copyFile(File srcFile, File destFile)
 		throws IOException {
 		InputStream in = new FileInputStream(srcFile);
@@ -51,6 +55,9 @@ public class CopyFile {
 		}
 	}
 
+	/**
+	 * Compute checksum for file
+	 */
 	public static Long createChecksum(File file) throws IOException {
 		long millis = System.currentTimeMillis();
 		InputStream in = new FileInputStream(file);
@@ -93,6 +100,11 @@ public class CopyFile {
 		}
 	}
 
+	/**
+	 * Main method
+	 * Syntax is:
+	 * CopyFile SRC-FILE-NAME DEST-DIR-NAME
+	 */
 	public static void main(String[] args) throws IOException {
 		// make sure there are exactly two arguments
 		if (args.length != 2) {

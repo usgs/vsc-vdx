@@ -31,11 +31,19 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	private static final String DATABASE_NAME = "ewrsam";
 	
 	private String tableSuffix;
+	
+	/**
+	 * Default constructor
+	 */
 	public SQLEWRSAMDataSource()
 	{
 		super();
 	}
 	
+	/**
+	 * Constructor
+	 * @param s data type (Events/Values)
+	 */
 	public SQLEWRSAMDataSource(String s)
 	{
 		super();
@@ -47,6 +55,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 	}
 
 
+	/**
+	 * Initialize data source with settings from configuration file
+	 */
 	public void initialize(ConfigFile params)
 	{
 		String url = params.getString("vdx.url");
@@ -58,12 +69,23 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 	
+	/**
+	 * Create database with name "'vdx.name config parameter'$ewrsam"
+	 */
 	public boolean createDatabase()
 	{
 			String db = name + "$" + DATABASE_NAME;
 			return (createDefaultDatabase(db, 0, true, false));
 	}
 
+	/**
+	 * Create channel
+	 * @param channel channel code
+	 * @param channelName channel name
+	 * @param lon longitude
+	 * @param lat latitude
+	 * @return true if success
+	 */
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 		if (channelName == null)
@@ -96,21 +118,34 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return false;
 	}
 	
+	/**
+	 * Check if database exist.
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
 	}
 
+	/**
+	 * Get data source type, "ewrsam" for this class
+	 */
 	public String getType()
 	{
 		return "ewrsam";
 	}
 
+	/**
+	 * Get channels list in format "sid:code:name:lon:lat" from database
+	 */
 	public List<String> getSelectors()
 	{
 		return defaultGetSelectors(DATABASE_NAME);
 	}
 
+	/**
+	 * Search database tables for events and values
+	 * @return if values table found, add "VALUES" string to list. if events tables found, add "EVENTS" string to list
+	 */
 	public List<String> getTypes()
 	{
 		List<String> result = new ArrayList<String>();
@@ -147,11 +182,23 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 
+	/**
+	 * Get selector name
+	 * @param plural if we need selector name in the plural form
+	 */
 	public String getSelectorName(boolean plural)
 	{
 		return plural ? "Stations" : "Station";
 	}
 	
+	/**
+	 * Getter for data. 
+	 * Search value of 'action' parameters and retrieve corresponding data.
+	 * 
+	 * Possible values are "data", "selectors", "ewRsamMenu"
+	 * 
+	 * @param command to execute, map of parameter-value pairs.
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		
@@ -194,6 +241,14 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 
+	/**
+	 * Get EW RSAM data
+	 * @param cid channel code
+	 * @param p period
+	 * @param type data type (EVENTS/VALUES)
+	 * @param st start time
+	 * @param et end time
+	 */
 	public EWRSAMData getEWRSAMData(int cid, int p, String type, double st, double et)
 	{
 		
@@ -277,6 +332,13 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 	
+	/**
+	 * Insert data for channel
+	 * 
+	 * @param channel channel code
+	 * @param data data matrix to insert
+	 * @param r if we permit data replacing?
+	 */
 	public void insertData(String channel, DoubleMatrix2D data, boolean r)
 	{
 		String dbName = name + "$" + DATABASE_NAME;

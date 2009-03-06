@@ -14,6 +14,10 @@ import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
 
 /**
+ * Renderer to draw spectrograms.
+ * Keeps reference to processed wave data,
+ * compute spectrograms and create image to render as ImageDataRenderer.
+ *   
  * $Log: not supported by cvs2svn $
  * Revision 1.6  2006/10/26 01:04:44  dcervelli
  * Changes for labeling.
@@ -69,6 +73,9 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	protected String channelTitle;
 	
+	/**
+	 * Default constructor
+	 */
 	public SpectrogramRenderer()
 	{
 		axis = new AxisRenderer(this);
@@ -85,7 +92,11 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		imgBuffer = new byte[64000];
 		spectrum = Jet.getInstance();
 	}
-	  
+	
+	/**
+	 * Constructor
+	 * @param w slice to present as spectrogram
+	 */
 	public SpectrogramRenderer(SliceWave w)
 	{
 		this();
@@ -97,11 +108,17 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		decorator = fd;
 	}
 	
+	/**
+	 * Create default decorator to render frame
+	 */
 	public void createDefaultFrameDecorator()
 	{
 		decorator = new DefaultWaveFrameDecorator();
 	}
 	
+	/**
+	 * Set graph title
+	 */
 	public void setTitle(String t)
 	{
 		channelTitle = t;
@@ -122,6 +139,11 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		}
 	}
 	
+	/**
+	 * Compute spectrogram.
+	 * Reinitialize frame decorator with this renderer data.
+	 * @return maximum magnitude
+	 */
 	public double update(double oldMaxPower)
 	{
 		if (decorator == null)
@@ -223,7 +245,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 
 	/**
-	 * @param autoScale The autoScale to set.
+	 * Set autoscale flag
 	 */
 	public void setAutoScale(boolean autoScale)
 	{
@@ -236,64 +258,71 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		this.fftSize = fftSize;
 	}
+	
 	/**
-	 * @param logFreq The logFreq to set.
+	 * Set flag if we have logarithm frequency axis
 	 */
 	public void setLogFreq(boolean logFreq)
 	{
 		this.logFreq = logFreq;
 	}
+	
 	/**
-	 * @param logPower The logPower to set.
+	 * Set flag if we have logarithm power axis
 	 */
 	public void setLogPower(boolean logPower)
 	{
 		this.logPower = logPower;
 	}
+	
 	/**
-	 * @param maxFreq The maxFreq to set.
+	 * Set maximum frequency
 	 */
 	public void setMaxFreq(double maxFreq)
 	{
 		this.maxFreq = maxFreq;
 	}
+	
 	/**
-	 * @param maxPower The maxPower to set.
+	 * Get maximum power value
 	 */
 	public void setMaxPower(double maxPower)
 	{
 		this.maxPower = maxPower;
 	}
+	
 	/**
-	 * @param minFreq The minFreq to set.
+	 * Set minimum frequency
 	 */
 	public void setMinFreq(double minFreq)
 	{
 		this.minFreq = minFreq;
 	}
 	/**
-	 * @param spectrogramOverlap The spectrogramOverlap to set.
+	 * Set spectrogram overlapping flag
 	 */
 	public void setOverlap(double overlap)
 	{
 		this.overlap = overlap;
 	}
 	/**
-	 * @param viewEndTime The viewEndTime to set.
+	 * Set viewEndTime.
 	 */
 	public void setViewEndTime(double viewEndTime)
 	{
 		this.viewEndTime = viewEndTime;
 	}
+	
 	/**
-	 * @param viewStartTime The viewStartTime to set.
+	 * Set viewStartTime.
 	 */
 	public void setViewStartTime(double viewStartTime)
 	{
 		this.viewStartTime = viewStartTime;
 	}
+	
 	/**
-	 * @param wave The wave to set.
+	 * Set slice to process
 	 */
 	public void setWave(SliceWave wave)
 	{
@@ -301,14 +330,15 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
-	 * @param ticks The hTicks to set.
+	 * Set h ticks count
 	 */
 	public void setHTicks(int ticks)
 	{
 		hTicks = ticks;
 	}
+	
 	/**
-	 * @param ticks The vTicks to set.
+	 * Set v ticks count
 	 */
 	public void setVTicks(int ticks)
 	{
@@ -320,17 +350,26 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		timeZoneOffset = tzo;
 	}
 	
+	/**
+	 * Set Y label
+	 */
 	public void setYLabel(int i)
 	{
 		yLabel = i;
 	}
 
+	/**
+	 * Set Y axis label
+	 */
 	public void setYAxisLabel(String s)
 	{
 		if (decorator instanceof DefaultWaveFrameDecorator)
 			((DefaultWaveFrameDecorator)decorator).setYAxisLabel(s);
 	}
 
+	/**
+	 * Set X label
+	 */
 	public void setXLabel(int i)
 	{
 		xLabel = i;

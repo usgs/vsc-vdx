@@ -8,13 +8,16 @@ import java.util.List;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
+ * GenericDataMatrix with 2 columns: time/voltage
+ * to store voltage data
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
 public class VoltageData extends GenericDataMatrix
 {
-	/** Generic empty constructor
+	/** 
+	 * Generic empty constructor.
 	 */
 	public VoltageData()
 	{
@@ -23,6 +26,7 @@ public class VoltageData extends GenericDataMatrix
 	}
 
 	/**
+	 * Constructor.
 	 * Create an RSAMData from a byte buffer.  This first 4 bytes specify an
 	 * integer number of rows followed by rows*16 bytes, 2 doubles: j2ksec and 
 	 * RSAM.
@@ -34,6 +38,10 @@ public class VoltageData extends GenericDataMatrix
 		super(bb);
 	}
 
+	/**
+	 * Constructor
+	 * @param list list of matrix rows
+	 */
 	public VoltageData(List<double[]> list)
 	{
 		super(list);

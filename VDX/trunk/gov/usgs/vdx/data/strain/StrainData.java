@@ -3,6 +3,7 @@ package gov.usgs.vdx.data.strain;
 import gov.usgs.vdx.data.GenericDataMatrix;
 
 /**
+ * Customized  GenericDataMatrix, with two columns: time and strain
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli

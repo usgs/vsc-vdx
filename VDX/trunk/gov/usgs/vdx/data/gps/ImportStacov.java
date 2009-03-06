@@ -15,10 +15,10 @@ import java.util.TimeZone;
 import java.util.logging.Logger;
 
 /**
- *
+ * Import station covariance file
+ * 
  * TODO: un-hardcode "localhost"
  * 
- *
  * @author Dan Cervelli
  */
 public class ImportStacov
@@ -28,6 +28,12 @@ public class ImportStacov
 	private SQLGPSDataSource dataSource;
 	private int typeId;
 
+	/**
+	 * Constructor
+	 * @param vdxPrefix vdx prefix
+	 * @param name vdx name
+	 * @param tid type id
+	 */
 	public ImportStacov(String vdxPrefix, String name, int tid)
 	{
 		dataSource = new SQLGPSDataSource();
@@ -44,6 +50,10 @@ public class ImportStacov
 			benchmarks.put(bm.getCode(), bm);
 	}
 	
+	/**
+	 * Import station covariance file
+	 * @param fn file name
+	 */
 	public void importFile(String fn)
 	{
 		logger = Log.getLogger("gov.usgs.vdx");
@@ -166,6 +176,10 @@ public class ImportStacov
 		}
 	}
 
+	/**
+	 * Main method. Syntax is
+	 * "java gov.usgs.vdx.data.gps.ImportStacov [vdx prefix] [vdx name] [solution id] [files...]"
+	 */
 	public static void main(String args[])
 	{
 		if (args.length < 3)

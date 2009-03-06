@@ -55,6 +55,11 @@ public class HelicorderSettings
 	public boolean minimumAxis = false;
 	public boolean largeChannelDisplay = false;
 	
+	/**
+	 * Apply settings stored in this class to HelicorderRenderer
+	 * @param hr renderer to tune
+	 * @param hd data to apply to renderer
+	 */
 	public void applySettings(HelicorderRenderer hr, HelicorderData hd)
 	{
 		hr.setChannel(channel);
@@ -86,18 +91,30 @@ public class HelicorderSettings
 			hr.createDefaultAxis();
 	}
 	
+	/**
+	 * Compute helicorder size
+	 * @param w plot width
+	 * @param h plot height
+	 */
 	public void setSizeFromPlotSize(int w, int h)
 	{
 		width = w - left * 2;
 		height = h - (top + 50);
 	}
 	
+	/**
+	 * set helicorder position
+	 */
 	public void setMinimumSizes()
 	{
 		left = 31;
 		top = 16;
 	}
 	
+	/**
+	 * Create plot 
+	 * @param hd data to render
+	 */
 	public Plot createPlot(HelicorderData hd)
 	{
 		Plot plot = new Plot();

@@ -7,13 +7,15 @@ import cern.colt.matrix.DoubleMatrix2D;
 import gov.usgs.vdx.data.GenericDataMatrix;
 
 /**
+ * GenericDataMatrix with 2 columns: time and temperature.
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
 public class ThermalData extends GenericDataMatrix
 {
-	/** Generic empty constructor
+	/** 
+	 * Generic empty constructor
 	 */
 	public ThermalData()
 	{
@@ -39,7 +41,7 @@ public class ThermalData extends GenericDataMatrix
 	}
 
 	/** Gets the RSAM column (column 2) of the data. 
-	 * @return the data column
+	 * @return the temperature column
 	 */
 	public DoubleMatrix2D getTemperature()
 	{

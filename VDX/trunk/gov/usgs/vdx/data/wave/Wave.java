@@ -243,6 +243,10 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		return powerBuf;
 	}
 
+	/**
+	 * Truncate internal data buffer
+	 * @param s new size
+	 */
 	public void trunc(int s)
 	{
 		int[] buf = new int[s];
@@ -250,17 +254,27 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		buffer = buf;
 	}
 
+	/**
+	 * Subtract integer from every data value in the buffer
+	 * @param m value to subtract
+	 */
 	public void subtract(int m)
 	{
 		for (int i = 0; i < buffer.length; i++)
 			buffer[i] -= m;
 	}
 
+	/**
+	 * Set sample rate
+	 */
 	public void setSamplingRate(double sr)
 	{
 		samplingRate = sr;
 	}
 
+	/**
+	 * Set start time
+	 */
 	public void setStartTime(double st)
 	{
 		startTime = st;
@@ -305,6 +319,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		min = Integer.MAX_VALUE;
 	}
 
+	/**
+	 * Scan data and compute statistic
+	 */
 	private void deriveStatistics()
 	{
 		if (buffer == null || buffer.length == 0)
@@ -979,7 +996,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 		return d;
 	}
-	
+
 	public double[] removeMean()
 	{
 		double[] d = new double[this.buffer.length];
@@ -989,7 +1006,10 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		
 		return d;
 	}
-
+	/**
+	 * Filter data
+	 * @param bw Butterworth filter to apply
+	 */
 	public void filter(Butterworth bw, boolean zeroPhaseShift)
 	{
 		double mean = mean();
@@ -1047,6 +1067,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		return bb;
 	}
 	
+	/**
+	 * Restore Wave content from ByteBuffer
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		startTime = bb.getDouble();
@@ -1110,6 +1133,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	    return sac;
 	}
 
+	/**
+	 * Compare waves by start time
+	 */
 	public int compareTo(Wave o) 
 	{
 		return (int)Math.round(getStartTime() - o.getStartTime());

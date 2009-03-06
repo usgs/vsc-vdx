@@ -54,6 +54,9 @@ public class HelicorderData extends GenericDataMatrix
 	private transient double bias = -1E300;
 	private transient double meanMax = -1E300;
 	
+	/**
+	 * Set predefined column names: time/min/max
+	 */
 	public void setColumnNames()
 	{
 		columnMap.put("time", 0);
@@ -88,6 +91,9 @@ public class HelicorderData extends GenericDataMatrix
 		super(list);
 	}
 	
+	/**
+	 * Reset bias max and min values to undefined state
+	 */
 	public void resetBiasMinMax()
 	{
 		bias = -1E300;
@@ -110,6 +116,9 @@ public class HelicorderData extends GenericDataMatrix
 		return data.viewPart(0, 2, rows(), 1);
 	}
 	
+	/**
+	 * Get bias for all data
+	 */
 	public double getBias()
 	{
 		if (bias != -1E300)
@@ -135,6 +144,12 @@ public class HelicorderData extends GenericDataMatrix
 		return bias;
 	}
 	
+	/**
+	 * Find index for data
+	 * @param t time to search index
+	 * @param left start index value
+	 * @param right end index value
+	 */
 	private int findIndex(double t, int left, int right)
 	{
 		int mid = 0;
@@ -153,6 +168,11 @@ public class HelicorderData extends GenericDataMatrix
 		return mid;
 	}
 	
+	/**
+	 * 
+	 * Get bias for data between t1 and t2 time values
+	 *
+	 */
 	public double getBiasBetween(double t1, double t2)
 	{
 		double bias = 0;
@@ -177,6 +197,10 @@ public class HelicorderData extends GenericDataMatrix
 		return bias;	
 	}
 	
+	/**
+	 * Split whole time range on raw set with duration timeChunk.
+	 * Get array of biases for each row.
+	 */
 	public double[] getBiasByRow(double timeChunk)
 	{
 		double mint = getStartTime() - (getStartTime() % timeChunk);
@@ -212,6 +236,10 @@ public class HelicorderData extends GenericDataMatrix
 		return biases;
 	}
 	
+	/**
+	 * Remove bias from data 
+	 * @return removed bias
+	 */
 	public double removeBias()
 	{
 		double bias = 0;
@@ -227,6 +255,9 @@ public class HelicorderData extends GenericDataMatrix
 		return bias;		
 	}
 	
+	/**
+	 * Get mean for value section max values on whole data
+	 */
 	public double getMeanMax()
 	{
 		if (meanMax != -1E300)
@@ -250,6 +281,9 @@ public class HelicorderData extends GenericDataMatrix
 		return meanMax;	
 	}
 	
+	/**
+	 * Get mean of value section center position on whole data range
+	 */
 	public double getMeanRange()
 	{
 		double mean = 0;
@@ -263,16 +297,25 @@ public class HelicorderData extends GenericDataMatrix
 		return mean / samples;
 	}
 	
+	/**
+	 * Get start time
+	 */
 	public double getStartTime()
 	{
 		return data.getQuick(0, 0);
 	}	
 	
+	/**
+	 * Get end time
+	 */
 	public double getEndTime()
 	{
 		return Math.round(data.getQuick(rows() - 1, 0));	
 	}
 	
+	/**
+	 * Get flag if this helicorder data have time intersection with another
+	 */
 	public boolean overlaps(HelicorderData heli)
 	{
 		// obviously this could be compressed to one line, but this is readable:
@@ -307,6 +350,11 @@ public class HelicorderData extends GenericDataMatrix
 		return -1;
 	}
 
+	/**
+	 * Get subset of data
+	 * @param t1 start time 
+	 * @param t2 end time
+	 */
 	public HelicorderData subset(double t1, double t2)
 	{
 		int i1 = findClosestTimeIndexGreaterThan(t1);
@@ -321,6 +369,9 @@ public class HelicorderData extends GenericDataMatrix
 	}
 	
 	// can trash either helicorder
+	/**
+	 * Merge helicorders
+	 */
 	public HelicorderData combine(HelicorderData heli)
 	{
 		// if (!overlaps(heli))
@@ -366,6 +417,9 @@ public class HelicorderData extends GenericDataMatrix
 		return null;
 	}
 	
+	/**
+	 * Sort helicorder data by time
+	 */
 	public void sort()
 	{
 		if (data == null)
@@ -380,7 +434,10 @@ public class HelicorderData extends GenericDataMatrix
 				});
 		data = DoubleFactory2D.dense.make(matrix);
 	}
-	
+
+	/**
+	 * Get string representation, dump helicorder data matrix separating values by ' '
+	 */
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
@@ -396,6 +453,9 @@ public class HelicorderData extends GenericDataMatrix
 		return sb.toString();
 	}
 	
+	/**
+	 * Dump helicorder data matrix as CSV
+	 */
 	public String toCSV()
 	{
 		StringBuffer sb = new StringBuffer();

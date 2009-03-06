@@ -345,6 +345,9 @@ public class SQLTiltDataManager extends SQLDataManager implements TiltDataManage
     // From here on is provided for convenience.  These functions are not part 
     // of the implementation of TiltDataManager
     
+    /**
+     * Get the last data time for station
+     */
     public synchronized java.util.Date getLastDataTime(String station)
     {
         try
@@ -360,6 +363,11 @@ public class SQLTiltDataManager extends SQLDataManager implements TiltDataManage
         return null;
     }
     
+    /**
+     * Insert record in the station's tilt table
+     * @param station station name to select table
+     * @return true if insertion successful
+     */
     public synchronized void insertTiltData(String station, double j2ksec, String date, double x, double y, double agnd)
     {
         try
@@ -378,6 +386,11 @@ public class SQLTiltDataManager extends SQLDataManager implements TiltDataManage
         }
     }
     
+    /**
+     * Insert record in the station's env table
+     * @param station station name to select table
+     * @return true if insertion successful
+     */
     public synchronized void insertTiltEnvData(String station, double j2ksec, String date, double ht, double bt, double v, double r, double agnd)
     {
         try

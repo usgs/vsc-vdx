@@ -4,6 +4,9 @@ import gov.usgs.math.FFT;
 import gov.usgs.util.Util;
 
 /**
+ * Represents slice - continuous part of wave time series.
+ * Contain computed and cached statistics about wave series zone.
+ * 
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
@@ -42,6 +45,10 @@ public class SliceWave
 	private transient double min = 1E300;
 	private transient double[] dataRange = null;
 	
+	/**
+	 * Constructor
+	 * @param sw Time series
+	 */
 	public SliceWave(Wave sw)
 	{
 		source = sw;
@@ -49,11 +56,17 @@ public class SliceWave
 		limit = source.buffer.length;
 	}
 	
+	/**
+	 * Getter for time series
+	 */
 	public Wave getWave()
 	{
 		return source;
 	}
 	
+	/**
+	 * Get data range - max and min slice data limits
+	 */
 	public double[] getDataRange()
 	{
 		if (dataRange == null)
@@ -62,31 +75,51 @@ public class SliceWave
 		return dataRange;
 	}
 	
+	/**
+	 * Get samples count in represented slice
+	 */
 	public int samples()
 	{
 		return limit - position;
 	}
-	
+
+	/**
+	 * Get sample rate
+	 */
 	public double getSamplingRate()
 	{
 		return source.getSamplingRate();
 	}
 	
+	/**
+	 * Get slice start time
+	 */
 	public double getStartTime()
 	{
 		return source.getStartTime() + position * (1 / getSamplingRate());
 	}
 	
+	/**
+	 * Get slice end time
+	 */
 	public double getEndTime()
 	{
 		return source.getStartTime() + limit * (1 / getSamplingRate());
 	}
 
+	/**
+	 * Get wave series end time
+	 */
 	private double getTrueEndTime()
 	{
 		return getStartTime() + source.buffer.length * (1 / getSamplingRate());
 	}
 	
+	/**
+	 * Set time limits to define slice zone, compute statistics
+	 * @param t1 start time
+	 * @param t2 end time
+	 */
 	public void setSlice(double t1, double t2)
 	{
 		if (t1 < source.getStartTime() || t2 > getTrueEndTime() || t1 >= t2)
@@ -112,6 +145,9 @@ public class SliceWave
 		min = 1E300;
 	}
 	 
+	/**
+	 * Compute slice statistics
+	 */
 	private void deriveStatistics()
 	{
 		if (source.buffer == null || source.buffer.length == 0)
@@ -322,6 +358,12 @@ public class SliceWave
 		return r;
 	}
 	
+	/**
+	 * The same as FFT(), without separation real and imaginary part
+	 *  
+	 * @return the FFT (n*2 rows) array
+	 * @see FFT
+	 */
 	public double[] fastFFT()
 	{
 		int n = samples();
@@ -352,21 +394,35 @@ public class SliceWave
 		return buf;
 	}
 	
+	/**
+	 * Set read pointer in the slice starting position
+	 */
 	public void reset()
 	{
 		readPosition = position;
 	}
 	
+	/**
+	 * Check if read pointer in the slice zone
+	 */
 	public boolean hasNext()
 	{
 		return readPosition < limit;
 	}
 	
+	/**
+	 * Move read pointer in the next position
+	 * @return data value in the read pointer position before moving
+	 */
 	public double next()
 	{
 		return source.buffer[readPosition++];
 	}
 	
+	/**
+	 * Dump slice content to CSV string
+	 * @return
+	 */
 	public String toCSV()
 	{
 		if (source.buffer == null || source.buffer.length == 0)

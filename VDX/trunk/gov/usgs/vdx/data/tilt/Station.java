@@ -6,6 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+*We already have one station in package gov.usgs.vdx.data.generic.variable; why we need another one?
+*The only visible difference is azimuth field.
+*/
+
 public class Station implements Comparable<Object> {
 	
 	private int sid;
@@ -15,6 +20,9 @@ public class Station implements Comparable<Object> {
 	private double lat;
 	private double azimuth;
 	
+	/**
+	 * Default constructor
+	 */
 	public Station () {
 		sid		= -1;
 		code	= null;

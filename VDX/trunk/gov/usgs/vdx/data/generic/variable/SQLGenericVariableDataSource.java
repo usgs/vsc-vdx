@@ -63,7 +63,10 @@ import java.util.logging.Level;
 public class SQLGenericVariableDataSource extends SQLDataSource implements DataSource
 {
 	public static final String DATABASE_NAME = "nwis";
-	
+
+	/**
+	 * Create 'nwis' database
+	 */
 	public boolean createDatabase()
 	{
 		
@@ -100,16 +103,25 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return false;
 	}
 
+	/**
+	 * Get flag if database exist
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(DATABASE_NAME);
 	}
 
+	/**
+	 * Get database type, 'nwis' in this case
+	 */
 	public String getType()
 	{
 		return "nwis";
 	}
 
+	/**
+	 * Init object from given configuration file
+	 */
 	public void initialize(ConfigFile params)
 	{
 		String driver = params.getString("vdx.driver");
@@ -121,6 +133,9 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	
 	}
 
+	/**
+	 * Get whole list of stations
+	 */
 	public List<Station> getStations()
 	{
 		List<Station> result = new ArrayList<Station>();
@@ -152,6 +167,11 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return result;
 	}
 
+	/**
+	 * Get one station by org and site number
+	 * @param orgIn
+	 * @param siteNoIn
+	 */
 	public Station getStation(String orgIn, String siteNoIn)
 	{
 		Station s = null;
@@ -185,6 +205,9 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return s;
 	}
 	
+	/**
+	 * Get list of registered data types for this database
+	 */
 	public List<DataType> getDataTypes()
 	{
 		List<DataType> result = new ArrayList<DataType>();
@@ -209,6 +232,10 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return result;
 	}
 	
+	/**
+	 * Get station id (the same as getStationID(String code))
+	 * @param code station code
+	 */
 	public int getStationName(String code)
 	{
 		try
@@ -229,6 +256,10 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return -1;
 	}
 
+	/**
+	 * Get station id 
+	 * @param code station code
+	 */
 	public int getStationID(String code)
 	{
 		try
@@ -248,9 +279,10 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		}
 		return -1;
 	}
-	
 
-
+	/**
+	 * Create new data type in the database
+	 */
 	public void insertDataType(DataType dt)
 	{
 		try
@@ -267,11 +299,26 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		}
 	}
 	
+	/**
+	 * insert new data record in the database
+	 * @param d date 
+	 * @param station station
+	 * @param dt data type
+	 * @param dd data value
+	 */
 	public void insertRecord(Date d, Station station, DataType dt, double dd)
 	{
 		insertRecord(d, station, dt, dd, false);
 	}
-	
+
+	/**
+	 * insert new data record in the database
+	 * @param d date 
+	 * @param station station
+	 * @param dt data type
+	 * @param dd data value
+	 * @param is replace record?
+	 */
 	public void insertRecord(Date d, Station station, DataType dt, double dd, boolean r)
 	{
 		
@@ -310,6 +357,14 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		
 	}
 	
+	/**
+	 * Insert new channel
+	 * @param code channel code
+	 * @param name channel name
+	 * @param lon longitude 
+	 * @param lat latitude
+	 * @return -1 value
+	 */
 	public int insertChannel(String code, String name, double lon, double lat)
 	{
 		int result = -1;
@@ -331,6 +386,11 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return result;
 	}
 	
+	/**
+	 * Create table for station data
+	 * @param stationTable table name
+	 * @return false
+	 */
 	public boolean createStationTable(String stationTable)
 	{
 		boolean success = false;
@@ -352,7 +412,10 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		return success;
 	}
 
-
+	/**
+	 * Get channels list in format "sid:org:lon:name:site_no" from database
+	 * @param db database name to query
+	 */
 	public List<String> getSelectors()
 	{
 		try
@@ -405,6 +468,12 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		}
 		return null;
 	}
+	
+	/**
+	 * Getter for data. 
+	 * Search value of 'action' parameter and retrieve corresponding data.
+	 * @param command to execute.
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		
@@ -429,6 +498,15 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		}
 		return null;
 	}
+	
+	/**
+	 * Get data for station
+	 * @param cid station id
+	 * @param st start time
+	 * @param et end time
+	 * @param :-separated list of types
+	 * @return
+	 */
 	public GenericDataMatrix getNWISData(int cid, double st, double et, String selectedTypes)
 	{
 		GenericDataMatrix result = null;

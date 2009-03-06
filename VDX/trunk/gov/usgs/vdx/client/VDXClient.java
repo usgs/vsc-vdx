@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * 
- * 
+ * Customized internet client, can connect to specified host-port and read raw data.
+ * Can issue command and get command processing result. 
  *
  * @author Dan Cervelli
  */
@@ -39,6 +39,11 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("nwis", "gov.usgs.vdx.data.GenericDataMatrix");
 	}
 	
+	/**
+	 * Constructor
+	 * @param h host to connect
+	 * @param p port to connect
+	 */
 	public VDXClient(String h, int p)
 	{
 		super(h, p);
@@ -46,11 +51,21 @@ public class VDXClient extends InternetClient
 		setTimeout(30000);
 	}
 	
+	/**
+	 * Adds resulting data type to internal map
+	 * @param t type name
+	 * @param c class name to process this type's data
+	 */
 	public static void addDataType(String t, String c)
 	{
 		dataTypeMap.put(t, c);
 	}
 	
+	/**
+	 * Issue command to server. 
+	 * Command is map of parameters - param_name - param_value pairs.
+	 * @return Command result got from server as string
+	 */
 	protected String submitCommand(Map<String, String> params) throws IOException
 	{
 		if (!connected())
@@ -65,6 +80,11 @@ public class VDXClient extends InternetClient
 			return rs;
 	}
 	
+	/**
+	 * Issue command to server and get binary data response. 
+	 * Command is map of parameters - param_name - param_value pairs.
+	 * @return Command result got from server and parsed in BinaryDataSet
+	 */
 	public BinaryDataSet getBinaryData(final Map<String, String> params)
 	{
 		Retriable<BinaryDataSet> rt = new Retriable<BinaryDataSet>("VDXClient.getBinaryData()", MAX_RETRIES)
@@ -130,6 +150,11 @@ public class VDXClient extends InternetClient
 		return rt.go();
 	}
 	
+	/**
+	 * Issue command to server and get text data response. 
+	 * Command is map of parameters - param_name - param_value pairs.
+	 * @return Command result got from server and parsed List<String>
+	 */
 	public List<String> getTextData(final Map<String, String> params)
 	{
 		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTestData()", MAX_RETRIES)

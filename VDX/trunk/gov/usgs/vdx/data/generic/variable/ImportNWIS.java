@@ -18,7 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
+  * Import NWIS data from url
+  * 
   * $Log: not supported by cvs2svn $
   * Revision 1.11  2008/04/07 17:41:20  tparker
   * ignore RDB values with qualification codes
@@ -64,6 +65,10 @@ public class ImportNWIS
 	private SQLGenericVariableDataSource dataSource;
 	private ConfigFile params;
 
+	/**
+	 * Constructor
+	 * @param cf configuration file to specify data source to import in and data structure
+	 */
 	public ImportNWIS(String cf)
 	{
 		dataSource = new SQLGenericVariableDataSource();
@@ -74,6 +79,11 @@ public class ImportNWIS
 		stations = dataSource.getStations();
 	}	
 	
+	/**
+	 * Import NWIS data from url ('url' parameter in the configuration)
+	 * @param st station
+	 * @param period not used really
+	 */
 	public void importWeb(Station st, int period)
 	{
 		if (!st.getActive())
@@ -175,6 +185,9 @@ public class ImportNWIS
 		}
 	}
 
+	/**
+	 * Main method
+	 */
 	public static void main(String[] as)
 	{
 		String cf = CONFIG_FILE;

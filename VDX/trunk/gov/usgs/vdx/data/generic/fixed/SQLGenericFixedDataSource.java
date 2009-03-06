@@ -34,6 +34,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	private String querySQL;
 	private String name;
 	
+	/**
+	 * Init object from given configuration file
+	 */
 	public void initialize(ConfigFile params)
 	{
 		
@@ -57,6 +60,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 
+	/**
+	 * Getter for metadata
+	 */
 	private void getMetadata()
 	{
 		if (metadata != null)
@@ -76,6 +82,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 	}
 	
+	/**
+	 * Query database for described columns and construct
+	 * sql to retrieve their data
+	 */
 	private void queryColumnData()
 	{
 		if (columns != null)
@@ -120,6 +130,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 	}
 	
+	/**
+	 * Create generic database
+	 */
 	public boolean createDatabase()
 	{
 		try
@@ -149,6 +162,14 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return false;
 	}
 
+	/**
+	 * Create channel
+	 * @param channel channel code
+	 * @param channelName
+	 * @param lon
+	 * @param lat
+	 * @return flag if operation successful
+	 */
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 		queryColumnData();
@@ -159,26 +180,43 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
 	}
 	
+	/**
+	 * Get flag if database exist
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
 	}
 
+	/**
+	 * Get database type, generic in this case
+	 */
 	public String getType()
 	{
 		return "generic";
 	}
 
+	/**
+	 * Get channels list in format "sid:code:name:lon:lat" from database
+	 * @param db database name to query
+	 */
 	public List<String> getSelectors()
 	{
 		return defaultGetSelectors(DATABASE_NAME);
 	}
 
+	/**
+	 * Get selector name
+	 * @param plural if we need selector name in the plural form
+	 */
 	public String getSelectorName(boolean plural)
 	{
 		return plural ? "Stations" : "Station";
 	}
 
+	/**
+	 * Getter for selector string
+	 */
 	public String getSelectorString()
 	{
 		String ss = metadata.get("selectorString");
@@ -188,6 +226,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return ss;
 	}
 	
+	/**
+	 * Getter for data source description
+	 */
 	public String getDescription()
 	{
 		String d = metadata.get("description");
@@ -197,6 +238,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return d;
 	}
 	
+	/**
+	 * Getter for data source title
+	 */
 	public String getTitle()
 	{
 		String t = metadata.get("title");
@@ -206,6 +250,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return t;
 	}
 	
+	/**
+	 * Getter for data source time shortcuts
+	 */
 	public String getTimeShortcuts()
 	{
 		String ts = metadata.get("timeShortcuts");
@@ -215,6 +262,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return ts;
 	}
 	
+	/**
+	 * Getter for data. Search value of 'action' parameter and retrieve corresponding data.
+	 * @param command to execute.
+	 * 
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		String action = params.get("action");
@@ -253,6 +305,13 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return null;
 	}
 
+	/**
+	 * Get data for one channel
+	 * @param cid channel code
+	 * @param st start time
+	 * @param et end time
+	 * @return
+	 */
 	public GenericDataMatrix getGenericData(int cid, double st, double et)
 	{
 		GenericDataMatrix result = null;
@@ -292,6 +351,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return result;
 	}
 	
+	/**
+	 * Insert data 
+	 * @param table table name to insert
+	 * @param d 2d matrix of data
+	 */
 	public void insertData(String table, GenericDataMatrix d)
 	{
 		String[] colNames = d.getColumnNames();
@@ -326,6 +390,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			}
 		}
 	}
+	
+	/**
+	 * Getter for column list
+	 */
 	public List<GenericColumn> getColumns()
 	{
 		return columns;

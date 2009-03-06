@@ -25,6 +25,10 @@ import java.io.FileInputStream;
 public class ImportPTX
 {
 
+	/**
+	 * Main method, expect file names to proceed in the command line
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws Exception
 	{
 		SQLTiltStationDataSource dataSource = new SQLTiltStationDataSource();

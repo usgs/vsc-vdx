@@ -10,7 +10,7 @@ import java.util.Map;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
- * 
+ * Stub class, it dumps information on stdout instead of insert it into the database
  *
  * @author Tom Parker
  */

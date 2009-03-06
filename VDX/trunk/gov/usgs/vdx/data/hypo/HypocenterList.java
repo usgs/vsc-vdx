@@ -18,6 +18,7 @@ import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
+ * Represent list of hypocenters
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.6  2007/08/31 04:36:09  tparker
@@ -111,31 +112,51 @@ public class HypocenterList implements BinaryDataSet
 	
 	private List<Hypocenter> hypocenters;
 
+	/**
+	 * Default constructor
+	 */
 	public HypocenterList()
 	{
 		this(new ArrayList<Hypocenter>(1));
 	}
 	
+	/**
+	 * Constructor.
+	 * @param bb ByteBuffer to parse
+	 * @see fromBinary(ByteBuffer bb)
+	 */
 	public HypocenterList(ByteBuffer bb)
 	{
 		fromBinary(bb);
 	}
 	
+	/**
+	 * Constructor
+	 */
 	public HypocenterList(List<Hypocenter> hs)
 	{
 		hypocenters = hs;
 	}
 	
+	/**
+	 * Get list of hypocenters
+	 */
 	public List<Hypocenter> getHypocenters()
 	{
 		return hypocenters;
 	}
 	
+	/**
+	 * Get list size
+	 */
 	public int size()
 	{
 		return hypocenters.size();
 	}
 	
+	/**
+	 * Get time of first event in the list
+	 */
 	public double getStartTime()
 	{
 		if (hypocenters == null || hypocenters.size() == 0)
@@ -144,6 +165,9 @@ public class HypocenterList implements BinaryDataSet
 			return hypocenters.get(0).getTime();
 	}
 	
+	/**
+	 * Get time of last event in the list
+	 */
 	public double getEndTime()
 	{
 		if (hypocenters == null || hypocenters.size() == 0)
@@ -152,6 +176,10 @@ public class HypocenterList implements BinaryDataSet
 			return hypocenters.get(hypocenters.size() - 1).getTime();
 	}
 	
+	/**
+	 * Parse ByteBuffer and fill list
+	 * @see toBinary()
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		int rows = bb.getInt();
@@ -166,6 +194,9 @@ public class HypocenterList implements BinaryDataSet
 		}
 	}
 	
+	/**
+	 * Dump object content into ByteBuffer
+	 */
 	public ByteBuffer toBinary()
 	{
 		ByteBuffer buffer = ByteBuffer.allocate(4 + hypocenters.size() * 5 * 8);
@@ -176,11 +207,18 @@ public class HypocenterList implements BinaryDataSet
 		return buffer;
 	}
 	
+	/**
+	 * Get string representation of hypocenters list
+	 */
 	public String toString()
 	{
 		return "HypocenterList: " + hypocenters.size() + " hypocenters";
 	}
 	
+	/**
+	 * Get initialized axis to use with histogram graph
+	 * @param bin histogram section period
+	 */
 	private IAxis getHistogramAxis(BinSize bin)
 	{
 		double startTime = getStartTime();
@@ -287,6 +325,9 @@ public class HypocenterList implements BinaryDataSet
 		return axis;
 	}
 	
+	/**
+	 * Compute 2-column matrix: time - cumulative event count
+	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{
 		DoubleMatrix2D result = DoubleFactory2D.dense.make(hypocenters.size(), 2);
@@ -299,6 +340,9 @@ public class HypocenterList implements BinaryDataSet
 		return result;
 	}
 	
+	/**
+	 * Compute 2-column matrix: time - cumulative moment
+	 */
 	public DoubleMatrix2D getCumulativeMoment()
 	{
 		DoubleMatrix2D result = DoubleFactory2D.dense.make(hypocenters.size(), 2);
@@ -314,7 +358,10 @@ public class HypocenterList implements BinaryDataSet
 		}
 		return result;
 	}
-	
+
+	/**
+	 * Compute 2-column matrix: time - cumulative magnitude
+	 */
 	public DoubleMatrix2D getCumulativeMagnitude()
 	{
 		DoubleMatrix2D result = getCumulativeMoment();
@@ -326,6 +373,10 @@ public class HypocenterList implements BinaryDataSet
 		return result;
 	}
 	
+	/**
+	 * Get initialized histogram of event count by time
+	 * @param bin time interval
+	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
 		if (hypocenters == null || hypocenters.size() == 0)
@@ -337,12 +388,18 @@ public class HypocenterList implements BinaryDataSet
 		return hist;
 	}
 	
+	/**
+	 * Project of all hypocenters in the list
+	 */
 	public void project(Projection proj)
 	{
 		for (Hypocenter hc : hypocenters)
 			hc.project(proj);
 	}
 	
+	/**
+	 * Dump list as CSV string
+	 */
 	public String toCSV()
 	{
 		StringBuffer sb = new StringBuffer();

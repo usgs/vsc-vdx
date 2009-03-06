@@ -34,6 +34,11 @@ import java.util.TimeZone;
  */
 public class Seed
 {
+	/**
+	 * Reads seed file
+	 * @param fn file name
+	 * @return map of pairs "station/channel/network/location"-list of segments as Wave objects
+	 */
 	public static Map<String, List<Wave>> readSeed(String fn)
 	{
 		Map<String, List<Wave>> map = new HashMap<String, List<Wave>>();
@@ -88,6 +93,9 @@ public class Seed
 		return map;
 	}
 	 
+	/**
+	 * Convert binary time to Date
+	 */
 	public static Date btimeToDate(Btime bt)
 	{
     	Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
@@ -100,6 +108,11 @@ public class Seed
     	return cal.getTime();
 	}
 	
+	/**
+	 * Get sample rate
+	 * @param factor seed factor parameter
+	 * @param multiplier seed multiplier parameter
+	 */
 	public static float getSampleRate (double factor, double multiplier) {
         float sampleRate = (float) 10000.0;  // default (impossible) value;
         if ((factor * multiplier) != 0.0) {  // in the case of log records

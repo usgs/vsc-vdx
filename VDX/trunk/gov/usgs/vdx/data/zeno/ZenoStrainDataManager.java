@@ -4,7 +4,8 @@ import java.sql.*;
 
 public class ZenoStrainDataManager extends SQLStrainDataManager
 {
-	/** The singleton data manager.
+	/** 
+	 * The singleton data manager for Zenos 
 	 */
     protected static ZenoStrainDataManager strainDataManager;
     

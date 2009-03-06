@@ -15,6 +15,9 @@ import java.util.logging.Logger;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
+ * Generic SQL data source.
+ * Store reference to VDX database and provide methods to init
+ * default database structure.
  * 
  * TODO: use PreparedStatements.
  * 
@@ -45,28 +48,57 @@ abstract public class SQLDataSource
 	protected String url;
 	protected String vdxPrefix;
 	
+	/**
+	 * Sets VDX database for this source
+	 */
 	public void setDatabase(VDXDatabase db)
 	{
 		database = db;
 		logger = database.getLogger();
 	}
-	
+
+	/**
+	 * Sets name of this SQLDataSource
+	 */
 	public void setName(String n)
 	{
 		name = n;
 	}
 	
+	/**
+	 * Init this SQLDataSource from configuration
+	 */
 	abstract public void initialize(ConfigFile params);
 	
+	/**
+	 * Create database. Concrete realization see in the inherited classes
+	 * @return true if success
+	 */
 	abstract public boolean createDatabase();
 	
+	/**
+	 * Check if database exist. Concrete realization see in the inherited classes
+	 */
 	abstract public boolean databaseExists();
 	
+	/**
+	 * Check if VDX database has connection to SQL server
+	 * @param dbName
+	 * @return
+	 */
 	public boolean defaultDatabaseExists(String dbName)
 	{
 		return database.useDatabase(dbName);
 	}
 	
+	/**
+	 * Create default VDX database
+	 * @param dbName database name (without prefix)
+	 * @param comps number of places in translation table
+	 * @param channels if we need to create channels table
+	 * @param translations if we need to create translations table
+	 * @return
+	 */
 	public boolean createDefaultDatabase(String dbName, int comps, boolean channels, boolean translations)
 	{
 		try
@@ -116,13 +148,25 @@ abstract public class SQLDataSource
 	 * @param channel
 	 * @param lon
 	 * @param lat
-	 * @return
+	 * @return false, creation was not succeded
 	 */
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 		return false;
 	}
-	
+
+	/**
+	 * Create default channel
+	 * @param dbName database name (without prefix)
+	 * @param channel channel code
+	 * @param channelName channel name
+	 * @param lon longitude
+	 * @param lat latitude
+	 * @param cols array of strings - column names in table created to store channel data
+	 * @param channels if we need to add record in 'channels' table
+	 * @param translations if we need to add 'tid' field to table created to store channel data
+	 * @return true if success
+	 */
 	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, String[] cols, boolean channels, boolean translations)
 	{
 		
@@ -169,6 +213,10 @@ abstract public class SQLDataSource
 		return false;
 	}
 	
+	/**
+	 * Get channels list in format "sid:code:name:lon:lat" from database
+	 * @param db database name to query
+	 */
 	public List<String> defaultGetSelectors(String db)
 	{
 		try
@@ -192,7 +240,11 @@ abstract public class SQLDataSource
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Get channels list from database
+	 * @param db database name to query
+	 */
 	public List<Channel> defaultGetChannels(String db)
 	{
 		try
@@ -217,6 +269,11 @@ abstract public class SQLDataSource
 		return null;
 	}
 	
+	/**
+	 * Check if channel exist
+	 * @param db database to check (without prefix)
+	 * @param ch channel code to check
+	 */
 	public boolean defaultChannelExists(String db, String ch)
 	{
 		try
@@ -234,12 +291,23 @@ abstract public class SQLDataSource
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Import channel data, not implemented in this generic class
+	 * @param channel channel code
+	 * @param data data matrix
+	 */
 	public void insertData(String channel, DoubleMatrix2D data)
 	{
 		insertData(channel, data, false);
 	}
 
+	/**
+	 * Import channel data, not implemented in this generic class
+	 * @param channel channel code
+	 * @param data data matrix
+	 * @param b
+	 */
 	public void insertData(String channel, DoubleMatrix2D data, boolean b)
 	{
 		System.out.println("Data import not available for this source.");

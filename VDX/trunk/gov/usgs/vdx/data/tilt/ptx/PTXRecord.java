@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
 /**
+ * Presents one record in Pinnacle series 5000 tiltmeter PTX file
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.1  2005/09/21 19:57:11  dcervelli
@@ -20,11 +21,18 @@ public class PTXRecord
 	
 	private byte[] buffer;
 	
+	/**
+	 * Constructor
+	 * @param b array of bytes
+	 */
 	public PTXRecord(byte[] b)
 	{
 		buffer = b;
 	}
 	
+	/**
+	 * Construct long value from four bytes
+	 */
 	private long createInt(byte b0, byte b1, byte b2, byte b3)
 	{
 		return ((b0 & 0xff) | 
@@ -33,46 +41,76 @@ public class PTXRecord
 			   (((b3 & 0xff) << 24) & 0xff000000) & 0x00000000ffffffff); 
 	}
 	
+	/**
+	 * @return quantity of data bytes in the record
+	 */
 	public int getNumBytes()
 	{
 		return (int)createInt(buffer[0], buffer[1], (byte)0, (byte)0);
 	}
-	
+
+	/**
+	 * @return record start time
+	 */
 	public long getStartTime()
 	{
 		return createInt(buffer[5], buffer[4], buffer[3], buffer[2]);
 	}
 	
+	/**
+	 * @return the temperature
+	 */
 	public int getTemperature()
 	{
 		return (int)createInt(buffer[6], buffer[7], buffer[8], (byte)0);	
 	}
 	
+	/**
+	 * @return the voltage
+	 */
 	public int getVoltage()
 	{
 		return (int)createInt(buffer[9], buffer[10], buffer[11], (byte)0);	
 	}
-	
+
+	/**
+	 * 
+	 * @return the heading
+	 */
 	public int getHeading()
 	{
 		return (int)createInt(buffer[12], buffer[13], (byte)0, (byte)0);
 	}
 	
+	/**
+	 * 
+	 * @return sample rate, seconds per sample
+	 */
 	public int getSecondsPerSample()
 	{
 		return (int)createInt(buffer[14], (byte)0, (byte)0, (byte)0); 
 	}
 
+	/**
+	 * @return the gain
+	 */
 	public int getGain()
 	{
 		return buffer[15] + 1;
 	}
 	
+	/**
+	 * @return the record serial number
+	 */
 	public int getSerialNumber()
 	{
 		return (int)createInt(buffer[16], buffer[17], (byte)0, (byte)0);
 	}
 	
+	/**
+	 * 
+	 * @return the version
+	 */
 	public int getVersion()
 	{
 		return buffer[18];
@@ -83,21 +121,33 @@ public class PTXRecord
 		return buffer[19];
 	}
 	
+	/**
+	 * @return X calibration data
+	 */
 	public int getXCalibration()
 	{
 		return (int)createInt(buffer[20], buffer[21], buffer[22], (byte)0);
 	}
-	
+
+	/**
+	 * @return Y calibration data
+	 */
 	public int getYCalibration()
 	{
 		return (int)createInt(buffer[23], buffer[24], buffer[25], (byte)0);
 	}
-	
+
+	/**
+	 * @return location name
+	 */
 	public String getLocationName()
 	{
 		return Util.bytesToString(buffer, 26, 8);
 	}
 	
+	/**
+	 * @return two-column matrix of tilt data
+	 */
 	public int[][] getData()
 	{
 		int samples = (getNumBytes() - 34) / (2 * 3);
@@ -111,7 +161,9 @@ public class PTXRecord
 		
 		return result;
 	}
-	
+	/**
+	 * @return five-column matrix of data, including time, tilt1, tilt2, voltage, temperature
+	 */	
 	public double[][] getImportData()
 	{
 		int samples = (getNumBytes() - 34) / (2 * 3);
@@ -137,6 +189,9 @@ public class PTXRecord
 		return result;
 	}
 	
+	/**
+	 * Dump record metainformation into string
+	 */
 	public String toString()
 	{
 		return "numBytes=" + getNumBytes() + "\n" +

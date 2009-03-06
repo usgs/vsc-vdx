@@ -314,31 +314,50 @@ public class SAC
 		dis.close();
 	}
 
+	/**
+	 * Swap bytes in short value
+	 */
 	public final static short swapBytes(short val)
 	{
 		return (short)(((val & 0xff00) >> 8) + ((val & 0x00ff) << 8));
 	}
 
+	/**
+	 * Swap bytes in float value
+	 */
 	public final static float swapBytes(float val)
 	{
 		return Float.intBitsToFloat(swapBytes(Float.floatToRawIntBits(val)));
 	}
 
+	/**
+	 * Swap bytes in int value
+	 */
 	public final static int swapBytes(int val)
 	{
 		return ((val & 0xff000000) >>> 24) + ((val & 0x00ff0000) >> 8) + ((val & 0x0000ff00) << 8) + ((val & 0x000000ff) << 24);
 	}
 
+	/**
+	 * Swap bytes in double value
+	 */
 	public final static double swapBytes(double val)
 	{
 		return Double.longBitsToDouble(swapBytes(Double.doubleToRawLongBits(val)));
 	}
 
+	/**
+	 * Swap bytes in long value
+	 */
 	public final static long swapBytes(long val)
 	{
 		return ((val & 0xffl << 56) >>> 56) + ((val & 0xffl << 48) >> 40) + ((val & 0xffl << 40) >> 24) + ((val & 0xffl << 32) >> 8) + ((val & 0xffl << 24) << 8) + ((val & 0xffl << 16) << 24) + ((val & 0xffl << 8) << 40) + ((val & 0xffl) << 56);
 	}
 
+	/**
+	 * reads the sac from DataInputStream, without correctness checks.
+	 * @throws IOException if can't read from input stream
+	 */
 	public void read(DataInputStream dis) throws IOException
 	{
 		readHeader(dis);
@@ -684,7 +703,7 @@ public class SAC
 		kinst = new String(eightBytes);
 	}
 
-	/** read the data portion of the given File */
+	/** read the data portion of SAC format from the given stream */
 	public void readData(DataInputStream fis) throws IOException
 	{
 		InputStream in = fis;
@@ -833,6 +852,10 @@ public class SAC
 		} // end of else
 	}
 
+	/**
+	 * Write SAC header to output stream
+	 * @throws IOException if writing fails
+	 */
 	public void writeHeader(DataOutputStream dos) throws IOException
 	{
 		writeFloat(dos, delta);
@@ -1184,6 +1207,10 @@ public class SAC
 
 	}
 
+	/**
+	 * Write data portion of SAC format in the given output stream
+	 * @throws IOException if writing fails
+	 */
 	public void writeData(DataOutputStream dos) throws IOException
 	{
 
@@ -1201,6 +1228,9 @@ public class SAC
 		}
 	}
 
+	/**
+	 * Print header to stdout
+	 */
 	public void printHeader()
 	{
 		System.out.println("delta = " + delta + " depmin = " + depmin + " depmax = " + depmax + " scale = " + scale + " odelta = " + odelta);
@@ -1233,6 +1263,9 @@ public class SAC
 		System.out.println(" knetwk = " + knetwk + " kdatrd = " + kdatrd + " kinst = " + kinst);
 	}
 
+	/**
+	 * Create Wave object from SAC data
+	 */
 	public Wave toWave()
 	{
 		Wave sw = new Wave();
@@ -1247,11 +1280,17 @@ public class SAC
 		return sw;
 	}
 
+	/**
+	 * Get string with station description
+	 */
 	public String getStationInfo()
 	{
 		return kstnm.trim() + "_" + kcmpnm.trim() + "_" + knetwk.trim();
 	}
 
+	/**
+	 * Get string with channel description
+	 */
 	public String getWinstonChannel()
 	{
 		return kstnm.trim() + "$" + kcmpnm.trim() + "$" + knetwk.trim().replace('-', 'D');
@@ -1259,6 +1298,10 @@ public class SAC
 
 	//nzyear = 2004 nzjday = 220 nzhour = 9 nzmin = 31 nzsec = 17
 	//nzmsec = 580 nvhdr = 6 norid = 0 nevid = 0 npts = 36490
+	
+	/**
+	 * Get start time of data
+	 */
 	public Date getStartTime()
 	{
 		String ds = nzyear + "," + nzjday + "," + nzhour + "," + nzmin + "," + nzsec + "," + nzmsec;
@@ -1276,6 +1319,9 @@ public class SAC
 		return d;
 	}
 
+	/**
+	 * Get sample rate
+	 */
 	public double getSamplingRate()
 	{
 		return 1 / delta;

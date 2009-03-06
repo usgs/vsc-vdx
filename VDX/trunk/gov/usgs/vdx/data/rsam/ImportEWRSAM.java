@@ -34,6 +34,11 @@ public class ImportEWRSAM
 	private int year;
 	public ConfigFile params;
 	
+	/**
+	 * Constructor
+	 * @param cf configuration file
+	 * @param y year
+	 */
 	public ImportEWRSAM(String cf, int y)
 	{
 		params = new ConfigFile(cf);
@@ -45,6 +50,11 @@ public class ImportEWRSAM
 		year = y;
 	}
 	
+	/**
+	 * Import data
+	 * @param dirName directory to find files to import
+	 * @param fileType type (events/values)
+	 */
 	private void processDir(String dirName, String fileType)
 	{
 		File dir = null;
@@ -65,6 +75,10 @@ public class ImportEWRSAM
 	    	process(f, fileType);
 	}
 
+	/**
+	 * Import data from file defined by "valueDir" configuration parameter
+	 * and events from file  defined by "eventDir" configuration parameter
+	 */
 	public void process()
 	{
 		String dirName;
@@ -78,6 +92,11 @@ public class ImportEWRSAM
 			processDir(dirName, "ewrsamEvents");
 	}
 	
+	/**
+	 * Import data
+	 * @param f file to import
+	 * @param t type (events/values)
+	 */
 	private void process(File f, String t)
 	{
 		String channel;
@@ -120,6 +139,9 @@ public class ImportEWRSAM
 		ib.process(channel, f.getAbsolutePath());
 	}
 	
+	/**
+	 * Check if directory exist and readable.
+	 */
 	static private void validateDirectory (File aDirectory) throws FileNotFoundException 
 	{
 		if (aDirectory == null) 
@@ -132,6 +154,16 @@ public class ImportEWRSAM
 		  throw new IllegalArgumentException("Directory cannot be read: " + aDirectory);
 	}
  
+	/**
+	 * Main method
+	 * Syntax is:
+	 * java gov.usgs.vdx.data.rsam.ImportEWRSAM [-c <configFile>] [-Y | -y <year> | -a]
+	 * Options:
+	 * -c <configFile> config to use, Default: importEWRSAM.config
+	 * -Y import data for this year
+	 * -y <year> import data for given year
+	 * -a import all data
+	 */
 	public static void main(String[] as)
 	{
 		Calendar startTime = Calendar.getInstance();

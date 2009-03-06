@@ -12,6 +12,7 @@ import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
+ * Renderer for spectra data
  * 
  * TODO: different axis labeling schemes.
  * $Log: not supported by cvs2svn $
@@ -40,19 +41,31 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	protected FrameDecorator decorator;
 	
+	/**
+	 * Default constructor
+	 */
 	public SpectraRenderer()
 	{}
-
+	
+	/**
+	 * Set frame decorator to draw graph's frame
+	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
 		decorator = fd;
 	}
 	
+	/**
+	 * Set slice to render
+	 */
 	public void setWave(SliceWave sw)
 	{
 		wave = sw;
 	}
 	
+	/**
+	 * Set graph title
+	 */
 	public void setTitle(String t)
 	{
 		channelTitle = t;
@@ -82,7 +95,11 @@ public class SpectraRenderer extends MatrixRenderer
 		}
 	}
 	
-
+	/**
+	 * Compute spectra for slice.
+	 * Reinitialize frame decorator with this renderer data.
+	 * @return maximum spectra power value
+	 */
 	public double update(double oldMaxPower)
 	{
 		if (decorator == null)
@@ -151,51 +168,81 @@ public class SpectraRenderer extends MatrixRenderer
 		return maxp;
 	}
 
+	/**
+	 * Get autoscale flag
+	 */
 	public boolean isAutoScale()
 	{
 		return autoScale;
 	}
 
+	/**
+	 * Set autoscale flag
+	 */
 	public void setAutoScale(boolean autoScale)
 	{
 		this.autoScale = autoScale;
 	}
-	
+
+	/**
+	 * Get flag if we have logarithm frequency axis
+	 */
 	public boolean isLogFreq()
 	{
 		return logFreq;
 	}
 
+	/**
+	 * Set flag if we have logarithm frequency axis
+	 */
 	public void setLogFreq(boolean logFreq)
 	{
 		this.logFreq = logFreq;
 	}
 
+	/**
+	 * Get flag if we have logarithm power axis
+	 */
 	public boolean isLogPower()
 	{
 		return logPower;
 	}
 
+	/**
+	 * Set flag if we have logarithm power axis
+	 */
 	public void setLogPower(boolean logPower)
 	{
 		this.logPower = logPower;
 	}
 
+	/**
+	 * Get maximum frequency
+	 */
 	public double getMaxFreq()
 	{
 		return maxFreq;
 	}
 
+	/**
+	 * Set maximum frequency
+	 */
 	public void setMaxFreq(double maxFreq)
 	{
 		this.maxFreq = maxFreq;
 	}
 
+	/**
+	 * Get maximum power
+	 */
 	public double getMaxPower()
 	{
 		return maxPower;
 	}
 
+	/**
+	 * Set maximum power
+	 */
 	public void setMaxPower(double maxPower)
 	{
 		this.maxPower = maxPower;
@@ -206,6 +253,9 @@ public class SpectraRenderer extends MatrixRenderer
 		return minFreq;
 	}
 
+	/**
+	 * Set minimum frequency
+	 */
 	public void setMinFreq(double minFreq)
 	{
 		this.minFreq = minFreq;

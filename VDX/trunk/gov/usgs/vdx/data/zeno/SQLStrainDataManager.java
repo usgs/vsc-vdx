@@ -276,6 +276,9 @@ public class SQLStrainDataManager extends SQLDataManager implements StrainDataMa
     // From here on is provided for convenience.  These functions are not part 
     // of the implementation of StrainDataManager
     
+    /**
+     * Get the last data time for station
+     */
     public java.util.Date getLastDataTime(String station)
     {
         try
@@ -291,7 +294,12 @@ public class SQLStrainDataManager extends SQLDataManager implements StrainDataMa
         }
         return null;
     }
-    
+   
+    /**
+     * Insert record in the station's strain table
+     * @param station station name to select table
+     * @return true if insertion successful
+     */
     public boolean insertStrainData(String station, double j2ksec, String time, double dt01, double dt02, double agnd)
     {
         try
@@ -312,6 +320,11 @@ public class SQLStrainDataManager extends SQLDataManager implements StrainDataMa
         return false;
     }
     
+    /**
+     * Insert record in the station's env table
+     * @param station station name to select table
+     * @return true if insertion successful
+     */
     public boolean insertStrainEnvData(String station, double j2ksec, String time, double bar, double ht, double v, double r, double agnd)
     {
         try

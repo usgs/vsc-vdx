@@ -10,6 +10,41 @@ import java.util.Date;
 import java.util.TimeZone;
 
 /**
+ * 
+ * Message structure:
+ * 
+ *TpEidnumbrSoVYearMoDyHrMnSecLatddddLongddddDeptMgNstNphDminRmssErhoErzzGpMNmEmLC
+ *12345678901234567890123456789012345678901234567890123456789012345678901234567890
+ *         1         2         3         4         5         6         7         8
+ *
+ *a2 * Tp   = Message type = "E " (seismic event)
+ *a8 * Eid  = Event identification number  (any string)
+ *a2 * So   = Data Source =  regional network designation
+ *a1 * V    = Event Version     (ASCII char, except [,])
+ *i4 * Year = Calendar year                (GMT) (-999-6070)
+ *i2 * Mo   = Month of the year            (GMT) (1-12)
+ *i2 * Dy   = Day of the month             (GMT) (1-31)
+ *i2 * Hr   = Hours since midnight         (GMT) (0-23)
+ *i2 * Mn   = Minutes past the hour        (GMT) (0-59)
+ *i3 * Sec  = Seconds past the minute * 10 (GMT) (0-599)
+ *i7 * Lat  = Latitude:  signed decimal degrees*10000 north>0
+ *i8 * Long = Longitude: signed decimal degrees*10000 west <0
+ *i4   Dept = Depth below sea level, kilometers * 10
+ *i2   Mg   = Magnitude * 10
+ *i3   Nst  = Number of stations used for location
+ *i3   Nph  = Number of phases used for location
+ *i4   Dmin = Distance to 1st station;   kilometers * 10
+ *i4   Rmss = Rms time error; sec * 100
+ *i4   Erho = Horizontal standard error; kilometers * 10
+ *i4   Erzz = Vertical standard error;   kilometers * 10
+ *i2   Gp   = Azimuthal gap, percent of circle; degrees/3.6
+ *a1   M    = Magnitude type
+ *i2   Nm   = Number of stations for magnitude determination
+ *i2   Em   = Standard error of the magnitude * 10
+ *a1   L    = Location method
+ *a1 * C    = Menlo Park check character, defined below
+ * 
+ * 
  * TODO: modernize (use Time, Enum, etc.)
  * 
  * $Log: not supported by cvs2svn $
@@ -26,44 +61,19 @@ public class CUBEMessage
     public static final int UNKNOWN = 5;
     private String message;
     
-/*
-TpEidnumbrSoVYearMoDyHrMnSecLatddddLongddddDeptMgNstNphDminRmssErhoErzzGpMNmEmLC
-12345678901234567890123456789012345678901234567890123456789012345678901234567890
-         1         2         3         4         5         6         7         8
-
-a2 * Tp   = Message type = "E " (seismic event)
-a8 * Eid  = Event identification number  (any string)
-a2 * So   = Data Source =  regional network designation
-a1 * V    = Event Version     (ASCII char, except [,])
-i4 * Year = Calendar year                (GMT) (-999-6070)
-i2 * Mo   = Month of the year            (GMT) (1-12)
-i2 * Dy   = Day of the month             (GMT) (1-31)
-i2 * Hr   = Hours since midnight         (GMT) (0-23)
-i2 * Mn   = Minutes past the hour        (GMT) (0-59)
-i3 * Sec  = Seconds past the minute * 10 (GMT) (0-599)
-i7 * Lat  = Latitude:  signed decimal degrees*10000 north>0
-i8 * Long = Longitude: signed decimal degrees*10000 west <0
-i4   Dept = Depth below sea level, kilometers * 10
-i2   Mg   = Magnitude * 10
-i3   Nst  = Number of stations used for location
-i3   Nph  = Number of phases used for location
-i4   Dmin = Distance to 1st station;   kilometers * 10
-i4   Rmss = Rms time error; sec * 100
-i4   Erho = Horizontal standard error; kilometers * 10
-i4   Erzz = Vertical standard error;   kilometers * 10
-i2   Gp   = Azimuthal gap, percent of circle; degrees/3.6
-a1   M    = Magnitude type
-i2   Nm   = Number of stations for magnitude determination
-i2   Em   = Standard error of the magnitude * 10
-a1   L    = Location method
-a1 * C    = Menlo Park check character, defined below
- */    
-    
+  
+    /**
+     * Constructor
+     * @param m message string
+     */
     public CUBEMessage(String m)
     {
         message = m;
     }
     
+    /**
+     * Get message type
+     */
     public int getMessageType()
     {
         if (message == null || message.length() == 0)
@@ -81,21 +91,33 @@ a1 * C    = Menlo Park check character, defined below
             return UNKNOWN;
     }
     
+    /**
+     * Get event ID
+      */
     public String getEventID()
     {
         return message.substring(2, 10);
     }
     
+    /**
+     * Get data source
+     */
     public String getDataSource()
     {
         return message.substring(10, 12);
     }
     
+    /**
+     * Get message version
+      */
     public char getVersion()
     {
         return message.charAt(12);
     }
     
+    /**
+     * Get message date
+     */
     public Date getDate()
     {
         try
@@ -112,12 +134,18 @@ a1 * C    = Menlo Park check character, defined below
         }
         return new Date(0);
     }
-    
+  
+    /**
+     * Get message date as j2k
+     */
     public double getJ2KSec()
     {
         return Util.dateToJ2K(getDate());
     }
     
+    /**
+     * Get message event latitude
+     */
     public double getLatitude()
     {
         String lat = message.substring(28, 35).trim();
@@ -125,7 +153,10 @@ a1 * C    = Menlo Park check character, defined below
         try { r = Double.parseDouble(lat) / 10000; } catch (Exception e) {}
         return r;
     }
-    
+ 
+    /**
+     * Get message event longitude
+     */
     public double getLongitude()
     {
         String lon = message.substring(35, 43).trim();
@@ -134,6 +165,9 @@ a1 * C    = Menlo Park check character, defined below
         return r;
     }
     
+    /**
+     * Get message event depth
+     */
     public double getDepth()
     {
         String depth = message.substring(43, 47).trim();
@@ -141,7 +175,10 @@ a1 * C    = Menlo Park check character, defined below
         try {  r = Double.parseDouble(depth) / 10; } catch (Exception e) {}
         return r;
     }
-    
+   
+    /**
+     * Get message event magnitude
+     */
     public double getMagnitude()
     {
         String depth = message.substring(47, 49).trim();
@@ -150,6 +187,11 @@ a1 * C    = Menlo Park check character, defined below
         return r;
     }
     
+    /**
+     * Main method
+     * Reads all files in the current directory, assume each of them contains one message.
+     * Print all found earthquakes event on stdout.
+     */
     public static void main(String[] args)
     {
         try

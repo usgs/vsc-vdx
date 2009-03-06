@@ -77,6 +77,10 @@ public class RSAMData extends GenericDataMatrix
 		super(bb);
 	}
 
+	/**
+	 * Constructor.
+	 * @param list list of matrix rows
+	 */
 	public RSAMData(List<double[]> list)
 	{
 		super(list);
@@ -90,6 +94,10 @@ public class RSAMData extends GenericDataMatrix
 		return data.viewPart(0, 1, rows(), 1);
 	}
 	
+	/**
+	 * Get initialized axis to use with histogram graph
+	 * @param bin histogram section period
+	 */
 	protected IAxis getHistogramAxis(BinSize bin)
 	{
 		double startTime = getStartTime();
@@ -246,7 +254,11 @@ public class RSAMData extends GenericDataMatrix
 		events.setQuick(eventCount+1, 0, data.get(data.rows()-1,0));
 		events.setQuick(eventCount+1, 1, eventCount);
 	}
-	
+
+	/**
+	 * Get ratio of this data value and given RSAMData data value
+	 * on the time interval where they are intersecting.
+	 */
 	public RSAMData getRatSAM(RSAMData d)
 	{
 		DoubleMatrix2D other = d.getData();
@@ -278,11 +290,17 @@ public class RSAMData extends GenericDataMatrix
 		return new RSAMData(ratList);
 	}
 	
+	/**
+	 * Get cumulative event data by time interval
+	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
 		return events;
 	}
 	
+	/**
+	 * Dump cumulative data as CSV string
+	 */
 	public String getCountsCSV()
 	{
 		StringBuffer sb = new StringBuffer();
@@ -299,6 +317,10 @@ public class RSAMData extends GenericDataMatrix
 		return sb.toString();
 	}
 	
+	/**
+	 * Get initialized histogram of event count by time
+	 * @param bin time interval
+	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
 		if (data == null || data.size() == 0)

@@ -5,6 +5,7 @@ import gov.usgs.vdx.data.BinaryDataSet;
 import java.nio.ByteBuffer;
 
 /**
+ * GPS data point
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
@@ -26,12 +27,18 @@ public class DataPoint implements BinaryDataSet
 	public double syz;
 	public double len = Double.NaN;
 	
+	/**
+	 * Get string data point representation
+	 */
 	public String toString()
 	{
 		return String.format("t:%.8f x:%.8f y:%.8f z:%.8f sx:%.8f sy:%.8f sz:%.8f sxy:%.8f sxz:%.8f syz:%.8f", 
 				t, x, y, z, sxx, syy, szz, sxy, sxz, syz);
 	}
 
+	/**
+	 * Get binary data point representation
+	 */
 	public ByteBuffer toBinary()
 	{
 		ByteBuffer bb = ByteBuffer.allocate(11 * 8);
@@ -49,6 +56,9 @@ public class DataPoint implements BinaryDataSet
 		return bb;
 	}
 
+	/**
+	 * Initialize data point from binary representation
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		t = bb.getDouble();

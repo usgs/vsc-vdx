@@ -3,7 +3,8 @@ package gov.usgs.vdx.data.zeno;
 import java.sql.*;
 
 /**
- *
+ * Keeps information needed to initialize database connection and connection itself.
+ * 
  * @author  cervelli
  */
 abstract public class DatabaseDataManager 
@@ -15,8 +16,14 @@ abstract public class DatabaseDataManager
     protected Connection connection;
     protected Statement statement;
     
+    /**
+     * Default constructor
+     */
     protected DatabaseDataManager() {}
-    
+   
+    /**
+     * Perform connection to database.
+     */
     public void connect()
     {
         try
@@ -30,7 +37,10 @@ abstract public class DatabaseDataManager
             e.printStackTrace();
         }
     }
-    
+ 
+    /**
+     * Close connection to database.
+     */
     public void close()
     {
         try

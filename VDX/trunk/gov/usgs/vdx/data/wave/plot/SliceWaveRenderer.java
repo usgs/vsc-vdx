@@ -15,7 +15,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * A renderer for wave time series.
+ * A renderer for slice of wave time series.
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.15  2007/03/06 21:07:47  tparker
@@ -94,99 +94,160 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	protected FrameDecorator decorator;
 	
+	/**
+	 * Set frame decorator to draw graph's frame
+	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
 		decorator = fd;
 	}
-	
+
+	/**
+	 * Set highlighted zone
+	 * @param x1 minimum x
+	 * @param x2 maximum X
+	 */
 	public void setHighlight(double x1, double x2)
 	{
 		highlightX1 = x1;
 		highlightX2 = x2;
 	}
 	
+	/**
+	 * Get maximum Y value
+	 */
 	public double getMaxY() 
 	{
 		return maxY;
 	}
-	
+
+	/**
+	 * Set maximum Y value
+	 */
 	public void setMaxY(double maxY) 
 	{
 		this.maxY = maxY;
 	}
 	
+	/**
+	 * Get minimum Y value
+	 */
 	public double getMinY() 
 	{
 		return minY;
 	}
 	
+	/**
+	 * Set minimum Y value
+	 */
 	public void setMinY(double minY) 
 	{
 		this.minY = minY;
 	}
 	
+	/**
+	 * Get autoscale flag
+	 */
 	public boolean isAutoScale() 
 	{
 		return autoScale;
 	}
-	
+
+	/**
+	 * Get demean flag
+	 */
 	public boolean isRemoveBias() 
 	{
 		return removeBias;
 	}
-	
+
+	/**
+	 * Set autoscale flag
+	 */
 	public void setAutoScale(boolean b)
 	{
 		autoScale = b;
 	}
-	
+
+	/**
+	 * Set limits on Y axis
+	 */
 	public void setYLimits(double min, double max)
 	{
 		minY = min;
 		maxY = max;
 	}
 	
+	/**
+	 * Set demean flag
+	 */
 	public void setRemoveBias(boolean b)
 	{
 	    removeBias = b;
 	}
 	
+	/**
+	 * Set draw samples flag
+	 */
 	public void setDrawSamples(boolean b)
 	{
 		drawSamples = b;
 	}
 	
+	/**
+	 * Set slice to render
+	 */
 	public void setWave(SliceWave w)
 	{
 		wave = w;
 	}
 
+	/**
+	 * Set limits on time axis
+	 * @param t1 start time
+	 * @param t2 end time
+	 */
 	public void setViewTimes(double t1, double t2)
 	{
 	    viewStartTime = t1;
 	    viewEndTime = t2;
 	}
 	
+	/**
+	 * Set color
+	 */
 	public void setColor(Color c)
 	{
 		color = c;
 	}
 	
+	/**
+	 * Set flag if we display axis labels
+	 */
 	public void setDisplayLabels(boolean b)
 	{
 		displayLabels = b;
 	}
 	
+	/**
+	 * Set Y axis label
+	 */
 	public void setYLabel(String s)
 	{
 		yLabel = s;
 	}
 
+	/**
+	 * Set graph title
+	 */
 	public void setTitle(String s)
 	{
 		title = s;
 	}
 
+	/**
+	 * Create default decorator to render frame
+	 */
 	public void createDefaultFrameDecorator()
 	{
 		decorator = new DefaultWaveFrameDecorator();
@@ -203,6 +264,9 @@ public class SliceWaveRenderer extends FrameRenderer
 		}
 	}
 	
+	/**
+	 * Reinitialize frame decorator with this renderer data
+	 */
 	public void update()
 	{
 		if (decorator == null)
@@ -213,6 +277,9 @@ public class SliceWaveRenderer extends FrameRenderer
 		decorator.decorate(this);
 	}
 	
+	/**
+	 * Render slice graph
+	 */
 	public void render(Graphics2D g)
 	{
 		Shape origClip = g.getClip();

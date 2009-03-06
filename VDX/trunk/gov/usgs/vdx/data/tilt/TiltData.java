@@ -11,6 +11,8 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 
 /**
+ * GenericDataMatrix with 3 columns: time/east/north
+ * to store tilt data
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.1  2005/08/26 20:39:00  dcervelli
@@ -20,16 +22,26 @@ import cern.colt.matrix.linalg.Algebra;
  */
 public class TiltData extends GenericDataMatrix
 {
+	/**
+	 * Default constructor
+	 */
 	public TiltData()
 	{
 		super();
 	}
 	
+	/**
+	 * Constructor
+	 * @param pts list of raws, each of them is double[3]
+	 */
 	public TiltData(List<double[]> pts)
 	{
 		super(pts);
 	}
 	
+	/**
+	 * Set predefined column names: time/east/north
+	 */
 	public void setColumnNames()
 	{
 		columnMap.put("time", 0);

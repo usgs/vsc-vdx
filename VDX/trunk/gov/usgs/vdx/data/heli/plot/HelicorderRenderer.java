@@ -127,11 +127,19 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	private FrameDecorator decorator;
 	
+	/**
+	 * Default constructor
+	 */
 	public HelicorderRenderer()
 	{
 		forceCenter = false;
 	}		
-		
+	
+	/**
+	 * Constructor
+	 * @param d data to render
+	 * @param xs raw duration
+	 */
 	public HelicorderRenderer(HelicorderData d, double xs)
 	{
 		this();
@@ -139,26 +147,44 @@ public class HelicorderRenderer extends FrameRenderer
 		timeChunk = xs;
 	}
 	
+	/**
+	 * Setter for data
+	 * @param d
+	 */
 	public void setData(HelicorderData d)
 	{
 		data = d;	
 	}
 	
+	/**
+	 * Setter for raw duration
+	 */
 	public void setTimeChunk(double xs)
 	{
 		timeChunk = xs;	
 	}
-	
+
+	/**
+	 * Getter for raw duration
+	 */
 	public double getTimeChunk()
 	{
 		return timeChunk;	
 	}
 	
+	/**
+	 * Sets large channel flag
+	 */
 	public void setLargeChannelDisplay(boolean b)
 	{
 		largeChannelDisplay = b;
 	}
 	
+	/**
+	 * Compute double array with description of graph axis information
+	 * @param adjTime flag if we take into account time zone offset while time boundaries computing 
+	 * @return
+	 */
 	public double[] getTranslationInfo(boolean adjTime)
 	{
 		double tzo = 0;
@@ -183,28 +209,46 @@ public class HelicorderRenderer extends FrameRenderer
 		return ((graphHeight / (double)numRows) / (hcMaxY - hcMinY));
 	}
 	
+	/**
+	 * Get pixel X coordinate, taking into account raw structure of helicorder 
+	 * @param x time value
+	 */
 	public double helicorderGetXPixel(double x)
 	{
 		double tx = (x - hcMinX) % timeChunk;
 		return (tx * helicorderGetXScale()) + graphX;
 	}
-	
+
+	/**
+	 * Get pixel Y coordinate, taking into account raw structure of helicorder
+	 * @param x time value
+	 * @param y data value 
+	 */
 	public double helicorderGetYPixel(double x, double y)
 	{
 		int row = numRows - (int)((x - hcMinX) / timeChunk) - 1;
 		return graphY + graphHeight - ((y - hcMinY) * helicorderGetYScale()) - ((double)row * rowHeight);
 	}
 	
+	/**
+	 * Get max X (time) value of helicorder
+	 */
 	public double getHelicorderMaxX()
 	{
 		return hcMaxX;
 	}
 	
+	/**
+	 * Get min X (time) value of helicorder
+	 */
 	public double getHelicorderMinX()
 	{
 		return hcMinX;
 	}
 	
+	/**
+	 * Get end time of helicorder view extent
+	 */
 	public double getViewEndTime()
 	{
 		return hcMinX + numRows * timeChunk;
@@ -228,6 +272,9 @@ public class HelicorderRenderer extends FrameRenderer
 		super.setExtents(0, timeChunk, 0, numRows);
 	}
 	
+	/**
+	 * Get raw number for time value
+	 */
 	public int getRow(double x)
 	{
 		if (x - hcMinX < 0)
@@ -235,6 +282,9 @@ public class HelicorderRenderer extends FrameRenderer
 		return (int)((x - hcMinX) / (double)timeChunk);
 	}
 	
+	/**
+	 * Setter for channel
+	 */
 	public void setChannel(String ch)
 	{
 		channel = ch.replace('$', ' ');
@@ -255,44 +305,65 @@ public class HelicorderRenderer extends FrameRenderer
 		clipWav = cw;
 	}
 	
+	/**
+	 * Set timeout to detect clipping
+	 */
 	public void setClipAlertTimeout(int to)
 	{
 		alertClipTimeout = to;
 	}
 	/**
-	 * @param forceCenter The forceCenter to set.
+	 * Set flag if we force center view
 	 */
 	public void setForceCenter(boolean forceCenter)
 	{
 		this.forceCenter = forceCenter;
 	}
 	
+	/**
+	 * Get number of raws in the helicorder
+	 */
 	public int getNumRows()
 	{
 		return numRows;	
 	}
 
+	/**
+	 * Setter for time zone
+	 */
 	public void setTimeZone(TimeZone tz)
 	{
 		if (tz != null)
 			timeZone = tz;
 	}
 	
+	/**
+	 * Not realized yet
+	 */
 	public void setTimeZoneAbbr(String s)
 	{
 //		timeZoneAbbr = s;
 	}
-	
+
+	/**
+	 * Not realized yet
+	 */
 	public void setTimeZoneOffset(double h)
 	{
 //		timeZoneOffset = h;
 	}
 	
+	/**
+	 * Set flag if we show clipping
+	 */
 	public void setShowClip(boolean b)
 	{
 		showClip = b;
 	}
 	
+	/**
+	 * Set flag if we play alert while clipping detected
+	 */
 	public void setAlertClip(boolean b)
 	{
 		alertClip = b;
@@ -302,22 +373,34 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		clipValue = i;
 	}
-	
+
+	/**
+	 * Get raw height
+	 */
 	public double getRowHeight()
 	{
 		return rowHeight;
 	}
 	
+	/**
+	 * Set decorator to render frame
+	 */
 	public void setFrameDecorator(FrameDecorator d)
 	{
 		decorator = d;
 	}
 	
+	/**
+	 * Set colors to render
+	 */
 	public void setColors(Color[] cs)
 	{
 		colors = cs;
 	}
 	
+	/**
+	 * Render graph
+	 */
 	public void render(Graphics2D g)
 	{
 //		CodeTimer ct = new CodeTimer("render");
@@ -451,6 +534,9 @@ public class HelicorderRenderer extends FrameRenderer
 //		ct.stop();
 	}
 	
+	/**
+	 * Create new MinimumDecorator and set it as decorator for this renderer
+	 */
 	public void createMinimumAxis()
 	{
 		decorator = new MinimumDecorator();

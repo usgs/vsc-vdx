@@ -45,6 +45,9 @@ import java.util.List;
  */
 public class HypocenterRenderer implements Renderer
 {
+	/**
+	 * Enumeration to define scale type
+	 */
 	public enum Axes
 	{
 		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW;
@@ -71,6 +74,9 @@ public class HypocenterRenderer implements Renderer
 		}
 	}
 	
+	/**
+	 * Enumeration to define coloring mode
+	 */
 	public enum ColorOption
 	{
 		DEPTH, TIME, MONOCHROME;
@@ -82,9 +88,9 @@ public class HypocenterRenderer implements Renderer
 			switch (c.charAt(0))
 			{
 				case 'D':
-					return DEPTH;
+					return DEPTH; //Coloring by depth
 				case 'T':
-					return TIME;
+					return TIME;  //Coloring by time
 				case 'M':
 					return MONOCHROME;
 				default:
@@ -122,7 +128,8 @@ public class HypocenterRenderer implements Renderer
     private Renderer colorScaleRenderer;
     private Renderer magnitudeScaleRenderer;
     
-    /** The shapes that used to render different magnitude earthquakes
+    /** 
+     * The shapes that used to render different magnitude earthquakes
 	 */
     public static Ellipse2D.Float[] circles = new Ellipse2D.Float[]
     {
@@ -139,11 +146,13 @@ public class HypocenterRenderer implements Renderer
     public static final int[] circleScaleOffset = new int[] {1, 8, 17, 28, 44, 64, 90, 120};
     
     // set these externally
-	/** The colors for different depths
+	/** 
+	 * The colors for different depths
 	 */
     public static Color[] colors = new Color[] {Color.BLACK, Color.GREEN, Color.RED, new Color(1.0f, 0.91f, 0.0f), Color.BLUE, new Color(0.8f, 0f, 1f), Color.BLACK};
 	
-	/** The depth intervals
+	/** 
+	 * The depth intervals
 	 */
     public static double[] depths = new double[] {10000, 0, -5, -10, -20, -40, -70, -10000};
     
@@ -170,7 +179,8 @@ public class HypocenterRenderer implements Renderer
         colorOpt = ColorOption.chooseAuto(v);
     }
     
-	/** Sets the renderer to operate in color-time mode where time is 
+	/** 
+	 * Sets the renderer to operate in color-time mode where time is 
 	 * represented in color instead of depth.
 	 * @param min the minimum time (j2ksec) for the coolest color
 	 * @param max the maximum time (j2ksec) for the warmest color
@@ -183,22 +193,37 @@ public class HypocenterRenderer implements Renderer
         minTime = min;
         maxTime = max;
     }
-    
+ 
+    /**
+     * Sets monochrome color mode
+     */
     public void setMonochrome()
     {
     	colorOpt = ColorOption.MONOCHROME;
     }
     
+    /**
+     * Sets depth color mode
+     */
     public void setColorDepth()
     {
     	colorOpt = ColorOption.DEPTH;
     }
     
+    /**
+     * Sets color mode
+     * @param c Color option to set
+     */
     public void setColorOption(ColorOption c)
     {
     	colorOpt = c;
     }
     
+    /**
+     * Create renderer to draw hypocenter's magnitude
+     * @param xStart hypocenter's X pixel coordinate
+     * @param yStart hypocenter's Y pixel coordinate
+     */
     public void createMagnitudeScaleRenderer(final double xStart, final double yStart)
     {
     	magnitudeScaleRenderer = new Renderer()
@@ -226,6 +251,11 @@ public class HypocenterRenderer implements Renderer
 		    	};
     }
     
+    /**
+     * Create renderer to draw hypocenter in current color mode and scale type
+     * @param xStart hypocenter's X pixel coordinate
+     * @param yStart hypocenter's Y pixel coordinate
+     */
     public void createColorScaleRenderer(final double xStart, final double yStart)
     {
     	colorScaleRenderer = new Renderer()
@@ -281,7 +311,8 @@ public class HypocenterRenderer implements Renderer
 		    	};
     }
     
-	/** Gets a renderer that draws the proper scale/key/legend for this
+	/** 
+	 * Gets a renderer that draws the proper scale/key/legend for this
 	 * HypocentererRenderer based on its current settings.  This uses the Jet
 	 * color spectrum in some cases.
 	 * @param xStart the x-pixel location for the scale
@@ -381,7 +412,8 @@ public class HypocenterRenderer implements Renderer
         	};
     }
     
-	/** Renders according to the settings of this HypocenterRenderer.
+	/** 
+	 * Renders according to the settings of this HypocenterRenderer.
 	 * @param g the graphics object upon which to render
 	 */
     public void render(Graphics2D g)

@@ -10,6 +10,7 @@ import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
+ * BinaryDataSet to store cern's DoubleMatrix2D and metainformation about matrix column's names
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.8  2007/07/24 20:37:35  tparker
@@ -44,6 +45,9 @@ public class GenericDataMatrix implements BinaryDataSet
 	protected DoubleMatrix2D data;
 	protected HashMap<String, Integer> columnMap;
 	
+	/**
+	 * Default constructor
+	 */
 	public GenericDataMatrix()
 	{
 		data = null;
@@ -51,6 +55,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		setColumnNames();
 	}
 	
+	/**
+	 * Construct GenericDataMatrix from given 2d matrix
+	 * @param d
+	 */
 	public GenericDataMatrix(DoubleMatrix2D d)
 	{
 		this();
@@ -67,7 +75,11 @@ public class GenericDataMatrix implements BinaryDataSet
 		this();
 		fromBinary(bb);
 	}
-	
+
+	/**
+	 * Create a GenericDataMatrix from a List<double[]>.  
+	 * 
+	 */
 	public GenericDataMatrix(List<double[]> list)
 	{
 		this();
@@ -86,6 +98,9 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 	}
 	
+	/**
+	 * Dumps content as ByteBuffer
+	 */
 	public ByteBuffer toBinary()
 	{
 		int rows = rows();
@@ -99,7 +114,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 		return bb;
 	}
-		
+	
+	/**
+	 * Init content from ByteBuffer
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		int rows = bb.getInt();
@@ -112,6 +130,9 @@ public class GenericDataMatrix implements BinaryDataSet
 		}		
 	}
 	
+	/**
+	 * Dumps content as CSV
+	 */
 	public String toCSV()
 	{
 		StringBuffer sb = new StringBuffer();
@@ -136,16 +157,28 @@ public class GenericDataMatrix implements BinaryDataSet
 		data = d;
 	}
 
+	/**
+	 * Sets names of matrix conumns
+	 */
 	public void setColumnNames()
 	{}
 
+
+	/**
+	 * Sets names of matrix conumns
+	 * @param s Array of strings - column names
+	 */
 	public void setColumnNames(String[] s)
 	{
 		int i = 0;
 		for (String name : s)
 			columnMap.put(name, i++);
 	}
-	
+
+	/**
+	 * Gets names of matrix conumns
+	 * @return Array of strings - column names
+	 */
 	public String[] getColumnNames()
 	{
 		String[] c = new String[columnMap.size()];
@@ -165,7 +198,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		else
 			return 0;
 	}
-	
+
+	/** Gets the number of columns in the data.
+	 * @return the column count
+	 */
 	public int columns()
 	{
 		if (data != null)
@@ -174,6 +210,11 @@ public class GenericDataMatrix implements BinaryDataSet
 			return 0;
 	}
 
+	/**
+	 * Add double value to one column
+	 * @param c column name to add
+	 * @param v value to add
+	 */
 	public void add(String c, double v)
 	{
 		Integer i = columnMap.get(c);
@@ -181,25 +222,44 @@ public class GenericDataMatrix implements BinaryDataSet
 			add(i, v);
 	}
 	
+	/**
+	 * Add double value to one column
+	 * @param c column number to add
+	 * @param v value to add
+	 */
 	public void add(int c, double v)
 	{
 		for (int i = 0; i < rows(); i++)
 			data.setQuick(i, c, data.getQuick(i, c) + v);
 	}
-	
+
+	/**
+	 * Multiply one column to double value
+	 * @param c name of column to multiply
+	 * @param v value to multiply
+	 */
 	public void mult(String c, double v)
 	{
 		Integer i = columnMap.get(c);
 		if (i != null)
 			mult(i, v);
 	}
-	
+
+	/**
+	 * Multiply one column to double value
+	 * @param c number of column to multiply
+	 * @param v value to multiply
+	 */
 	public void mult(int c, double v)
 	{
 		for (int i = 0; i < rows(); i++)
 			data.setQuick(i, c, data.getQuick(i, c) * v);
 	}
 
+	/**
+	 * Sums column, value in resulting column is sum of all previous raws.
+	 * @param c
+	 */
 	public void sum(int c)
 	{
 		for (int i=1; i<rows(); i++)
@@ -209,7 +269,7 @@ public class GenericDataMatrix implements BinaryDataSet
 			data.setQuick(i,c,d);
 		}
 	}
-	
+
 	public void detrend(int c) {
 
         double xm	= mean(0);
@@ -228,6 +288,10 @@ public class GenericDataMatrix implements BinaryDataSet
         }
 	}
 	
+	/**
+	 * Get maximum value in column
+	 * @param c column number
+	 */
 	public double max(int c)
 	{
 		double m = -1E300;
@@ -235,7 +299,11 @@ public class GenericDataMatrix implements BinaryDataSet
 			m = Math.max(m, data.getQuick(i, c));
 		return m;
 	}
-	
+
+	/**
+	 * Get minimum value in column
+	 * @param c column number
+	 */
 	public double min(int c)
 	{
 		double m = 1E300;
@@ -244,6 +312,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		return m;
 	}
 	
+	/**
+	 * Get mean value in column
+	 * @param c column number
+	 */
 	public double mean(int c)
 	{
 		double t = 0;
@@ -252,6 +324,9 @@ public class GenericDataMatrix implements BinaryDataSet
 		return t / (double)rows();
 	}
 	
+	/**
+	 * @return (0,0) value of matrix
+	 */
 	public double getStartTime()
 	{
 		
@@ -260,7 +335,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		else
 			return data.get(0,0);
 	}
-	
+
+	/**
+	 * @return (rows()-1,0) value of matrix
+	 */
 	public double getEndTime()
 	{
 		if (data == null || data.size() == 0)
@@ -293,6 +371,11 @@ public class GenericDataMatrix implements BinaryDataSet
 		return data.viewPart(0, c, rows(), 1);
 	}
 	
+	/**
+	 * Gets a data column.
+	 * @param c Column name
+	 * @return the data column
+	 */
 	public DoubleMatrix2D getColumn(String c)
 	{
 		Integer i = columnMap.get(c);
@@ -310,6 +393,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		return data;
 	}
 
+	/**
+	 * Contatenate two matrix
+	 * @param dm matrix to concatenate with this one
+	 */
 	public void concatenate(GenericDataMatrix dm)
 	{
 		DoubleMatrix2D[][] ms = new DoubleMatrix2D[2][1];
@@ -318,6 +405,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		data = DoubleFactory2D.dense.compose(ms);
 	}
 	
+	/**
+	 * 
+	 * @return size of memory occuped by data matrix, in bytes
+	 */
 	public int getMemorySize()
 	{
 		return (data.rows() * data.columns() * 8);	

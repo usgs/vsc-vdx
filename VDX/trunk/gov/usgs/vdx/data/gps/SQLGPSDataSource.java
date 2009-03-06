@@ -44,6 +44,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 {
 	public static final String DATABASE_NAME = "gps";
 	
+	/**
+	 * Create 'gps' database
+	 */
 	public boolean createDatabase()
 	{
 		try
@@ -87,20 +90,32 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return false;
 	}
 
+	/**
+	 * Get flag if database exist
+	 */
 	public boolean databaseExists()
 	{
 		return defaultDatabaseExists(DATABASE_NAME);
 	}
 	
+	/**
+	 * Close database connection
+	 */
 	public void disconnect() {
 		database.close();
 	}
 
+	/**
+	 * Get data source type, "gps" for this class
+	 */
 	public String getType()
 	{
 		return "gps";
 	}
 
+	/**
+	 * Initialize data source from configuration file
+	 */
 	public void initialize(ConfigFile params)
 	{
 		String driver = params.getString("vdx.driver");
@@ -110,6 +125,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		database = new VDXDatabase(driver, url, vdxPrefix);
 	}
 
+	/**
+	 * Get list of all benchmarks ordered by code from database
+	 */
 	public List<Benchmark> getBenchmarks()
 	{
 		List<Benchmark> result = new ArrayList<Benchmark>();
@@ -137,6 +155,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 	
+	/**
+	 * Get list of all solution types from database
+	 */
 	public List<SolutionType> getSolutionTypes()
 	{
 		List<SolutionType> result = new ArrayList<SolutionType>();
@@ -162,6 +183,10 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 	
+	/**
+	 * Get benchmark ID
+	 * @param code benchmark code
+	 */
 	public int getBenchmarkID(String code)
 	{
 		try
@@ -182,6 +207,13 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return -1;
 	}
 	
+	/**
+	 * Get GPSData
+	 * @param code benchmark code
+	 * @param stid source id
+	 * @param st start time
+	 * @param et end time
+	 */
 	public GPSData getGPSData(String code, int stid, double st, double et)
 	{
 		int id = getBenchmarkID(code);
@@ -191,6 +223,13 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			return getGPSData(id, stid, st, et);
 	}
 	
+	/**
+	 * Get GPSData
+	 * @param bid benchmark id
+	 * @param stid source id
+	 * @param st start time
+	 * @param et end time
+	 */
 	public GPSData getGPSData(int bid, int stid, double st, double et)
 	{
 		try
@@ -234,6 +273,11 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 	
+	/**
+	 * Getter for data. 
+	 * Search value of 'action' parameter and retrieve corresponding data.
+	 * @param command to execute.
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{
 		String action = params.get("action");
@@ -273,6 +317,11 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 
+	/**
+	 * Insert new benchmark type
+	 * @param type name
+	 * @return last inserted id or -1 if unsuccessful
+	 */
 	public int insertBenchmarkType(String n)
 	{
 		int result = -1;
@@ -294,6 +343,12 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		return result;
 	}
 	
+	/**
+	 * Insert new solution type
+	 * @param n type name
+	 * @param rank type rank
+	 * @return last inserted id or -1 if unsuccessful
+	 */
 	public int insertSolutionType(String n, int rank)
 	{
 		int result = -1;

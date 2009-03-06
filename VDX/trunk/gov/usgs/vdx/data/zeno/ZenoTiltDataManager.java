@@ -4,7 +4,8 @@ import java.sql.*;
 
 public class ZenoTiltDataManager extends SQLTiltDataManager
 {
-	/** The singleton data manager.
+	/** 
+	 * The singleton data manager for Zenos
 	 */
     protected static ZenoTiltDataManager tiltDataManager;
     

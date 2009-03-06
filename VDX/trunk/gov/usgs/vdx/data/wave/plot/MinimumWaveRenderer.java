@@ -1,12 +1,15 @@
 package gov.usgs.vdx.data.wave.plot;
 
 /**
- * 
+ * Customized SliceWaveRenderer
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
 public class MinimumWaveRenderer extends SliceWaveRenderer
 {
+	/**
+	 * Set axis ticks and labels values 
+	 */
 	public void update()
 	{
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);

@@ -40,6 +40,10 @@ public class ImportCSV
 	private List<GenericColumn> fileCols, dbCols;
 	protected Logger logger;
 
+	/**
+	 * Constructor
+	 * @param cf configuration file to specify data source to import in and data structure
+	 */
 	public ImportCSV(String cf)
 	{
 		logger = Log.getLogger("gov.usgs.vdx");
@@ -53,6 +57,9 @@ public class ImportCSV
 		logger.finest("exiting constructor");
 	}
 	
+	/**
+	 * Parse configuration and init class object
+	 */
 	private void processConfigFile()
 	{
 		ConfigFile sub;
@@ -89,6 +96,10 @@ public class ImportCSV
 		}
 	}
 	
+	/**
+	 * Import generic csv file
+	 * @param f file to process
+	 */
 	public void process(String f)
 	{
 		logger.fine("processing " + f);
@@ -140,6 +151,9 @@ public class ImportCSV
 		dataSource.insertData(table, gd);
 	}
 
+	/**
+	 * Print help message
+	 */
 	protected static void outputInstructions()
 	{
 		System.out.println("<importer> -c [vdx config] -n [database name] files...");
@@ -164,6 +178,10 @@ public class ImportCSV
 		}	
 	}
 	
+	/**
+	 * Import file of special format: date/lat/lon/depth/magnitude
+	 * @param resource
+	 */
 	public List<GenericColumn> importResource(String resource)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(resource);
@@ -231,11 +249,23 @@ public class ImportCSV
 		return hypos;
 	}
 	
+	/**
+	 * Create channel
+	 */
 	public void create ()
 	{
 		logger.info("Creating channel " + table);
 		dataSource.createChannel(table, table, lon, lat);
 	}
+	
+	/**
+	 * Main method
+	 * Command line syntax:
+	 *  -c config file name
+	 *  -h, --help print help message
+	 *  -g, --generate if we need to create database
+	 *  -v verbose mode
+	 */
 	public static void main(String as[])
 	{
 		Logger 	logger = Log.getLogger("gov.usgs.vdx");

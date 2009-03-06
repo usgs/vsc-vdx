@@ -35,11 +35,18 @@ public class GPSData implements BinaryDataSet
 	 */
 	public GPSData() {}
 	
+	/**
+	 * Constructor
+	 * @param pts list of DataPoints
+	 */
 	public GPSData(List pts)
 	{
 		setToList(pts);
 	}
 	
+	/**
+	 * Initialize internal matrices from list of DataPoints
+	 */
 	public void setToList(List pts)
 	{
 		int rows = pts.size();
@@ -86,6 +93,9 @@ public class GPSData implements BinaryDataSet
 		}
 	}
 	
+	/**
+	 * Get binary GPSData representation
+	 */
 	public ByteBuffer toBinary()
 	{
 		int rows = observations();
@@ -112,6 +122,9 @@ public class GPSData implements BinaryDataSet
 		return bb;
 	}
 
+	/**
+	 * Initialize GPSData from binary representation
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		int rows = bb.getInt();
@@ -421,7 +434,10 @@ public class GPSData implements BinaryDataSet
 		}
 		return SPARSE.compose(g);
 	}
-	
+
+	/**
+	 * Get first observation from internal matrices
+	 */
 	public DataPoint getFirstObservation()
 	{
 		if (observations() <= 0)
@@ -445,6 +461,9 @@ public class GPSData implements BinaryDataSet
 		return dp;
 	}
 	
+	/**
+	 * Print GPSData content to stdout
+	 */
 	public void output()
 	{
 		for (int i = 0; i < observations(); i++)

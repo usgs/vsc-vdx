@@ -21,14 +21,25 @@ public class SchedulerImportStacov implements gov.usgs.vdx.data.scheduler.Import
 	private SQLGPSDataSource dataSource;
 	private int typeId;
 	
+	/**
+	 * Default constructor
+	 */
 	public SchedulerImportStacov() {
 		
 	}
 	
+	/**
+	 * Constructor
+	 * @param args command line arguments
+	 */
 	public SchedulerImportStacov(String[] args)	{
 		init(args);
 	}
 	
+	/**
+	 * Initialize class object
+	 * @param args command line arguments
+	 */
 	public void init (String[] args) {
 		
 		// check for the right number of args
@@ -65,6 +76,10 @@ public class SchedulerImportStacov implements gov.usgs.vdx.data.scheduler.Import
 		dataSource.disconnect();
 	}
 	
+	/**
+	 * Import station covariance file
+	 * @param fn file name
+	 */
 	public void importFile(String fn)
 	{
 		logger = Log.getLogger("gov.usgs.vdx");
@@ -187,6 +202,10 @@ public class SchedulerImportStacov implements gov.usgs.vdx.data.scheduler.Import
 		}
 	}
 
+	/**
+	 * Main method. Syntax:
+	 * "java gov.usgs.vdx.data.gps.SchedulerImportStacov [vdx prefix] [vdx name] [solution id] [files...]"
+	 */
 	public static void main(String args[])
 	{
 		SchedulerImportStacov sis	= new SchedulerImportStacov(args);

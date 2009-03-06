@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
+ * Construct list of data sources mentioned in the configuration file.
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.2  2005/08/29 15:55:54  dcervelli
@@ -32,6 +33,12 @@ public class DataSourceHandler
 	private String url;
 	private String vdxPrefix;
 	
+	/**
+	 * Constructor
+	 * @param d database driver class name
+	 * @param u database connection url
+	 * @param p vdx prefix
+	 */
 	public DataSourceHandler(String d, String u, String p)
 	{
 		driver = d;
@@ -42,7 +49,11 @@ public class DataSourceHandler
 		dataSources = new HashMap<String, DataSourceDescriptor>();
 		processConfigFile();
 	}
-	
+
+	/**
+	 * Parse configuration file (default - 'vdxSources.config').
+	 * Fill map of pairs data_source_name - initialized data_source_descriptor defined in the config file
+	 */
 	public void processConfigFile()
 	{
 		config = new ConfigFile(CONFIG_FILE);
@@ -60,21 +71,29 @@ public class DataSourceHandler
 		}
 	}
 
+	/**
+	 * Get parsed config file
+	 */
 	public ConfigFile getConfig()
 	{
 		return config;
 	}
 	
+	/**
+	 * Get data source descriptor by name
+	 */
 	public DataSourceDescriptor getDataSourceDescriptor(String key)
 	{
 		return dataSources.get(key);
 	}
 	
+	/**
+	 * Get the whole list of data sources
+	 */
 	public List<DataSourceDescriptor> getDataSources()
 	{
 		List<DataSourceDescriptor> result = new ArrayList<DataSourceDescriptor>();
 		result.addAll(dataSources.values());
 		return result;
 	}
-
 }

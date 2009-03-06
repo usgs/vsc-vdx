@@ -5,7 +5,9 @@ import java.util.*;
 import gov.usgs.util.Util;
 
 /**
- *
+ * Customized DatabaseDataManager to connect to one particular database ('gas').
+ * Also contains methods to store and request CO2 and SO2 data.
+ * 
  * @author  cervelli
  */
 public class GasDataManager extends DatabaseDataManager
@@ -22,6 +24,9 @@ public class GasDataManager extends DatabaseDataManager
         connect();
     }    
     
+    /**
+     * Factory method of class
+     */
     public static GasDataManager getDataManager()
     {
         if (dataManager == null)
@@ -29,6 +34,10 @@ public class GasDataManager extends DatabaseDataManager
         return dataManager;
     }
     
+    /**
+     * Adds SO2 data record
+     * @return true if record successfully inserted
+     */
     public boolean addSO2Data(double j2ksec, int sid, String date, double avg, double min, double max,
             double ws, double wd, double wdsd, double temp, double hum, double press,
             double cal, double volt)
@@ -51,6 +60,10 @@ public class GasDataManager extends DatabaseDataManager
         return true;
     }
     
+    /**
+     * Adds CO2 data record
+     * @return true if record successfully inserted
+     */
     public boolean addCO2Data(double j2ksec, int sid, String date, double val)
     {
         try
@@ -70,6 +83,10 @@ public class GasDataManager extends DatabaseDataManager
         return true;
     }
 
+    /**
+     * Adds CO2 high data record
+     * @return true if record successfully inserted
+     */
     public boolean addCO2highData(double j2ksec, int sid, String date, double val)
     {
         try
@@ -89,7 +106,9 @@ public class GasDataManager extends DatabaseDataManager
         return true;
     }
 
-    
+    /**
+     * Get list of SO2 stations (array of code-name pairs)
+     */
     public String[][] getSO2Stations()
     {
         String[][] stations = null;
@@ -113,7 +132,10 @@ public class GasDataManager extends DatabaseDataManager
         }
         return stations;
     }
-    
+   
+    /**
+     * Get list of CO2 stations (array of code-name pairs)
+     */
     public String[][] getCO2Stations()
     {
         String[][] stations = null;
@@ -138,6 +160,14 @@ public class GasDataManager extends DatabaseDataManager
         return stations;
     }
 
+    /**
+     * Get requested field from so2 table 
+     * @param comp field name
+     * @param sid sid value to filter output
+     * @param t1 minimum j2ksec time
+     * @param t2 maximum j2ksec time
+     * @return list of time-field_value pairs
+     */
     public double[][] getSO2Component(String comp, int sid, double t1, double t2)
     {
         double[][] data = null;
@@ -221,7 +251,13 @@ public class GasDataManager extends DatabaseDataManager
         return data;
     }
     
-    
+   /**
+    * Dump SO2 data to file 
+    * @param fileName to output
+    * @param sid sid to filter output
+    * @param t1 minimum j2ksec time
+    * @param t2 maximum j2ksec time
+    */
     public void outputRawSO2Data(String fileName, int sid, double t1, double t2)
     {
         try
@@ -239,6 +275,13 @@ public class GasDataManager extends DatabaseDataManager
         }
     }
     
+    /**
+     * Dump CO2 data to file 
+     * @param fileName to output
+     * @param sid sid to filter output
+     * @param t1 minimum j2ksec time
+     * @param t2 maximum j2ksec time
+     */
     public void outputRawCO2Data(String fileName, int sid, double t1, double t2)
     {
         try

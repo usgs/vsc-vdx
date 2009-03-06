@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.Date;
 
 /**
+ * SQL data source for tilt data
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.3  2005/10/18 20:25:43  dcervelli
@@ -37,13 +38,24 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 {
 	public static String DATABASE_NAME = "tilt";
 
+	/**
+	 * Default constructor
+	 */
 	public SQLTiltStationDataSource(){}
-	
-	public String getType()	{
+	/**
+	 * Get data source type, "tilt" for this class
+	 */
+	public String getType()
+	{
+
 		return "tilt";
 	}
 	
-	public void initialize(ConfigFile params) {
+	/**
+	 * Initialize settings from configuration file
+	 */
+	public void initialize(ConfigFile params)
+	{
 		String driver = params.getString("vdx.driver");
 		String url = params.getString("vdx.url");
 		String vdxPrefix = params.getString("vdx.vdxPrefix");
@@ -58,12 +70,21 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		database.getLogger().info("vdx.name:" + name);
 	}
 
-	public boolean databaseExists() {
+	/**
+	 * Check if database exists.
+	 */
+	public boolean databaseExists()
+	{
 		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
 	}
 	
-	public boolean createDatabase() {
-		try {
+	/**
+	 * Create database for tilt data
+	 */
+	public boolean createDatabase()
+	{
+		try
+		{
 			Statement st = database.getStatement();
 			database.useRootDatabase();
 			String db = database.getDatabasePrefix() + "_" + name + "$" + DATABASE_NAME;
@@ -96,7 +117,15 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Create channel
+	 * @param channel channel code
+	 * @param channelName channel name
+	 * @param lon longitude
+	 * @param lat latitude
+	 * @return true if success
+	 */	
 	public boolean createChannel(String channel, String channelName, double lon, double lat, double azimuth, int tid) {
 		try {
 			Statement st = database.getStatement();
@@ -124,6 +153,9 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		return false;
 	}
 
+	/**
+	 * Get channels list in format "sid:code:name:lon:lat" from database
+	 */
 	public List<String> getSelectors() {
 		try {
 			List<String> result = new ArrayList<String>();
@@ -141,10 +173,18 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		return null;
 	}
 
+	/**
+	 * Get selector name
+	 * @param plural if we need selector name in the plural form
+	 */
 	public String getSelectorName(boolean plural) {
 		return plural ? "Stations" : "Station";
 	}
 	
+	/**
+	 * Get azimuth for channel
+	 * @param code channel code
+	 */
 	public double getNominalAzimuth (String code) {
 		double result = -1.0;
 		try {
@@ -160,7 +200,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 		return result;
 	}
-	
+
 	public synchronized Date getLastDataTime (String station) {
 		Date lastDataTime = null;
         try {
@@ -204,7 +244,15 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
             e.printStackTrace();
         }
 	}
-	
+
+
+	/**
+	 * Getter for data. 
+	 * Search value of 'action' parameter and retrieve corresponding data:
+	 * Possible values are "selectors" and "data".
+	 * 
+	 * @param command to execute, map of parameter-value pairs.
+	 */	
 	public RequestResult getData(Map<String, String> params) {
 		
 		String action = params.get("action");
@@ -225,7 +273,13 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Get tilt data from the database
+	 * @param cid channel id
+	 * @param st start time
+	 * @param et end time
+	 */	
 	public TiltStationData getTiltStationData(int cid, double st, double et) {
 		try {
 			database.useDatabase(name + "$" + DATABASE_NAME);
@@ -265,7 +319,15 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 		return null;
 	}
-	
+
+	/**
+	 * Insert tilt record into the database
+	 * @param code channel code
+	 * @param t time
+	 * @param x x tilt data
+	 * @param y y tilt data
+	 * @param tid translation id
+	 */	
 	public void insertData(String code, double t, double x, double y, double h, double b, double i, double g, double r) {
 		try {
 			int tid = -1;

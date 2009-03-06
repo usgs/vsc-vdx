@@ -4,7 +4,10 @@ import java.util.*;
 import java.io.*;
 
 /**
- *
+ * Represent configuration file. 
+ * Read disk file of 'param = value' structure and keep map of parameters.
+ * '#' is a comment line mark.
+ * 
  * @author Dan Cervelli
  */
 public class ConfigFile
@@ -13,6 +16,10 @@ public class ConfigFile
     private boolean corrupt;
     private String name;
     
+    /**
+     * Constructor
+     * @param fn config file name
+     */
     public ConfigFile(String fn)
     {
     	if (fn.endsWith(".config"))
@@ -23,7 +30,11 @@ public class ConfigFile
         corrupt = false;
         readConfigFile(fn);
     }
-    
+ 
+    /**
+     * Reads configuration file and initialize this object
+     * @param fn
+     */
     public void readConfigFile(String fn)
     {
         try
@@ -49,22 +60,35 @@ public class ConfigFile
             corrupt = true;
         }
     }
-    
+ 
+    /**
+     * Get parameter value
+     * @param key param name
+     */
     public String get(String key)
     {
         return (String)config.get(key);
     }
-    
+ 
+    /**
+     * Get whole map of parameters
+     */
     public HashMap getConfig()
     {
         return config;
     }
     
+    /**
+     * Get flag if disk configuration file was parsed successfully
+      */
     public boolean isCorrupt()
     {
     	return corrupt;	
     }
     
+    /**
+     * Get configuration name (part of disk file name without '.config')
+      */
     public String getName()
     {
     	return name;	

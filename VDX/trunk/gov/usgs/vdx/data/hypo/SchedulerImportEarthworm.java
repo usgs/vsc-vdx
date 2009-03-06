@@ -41,16 +41,26 @@ public class SchedulerImportEarthworm extends SchedulerImporter implements gov.u
 	private SimpleDateFormat dateIn;
 	private SimpleDateFormat dateOut;
 	
-	// constructor used from calling classes
+	/**
+	 * Default constructor.
+	 * Used from calling classes
+	 */
 	public SchedulerImportEarthworm() {
 	}
 	
-	// constructor used from main
+    /**
+    * Constructor.
+    * Used from main
+    * @param args command line arguments
+    */
 	public SchedulerImportEarthworm(String[] args) {
 		init(args);
 	}
 	
-	// initialization
+	/**
+	 * Initialization method
+	 * @param args command line arguments
+	 */
 	public void init(String[] args) {		
 
 		dateIn = new SimpleDateFormat("yyyyMMdd HHmm ss.SSS");
@@ -70,7 +80,11 @@ public class SchedulerImportEarthworm extends SchedulerImporter implements gov.u
 		// disconnect from the database
 		disconnect();
 	}
-	
+
+	/**
+	 * Parse earthworm file from url (resource locator or file name)
+	 * @return Hypocenters list
+	 */
 	public List<Hypocenter> importResource(String resource)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(resource);
@@ -122,6 +136,12 @@ public class SchedulerImportEarthworm extends SchedulerImporter implements gov.u
 		return hypos;
 	}
 	
+	/**
+	 * Main method.
+	 * Initialize data source using command line arguments and make import.
+	 * Syntax is:
+	 * "<importer> -c [vdx config] -n [database name] files..."
+	 */
 	public static void main(String args[])	{
 		
 		// the only thing we are doing here is getting the command line arguments

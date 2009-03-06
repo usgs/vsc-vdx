@@ -4,13 +4,18 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.ResourceReader;
 
 /**
- * 
+ * Import benchmarks from file
  * @author Dan Cervelli
  */
 public class ImportSum
 {
 	private SQLGPSDataSource dataSource;
 
+	/**
+	 * Constructor
+	 * @param vdxPrefix vdx prefix
+	 * @param name vdx name
+	 */
 	public ImportSum(String vdxPrefix, String name)
 	{
 		dataSource = new SQLGPSDataSource();
@@ -22,6 +27,10 @@ public class ImportSum
 		dataSource.initialize(params);
 	}
 	
+	/**
+	 * Import benchmarks file
+	 * @param fn file name
+	 */
 	public void importSum(String fn)
 	{
 		ResourceReader rr = ResourceReader.getResourceReader(fn);
@@ -54,6 +63,9 @@ public class ImportSum
 		System.out.printf("%s %f %f %f\n", bm, lon, lat, height);
 	}
 	
+	/**
+	 * Main method
+	 */
 	public static void main(String[] args)
 	{
 		ImportSum is = new ImportSum(args[0], args[1]);

@@ -27,6 +27,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Keeps SQL database-related information
+ * needed to make connection.
+ * 
  * Not thread-safe.
  * 
  * TODO: refactor so VDXDatabase and WinstonDatabase derive from a common source.
@@ -54,6 +57,12 @@ public class VDXDatabase
 	
 	private Map<String, PreparedStatement> preparedStatements;
 	
+	/**
+	 * Constructor
+	 * @param driver class name for database driver
+	 * @param url database url
+	 * @param db database prefix
+	 */
 	public VDXDatabase(String driver, String url, String db)
 	{
 	    logger = Log.getLogger("gov.usgs.vdx");
@@ -66,6 +75,10 @@ public class VDXDatabase
 		connect();
 	}
 	
+	/**
+	 * Construct VDXdatabase from configuration
+	 * @param cf content of configuration file
+	 */
 	public static VDXDatabase getVDXDatabase(String cf)
 	{
 		VDXDatabase db = null;
@@ -86,16 +99,25 @@ public class VDXDatabase
 		return db;
 	}
 	
+	/**
+	 * Getter for logger
+	 */
 	public Logger getLogger()
 	{
 	    return logger;
 	}
-	
+
+	/**
+	 * Setter for logger
+	 */
 	public void setLogger(Logger log)
 	{
 	    logger = log;
 	}
 	
+	/**
+	 * Performs database connection
+	 */
 	public void connect()
 	{
 		logger.fine("Connecting to " + dbURL);
@@ -122,7 +144,10 @@ public class VDXDatabase
 			connected = false;
 		}	
 	}
-	
+
+	/**
+	 * Close database connection
+	 */
 	public void close()
 	{
 		if (!checkConnect())
@@ -140,11 +165,19 @@ public class VDXDatabase
 		}
 	}
 
+	/**
+	 * Make connection if it was closed
+	 * @return true if connected 
+	 */
 	public boolean checkConnect()
 	{
 		return checkConnect(true);
 	}
 	
+	/**
+	 * Make connection if it was closed
+	 * @return true if connected 
+	 */
 	public boolean checkConnect(final boolean verbose)
 	{
 		if (connected)
@@ -163,21 +196,34 @@ public class VDXDatabase
 		}
 	}
 
+	/**
+	 * Check if connection active
+	 */
 	public boolean connected()
 	{
 		return connected;
 	}
-	
+
+	/**
+	 * Getter for database connection
+	 */
 	public Connection getConnection()
 	{
 		return connection;
 	}
-	
+
+	/**
+	 * Getter for statement
+	 */
 	public Statement getStatement()
 	{
 		return statement;	
 	}
 
+	/**
+	 * Execute given sql
+	 * @return true if success
+	 */
 	public boolean execute(final String sql)
 	{
 		Boolean b = new Retriable<Boolean>()
@@ -208,6 +254,10 @@ public class VDXDatabase
 		return b != null && b.booleanValue();
 	}
 	
+	/**
+	 * Execute given sql
+	 * @return result set given from database
+	 */
 	public ResultSet executeQuery(final String sql)
 	{
 		ResultSet rs = new Retriable<ResultSet>()
@@ -236,11 +286,17 @@ public class VDXDatabase
 		return rs;
 	}
 	
+	/**
+	 * Getter for VDX database prefix
+	 */
 	public String getDatabasePrefix()
 	{
 	    return databasePrefix;
 	}
 	
+	/**
+	 * Create 'version' table and insert current values
+	 */
 	private void createTables()
 	{
 		try
@@ -255,11 +311,20 @@ public class VDXDatabase
 		}
 	}
 	
+	/**
+	 * Select 'ROOT' database to use inside SQL server
+	 * @return true if success
+	 */
 	public boolean useRootDatabase()
 	{
 		return useDatabase("ROOT");
 	}
 	
+	/**
+	 * Select database to use inside SQL server
+	 * @param db database name (without prefix)
+	 * @return true if success
+	 */
 	public boolean useDatabase(String db)
 	{
 		db = databasePrefix + "_" + db;
@@ -291,6 +356,10 @@ public class VDXDatabase
 		return false;
 	}
 	
+	/**
+	 * Create database 'ROOT' if it isn't exist and use it.
+	 * @return true if success
+	 */
 	public boolean checkDatabase()
 	{
 		if (!checkConnect())
@@ -322,6 +391,10 @@ public class VDXDatabase
 		return false;
 	}
 	
+	/**
+	 * Prepare statement for sql 
+	 * @return prepared statement
+	 */
 	public PreparedStatement getPreparedStatement(String sql)
 	{
 		try
@@ -341,6 +414,9 @@ public class VDXDatabase
 		return null;
 	}
 
+	/**
+	 * Print help message on system output
+	 */
 	protected static void outputInstructions()
 	{
 		System.out.println("<VDXDatabase> [-c configfile] -a <action> [other args]");
@@ -348,6 +424,12 @@ public class VDXDatabase
 		System.out.println("\n\tcreateetilt \n\tcreategeneric \n\tcreatenwis \n\tcreateewrsam");
 	}
 	
+	/**
+	 * Create given VDX database
+	 * @param db VDX database
+	 * @param args command line arguments
+	 * @param ds data source
+	 */
 	protected static void createDatabase(VDXDatabase db, Arguments args, SQLDataSource ds)
 	{
 		String name = args.get("-n");
@@ -363,6 +445,12 @@ public class VDXDatabase
 		System.out.println(msg);
 	}
 	
+	/**
+	 * Check if table exist in the database
+	 * @param db database name
+	 * @param table table name
+	 * @return
+	 */
 	public boolean tableExists(String db, String table)
 	{
 		try
@@ -378,6 +466,9 @@ public class VDXDatabase
 		return false;
 	}	
 	
+	/**
+	 * Main method, provide command-line interface
+	 */
 	public static void main(String[] as)
 	{
 		Set<String> flags = new HashSet<String>();

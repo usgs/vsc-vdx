@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Abstract class to parse given list of files and insert parsed hypocenters
+ * into database.
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
@@ -26,11 +28,19 @@ abstract public class Importer
 		keys.add("-c");
 	}
 	
+	/**
+	 * Constructor
+	 * @param ds SQLHypocenterDataSource to import
+	 */
 	public Importer(SQLHypocenterDataSource ds)
 	{
 		dataSource = ds;
 	}
 	
+	/**
+	 * Fabric method for data source
+	 * @param args command line arguments
+	 */
 	public static SQLHypocenterDataSource getDataSource(Arguments args)
 	{
 		String cfn = args.get("-c");
@@ -46,20 +56,35 @@ abstract public class Importer
 		return ds;
 	}
 	
+	/**
+	 * Abstract method to parse data from url (resource locator or file name)
+	 * @return Hypocenters list
+	 */
 	abstract public List<Hypocenter> importResource(String resource);
 
+	/**
+	 * Insert hypocenters list into database
+	 */
 	protected void insert(List<Hypocenter> hypos)
 	{
 		for (Hypocenter hc : hypos)
 			dataSource.insertHypocenter(hc);
 	}
 	
+	/**
+	 * Print usage instructions on stdout
+	 */
 	protected static void outputInstructions()
 	{
 		System.out.println("<importer> -c [vdx config] -n [database name] files...");
 		System.exit(-1);
 	}
 	
+	/**
+	 * Parse files from command line and insert hypocenters list into database
+	 * @param args command line arguments
+	 * @param impt importer to process
+	 */
 	protected static void process(Arguments args, Importer impt)
 	{
 		if (args.size() == 0)

@@ -10,13 +10,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
-/*
-* @author Loren Antolik
-*/
+/**
+ * Scheduler is the main entry point for data acquisition importers.
+ * it provides file management for data files, and an interface to 
+ * the right importer for the job
+ * 
+ * @author Loren Antolik
+ */
 
-// Scheduler is the main entry point for data acquisition importers.
-// it provides file management for data files, and an interface to 
-// the right importer for the job
+
 public class Scheduler {
 	
 	// config file variables
@@ -38,16 +40,22 @@ public class Scheduler {
 	private static File			vdxDirectory;
 	protected Logger			logger;
 	
-	// constructor for no arguments (for use by a calling class)
+	/**
+	* Constructor for no arguments (for use by a calling class)
+	*/
 	public Scheduler() {
 	}
 	
-	// constructor with command line arguments (for use from the command line)
+	/**
+	*Constructor with command line arguments (for use from the command line)
+	*/
 	public Scheduler(String[] args) {
 		init(args);
 	}
 	
-	// initialization method.  initializes all values and runs the program
+	/**
+	*Initialization method.  Initializes all values and runs the program
+	*/
 	public void init(String[] args) {
 		
 		// get the config file name and make sure that it exists
@@ -78,6 +86,9 @@ public class Scheduler {
 		timer.scheduleAtFixedRate(scheduler.new SchedulerTimerTask(), 0, pollingCycleSeconds * 1000);		
 	}
 	
+	/**
+	 * Parse configuration file and initialize internal variables
+	 */
 	public static void parseConfigFileVals(ConfigFile configFile) {
 		
 		// read the config file and give defaults
@@ -91,6 +102,9 @@ public class Scheduler {
 		deleteProcessedFile			= Util.stringToBoolean(configFile.getString("deleteProcessedFile"));		
 	}
 	
+	/**
+	 * Check conditions for successful scheduled task execution
+	 */
 	public static void validateSchedulerVars() {
 		
 		// check to make sure that the class exists, don't instantiate it yet though
@@ -133,6 +147,9 @@ public class Scheduler {
 		}
 	}
 	
+	/**
+	 * Prints configuration parameters to stdout
+	 */
 	public static void displayDefaultParameters(String currentState) {
 		System.out.println("--- Value : " + currentState + " ---");
 		System.out.println("importClassName:            " + importClassName);
@@ -145,7 +162,11 @@ public class Scheduler {
 		System.out.println("deleteProcessedFile:        " + deleteProcessedFile);
 	}
 	
-	// main class
+	/**
+	*Main method
+	*Syntax is:
+	*java gov.usgs.vdx.data.scheduler.Scheduler configFile
+	*/
 	public static void main (String args[]) {
 		
 		// check to make sure there are command line arguments
@@ -157,7 +178,8 @@ public class Scheduler {
 		Scheduler scheduler = new Scheduler(args);
 	}
 	
-	// extension of class for getting the proper file listing
+	/**Extension of class for getting the proper file listing
+	 */
 	class ImportFileFilter implements FileFilter {
 		
 		// constructor
@@ -170,7 +192,8 @@ public class Scheduler {
 		}
 	}
 	
-	//	 extension of class for timing the importing
+	/**Extension of class for timing the importing
+	 */
 	class SchedulerTimerTask extends TimerTask {
 		
 		// instance variables

@@ -30,13 +30,10 @@ public class EWRSAMData extends RSAMData
 	}
 
 	/**
-	 * Create an RSAMData from a byte buffer.  This first 4 bytes specify an
-	 * integer number of rows followed by rows*16 bytes, 2 doubles: j2ksec and 
-	 * RSAM.
-	 * 
-	 * @param bb the byte buffer
+	 * Constructor.
+	 * @param list rsam data
+	 * @param e cumulative events data 
 	 */
-
 	public EWRSAMData(List<double[]> list, List<double[]> e)
 	{
 		super(list);
@@ -57,6 +54,11 @@ public class EWRSAMData extends RSAMData
 		}
 	}
 
+	/**
+	 * Dump RSAMData to byte buffer. This first 4 bytes specify an
+	 * integer number of rows followed by rows*16 bytes, 2 doubles: j2ksec and 
+	 * RSAM.
+	 */
 	public ByteBuffer toBinary()
 	{
 		ByteBuffer dataBb;
@@ -111,7 +113,12 @@ public class EWRSAMData extends RSAMData
 
 		return bb;
 	}
-		
+	
+	/**
+	 * Initialize an RSAMData from a byte buffer.  
+	 * @see toBinary()
+	 * @param bb the byte buffer
+	 */
 	public void fromBinary(ByteBuffer bb)
 	{
 		int rows = bb.getInt();
@@ -147,11 +154,18 @@ public class EWRSAMData extends RSAMData
 		}
 	}
 	
+	/**
+	 * Get cumulative event data by time interval
+	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
 		return events;
 	}
 	
+	/**
+	 * Get initialized histogram of event count by time
+	 * @param bin time interval
+	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
 		System.err.println("Entering ew hist");

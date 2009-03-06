@@ -15,7 +15,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- *
+ * Import pinnacle data - from pinnacle server socket or from files
+ * 
  * @author Dan Cervelli
  */
 public class ImportPinnServer extends Client
@@ -26,12 +27,22 @@ public class ImportPinnServer extends Client
 	private Logger logger;
 	
 		
+	
+	/**
+	 * Constructor
+	 * @param h host 
+	 * @param p port
+	 */
 	public ImportPinnServer(String h, int p)
 	{
 		super(h, p);
 		logger = Log.getLogger("gov.usgs.vdx");
 	}
 	
+	/**
+	 * Fabric method to create instance
+	 * @param fn configuration file name
+	 */
 	public static ImportPinnServer createImportPinnServer(String fn)
 	{
 		if (fn == null)
@@ -71,12 +82,20 @@ public class ImportPinnServer extends Client
 		return ips;
 	}
 
+	/**
+	 * Method to handle with data block which was got from pinnacle server
+	 * @see gov.usgs.pinnacle.Client
+	 */
 	public void handleStatusBlock(StatusBlock sb)
 	{
 		System.out.println(sb);
 		dataSource.insertData(channel, sb.getJ2K(), sb.getXMillis(), sb.getYMillis(), sb.getVoltage(), 0, sb.getTemperature(), 0, 0);
 	}
 	
+	/**
+	 * Import from file which contains pinnacle blocks
+	 * @param fn file name
+	 */
 	public void importFile(String fn)
 	{
 		logger = Log.getLogger("gov.usgs.vdx");
@@ -105,6 +124,13 @@ public class ImportPinnServer extends Client
 		}
 	}
 	
+	/**
+	 * Main method
+	 * Syntax is:
+	 * java gov.usgs.vdx.data.tilt.ImportPinnServer [-c <configFile>] [files...]
+	 * 
+	 * If file names are given than import files, else connect and listen for pinnacle server
+	 */
 	public static void main(String[] as)
 	{
 		String cf = null;
