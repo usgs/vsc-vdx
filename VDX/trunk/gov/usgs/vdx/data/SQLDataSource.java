@@ -175,32 +175,29 @@ abstract public class SQLDataSource
 	 * @param translations if we need to add 'tid' field to table created to store channel data
 	 * @return true if success
 	 */
-	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, String[] cols, boolean channels, boolean translations)
-	{
+	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, 
+			String[] cols, boolean channels, boolean translations) {
 		
-		logger.info("Creating channel " + name);
-		try
-		{
+		logger.info("Creating channel " + channel);
+		try {
 			if (channelName == null)
 				channelName = "";
 			Statement st = database.getStatement();
 			database.useDatabase(dbName);
-			if (channels)
-			{
-				st.execute(
-						"INSERT INTO channels (code, name, lon, lat) VALUES ('" + channel + "','" + channelName + "'," + lon + "," + lat + ")");
+			if (channels) {
+				st.execute("INSERT INTO channels (code, name, lon, lat) " +
+						   "VALUES ('" + channel + "','" + channelName + "'," + lon + "," + lat + ")");
 			}
-			if (cols == null)
-			{
+			if (cols == null) {
 				cols = new String[comps];
-				for (int i = 0; i < comps; i++)
+				for (int i = 0; i < comps; i++) {
 					cols[i] = "ch" + i;
+				}
 			}
 			
 			String table = channel;
 			String sql = "CREATE TABLE " + table + " (t DOUBLE PRIMARY KEY,";
-			for (int i = 0; i < comps; i++)
-			{
+			for (int i = 0; i < comps; i++) {
 				sql += cols[i] + " DOUBLE DEFAULT 0 NOT NULL";
 				if (i != comps - 1)
 					sql += ",";
@@ -212,9 +209,7 @@ abstract public class SQLDataSource
 
 			st.execute(sql);
 			return true;
-		}
-		catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.createDefaultChannel(\"" + channel + "\", " + lon + ", " + lat + ") failed.", e);
 			e.printStackTrace();
 		}
