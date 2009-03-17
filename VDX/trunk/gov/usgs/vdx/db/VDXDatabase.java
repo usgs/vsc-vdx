@@ -421,7 +421,7 @@ public class VDXDatabase
 	{
 		System.out.println("<VDXDatabase> [-c configfile] -a <action> [other args]");
 		System.out.print("Known actions: \n\tcreatehypocenters \n\tcreategps \n\tcreatetilt");
-		System.out.println("\n\tcreateetilt \n\tcreategeneric \n\tcreatenwis \n\tcreateewrsam");
+		System.out.println("\n\tcreategenericvariable \n\tcreategenericfixed \n\tcreateewrsam");
 	}
 	
 	/**
