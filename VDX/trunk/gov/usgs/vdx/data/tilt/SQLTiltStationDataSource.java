@@ -355,4 +355,8 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertData() failed.", e);
 		}
 	}
+	
+	public void insertValve2Data () {
+		
+	}
 }
