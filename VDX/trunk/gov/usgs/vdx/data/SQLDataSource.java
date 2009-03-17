@@ -65,6 +65,10 @@ abstract public class SQLDataSource
 		name = n;
 	}
 	
+	/**
+	 * Gets name of this SQLDataSource
+	 * @name
+	 */
 	public String getName() {
 		return name;
 	}
