@@ -65,6 +65,10 @@ abstract public class SQLDataSource
 		name = n;
 	}
 	
+	public String getName() {
+		return name;
+	}
+
 	/**
 	 * Init this SQLDataSource from configuration
 	 */
