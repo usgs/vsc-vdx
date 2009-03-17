@@ -78,7 +78,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getColumns()", e);
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.getMetadata()", e);
 		}
 	}
 	
@@ -90,24 +90,22 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	{
 		if (columns != null)
 			return;
-		try
-		{
-			columns = new ArrayList<GenericColumn>();
-			columnStrings = new ArrayList<String>();
-			Statement st = database.getStatement();
+		try {
+			columns			= new ArrayList<GenericColumn>();
+			columnStrings	= new ArrayList<String>();
+			Statement st	= database.getStatement();
 
 			String db = name + "$" + DATABASE_NAME;
 			if (!database.useDatabase(db))
 				throw new RuntimeException("Can't connect to database");
 			ResultSet rs = st.executeQuery("SELECT idx, name, description, unit, checked FROM cols ORDER BY idx ASC");
-			while (rs.next())
-			{
-				GenericColumn col = new GenericColumn();
-				col.index = rs.getInt(1);
-				col.name = rs.getString(2);
-				col.description = rs.getString(3);
-				col.unit = rs.getString(4);
-				col.checked = rs.getInt(5) == 1;
+			while (rs.next()) {
+				GenericColumn col	= new GenericColumn();
+				col.index			= rs.getInt(1);
+				col.name			= rs.getString(2);
+				col.description		= rs.getString(3);
+				col.unit			= rs.getString(4);
+				col.checked			= rs.getInt(5) == 1;
 				columns.add(col);
 				columnStrings.add(col.toString());
 			}
@@ -126,7 +124,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.queryColumnData()", e);
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.queryColumnData()", e);
 		}
 	}
 	
@@ -145,7 +143,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			Statement st = database.getStatement();
 			database.useDatabase(db);
 			st.execute(
-					"CREATE TABLE cols (idx INT PRIMARY KEY," +
+					"CREATE TABLE cols (idx INT PRIMARY KEY AUTO_INCREMENT," +
 					"name VARCHAR(255) UNIQUE," +
 					"description VARCHAR(255)," + 
 					"unit VARCHAR(255)," +
@@ -158,7 +156,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 		catch (SQLException e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.createDatabase() failed.", e);
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.createDatabase() failed.", e);
 		}
 		return false;
 	}
@@ -175,10 +173,34 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	{
 		queryColumnData();
 		String[] cols = new String[columns.size()];
-		for (int i = 0; i < cols.length; i++)
+		for (int i = 0; i < cols.length; i++) {
 			cols[i] = columns.get(i).name;
-		
+		}		
 		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
+	}
+	
+	/**
+	 * createColumn
+	 * @param gc
+	 */
+	public boolean createColumn (GenericColumn gc) {
+		
+		try {			
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			PreparedStatement ps = database.getPreparedStatement(
+					"INSERT IGNORE INTO cols (name, description, unit, checked) " +
+					"VALUES (?,?,?,?)");
+			ps.setString(1, gc.name);
+			ps.setString(2, gc.description);
+			ps.setString(3, gc.unit);
+			ps.setBoolean(4, gc.checked);
+			ps.execute();
+			return true;
+			
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.createColumn() failed.", e);
+		}
+		return false;
 	}
 	
 	/**
@@ -285,8 +307,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			result.add(getSelectorString());
 			result.add(getTimeShortcuts());
 			result.add(Integer.toString(columnStrings.size()));
-			for (String s : columnStrings)
+			for (String s : columnStrings) {
 				result.add(s);
+			}
 			return new TextResult(result);
 		}
 		else if (action.equals("selectors"))
@@ -347,7 +370,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 		catch (Exception e)
 		{
-			database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.getGenericData()", e);
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.getGenericData()", e);
 		}
 		return result;
 	}
@@ -387,7 +410,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			}
 			catch (SQLException e)
 			{
-				database.getLogger().log(Level.SEVERE, "SQLGenericDataSource.insertData() failed.", e);
+				database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertData() failed.", e);
 			}
 		}
 	}
