@@ -137,6 +137,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	{
 		try
 		{
+			name = getName();
 			String db = name + "$" + DATABASE_NAME;
 			if (!createDefaultDatabase(db, 0, true, false))
 				return false;
@@ -397,5 +398,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	public List<GenericColumn> getColumns()
 	{
 		return columns;
+	}
+	
+	public void insertValve2Data() {
+		
 	}
 }
