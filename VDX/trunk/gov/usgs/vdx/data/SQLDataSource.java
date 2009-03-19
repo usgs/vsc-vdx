@@ -178,7 +178,7 @@ abstract public class SQLDataSource
 	public boolean createDefaultChannel(String dbName, int comps, String channel, String channelName, double lon, double lat, 
 			String[] cols, boolean channels, boolean translations) {
 		
-		logger.info("Creating channel " + channel);
+		// logger.info("Creating channel " + channel);
 		try {
 			if (channelName == null)
 				channelName = "";
