@@ -8,7 +8,9 @@ import java.nio.channels.SocketChannel;
 import java.util.logging.Level;
 
 /**
- * 
+ * Extended CommandHandler, a class that handles server requests on a separate thread.
+ * Designed to handle VDX requests.
+ *  
  * $Log: not supported by cvs2svn $
  * Revision 1.2  2005/08/29 15:56:16  dcervelli
  * New logging changes.
@@ -25,6 +27,10 @@ public class ServerHandler extends CommandHandler
 	private DataSourceHandler dataSourceHandler;
 	private NetTools netTools;
 
+	/**
+	 * Constructor
+	 * @param s VDX server 
+	 */
 	public ServerHandler(VDX s)
 	{
 		super(s, "VDX/ServerHandler-" + instances++);
@@ -34,6 +40,9 @@ public class ServerHandler extends CommandHandler
 		setupCommandHandlers();
 	}
 
+	/**
+	 * Fill possible commands for VDX server
+	 */
 	protected void setupCommandHandlers()
 	{
 		addCommand("version", new BaseCommand(this, netTools)
@@ -50,11 +59,17 @@ public class ServerHandler extends CommandHandler
 		addCommand("getdata", new GetDataCommand(this, netTools));
 	}
 	
+	/**
+	 * @return data source handler computed from vdx parameters
+	 */
 	public DataSourceHandler getDataSourceHandler()
 	{
 		return dataSourceHandler;
 	}
 	
+	/**
+	 * Write log message
+	 */
 	public void log(Level level, String msg, SocketChannel channel)
 	{
 		vdx.log(level, msg, channel);
