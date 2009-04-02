@@ -9,7 +9,10 @@ import java.util.Map;
 import java.util.logging.Level;
 
 /**
- * 
+ * <p>
+ * Base abstract class to represent command performed by server.
+ * All concrete command should derived from this class.
+ * </p>
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
@@ -21,18 +24,30 @@ abstract public class BaseCommand implements Command
 	protected Map<String, String> inParams;
 	protected Map<String, String> outParams;
 	
+	/**
+	 * Constructor
+	 */
 	public BaseCommand(ServerHandler sh, NetTools nt)
 	{
 		handler = sh;
 		netTools = nt;
 	}
 
+	/**
+	 * Throw and log error
+	 * @param msg error message
+	 * @param cmd command
+	 * @param cmd socket channel
+	 */
 	public void sendError(String msg, String cmd, SocketChannel channel)
 	{
 		netTools.writeString("error: " + msg + "\n", channel);
 		handler.log(Level.FINE, String.format("[%s] error: %s", cmd, msg), channel);
 	}
 	
+	/**
+	 * Parse command and comstruct parameters map
+	 */
 	// TODO: allow \s for semicolons?
 	public void parseParams(String cmd)
 	{
