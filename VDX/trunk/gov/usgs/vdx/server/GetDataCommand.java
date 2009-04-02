@@ -10,6 +10,10 @@ import java.nio.channels.SocketChannel;
 import java.util.logging.Level;
 
 /**
+ * Comand to retrieve data. 
+ * Contains 'source' parameter do determine data source,
+ * and parameters set to determine requested data.
+ *  
  * 
  * $Log: not supported by cvs2svn $
  * Revision 1.2  2005/08/28 19:11:44  dcervelli
@@ -22,11 +26,17 @@ import java.util.logging.Level;
  */
 public class GetDataCommand extends BaseCommand
 {
+	/**
+	 * Constructor
+	 */
 	public GetDataCommand(ServerHandler sh, NetTools nt)
 	{
 		super(sh, nt);
 	}
 	
+	/**
+	 * Perform command actions, write result to channel
+	 */
 	public void doCommand(Object info, SocketChannel channel)
 	{
 		CodeTimer ct = new CodeTimer("send");
