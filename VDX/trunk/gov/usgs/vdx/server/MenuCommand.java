@@ -10,17 +10,24 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
+ * Comand to retrieve menu description data. 
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
 public class MenuCommand extends BaseCommand
 {
+	/**
+	 * Constructor
+	 */
 	public MenuCommand(ServerHandler sh, NetTools nt)
 	{
 		super(sh, nt);
 	}
-	
+
+	/**
+	 * Perform command actions, write result to channel
+	 */
 	public void doCommand(Object info, SocketChannel channel)
 	{
 		handler.log(Level.FINE, "[menu]", channel);
