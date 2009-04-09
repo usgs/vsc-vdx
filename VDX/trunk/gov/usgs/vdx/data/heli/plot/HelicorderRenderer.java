@@ -31,64 +31,6 @@ import cern.colt.matrix.DoubleMatrix2D;
 
 /**
  * A class for rendering helicorders.
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.14  2007/08/05 19:58:39  dcervelli
- * Added a method for settings the helicorder colors.
- *
- * Revision 1.13  2007/02/01 01:23:17  dcervelli
- * Fixes for time zones in WWS helicorders.
- *
- * Revision 1.12  2006/08/16 18:10:05  cervelli
- * Added transparency to kiosk labels, made font slightly smaller
- *
- * Revision 1.11  2006/08/12 01:13:32  dcervelli
- * Uses decorators now.
- *
- * Revision 1.10  2006/07/22 20:15:02  cervelli
- * Changes for time zones.
- *
- * Revision 1.9  2006/04/08 01:50:03  dcervelli
- * Added getRowHeight() function for bug #17.
- *
- * Revision 1.8  2006/02/01 23:26:11  tparker
- * Play clip alert in a dedicated thread
- *
- * Revision 1.7  2006/02/01 18:01:31  tparker
- * tweak alert
- *
- * Revision 1.6  2006/01/25 21:46:26  tparker
- * Move clipping alert into the heli renderer.
- *
- * Revision 1.5  2005/09/22 20:54:00  dcervelli
- * Moved large channel display code from Swarm to here.
- *
- * Revision 1.4  2005/09/14 20:41:17  dcervelli
- * Fixed minimum axis channel label position bug (Mantis #0000001).
- *
- * Revision 1.3  2005/08/29 22:35:07  dcervelli
- * Fixed first line color change bug.
- *
- * Revision 1.2  2005/08/29 22:15:48  dcervelli
- * Optimized forceCenter.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
- *
- * Revision 1.6  2005/05/01 16:57:14  cervelli
- * Changes for minimal axes.
- *
- * Revision 1.5  2005/04/23 15:52:51  cervelli
- * Removed code timer, cleaned up.
- *
- * Revision 1.4  2005/04/17 16:34:52  cervelli
- * Optimizations.
- *
- * Revision 1.3  2004/10/13 02:52:11  cvs
- * Removed output of clipped value.
- *
- * Revision 1.2  2004/10/13 02:48:46  cvs
- * Fixed bug where NO_DATA samples were plotting.
  *
  * @author Dan Cervelli
  * @version $Id: HelicorderRenderer.java,v 1.15 2007-08-16 17:28:53 tparker Exp $
@@ -513,6 +455,8 @@ public class HelicorderRenderer extends FrameRenderer
 					playClipAlert();
 				}
 			}
+			else if (alertClip)
+				g.setColor(new Color(128,255,128,192));
 			else
 				g.setColor(new Color(255,255,255,192));
 				
