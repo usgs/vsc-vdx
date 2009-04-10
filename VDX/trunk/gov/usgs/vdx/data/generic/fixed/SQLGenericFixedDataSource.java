@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.generic.fixed;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -137,7 +138,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		{
 			name = getName();
 			String db = name + "$" + DATABASE_NAME;
-			if (!createDefaultDatabase(db, 0, true, false))
+			if (!createDefaultDatabase(db, 0, true, true))
 				return false;
 			
 			Statement st = database.getStatement();
@@ -176,7 +177,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		for (int i = 0; i < cols.length; i++) {
 			cols[i] = columns.get(i).name;
 		}		
-		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, false);
+		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, true);
 	}
 	
 	/**
@@ -388,12 +389,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		database.useDatabase(name + "$" + DATABASE_NAME);
 		Statement st = database.getStatement();
 
-		for (int i=0; i<d.rows(); i++)
-		{
+		for (int i = 0; i < d.rows(); i++) {
 			StringBuffer names = new StringBuffer();
 			StringBuffer values = new StringBuffer();
-			for (int j=0; j<colNames.length; j++)
-			{
+			for (int j = 0; j < colNames.length; j++) {
 				names.append(colNames[j] + ",");
 				values.append(data.getQuick(i, j) + ",");
 			}
@@ -404,12 +403,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			sql.append("INSERT IGNORE INTO " + table + " (" + names + ") ");
 			sql.append("VALUES (" + values + ")");
 			
-			try
-			{
+			try {
 				st.execute(sql.toString());
-			}
-			catch (SQLException e)
-			{
+			} catch (SQLException e) {
 				database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertData() failed.", e);
 			}
 		}
@@ -423,7 +419,73 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return columns;
 	}
 	
-	public void insertValve2Data() {
-		
+	public void insertV2StrainData(String code, double t, double s1, double s2, double g, double bar, double h, double i, double r) {
+		try {
+			
+			// default some variables
+			int tid = -1;
+			int eid = -1;
+            
+            // lower case the code because that's how the table names are in the database
+            code.toLowerCase();
+			
+			// set the database
+			database.useDatabase("strain");
+			
+			// get the translation and offset
+            PreparedStatement ps = database.getPreparedStatement(
+            		"SELECT curTrans, curEnvTrans FROM stations WHERE code=?");
+            ps.setString(1, code);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+            	tid = rs.getInt(1);
+            	eid = rs.getInt(2);
+            }
+            rs.close();
+
+            // create the strain entry
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "strain VALUES (?,?,?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(3, s1);
+			ps.setDouble(4, s2);
+			ps.setDouble(5, g);
+			ps.setDouble(6, tid);
+			ps.execute();
+			
+			// create the environment entry
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(3, bar);
+			ps.setDouble(4, h);
+			ps.setDouble(5, i);
+			ps.setDouble(6, r);
+			ps.setDouble(7, g);
+			ps.setDouble(8, eid);
+			ps.execute();
+			
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertV2StrainData() failed.", e);
+		}		
+	}
+	
+	public void insertV2GasData(int sid, double t, double co2) {
+		try {
+			
+			// set the database
+			database.useDatabase("gas");
+
+            // create the tilt entry
+			PreparedStatement ps = database.getPreparedStatement("INSERT IGNORE INTO co2 VALUES (?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setInt(2, sid);
+			ps.setString(3, Util.j2KToDateString(t));
+			ps.setDouble(4, co2);
+			ps.execute();
+			
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertV2GasData() failed.", e);
+		}		
 	}
 }
