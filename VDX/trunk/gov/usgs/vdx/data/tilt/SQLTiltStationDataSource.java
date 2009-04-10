@@ -319,6 +319,146 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 		return null;
 	}
+	
+	/**
+	 * Get translation id from database
+	 * @param code
+	 * @param cx
+	 * @param dx
+	 * @param cy
+	 * @param dy
+	 * @param ch
+	 * @param dh
+	 * @param cb
+	 * @param db
+	 * @param ci
+	 * @param di
+	 * @param cg
+	 * @param dg
+	 * @param cr
+	 * @param dr
+	 * @param azimuth
+	 * @return tid.  -1 if not found
+	 */
+	public int getTranslation (String code, double cx, double dx, double cy, double dy, double ch, double dh, 
+				double cb, double db, double ci, double di, double cg, double dg, double cr, double dr, double azimuth) {
+		
+		// default the tid as a return value
+		int tid = -1;
+		PreparedStatement ps;
+		ResultSet rs;
+		
+		// try to lookup the translation in the database
+		try {
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			ps = database.getPreparedStatement("SELECT tid FROM translations " + 
+					"WHERE name=? AND cx=? AND dx=? AND cy=? AND dy=? AND ch=? AND dh=? AND cb=? AND db=? " +
+					"AND   ci=? AND di=? AND cg=? AND dg=? AND cr=? AND dr=? AND azimuth=?");
+			ps.setString(1, code);
+			ps.setDouble(2, cx);
+			ps.setDouble(3, dx);
+			ps.setDouble(4, cy);
+			ps.setDouble(5, dy);
+			ps.setDouble(6, ch);
+			ps.setDouble(7, dh);
+			ps.setDouble(8, cb);
+			ps.setDouble(9, db);
+			ps.setDouble(10,ci);
+			ps.setDouble(11,di);
+			ps.setDouble(12,cg);
+			ps.setDouble(13,dg);
+			ps.setDouble(14,cr);
+			ps.setDouble(15,dr);
+			ps.setDouble(16,azimuth);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				tid = rs.getInt(1);
+			}
+			rs.close();
+			
+		// catch SQLException
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertTranslation() failed.", e);
+		}
+		
+		return tid;		
+	}
+	
+	/**
+	 * Insert translation record into the database, return the new tid, or existing tid if one already exists
+	 * @param name
+	 * @param cx
+	 * @param dx
+	 * @param cy
+	 * @param dy
+	 * @param ch
+	 * @param dh
+	 * @param cb
+	 * @param db
+	 * @param ci
+	 * @param di
+	 * @param cg
+	 * @param dg
+	 * @param cr
+	 * @param dr
+	 * @param azimuth
+	 * @return tid
+	 */
+	public int insertTranslation(String code, double cx, double dx, double cy, double dy, double ch, double dh, 
+			double cb, double db, double ci, double di, double cg, double dg, double cr, double dr, double azimuth) {
+		
+		// default local variables
+		int tid = -1;
+		PreparedStatement ps;
+		
+		// try to create the translation, if it doesn't exist
+		try {
+			
+			// lookup the translation to see if it exists in the database yet
+			tid = getTranslation(code, cx, dx, cy, dy, ch, dh, cb, db, ci, di, cg, dg, cr, dr, azimuth);
+
+			// use the correct database
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			
+			// if the translation does not exist then create a new one
+			if (tid == -1) {
+				ps = database.getPreparedStatement("INSERT IGNORE INTO translations " +
+						"(name, cx, dx, cy, dy, ch, dh, cb, db, ci, di, cg, dg, cr, dr, azimuth) " +
+						"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+				ps.setString(1, code);
+				ps.setDouble(2, cx);
+				ps.setDouble(3, dx);
+				ps.setDouble(4, cy);
+				ps.setDouble(5, dy);
+				ps.setDouble(6, ch);
+				ps.setDouble(7, dh);
+				ps.setDouble(8, cb);
+				ps.setDouble(9, db);
+				ps.setDouble(10,ci);
+				ps.setDouble(11,di);
+				ps.setDouble(12,cg);
+				ps.setDouble(13,dg);
+				ps.setDouble(14,cr);
+				ps.setDouble(15,dr);
+				ps.setDouble(16,azimuth);
+				ps.execute();
+				tid = getTranslation(code, cx, dx, cy, dy, ch, dh, cb, db, ci, di, cg, dg, cr, dr, azimuth);
+			}
+			
+			// update the channels table with the current tid
+			ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");
+			ps.setInt(1, tid);
+			ps.setString(2, code);
+			ps.execute();
+			
+		// catch SQLException
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertTranslation() failed.", e);
+		}
+		
+		// return the translation id
+		return tid;
+	}
 
 	/**
 	 * Insert tilt record into the database
@@ -356,7 +496,58 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		}
 	}
 	
-	public void insertValve2Data () {
-		
+	public void insertV2Data (String code, double t, double x, double y, double h, double b, double i, double g, double r) {
+		try {
+			
+			// default some variables
+			int tid = -1;
+			int oid = -1;
+			int eid = -1;
+			
+			// set the database
+			database.useDatabase("tilt");
+			
+			// get the translation and offset
+            PreparedStatement ps = database.getPreparedStatement(
+            		"SELECT curTrans, curOffset, curEnv FROM stations WHERE code=?");
+            ps.setString(1, code);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+            	tid = rs.getInt(1);
+            	oid = rs.getInt(2);
+            	eid = rs.getInt(3);
+            }
+            rs.close();
+            
+            // lower case the code because that's how the table names are in the database
+            code.toLowerCase();
+
+            // create the tilt entry
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "tilt VALUES (?,?,?,?,?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(3, x);
+			ps.setDouble(4, y);
+			ps.setDouble(5, g);
+			ps.setDouble(6, tid);
+			ps.setDouble(7, oid);
+			ps.setDouble(8, 0);
+			ps.execute();
+			
+			// create the environment entry
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
+			ps.setDouble(1, t);
+			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(3, h);
+			ps.setDouble(4, b);
+			ps.setDouble(5, i);
+			ps.setDouble(6, r);
+			ps.setDouble(7, g);
+			ps.setDouble(8, eid);
+			ps.execute();
+			
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertV2Data() failed.", e);
+		}		
 	}
 }
