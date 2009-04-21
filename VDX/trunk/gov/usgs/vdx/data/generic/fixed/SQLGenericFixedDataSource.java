@@ -39,8 +39,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Init object from given configuration file
 	 */
 	public void initialize(ConfigFile params)
-	{
-		
+	{		
 		url = params.getString("vdx.url");
 		if (url == null)
 			throw new RuntimeException("config parameter vdx.url not found");
@@ -59,6 +58,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			throw new RuntimeException("config parameter vdx.vdxPrefix not found.");
 
 		database = new VDXDatabase(driver, url, vdxPrefix);
+		database.getLogger().info("vdx.name:" + name);
 	}
 
 	/**
@@ -111,20 +111,22 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 				columnStrings.add(col.toString());
 			}
 			rs.close();
+			
+			// include join to translations table
+			// translations should correspond to the ordering of the columns in the cols table
 			StringBuilder sb = new StringBuilder(256);
-			sb.append("SELECT t,");
-			for (int i = 0; i < columns.size(); i++)
-			{
+			sb.append("SELECT a.t as t, ");
+			for (int i = 0; i < columns.size(); i++) {
 				GenericColumn col = columns.get(i);
-				sb.append(col.name);
-				if (i + 1 != columns.size())
-					sb.append(",");
+				sb.append("a." + col.name + " * b.c" + i + " + b.d" + i + " as " + col.name);
+				if (i + 1 != columns.size()) {
+					sb.append(", ");
+				}
 			}
-			sb.append(" FROM [table] WHERE t>=? AND t<=? ORDER BY t ASC");
+			sb.append(" FROM [table] a JOIN translations b ON a.tid = b.tid WHERE a.t >= ? AND a.t <= ? ORDER BY a.t ASC");
 			querySQL = sb.toString();
-		}
-		catch (SQLException e)
-		{
+			
+		} catch (SQLException e) {
 			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.queryColumnData()", e);
 		}
 	}
@@ -377,6 +379,108 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	}
 	
 	/**
+	 * Gets translation id from database using the parameters passed.  Used to determine if the 
+	 * translation exists in the database for inserting a potentially new translation.
+	 * 
+	 * @param code		station code
+	 * @param gdm		generic data matrix containing the translations
+	 * 
+	 * @return tid		translation id of the translation.  -1 if not found.
+	 */
+	public int getTranslation (String code, GenericDataMatrix gdm) {
+		
+		// default the tid as a return value
+		int tid = -1;
+		PreparedStatement ps;
+		ResultSet rs;
+		String sql = "";
+		
+		// try looking up the translation in the database
+		try {
+			
+			DoubleMatrix2D dm = gdm.getData();
+			
+			// iterate through the generic data matrix to get a list of the columns and their values
+			for (int i = 0; i < dm.rows(); i++) {
+				sql += "AND c" + i + " = " + dm.get(i, 0) + " AND d" + i + " = " + dm.get(i, 1) + " ";
+			}
+			
+			// build and execute the query
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			ps = database.getPreparedStatement("SELECT tid FROM translations WHERE code=? " + sql);
+			ps.setString(1, code);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				tid = rs.getInt(1);
+			}
+			rs.close();
+			
+		// catch SQLException
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.getTranslation() failed.", e);
+		}
+		
+		// return the translation id
+		return tid;
+	}
+	
+	/**
+	 * Inserts a translation in the translations table, and assigns the channels table to use this translation as its default
+	 * 
+	 * @param code		station code
+	 * @param gdm		generic data matrix containing the translations
+	 * 
+	 * @return tid		translation id of this translation.  -1 if not found
+	 */
+	public int insertTranslation(String code, GenericDataMatrix gdm) {
+		
+		// default local variables
+		int tid = -1;
+		PreparedStatement ps;
+		String columns	= "";
+		String values	= "";
+		
+		// try to create the translation, if it doesn't exist
+		try {
+			
+			// lookup the translation to see if it exists in the database yet
+			tid = getTranslation(code, gdm);
+			
+			// use the correct database
+			if (tid == -1) {
+				
+				DoubleMatrix2D dm = gdm.getData();
+				
+				// iterate through the generic data matrix to get a list of the values
+				for (int i = 0; i < dm.rows(); i++) {
+					columns += "c" + i + ",d" + i + ",";
+					values	+= dm.get(i, 0) + "," + dm.get(i, 1) + ",";
+				}
+				columns += "code";
+				values  += "'" + code + "'";
+				
+				// insert the translation into the database
+				ps = database.getPreparedStatement("INSERT INTO translations (" + columns + ") VALUES (" + values + ")");
+				ps.execute();
+				tid = getTranslation(code, gdm);
+			}
+			
+			// update the channels table with the current tid
+			ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");
+			ps.setInt(1, tid);
+			ps.setString(2, code);
+			ps.execute();
+			
+		// catch SQLException
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertTranslation() failed.", e);
+		}
+		
+		// return the translation id
+		return tid;		
+	}
+	
+	/**
 	 * Insert data 
 	 * @param table table name to insert
 	 * @param d 2d matrix of data
@@ -385,22 +489,36 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	{
 		String[] colNames = d.getColumnNames();
 		DoubleMatrix2D data = d.getData();
+		int tid = -1;
 
 		database.useDatabase(name + "$" + DATABASE_NAME);
+		
+		// get the current tid from the channels table
+		try {
+			PreparedStatement ps = database.getPreparedStatement("SELECT tid FROM channels where code=?");
+			ps.setString(1, table);
+			ResultSet rs = ps.executeQuery();
+			rs.next();
+			tid = rs.getInt(1);
+			rs.close();
+		} catch (Exception e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.insertData()", e);
+		}
+		
 		Statement st = database.getStatement();
 
 		for (int i = 0; i < d.rows(); i++) {
-			StringBuffer names = new StringBuffer();
-			StringBuffer values = new StringBuffer();
+			StringBuffer columns	= new StringBuffer();
+			StringBuffer values		= new StringBuffer();
 			for (int j = 0; j < colNames.length; j++) {
-				names.append(colNames[j] + ",");
+				columns.append(colNames[j] + ",");
 				values.append(data.getQuick(i, j) + ",");
 			}
-			names.deleteCharAt(names.length()-1);
-			values.deleteCharAt(values.length()-1);
+			columns.append("tid");
+			values.append(tid);
 			
 			StringBuffer sql = new StringBuffer();
-			sql.append("INSERT IGNORE INTO " + table + " (" + names + ") ");
+			sql.append("INSERT IGNORE INTO " + table + " (" + columns + ") ");
 			sql.append("VALUES (" + values + ")");
 			
 			try {
