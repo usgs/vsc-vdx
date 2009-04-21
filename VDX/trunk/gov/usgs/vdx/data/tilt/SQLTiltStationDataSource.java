@@ -42,6 +42,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	 * Default constructor
 	 */
 	public SQLTiltStationDataSource(){}
+	
 	/**
 	 * Get data source type, "tilt" for this class
 	 */
@@ -52,20 +53,27 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	}
 	
 	/**
-	 * Initialize settings from configuration file
+	 * Init object from given configuration file
 	 */
 	public void initialize(ConfigFile params)
-	{
-		String driver = params.getString("vdx.driver");
-		String url = params.getString("vdx.url");
-		String vdxPrefix = params.getString("vdx.vdxPrefix");
-		if (vdxPrefix == null)
-			throw new RuntimeException("config parameter vdx.vdxPrefix not found. Update config if using vdx.name");
+	{		
+		url = params.getString("vdx.url");
+		if (url == null)
+			throw new RuntimeException("config parameter vdx.url not found");
+			
+		driver = params.getString("vdx.driver");
+		if (driver == null)
+			throw new RuntimeException("config parameter vdx.driver not found");
 		
 		name = params.getString("vdx.name");
 		if (name == null)
-			throw new RuntimeException("config parameter vdx.name not found. Update config if using vdx.databaseName");
+			throw new RuntimeException("config parameter vdx.name not found");
 		
+		setName(name);
+		vdxPrefix = params.getString("vdx.vdxPrefix");
+		if (vdxPrefix == null)
+			throw new RuntimeException("config parameter vdx.vdxPrefix not found.");
+
 		database = new VDXDatabase(driver, url, vdxPrefix);
 		database.getLogger().info("vdx.name:" + name);
 	}
@@ -276,9 +284,12 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 
 	/**
 	 * Get tilt data from the database
-	 * @param cid channel id
-	 * @param st start time
-	 * @param et end time
+	 * 
+	 * @param cid	channel id
+	 * @param st	start time
+	 * @param et	end time
+	 * 
+	 * @return td	TiltStationData object. null otherwise.
 	 */	
 	public TiltStationData getTiltStationData(int cid, double st, double et) {
 		try {
@@ -321,24 +332,27 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	}
 	
 	/**
-	 * Get translation id from database
-	 * @param code
-	 * @param cx
-	 * @param dx
-	 * @param cy
-	 * @param dy
-	 * @param ch
-	 * @param dh
-	 * @param cb
-	 * @param db
-	 * @param ci
-	 * @param di
-	 * @param cg
-	 * @param dg
-	 * @param cr
-	 * @param dr
-	 * @param azimuth
-	 * @return tid.  -1 if not found
+	 * Gets translation id from database using the parameters passed.  Used to determine if the 
+	 * translation exists in the database for inserting a potentially new translation.
+	 * 
+	 * @param code		station code
+	 * @param cx		x tilt translation
+	 * @param dx		x tilt offset
+	 * @param cy		y tilt translation
+	 * @param dy		y tilt offset
+	 * @param ch		hole temperature translation
+	 * @param dh		hole temperature offset
+	 * @param cb		box temperature translation
+	 * @param db		box temperature offset
+	 * @param ci		instrument voltage translation
+	 * @param di		instrument voltage offset
+	 * @param cg		ground voltage translation
+	 * @param dg		ground voltage offset
+	 * @param cr		rain gauge translation
+	 * @param dr		rain gauge offset
+	 * @param azimuth	azimuth of instrument (if not true north)
+	 * 
+	 * @return tid.		translation id of the translation.  -1 if not found.
 	 */
 	public int getTranslation (String code, double cx, double dx, double cy, double dy, double ch, double dh, 
 				double cb, double db, double ci, double di, double cg, double dg, double cr, double dr, double azimuth) {
@@ -378,31 +392,34 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			
 		// catch SQLException
 		} catch (SQLException e) {
-			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertTranslation() failed.", e);
+			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.getTranslation() failed.", e);
 		}
 		
+		// return the translation id
 		return tid;		
 	}
 	
 	/**
-	 * Insert translation record into the database, return the new tid, or existing tid if one already exists
-	 * @param name
-	 * @param cx
-	 * @param dx
-	 * @param cy
-	 * @param dy
-	 * @param ch
-	 * @param dh
-	 * @param cb
-	 * @param db
-	 * @param ci
-	 * @param di
-	 * @param cg
-	 * @param dg
-	 * @param cr
-	 * @param dr
-	 * @param azimuth
-	 * @return tid
+	 * Inserts a translation in the translations table, and assigns the channels table use this translation as its default
+	 * 
+	 * @param code		station code
+	 * @param cx		x tilt translation
+	 * @param dx		x tilt offset
+	 * @param cy		y tilt translation
+	 * @param dy		y tilt offset
+	 * @param ch		hole temperature translation
+	 * @param dh		hole temperature offset
+	 * @param cb		box temperature translation
+	 * @param db		box temperature offset
+	 * @param ci		instrument voltage translation
+	 * @param di		instrument voltage offset
+	 * @param cg		ground voltage translation
+	 * @param dg		ground voltage offset
+	 * @param cr		rain gauge translation
+	 * @param dr		rain gauge offset
+	 * @param azimuth	azimuth of instrument (if not true north)
+	 * 
+	 * @return tid		translation id of this translation.  -1 if not found.
 	 */
 	public int insertTranslation(String code, double cx, double dx, double cy, double dy, double ch, double dh, 
 			double cb, double db, double ci, double di, double cg, double dg, double cr, double dr, double azimuth) {
@@ -462,6 +479,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 
 	/**
 	 * Insert tilt record into the database
+	 * 
 	 * @param code channel code
 	 * @param t time
 	 * @param x x tilt data
