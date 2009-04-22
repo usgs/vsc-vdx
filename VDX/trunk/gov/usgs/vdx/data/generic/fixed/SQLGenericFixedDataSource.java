@@ -537,6 +537,19 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return columns;
 	}
 	
+	/**
+	 * Inserts data into VALVE2 Strain Database.  Assumes the translation and offsets are already set properly in the database.
+	 * 
+	 * @param code	station code
+	 * @param t		j2ksec
+	 * @param s1	strain1 value
+	 * @param s2	strain2 value
+	 * @param g		ground voltage
+	 * @param bar	barometer
+	 * @param h		hole temperature
+	 * @param i		instrument voltage
+	 * @param r		rainfall
+	 */
 	public void insertV2StrainData(String code, double t, double s1, double s2, double g, double bar, double h, double i, double r) {
 		try {
 			
