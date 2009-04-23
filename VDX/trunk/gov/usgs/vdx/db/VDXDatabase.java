@@ -357,6 +357,34 @@ public class VDXDatabase
 	}
 	
 	/**
+	 * Select VALVE 2 database to use inside SQL server
+	 * @param db database name (without prefix)
+	 * @return true if success
+	 */
+	public boolean useV2Database(String db) {
+		if (!checkConnect())
+			return false;
+		
+		try {
+			try {
+				statement.execute("USE " + db);
+			} catch (SQLException e) {
+				logger.log(Level.SEVERE, "Lost connection to VALVE 2 database, attempting to reconnect.");
+				close();
+				connect();
+			}
+			statement.execute("USE " + db);
+			return true;
+		} catch (SQLException e) {
+			if (e.getMessage().indexOf("Unknown database") != -1)
+				logger.log(Level.SEVERE, "Attempt to use nonexistent database: " + db);
+			else
+				logger.log(Level.SEVERE, "Could not use database: " + db, e);
+		}
+		return false;
+	}
+	
+	/**
 	 * Create database 'ROOT' if it isn't exist and use it.
 	 * @return true if success
 	 */
