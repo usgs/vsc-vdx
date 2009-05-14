@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
@@ -33,7 +34,6 @@ import cern.colt.matrix.DoubleMatrix2D;
  * A class for rendering helicorders.
  *
  * @author Dan Cervelli
- * @version $Id: HelicorderRenderer.java,v 1.15 2007-08-16 17:28:53 tparker Exp $
  */
 public class HelicorderRenderer extends FrameRenderer
 {
@@ -442,10 +442,20 @@ public class HelicorderRenderer extends FrameRenderer
 			Font oldFont = g.getFont();
 			g.setFont(LARGE_FONT);
 			String c = channel.replace('_', ' ');
+			
 			FontMetrics fm = g.getFontMetrics();
+			Font f = g.getFont();
+			float s = f.getSize();
 			int width = fm.stringWidth(c);
+			while ((width / (double)graphWidth > .5) && (--s > 1))
+			{
+				g.setFont(f.deriveFont(s));
+				fm = g.getFontMetrics();
+				width = fm.stringWidth(c);
+			}
 			int height = fm.getAscent() + fm.getDescent();
 			int lw = width + 20;
+
 			if (alertClip && lastClipTime > t2 - alertClipTimeout && clipWav != null)
 			{
 				g.setColor(Color.red);
