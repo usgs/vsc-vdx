@@ -21,16 +21,6 @@ import java.util.Date;
 
 /**
  * SQL data source for tilt data
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.3  2005/10/18 20:25:43  dcervelli
- * Closed resultsets, changed a typo.
- *
- * Revision 1.2  2005/10/14 20:45:08  dcervelli
- * More development.
- *
- * Revision 1.1  2005/10/13 22:17:51  dcervelli
- * Initial commit.
  *
  * @author Dan Cervelli
  */
@@ -105,7 +95,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 					"lon DOUBLE, " +
 					"lat DOUBLE, " +
 					"azimuth DOUBLE DEFAULT 0, " +
-					"tid INT DEFAULT 1)");
+					"tid INT DEFAULT 1 NOT NULL)");
 			st.execute(
 					"CREATE TABLE translations (tid INT PRIMARY KEY AUTO_INCREMENT," +
 					"name VARCHAR(255), " +
@@ -132,16 +122,21 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	 * @param channelName channel name
 	 * @param lon longitude
 	 * @param lat latitude
+	 * @param azimuth azimuth of deformation source
+	 * @param tid translation id of the channel
 	 * @return true if success
 	 */	
 	public boolean createChannel(String channel, String channelName, double lon, double lat, double azimuth, int tid) {
+		
 		try {
-			Statement st = database.getStatement();
-			database.useDatabase(name + "$" + DATABASE_NAME);
-			String table = channel;
-			st.execute(
+			
+			if (!defaultChannelExists(DATABASE_NAME, channel)) {
+				Statement st = database.getStatement();
+				database.useDatabase(name + "$" + DATABASE_NAME);
+				String table = channel;
+				st.execute(
 					"INSERT INTO channels (code, name, lon, lat, azimuth, tid) VALUES ('" + channel + "','" + channelName + "'," + lon + "," + lat + "," + azimuth + "," + tid + ")");
-			st.execute(
+				st.execute(
 					"CREATE TABLE " + table + " (" +
 					"t DOUBLE PRIMARY KEY, " +
 					"x DOUBLE DEFAULT NULL, " +
@@ -152,6 +147,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 					"g DOUBLE DEFAULT NULL, " +
 					"r DOUBLE DEFAULT NULL, " +
 					"tid INT DEFAULT 1 NOT NULL)");
+			}
 			
 			return true;
 			
@@ -213,8 +209,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		Date lastDataTime = null;
         try {
         	database.useDatabase(name + "$" + DATABASE_NAME);
-            PreparedStatement ps = database.getPreparedStatement("SELECT max(t) FROM ?");
-            ps.setString(1, station);
+            PreparedStatement ps = database.getPreparedStatement("SELECT max(t) FROM " + station);
             ResultSet rs = ps.executeQuery();
             rs.next();
             double result = rs.getDouble(1);
@@ -421,7 +416,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	 * 
 	 * @return tid		translation id of this translation.  -1 if not found.
 	 */
-	public int insertTranslation(String code, double cx, double dx, double cy, double dy, double ch, double dh, 
+	public int createTranslation(String code, double cx, double dx, double cy, double dy, double ch, double dh, 
 			double cb, double db, double ci, double di, double cg, double dg, double cr, double dr, double azimuth) {
 		
 		// default local variables
@@ -484,21 +479,26 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 	 * @param t time
 	 * @param x x tilt data
 	 * @param y y tilt data
-	 * @param tid translation id
+	 * @param h hole temperature data
+	 * @param b box temperature data
+	 * @param i instrument voltage data
+	 * @param g analog ground voltage data
+	 * @param r rainfall data
 	 */	
-	public void insertData(String code, double t, double x, double y, double h, double b, double i, double g, double r) {
+	public void insertData (String code, double t, double x, double y, double h, double b, double i, double g, double r) {
+		
+		int tid = -1;
+		
 		try {
-			int tid = -1;
 			database.useDatabase(name + "$" + DATABASE_NAME);
-			PreparedStatement ps = database.getPreparedStatement(
-					"SELECT tid FROM channels WHERE code=?");
+			PreparedStatement ps = database.getPreparedStatement("SELECT tid FROM channels WHERE code=?");
 			ps.setString(1, code);
 			ResultSet rs = ps.executeQuery();
 			if (rs.next()) {
 				tid = rs.getInt(1);
 			}
-			rs.close();			
-			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " VALUES (?,?,?,?,?,?,?)");
+			rs.close();
+			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " (t, x, y, h, b, i, g, r, tid) VALUES (?,?,?,?,?,?,?,?,?)");
 			ps.setDouble(1, t);
 			ps.setDouble(2, x);
 			ps.setDouble(3, y);
@@ -523,11 +523,10 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			int eid = -1;
 			
 			// set the database
-			database.useDatabase("tilt");
+			database.useV2Database("tilt");
 			
 			// get the translation and offset
-            PreparedStatement ps = database.getPreparedStatement(
-            		"SELECT curTrans, curOffset, curEnv FROM stations WHERE code=?");
+            PreparedStatement ps = database.getPreparedStatement("SELECT curTrans, curOffset, curEnv FROM stations WHERE code=?");
             ps.setString(1, code);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -564,8 +563,14 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			ps.setDouble(8, eid);
 			ps.execute();
 			
+		} catch (NullPointerException e) {
+			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertV2Data() failed.", e);
+			e.printStackTrace();
 		} catch (SQLException e) {
 			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertV2Data() failed.", e);
-		}		
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
