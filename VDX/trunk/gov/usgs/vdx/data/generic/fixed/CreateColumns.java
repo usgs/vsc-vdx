@@ -12,9 +12,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Class for importing CSV format files.
+ * Class for building the list of columns, translation table and channel listings and channels tables.
  *  
- * @author Tom Parker
+ * @author Loren Antolik
  */
 public class CreateColumns
 {
@@ -24,7 +24,7 @@ public class CreateColumns
 	protected static Set<String> keys;
 	private String channel, channelName;
 	private Double lon, lat;
-	private int index;
+	//private int index;
 	private String column, description, unit;
 	private boolean checked, active;
 	private ConfigFile params;
@@ -69,15 +69,18 @@ public class CreateColumns
 			
 			column		= coit.next();
 			sub			= params.getSubConfig(column);
-			index		= Integer.parseInt(sub.getString("index"));
+			//index		= Integer.parseInt(sub.getString("index"));
 			description	= sub.getString("description");
 			unit		= sub.getString("unit");
 			checked		= sub.getString("checked").equals("1");
 			active		= sub.getString("active").equals("1");
 			
-			GenericColumn gc = new GenericColumn(index, column, description, unit, checked, active);
+			GenericColumn gc = new GenericColumn(0, column, description, unit, checked, active);
 			dataSource.createColumn(gc);
-		}		
+		}
+		
+		// create the translations table now that we know what the columns are
+		dataSource.createTranslationTable();
 		
 		// get the list of channels
 		List<String> channels	= params.getList("channel");
