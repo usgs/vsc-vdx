@@ -20,22 +20,6 @@ import cern.colt.matrix.DoubleMatrix2D;
  * default database structure.
  * 
  * TODO: use PreparedStatements.
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.5  2006/04/09 18:26:05  dcervelli
- * ConfigFile/type safety changes.
- *
- * Revision 1.4  2005/09/21 18:13:58  dcervelli
- * Added defaultChannelExists().
- *
- * Revision 1.3  2005/09/06 21:36:43  dcervelli
- * Changed defaultGetSelectors() to standard VDX channel format.
- *
- * Revision 1.2  2005/09/01 00:28:56  dcervelli
- * Changes for default channels.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
  *
  * @author Dan Cervelli
  */
@@ -109,39 +93,24 @@ abstract public class SQLDataSource
 	 */
 	public boolean createDefaultDatabase(String dbName, int comps, boolean channels, boolean translations)
 	{
-		try
-		{
+		try {
 			database.useRootDatabase();
 			Statement st = database.getStatement();
 			String db = database.getDatabasePrefix() + "_" + dbName;
 			st.execute("CREATE DATABASE " + db);
 			st.execute("USE " + db);
-			if (channels)
-			{
-				st.execute(
-						"CREATE TABLE channels (sid INT PRIMARY KEY AUTO_INCREMENT," +
-						"code VARCHAR(16) UNIQUE," +
-						"name VARCHAR(255), " + 
-						"lon DOUBLE, lat DOUBLE)");
-				if (translations)
-				{
-					String sql = "";
-					for (int i = 0; i < comps; i++)
-					{
-						sql += "c" + i + " DOUBLE DEFAULT 1, d" + i + " DOUBLE DEFAULT 0";
-						if (i != comps - 1)
-							sql += ",";
-					}
-					st.execute(
-							"CREATE TABLE translations (tid INT PRIMARY KEY AUTO_INCREMENT," +
-							sql + ")");
-					st.execute("INSERT INTO translations (tid) VALUES (1)");
+			if (channels) {
+				if (translations) {
+					st.execute("CREATE TABLE channels (sid INT PRIMARY KEY AUTO_INCREMENT," +
+								"code VARCHAR(16) UNIQUE, name VARCHAR(255), lon DOUBLE, lat DOUBLE, tid INT DEFAULT 1 NOT NULL)");					
+				} else {
+					st.execute("CREATE TABLE channels (sid INT PRIMARY KEY AUTO_INCREMENT," +
+								"code VARCHAR(16) UNIQUE, name VARCHAR(255), lon DOUBLE, lat DOUBLE)");
 				}
 			}
 			return true;
-		}
-		catch (SQLException e)
-		{
+			
+		} catch (SQLException e) {
 			e.printStackTrace();
 			logger.log(Level.SEVERE, "SQLDataSource.createDatabase() failed.", e);
 		}
@@ -198,7 +167,9 @@ abstract public class SQLDataSource
 			String table = channel;
 			String sql = "CREATE TABLE " + table + " (t DOUBLE PRIMARY KEY,";
 			for (int i = 0; i < comps; i++) {
-				sql += cols[i] + " DOUBLE DEFAULT 0 NOT NULL";
+				// allow for null values in the database
+				// sql += cols[i] + " DOUBLE DEFAULT 0 NOT NULL";				
+				sql += cols[i] + " DOUBLE";
 				if (i != comps - 1)
 					sql += ",";
 			}
@@ -277,19 +248,16 @@ abstract public class SQLDataSource
 	 * @param db database to check (without prefix)
 	 * @param ch channel code to check
 	 */
-	public boolean defaultChannelExists(String db, String ch)
-	{
-		try
-		{
+	public boolean defaultChannelExists(String db, String ch) {
+		try {
 			database.useDatabase(name + "$" + db);
 			PreparedStatement ps = database.getPreparedStatement("SELECT COUNT(*) FROM channels WHERE code=?");
 			ps.setString(1, ch);
 			ResultSet rs = ps.executeQuery();
 			rs.next();
-			return rs.getInt(1) > 0;	
-		}
-		catch (SQLException e)
-		{
+			return rs.getInt(1) > 0;
+			
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
 		}
 		return false;
