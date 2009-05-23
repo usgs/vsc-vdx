@@ -25,8 +25,8 @@ import cern.colt.matrix.DoubleMatrix2D;
 /**
  * @author Dan Cervelli
  */
-public class SQLGenericFixedDataSource extends SQLDataSource implements DataSource
-{
+public class SQLGenericFixedDataSource extends SQLDataSource implements DataSource {
+	
 	private static final String DATABASE_NAME = "generic";
 	
 	private List<GenericColumn> columns;
@@ -38,8 +38,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Init object from given configuration file
 	 */
-	public void initialize(ConfigFile params)
-	{		
+	public void initialize(ConfigFile params) {		
 		url = params.getString("vdx.url");
 		if (url == null)
 			throw new RuntimeException("config parameter vdx.url not found");
@@ -64,21 +63,21 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for metadata
 	 */
-	private void getMetadata()
-	{
-		if (metadata != null)
+	private void getMetadata() {
+		
+		if (metadata != null) {
 			return;
-		try
-		{
+		}
+		
+		try {
 			metadata = new HashMap<String, String>();
 			database.useDatabase(name + "$" + DATABASE_NAME);
 			ResultSet rs = database.getStatement().executeQuery("SELECT meta_key, meta_value FROM metadata");
 			while (rs.next())
 				metadata.put(rs.getString(1), rs.getString(2));
 			rs.close();
-		}
-		catch (SQLException e)
-		{
+			
+		} catch (SQLException e) {
 			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.getMetadata()", e);
 		}
 	}
@@ -87,10 +86,12 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Query database for described columns and construct
 	 * sql to retrieve their data
 	 */
-	private void queryColumnData()
-	{
-		if (columns != null)
+	private void queryColumnData() {
+		
+		if (columns != null) {
 			return;
+		}
+		
 		try {
 			columns			= new ArrayList<GenericColumn>();
 			columnStrings	= new ArrayList<String>();
@@ -134,14 +135,14 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Create generic database
 	 */
-	public boolean createDatabase()
-	{
-		try
-		{
+	public boolean createDatabase() {
+		
+		try {
 			name = getName();
 			String db = name + "$" + DATABASE_NAME;
-			if (!createDefaultDatabase(db, 0, true, true))
+			if (!createDefaultDatabase(db, 0, true, true)) {
 				return false;
+			}
 			
 			Statement st = database.getStatement();
 			database.useDatabase(db);
@@ -156,12 +157,36 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 					"meta_key VARCHAR(255)," +
 					"meta_value VARCHAR(255))");
 			return true;
-		}
-		catch (SQLException e)
-		{
+			
+		} catch (SQLException e) {
 			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.createDatabase() failed.", e);
 		}
 		return false;
+	}
+	
+	public boolean createTranslationTable() {
+		
+		// default return value
+		boolean returnValue = false;
+		String sql = "";
+		queryColumnData();
+		
+		try {
+			for (int i = 0; i < columns.size(); i++) {
+				sql += "c" + i + " DOUBLE DEFAULT 1, d" + i + " DOUBLE DEFAULT 0";
+				if (i != columns.size() - 1)
+					sql += ",";
+			}			
+			database.useDatabase(name + "$" + DATABASE_NAME);
+			Statement st = database.getStatement();
+			st.execute("CREATE TABLE translations (tid INT PRIMARY KEY AUTO_INCREMENT,code VARCHAR(16)," + sql + ")");
+			st.execute("INSERT INTO translations (tid, code) VALUES (1, 'default')");
+			
+		} catch (SQLException e) {
+			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.createTranslationTable() failed", e);
+		}
+		
+		return returnValue;
 	}
 
 	/**
@@ -172,14 +197,18 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param lat
 	 * @return flag if operation successful
 	 */
-	public boolean createChannel(String channel, String channelName, double lon, double lat)
-	{
-		queryColumnData();
-		String[] cols = new String[columns.size()];
-		for (int i = 0; i < cols.length; i++) {
-			cols[i] = columns.get(i).name;
-		}		
-		return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, true);
+	public boolean createChannel(String channel, String channelName, double lon, double lat) {
+		
+		if (!defaultChannelExists(DATABASE_NAME, channel)) {
+			queryColumnData();
+			String[] cols = new String[columns.size()];
+			for (int i = 0; i < cols.length; i++) {
+				cols[i] = columns.get(i).name;
+			}		
+			return createDefaultChannel(name + "$" + DATABASE_NAME, cols.length, channel, channelName, lon, lat, cols, true, true);
+		} else {
+			return true;
+		}
 	}
 	
 	/**
@@ -209,16 +238,14 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Get flag if database exist
 	 */
-	public boolean databaseExists()
-	{
+	public boolean databaseExists() {
 		return defaultDatabaseExists(name + "$" + DATABASE_NAME);
 	}
 
 	/**
 	 * Get database type, generic in this case
 	 */
-	public String getType()
-	{
+	public String getType() {
 		return "generic";
 	}
 
@@ -226,8 +253,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Get channels list in format "sid:code:name:lon:lat" from database
 	 * @param db database name to query
 	 */
-	public List<String> getSelectors()
-	{
+	public List<String> getSelectors() {
 		return defaultGetSelectors(DATABASE_NAME);
 	}
 
@@ -235,16 +261,14 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Get selector name
 	 * @param plural if we need selector name in the plural form
 	 */
-	public String getSelectorName(boolean plural)
-	{
+	public String getSelectorName(boolean plural) {
 		return plural ? "Stations" : "Station";
 	}
 
 	/**
 	 * Getter for selector string
 	 */
-	public String getSelectorString()
-	{
+	public String getSelectorString() {
 		String ss = metadata.get("selectorString");
 		if (ss == null)
 			return "Channels";
@@ -255,8 +279,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for data source description
 	 */
-	public String getDescription()
-	{
+	public String getDescription() {
 		String d = metadata.get("description");
 		if (d == null)
 			return "no description";
@@ -267,8 +290,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for data source title
 	 */
-	public String getTitle()
-	{
+	public String getTitle() {
 		String t = metadata.get("title");
 		if (t == null)
 			return "Generic Data";
@@ -279,8 +301,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for data source time shortcuts
 	 */
-	public String getTimeShortcuts()
-	{
+	public String getTimeShortcuts() {
 		String ts = metadata.get("timeShortcuts");
 		if (ts == null)
 			return "-6h,-24h,-3d,-1w,-1m,-1y";
@@ -293,8 +314,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param command to execute.
 	 * 
 	 */
-	public RequestResult getData(Map<String, String> params)
-	{
+	public RequestResult getData(Map<String, String> params) {
 		String action = params.get("action");
 		if (action == null)
 			return null;
@@ -302,8 +322,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		queryColumnData();
 		getMetadata();
 		
-		if (action.equals("genericMenu"))
-		{
+		if (action.equals("genericMenu")) {
 			List<String> result = new ArrayList<String>(columnStrings.size() + 5);
 			result.add(getTitle());
 			result.add(getDescription());
@@ -314,14 +333,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 				result.add(s);
 			}
 			return new TextResult(result);
-		}
-		else if (action.equals("selectors"))
-		{
+		} else if (action.equals("selectors")) {
 			List<String> s = getSelectors();
 			return new TextResult(s);
-		}
-		else if (action.equals("data"))
-		{
+		} else if (action.equals("data")) {
 			int cid = Integer.parseInt(params.get("cid"));
 			double st = Double.parseDouble(params.get("st"));
 			double et = Double.parseDouble(params.get("et"));
@@ -339,11 +354,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param et end time
 	 * @return
 	 */
-	public GenericDataMatrix getGenericData(int cid, double st, double et)
-	{
+	public GenericDataMatrix getGenericData(int cid, double st, double et) {
+		
 		GenericDataMatrix result = null;
-		try
-		{
+		
+		try {
 			database.useDatabase(name + "$" + DATABASE_NAME);
 			PreparedStatement ps = database.getPreparedStatement("SELECT code FROM channels WHERE sid=?");
 			ps.setInt(1, cid);
@@ -359,8 +374,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
 			List<double[]> pts = new ArrayList<double[]>();
-			while (rs.next())
-			{
+			while (rs.next()) {
 				double[] d = new double[columns.size() + 1];
 				for (int i = 0; i < columns.size() + 1; i++)
 					d[i] = rs.getDouble(i + 1);
@@ -370,9 +384,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			
 			if (pts.size() > 0)
 				result = new GenericDataMatrix(pts);
-		}
-		catch (Exception e)
-		{
+			
+		} catch (Exception e) {
 			database.getLogger().log(Level.SEVERE, "SQLGenericFixedDataSource.getGenericData()", e);
 		}
 		return result;
@@ -432,7 +445,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * 
 	 * @return tid		translation id of this translation.  -1 if not found
 	 */
-	public int insertTranslation(String code, GenericDataMatrix gdm) {
+	public int createTranslation(String code, GenericDataMatrix gdm) {
 		
 		// default local variables
 		int tid = -1;
@@ -485,10 +498,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param table table name to insert
 	 * @param d 2d matrix of data
 	 */
-	public void insertData(String table, GenericDataMatrix d)
-	{
-		String[] colNames = d.getColumnNames();
-		DoubleMatrix2D data = d.getData();
+	public void insertData(String table, GenericDataMatrix gdm) {
+		
+		String[] colNames = gdm.getColumnNames();
+		DoubleMatrix2D data = gdm.getData();
 		int tid = -1;
 
 		database.useDatabase(name + "$" + DATABASE_NAME);
@@ -507,19 +520,22 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		
 		Statement st = database.getStatement();
 
-		for (int i = 0; i < d.rows(); i++) {
+		for (int i = 0; i < gdm.rows(); i++) {
 			StringBuffer columns	= new StringBuffer();
 			StringBuffer values		= new StringBuffer();
+			
+			// append the columns which DO appear in the column list
 			for (int j = 0; j < colNames.length; j++) {
 				columns.append(colNames[j] + ",");
 				values.append(data.getQuick(i, j) + ",");
 			}
+			
+			// append the tid
 			columns.append("tid");
 			values.append(tid);
 			
 			StringBuffer sql = new StringBuffer();
-			sql.append("INSERT IGNORE INTO " + table + " (" + columns + ") ");
-			sql.append("VALUES (" + values + ")");
+			sql.append("INSERT IGNORE INTO " + table + " (" + columns + ") VALUES (" + values + ")");
 			
 			try {
 				st.execute(sql.toString());
@@ -532,8 +548,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for column list
 	 */
-	public List<GenericColumn> getColumns()
-	{
+	public List<GenericColumn> getColumns() {
 		return columns;
 	}
 	
@@ -551,6 +566,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param r		rainfall
 	 */
 	public void insertV2StrainData(String code, double t, double s1, double s2, double g, double bar, double h, double i, double r) {
+		
 		try {
 			
 			// default some variables
@@ -561,7 +577,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
             code.toLowerCase();
 			
 			// set the database
-			database.useDatabase("strain");
+			database.useV2Database("strain");
 			
 			// get the translation and offset
             PreparedStatement ps = database.getPreparedStatement(
@@ -602,10 +618,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	}
 	
 	public void insertV2GasData(int sid, double t, double co2) {
+		
 		try {
 			
 			// set the database
-			database.useDatabase("gas");
+			database.useV2Database("gas");
 
             // create the tilt entry
 			PreparedStatement ps = database.getPreparedStatement("INSERT IGNORE INTO co2 VALUES (?,?,?,?)");
