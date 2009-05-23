@@ -461,8 +461,7 @@ public class VDXDatabase
 	protected static void createDatabase(VDXDatabase db, Arguments args, SQLDataSource ds)
 	{
 		String name = args.get("-n");
-		if (name == null)
-		{
+		if (name == null) {
 			System.err.println("You must specify the name of the database with '-n'.");
 			System.exit(-1);
 		}
@@ -497,8 +496,7 @@ public class VDXDatabase
 	/**
 	 * Main method, provide command-line interface
 	 */
-	public static void main(String[] as)
-	{
+	public static void main(String[] as) {
 		Set<String> flags = new HashSet<String>();
 		Set<String> kvs = new HashSet<String>();
 		kvs.add("-c");
@@ -506,26 +504,24 @@ public class VDXDatabase
 		kvs.add("-a");
 		Arguments args = new Arguments(as, flags, kvs);
 		String cf = args.get("-c");
-		if (cf == null)
+		if (cf == null) {
 			cf = DEFAULT_CONFIG_FILE;
+		}
 		
 		VDXDatabase db = VDXDatabase.getVDXDatabase(cf);
-		if (db == null)
-		{
+		if (db == null) {
 			System.out.println("Could not connect to VDX database");
 			System.exit(-1);
 		}
 		
 		String action = args.get("-a");
-		if (action == null)
+		if (action == null) {
 			outputInstructions();
-		else
-		{
+		} else {
 			action = action.toLowerCase();
-			if (action.equals("createvdx"))
+			if (action.equals("createvdx")) {
 				db.checkDatabase();
-			else
-			{
+			} else {
 				Map<String, SQLDataSource> sources = new HashMap<String, SQLDataSource>();
 				sources.put("createhypocenters", new SQLHypocenterDataSource());
 				sources.put("creategps", new SQLGPSDataSource());
@@ -534,11 +530,11 @@ public class VDXDatabase
 				sources.put("creategenericvariable", new SQLGenericVariableDataSource());
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				SQLDataSource sds = sources.get(action);
-				if (sds != null)
+				if (sds != null) {
 					createDatabase(db, args, sds);
-				else
+				} else {
 					System.out.println("I don't know how to " + action);
-					
+				}	
 			}
 		}
 	}
