@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -500,17 +501,19 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			rs.close();
 			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " (t, x, y, h, b, i, g, r, tid) VALUES (?,?,?,?,?,?,?,?,?)");
 			ps.setDouble(1, t);
-			ps.setDouble(2, x);
-			ps.setDouble(3, y);
-			ps.setDouble(4, h);
-			ps.setDouble(5, b);
-			ps.setDouble(6, i);
-			ps.setDouble(7, g);
-			ps.setDouble(8, r);
+			if (Double.isNaN(x)) { ps.setNull(2, 8); } else { ps.setDouble(2, x); }
+			if (Double.isNaN(y)) { ps.setNull(3, 8); } else { ps.setDouble(3, y); }
+			if (Double.isNaN(h)) { ps.setNull(4, 8); } else { ps.setDouble(4, h); }
+			if (Double.isNaN(b)) { ps.setNull(5, 8); } else { ps.setDouble(5, b); }
+			if (Double.isNaN(i)) { ps.setNull(6, 8); } else { ps.setDouble(6, i); }
+			if (Double.isNaN(g)) { ps.setNull(7, 8); } else { ps.setDouble(7, g); }
+			if (Double.isNaN(r)) { ps.setNull(8, 8); } else { ps.setDouble(8, r); }
 			ps.setInt(9, tid);
 			ps.execute();
 		} catch (SQLException e) {
-			database.getLogger().log(Level.SEVERE, "SQLTiltStationDataSource.insertData() failed.", e);
+			database.getLogger().log(Level.SEVERE, "SQLException.  SQLTiltStationDataSource.insertData() failed.", e);
+		} catch (Exception e) {
+			database.getLogger().log(Level.SEVERE, "Exception.  SQLTiltStationDataSource.insertData() failed.", e);
 		}
 	}
 	
@@ -543,9 +546,9 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
             ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "tilt VALUES (?,?,?,?,?,?,?,?)");
 			ps.setDouble(1, t);
 			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, x);
-			ps.setDouble(4, y);
-			ps.setDouble(5, g);
+			if (Double.isNaN(x)) { ps.setNull(3, 8); } else { ps.setDouble(3, x); }
+			if (Double.isNaN(y)) { ps.setNull(4, 8); } else { ps.setDouble(4, y); }
+			if (Double.isNaN(g)) { ps.setNull(5, 8); } else { ps.setDouble(5, g); }
 			ps.setDouble(6, tid);
 			ps.setDouble(7, oid);
 			ps.setDouble(8, 0);
@@ -555,11 +558,11 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
             ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
 			ps.setDouble(1, t);
 			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, h);
-			ps.setDouble(4, b);
-			ps.setDouble(5, i);
-			ps.setDouble(6, r);
-			ps.setDouble(7, g);
+			if (Double.isNaN(h)) { ps.setNull(3, 8); } else { ps.setDouble(3, h); }
+			if (Double.isNaN(b)) { ps.setNull(4, 8); } else { ps.setDouble(4, b); }
+			if (Double.isNaN(i)) { ps.setNull(5, 8); } else { ps.setDouble(5, i); }
+			if (Double.isNaN(r)) { ps.setNull(6, 8); } else { ps.setDouble(6, r); }
+			if (Double.isNaN(g)) { ps.setNull(7, 8); } else { ps.setDouble(7, g); }
 			ps.setDouble(8, eid);
 			ps.execute();
 			
