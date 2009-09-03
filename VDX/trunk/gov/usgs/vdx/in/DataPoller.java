@@ -140,6 +140,9 @@ public class DataPoller extends Poller {
 	private SQLGenericFixedDataSource strainDataSource;
 	private SQLGenericFixedDataSource gasDataSource;
 	
+	// default the connection to the station/
+	private FreewaveIPConnection connection;
+	
 	// NONE: no logging will take place
 	private static final int NONE = 0;
 	// LOW: normal program operation logging
@@ -311,7 +314,7 @@ public class DataPoller extends Poller {
 			// connection settings
 			callNumber		= Util.stringToInt(stationParams.getString("callNumber"));
 			output("callNumber:" + String.valueOf(callNumber), FULL, false);			
-			repeater			= Util.stringToInt(configFile.getString("repeater"), 0);
+			repeater			= Util.stringToInt(stationParams.getString("repeater"), 0);
 			output(" repeater:" + String.valueOf(repeater), FULL, false);		
 			connTimeout		= Util.stringToInt(stationParams.getString("connTimeout"), 50000);
 			output(" connTimeout:" + String.valueOf(connTimeout) + "ms", FULL, false);			
@@ -448,9 +451,6 @@ public class DataPoller extends Poller {
 			// begin message
 			output("#### " + currentTime.nowString() + " [Start Polling Cycle]\n", LOW, true);
 			
-			// default the connection to the station
-			FreewaveIPConnection connection = null;
-			
 			// iterate through this loop for each of the stations
 			for (int i = 0; i < stationList.size(); i++) {
 				
@@ -573,15 +573,10 @@ public class DataPoller extends Poller {
 						
 					// disconnect from the device, we will reconnect if we are trying again
 					} finally {
-						// if (connection != null) {
+						if (connection != null) {
 							connection.disconnect();
-						// }
+						}
 					}
-					
-					// try again to disconnect, in case the finally didn't work
-					// if (connection != null) {
-						connection.disconnect();
-					// }
 					
 					// update the number of tries so we don't waste all day trying
 					tries++;
