@@ -47,7 +47,8 @@ public class HelicorderSettings
 	public int barRange = -1;
 	public float barMult = 3;
 	public boolean showClip = false;
-
+	public boolean forceCenter = false;
+	
 	public String timeZoneAbbr = "GMT";
 	public double timeZoneOffset = 0;
 	public TimeZone timeZone = TimeZone.getTimeZone("GMT");
@@ -66,6 +67,7 @@ public class HelicorderSettings
 		hr.setData(hd);
 		hr.setTimeChunk(timeChunk);
 		hr.setLocation(left, top, width, height);
+		hr.setForceCenter(forceCenter);
 		double mean = hd.getMeanMax();
 		double bias = hd.getBias();
 		mean = Math.abs(bias - mean);
