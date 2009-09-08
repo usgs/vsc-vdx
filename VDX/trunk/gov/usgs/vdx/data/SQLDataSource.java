@@ -165,7 +165,7 @@ abstract public class SQLDataSource
 			}
 			
 			String table = channel;
-			String sql = "CREATE TABLE " + table + " (t DOUBLE PRIMARY KEY,";
+			String sql = "CREATE TABLE " + table + " (j2ksec DOUBLE PRIMARY KEY,";
 			for (int i = 0; i < comps; i++) {
 				// allow for null values in the database
 				// sql += cols[i] + " DOUBLE DEFAULT 0 NOT NULL";				
