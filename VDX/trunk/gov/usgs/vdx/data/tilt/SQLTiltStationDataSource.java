@@ -139,7 +139,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 					"INSERT INTO channels (code, name, lon, lat, azimuth, tid) VALUES ('" + channel + "','" + channelName + "'," + lon + "," + lat + "," + azimuth + "," + tid + ")");
 				st.execute(
 					"CREATE TABLE " + table + " (" +
-					"t DOUBLE PRIMARY KEY, " +
+					"j2ksec DOUBLE PRIMARY KEY, " +
 					"x DOUBLE DEFAULT NULL, " +
 					"y DOUBLE DEFAULT NULL, " +
 					"h DOUBLE DEFAULT NULL, " +
@@ -210,7 +210,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 		Date lastDataTime = null;
         try {
         	database.useDatabase(name + "$" + DATABASE_NAME);
-            PreparedStatement ps = database.getPreparedStatement("SELECT max(t) FROM " + station);
+            PreparedStatement ps = database.getPreparedStatement("SELECT max(j2ksec) FROM " + station);
             ResultSet rs = ps.executeQuery();
             rs.next();
             double result = rs.getDouble(1);
@@ -298,14 +298,14 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 			rs.close();
 
 			ps = database.getPreparedStatement(
-				"SELECT t, " +
+				"SELECT j2ksec, " +
 				"       COS(RADIANS(azimuth))*(x*cx+dx)+SIN(RADIANS(azimuth))*(y*cy+dy), " +
 				"      -SIN(RADIANS(azimuth))*(x*cx+dx)+COS(RADIANS(azimuth))*(y*cy+dy), " + 
 				"       h*ch+dh, b*cb+db, i*ci+di, g*cg+dg, r*cr+dr " +
 				"FROM " + code + " " +
 				"INNER JOIN translations ON " + code + ".tid=translations.tid " +
-				"WHERE t>=? AND t<=? " +
-				"ORDER BY t ASC");
+				"WHERE j2ksec>=? AND j2ksec<=? " +
+				"ORDER BY j2ksec ASC");
 			
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
@@ -499,7 +499,7 @@ public class SQLTiltStationDataSource extends SQLDataSource implements DataSourc
 				tid = rs.getInt(1);
 			}
 			rs.close();
-			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " (t, x, y, h, b, i, g, r, tid) VALUES (?,?,?,?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + " (j2ksec, x, y, h, b, i, g, r, tid) VALUES (?,?,?,?,?,?,?,?,?)");
 			ps.setDouble(1, t);
 			if (Double.isNaN(x)) { ps.setNull(2, 8); } else { ps.setDouble(2, x); }
 			if (Double.isNaN(y)) { ps.setNull(3, 8); } else { ps.setDouble(3, y); }
