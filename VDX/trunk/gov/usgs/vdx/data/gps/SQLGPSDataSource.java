@@ -78,9 +78,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			st.execute(
 					"CREATE TABLE sources (sid INT AUTO_INCREMENT," +
 					"name VARCHAR(255), hash VARCHAR(32)," +
-					"t0 DOUBLE NOT NULL, t1 DOUBLE NOT NULL," + 
+					"j2ksec0 DOUBLE NOT NULL, j2ksec1 DOUBLE NOT NULL," + 
 					"stid INT," +
-					"PRIMARY KEY (sid, t0, t1))");
+					"PRIMARY KEY (sid, j2ksec0, j2ksec1))");
 			return true;
 		}
 		catch (SQLException e)
@@ -236,11 +236,11 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 		{
 			database.useDatabase(name + "$" + DATABASE_NAME);
 			List<DataPoint> dataPoints = new ArrayList<DataPoint>();
-			String sql = "SELECT (t0+t1)/2, x, y, z, sxx, syy, szz, sxy, sxz, syz FROM solutions " +
+			String sql = "SELECT (j2ksec0+j2ksec1)/2, x, y, z, sxx, syy, szz, sxy, sxz, syz FROM solutions " +
 					"INNER JOIN benchmarks ON benchmarks.bid=solutions.bid " +
 					"INNER JOIN sources ON sources.sid=solutions.sid " +
 					"WHERE sources.stid=? AND benchmarks.bid=? " +
-					"AND t0>=? AND t1<=? ORDER BY 1";
+					"AND j2ksec0>=? AND j2ksec1<=? ORDER BY 1";
 			PreparedStatement ps = database.getPreparedStatement(sql);
 			ps.setInt(1, stid);
 //			ps.setString(2, selector);
@@ -410,7 +410,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource
 			rs.close();
 			if (cnt > 0)  // already inserted
 				return -1;
-			ps = database.getPreparedStatement("INSERT INTO sources (name, hash, t0, t1, stid) VALUES (?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT INTO sources (name, hash, j2ksec0, j2ksec1, stid) VALUES (?,?,?,?,?)");
 			ps.setString(1, n);
 			ps.setString(2, hash);
 			ps.setDouble(3, t0);
