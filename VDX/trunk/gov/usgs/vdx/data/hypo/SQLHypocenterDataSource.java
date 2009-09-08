@@ -55,7 +55,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		{
 			database.useDatabase(db);
 			database.getStatement().execute("ALTER TABLE " + DATABASE_NAME + " DROP PRIMARY KEY");
-			database.getStatement().execute("ALTER TABLE " + DATABASE_NAME + " ADD PRIMARY KEY (t, lon, lat)");
+			database.getStatement().execute("ALTER TABLE " + DATABASE_NAME + " ADD PRIMARY KEY (j2ksec, lon, lat)");
 			return true;
 		}
 		catch (Exception e)
@@ -141,9 +141,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			database.useDatabase(name + "$" + DATABASE_NAME);
 			// TODO: fix -180/180 wrap
 			List<Hypocenter> result = new ArrayList<Hypocenter>();
-			String sql = "SELECT t, lon, lat, depth, mag FROM hypocenters WHERE " +
-					"t>=? AND t<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=? " +
-					"ORDER BY t ASC";
+			String sql = "SELECT j2ksec, lon, lat, depth, mag FROM hypocenters WHERE " +
+					"j2ksec>=? AND j2ksec<=? AND lon>=? AND lon<=? AND lat>=? AND lat<=? AND depth>=? AND depth<=? AND mag>=? AND mag<=? " +
+					"ORDER BY j2ksec ASC";
 			PreparedStatement ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
