@@ -116,7 +116,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			// include join to translations table
 			// translations should correspond to the ordering of the columns in the cols table
 			StringBuilder sb = new StringBuilder(256);
-			sb.append("SELECT a.t as t, ");
+			sb.append("SELECT a.j2ksec as j2ksec, ");
 			for (int i = 0; i < columns.size(); i++) {
 				GenericColumn col = columns.get(i);
 				sb.append("a." + col.name + " * b.c" + i + " + b.d" + i + " as " + col.name);
@@ -124,7 +124,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 					sb.append(", ");
 				}
 			}
-			sb.append(" FROM [table] a JOIN translations b ON a.tid = b.tid WHERE a.t >= ? AND a.t <= ? ORDER BY a.t ASC");
+			sb.append(" FROM [table] a JOIN translations b ON a.tid = b.tid WHERE a.j2ksec >= ? AND a.j2ksec <= ? ORDER BY a.j2ksec ASC");
 			querySQL = sb.toString();
 			
 		} catch (SQLException e) {
