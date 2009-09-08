@@ -101,11 +101,11 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 				lon + "," + lat + ")");
 		
 			st.execute("CREATE TABLE " + channel + "_values" + 
-				" (t DOUBLE PRIMARY KEY," +
+				" (j2ksec DOUBLE PRIMARY KEY," +
 				" d DOUBLE DEFAULT 0 NOT NULL)");
 
 			st.execute("CREATE TABLE " + channel + "_events" + 
-				" (t DOUBLE PRIMARY KEY," +
+				" (j2ksec DOUBLE PRIMARY KEY," +
 				" d DOUBLE DEFAULT 0 NOT NULL)");
 			
 			return true;
@@ -269,7 +269,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 
 			if (type.equals("VALUES"))
 			{
-				String sql = "SELECT t+?/2,avg(d) FROM " + code + "_values" + " where t >= ? and t <= ? group by floor(t / ?);";
+				String sql = "SELECT j2ksec+?/2,avg(d) FROM " + code + "_values" + " where j2ksec >= ? and j2ksec <= ? group by floor(j2ksec / ?);";
 				ps = database.getPreparedStatement(sql);
 				ps.setDouble(1, p);
 				ps.setDouble(2, st);
@@ -289,7 +289,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			}
 			else if (type.equals("EVENTS"))
 			{
-				String sql = "SELECT t, d FROM " + code + "_events" + " where t >= ? and t <= ? and d != 0;";
+				String sql = "SELECT j2ksec, d FROM " + code + "_events" + " where j2ksec >= ? and j2ksec <= ? and d != 0;";
 				ps = database.getPreparedStatement(sql);
 				ps.setDouble(1, st);
 				ps.setDouble(2, et);
@@ -356,7 +356,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource
 			else
 				sql = "INSERT IGNORE INTO ";
 			
-			sql +=  channel + tableSuffix + " (t, d) VALUES (?,?)";
+			sql +=  channel + tableSuffix + " (j2ksec, d) VALUES (?,?)";
 			PreparedStatement ps = database.getPreparedStatement(sql);
 			for (int i=0; i < data.rows(); i++)
 			{
