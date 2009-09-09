@@ -522,7 +522,7 @@ public class DataPoller extends Poller {
 									dm.setQuick(0, 1, dl.s1);
 									dm.setQuick(0, 2, dl.s2);
 									dm.setQuick(0, 3, dl.bar);
-									String[] columnNames = {"t", "s1", "s2", "bar"};
+									String[] columnNames = {"j2ksec", "s1", "s2", "bar"};
 									GenericDataMatrix gdm = new GenericDataMatrix(dm);
 									gdm.setColumnNames(columnNames);
 									strainDataSource.insertData(stationObject.station, gdm);
@@ -537,7 +537,7 @@ public class DataPoller extends Poller {
 									dm.setQuick(0, 0, dl.t);
 									dm.setQuick(0, 1, dl.co2l);
 									dm.setQuick(0, 2, dl.co2h);
-									String[] columnNames = {"t", "co2l", "co2h"};
+									String[] columnNames = {"j2ksec", "co2l", "co2h"};
 									GenericDataMatrix gdm = new GenericDataMatrix(dm);
 									gdm.setColumnNames(columnNames);
 									gasDataSource.insertData(stationObject.station, gdm);
