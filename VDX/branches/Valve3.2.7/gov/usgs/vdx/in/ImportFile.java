@@ -79,6 +79,7 @@ public class ImportFile {
 	
 	private GenericDataMatrix gdm;
 	int count;
+	int test;
 
 	/**
 	 * ImportFile takes a config file as a parameter and parses it to prepare for importing
