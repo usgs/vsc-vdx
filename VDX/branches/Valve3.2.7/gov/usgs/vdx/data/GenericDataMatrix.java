@@ -10,7 +10,7 @@ import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
- * BinaryDataSet to store cern's DoubleMatrix2D and metainformation about matrix column's names
+ * BinaryDataSet to store cern's DoubleMatrix2D and meta information about matrix column's names
  *
  * @author Dan Cervelli
  */
@@ -203,8 +203,11 @@ public class GenericDataMatrix implements BinaryDataSet
 	 */
 	public void add(int c, double v)
 	{
-		for (int i = 0; i < rows(); i++)
-			data.setQuick(i, c, data.getQuick(i, c) + v);
+		for (int i = 0; i < rows(); i++) {
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				data.setQuick(i, c, data.getQuick(i, c) + v);
+			}
+		}
 	}
 
 	/**
@@ -226,8 +229,11 @@ public class GenericDataMatrix implements BinaryDataSet
 	 */
 	public void mult(int c, double v)
 	{
-		for (int i = 0; i < rows(); i++)
-			data.setQuick(i, c, data.getQuick(i, c) * v);
+		for (int i = 0; i < rows(); i++) {
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				data.setQuick(i, c, data.getQuick(i, c) * v);
+			}
+		}
 	}
 
 	/**
@@ -251,14 +257,18 @@ public class GenericDataMatrix implements BinaryDataSet
         double ssxx	= 0;
         double ssxy	= 0;        
         for (int i = 0; i < rows(); i++) {
-            ssxy += (data.getQuick(i, 0) - xm) * (data.getQuick(i, c) - ym);
-            ssxx += (data.getQuick(i, 0) - xm) * (data.getQuick(i, 0) - xm);
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				ssxy += (data.getQuick(i, 0) - xm) * (data.getQuick(i, c) - ym);
+				ssxx += (data.getQuick(i, 0) - xm) * (data.getQuick(i, 0) - xm);
+			}
         }
         
         double m	= ssxy / ssxx;
         double b	= ym - m * xm;
         for (int i = 0; i < rows(); i++) {
-            data.setQuick(i, c, data.getQuick(i, c) - (data.getQuick(i, 0) * m + b));
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				data.setQuick(i, c, data.getQuick(i, c) - (data.getQuick(i, 0) * m + b));
+			}
         }
 	}
 	
@@ -270,7 +280,9 @@ public class GenericDataMatrix implements BinaryDataSet
 	{
 		double m = -1E300;
 		for (int i = 0; i < rows(); i++)
-			m = Math.max(m, data.getQuick(i, c));
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				m = Math.max(m, data.getQuick(i, c));
+			}
 		return m;
 	}
 
@@ -282,7 +294,9 @@ public class GenericDataMatrix implements BinaryDataSet
 	{
 		double m = 1E300;
 		for (int i = 0; i < rows(); i++)
-			m = Math.min(m, data.getQuick(i, c));
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				m = Math.min(m, data.getQuick(i, c));
+			}
 		return m;
 	}
 	
@@ -293,9 +307,15 @@ public class GenericDataMatrix implements BinaryDataSet
 	public double mean(int c)
 	{
 		double t = 0;
-		for (int i = 0; i < rows(); i++)
-			t += data.getQuick(i, c);
-		return t / (double)rows();
+		double j = 0;
+		for (int i = 0; i < rows(); i++) {
+			if (!Double.isNaN(data.getQuick(i, c))) {
+				t += data.getQuick(i, c);
+				j++;
+			}
+		}
+		return t / j;
+		// return t / (double)rows();
 	}
 	
 	/**
