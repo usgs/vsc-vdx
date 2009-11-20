@@ -808,7 +808,7 @@ abstract public class SQLDataSource {
 			if (!allColumns) {
 				sql += "WHERE active = 1 ";
 			}
-			sql += "ORDER BY idx";
+			sql += "ORDER BY idx, name";
 			ps = database.getPreparedStatement(sql);
 			rs = ps.executeQuery();
 			while (rs.next()) {
@@ -889,7 +889,7 @@ abstract public class SQLDataSource {
 			// look up the channel code from the channels table, which is the name of the table to query
 			// channel types is false because at this point we don't care about that, just trying to get the channel name
 			Channel ch	= defaultGetChannel(cid, false);
-			columns		= defaultGetColumns(true);
+			columns		= defaultGetColumns(false);
 
 			// if we are getting ranked data back, then we need to include the rid, otherwise, just add in a field for j2ksec
 			if (ranks) {
@@ -908,14 +908,14 @@ abstract public class SQLDataSource {
 			for (int i = 0; i < columns.size(); i++) {
 				column = columns.get(i);
 				if (translations) {
-					sql = sql + "," + column.name + " * c" + column.name + " + d" + column.name + " as " + column.name;
+					sql = sql + "," + column.name + " * c" + column.name + " + d" + column.name + " as " + column.name + " ";
 				} else {
-					sql = sql + "," + column.name;
+					sql = sql + "," + column.name + " ";
 				}
 			}
 
 			// FROM sql
-			sql	= sql + "FROM ? a ";
+			sql	= sql + "FROM " + ch.getCode() + " a ";
 			if (translations) {
 				sql = sql + "INNER JOIN translations b on a.tid = b.tid ";
 			}
@@ -932,20 +932,17 @@ abstract public class SQLDataSource {
 				sql = sql + "AND   c.rid = ? ";
 			} else if (ranks && rid == 0) {
 				sql = sql + "AND   c.rank = (SELECT MAX(e.rank) " +
-				                            "FROM   ? d, ranks e " +
+				                            "FROM   " + ch.getCode() + " d, ranks e " +
 				                            "WHERE  d.rid = e.rid  " +
 				                            "AND    a.j2ksec = d.j2ksec) ";
 			}
 			sql = sql + "ORDER BY 1 ASC";
 
 			ps = database.getPreparedStatement(sql);
-			ps.setString(1, ch.getCode());
-			ps.setDouble(2, st);
-			ps.setDouble(3, et);
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
 			if (ranks && rid != 0) {
-				ps.setInt(4, rid);
-			} else if (ranks && rid == 0) {
-				ps.setString(4, ch.getCode());
+				ps.setInt(3, rid);
 			}
 			rs = ps.executeQuery();
 			
