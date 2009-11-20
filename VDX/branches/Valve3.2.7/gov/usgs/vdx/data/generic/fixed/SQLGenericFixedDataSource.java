@@ -34,12 +34,12 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Get database type, generic in this case
 	 * return type
 	 */
-	public String getType() { return DATABASE_NAME; }	
-	public boolean getChannelsFlag() { return channels; }
-	public boolean getTranslationsFlag() { return translations; }
-	public boolean getChannelTypesFlag() { return channelTypes; }
-	public boolean getRanksFlag() { return ranks; }
-	public boolean getColumnsFlag() { return columns; }
+	public String getType() 				{ return DATABASE_NAME; }	
+	public boolean getChannelsFlag()		{ return channels; }
+	public boolean getTranslationsFlag()	{ return translations; }
+	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	public boolean getRanksFlag()			{ return ranks; }
+	public boolean getColumnsFlag()			{ return columns; }
 	
 	/**
 	 * Initialize data source
