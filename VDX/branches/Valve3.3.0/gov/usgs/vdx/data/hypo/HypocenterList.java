@@ -162,7 +162,7 @@ public class HypocenterList implements BinaryDataSet
 		if (hypocenters == null || hypocenters.size() == 0)
 			return Double.NaN;
 		else
-			return hypocenters.get(0).getTime();
+			return hypocenters.get(0).j2ksec;
 	}
 	
 	/**
@@ -173,7 +173,20 @@ public class HypocenterList implements BinaryDataSet
 		if (hypocenters == null || hypocenters.size() == 0)
 			return Double.NaN;
 		else
-			return hypocenters.get(hypocenters.size() - 1).getTime();
+			return hypocenters.get(hypocenters.size() - 1).j2ksec;
+	}
+	
+	/**
+	 * Dump object content into ByteBuffer
+	 */
+	public ByteBuffer toBinary()
+	{
+		ByteBuffer buffer = ByteBuffer.allocate(4 + hypocenters.size() * 6 * 8);
+		buffer.putInt(hypocenters.size());
+		for (Hypocenter hc : hypocenters)
+			hc.insertIntoByteBuffer(buffer);
+		buffer.flip();
+		return buffer;
 	}
 	
 	/**
@@ -184,27 +197,10 @@ public class HypocenterList implements BinaryDataSet
 	{
 		int rows = bb.getInt();
 		hypocenters = new ArrayList<Hypocenter>(rows);
-		for (int i = 0; i < rows; i++)
-		{
-			double[] d = new double[5];
-			for (int j = 0; j < 5; j++)
-				d[j] = bb.getDouble();
-			Hypocenter hc = new Hypocenter(d);
+		for (int i = 0; i < rows; i++) {
+			Hypocenter hc = new Hypocenter(bb.getDouble(), bb.getInt(), bb.getDouble(), bb.getDouble(), bb.getDouble(), bb.getDouble());
 			hypocenters.add(hc);
 		}
-	}
-	
-	/**
-	 * Dump object content into ByteBuffer
-	 */
-	public ByteBuffer toBinary()
-	{
-		ByteBuffer buffer = ByteBuffer.allocate(4 + hypocenters.size() * 5 * 8);
-		buffer.putInt(hypocenters.size());
-		for (Hypocenter hc : hypocenters)
-			hc.insertIntoByteBuffer(buffer);
-		buffer.flip();
-		return buffer;
 	}
 	
 	/**
@@ -334,7 +330,7 @@ public class HypocenterList implements BinaryDataSet
 		for (int i = 0; i < hypocenters.size(); i++)
 		{
 			Hypocenter hc = hypocenters.get(i);
-			result.setQuick(i, 0, hc.getTime());
+			result.setQuick(i, 0, hc.j2ksec);
 			result.setQuick(i, 1, i);
 		}
 		return result;
@@ -349,8 +345,8 @@ public class HypocenterList implements BinaryDataSet
 		for (int i = 0; i < hypocenters.size(); i++)
 		{
 			Hypocenter hc = hypocenters.get(i);
-			result.setQuick(i, 0, hc.getTime());
-			double mo = Math.pow(10, (321 / 20 + 3 * hc.getMag() / 2));
+			result.setQuick(i, 0, hc.j2ksec);
+			double mo = Math.pow(10, (321 / 20 + 3 * hc.mag / 2));
 			if (i == 0)
 				result.setQuick(i, 1, mo);
 			else
@@ -384,7 +380,7 @@ public class HypocenterList implements BinaryDataSet
 		
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
 		for (Hypocenter hc : hypocenters)
-			hist.fill(hc.getTime());
+			hist.fill(hc.j2ksec);
 		return hist;
 	}
 	
