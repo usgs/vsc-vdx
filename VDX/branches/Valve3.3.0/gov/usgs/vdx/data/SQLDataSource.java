@@ -1093,14 +1093,14 @@ abstract public class SQLDataSource {
 			
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
-				sql = sql + "AND   c.rid = ? ";
+				sql = sql + "AND   c.rid  = ? ";
 			} else if (ranks && rid == 0) {
 				sql = sql + "AND   c.rank = (SELECT MAX(e.rank) " +
 				                            "FROM   " + channel.getCode() + " d, ranks e " +
 				                            "WHERE  d.rid = e.rid  " +
 				                            "AND    a.j2ksec = d.j2ksec) ";
 			}
-			sql = sql + "ORDER BY 1 ASC";
+			sql = sql + "ORDER BY a.j2ksec ASC";
 
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
