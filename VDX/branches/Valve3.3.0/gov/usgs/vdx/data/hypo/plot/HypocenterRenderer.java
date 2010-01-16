@@ -23,23 +23,7 @@ import java.util.List;
 
 /**
  * HypocenterRenderer is a class that render a list of hypocenters in a variety
- * of different ways. 
- *
- * $Log: not supported by cvs2svn $
- * Revision 1.2  2005/10/13 16:43:46  dcervelli
- * Changes for new scales.
- *
- * Revision 1.1  2005/08/28 18:55:56  dcervelli
- * Moved from vdx.data.hypo.  Converted to JDK1.5 enums.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
- *
- * Revision 1.2  2005/01/21 21:45:01  cvs
- * Added color scale bar for triple view.
- *
- * Revision 1.1  2004/10/12 18:21:25  cvs
- * Initial commit.
+ * of different ways.
  *
  * @author Dan Cervelli 
  */
@@ -433,26 +417,26 @@ public class HypocenterRenderer implements Renderer
         for (int i = 0; i < hcs.size(); i++)
         {
         	Hypocenter hc = hcs.get(i);
-            if (hc.getMag() != -99.99)
+            if (hc.mag != -99.99)
             {
             	switch(axes)
             	{
 	            	case MAP_VIEW:
 	            	case TRIPLE_VIEW:
-	            		xt = transformer.getXPixel(hc.getLon());
-	                    yt = transformer.getYPixel(hc.getLat());
+	            		xt = transformer.getXPixel(hc.lon);
+	                    yt = transformer.getYPixel(hc.lat);
 	                    break;
 	            	case LON_DEPTH:
-	            		xt = transformer.getXPixel(hc.getLon());
-	                    yt = transformer.getYPixel(hc.getDepth());
+	            		xt = transformer.getXPixel(hc.lon);
+	                    yt = transformer.getYPixel(hc.depth);
 	                    break;
 	            	case LAT_DEPTH:
-	            		xt = transformer.getXPixel(hc.getLat());
-	                    yt = transformer.getYPixel(hc.getDepth());
+	            		xt = transformer.getXPixel(hc.lat);
+	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
 	            	case DEPTH_TIME:
-	            		xt = transformer.getXPixel(hc.getTime());
-	                    yt = transformer.getYPixel(hc.getDepth());
+	            		xt = transformer.getXPixel(hc.j2ksec);
+	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
             	}
                 g.translate(xt, yt);
@@ -462,7 +446,7 @@ public class HypocenterRenderer implements Renderer
 	                case DEPTH:
 	                	for (int j = 0; j < depths.length - 1; j++)
 	                	{
-	                        if (hc.getDepth() <= depths[j] && hc.getDepth() > depths[j + 1])
+	                        if (hc.depth <= depths[j] && hc.depth > depths[j + 1])
 	                        {
 	                            color = colors[j];
 	                            break;
@@ -470,7 +454,7 @@ public class HypocenterRenderer implements Renderer
 	                	}
 	                	break;
 	                case TIME:
-	                	int ci = (int)(((hc.getTime() - minTime) / dt) * ((double)spectrum.colors.length - 1));
+	                	int ci = (int)(((hc.j2ksec - minTime) / dt) * ((double)spectrum.colors.length - 1));
 	                    color = spectrum.colors[ci];
 	                	break;
 	                case MONOCHROME:
@@ -479,7 +463,7 @@ public class HypocenterRenderer implements Renderer
                 }
                 
                 g.setColor(color);
-				int ci = (int)Math.floor(hc.getMag());
+				int ci = (int)Math.floor(hc.mag);
 				if (ci < 0)
 					ci = 0;
                 g.draw(circles[ci]);
