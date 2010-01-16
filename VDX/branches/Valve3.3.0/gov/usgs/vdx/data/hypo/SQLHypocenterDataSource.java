@@ -101,7 +101,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			st	= database.getStatement();
 			
 			// create the hypocenters table
-			sql	= "CREATE TABLE hypocenters (j2ksec DOUBLE NOT NULL, eid INT NOT NULL, rid INT NOT NULL, ";
+			sql	= "CREATE TABLE hypocenters (j2ksec DOUBLE NOT NULL, eid VARCHAR(45) NOT NULL, rid INT NOT NULL, ";
 			sql+= "   lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, depth DOUBLE NOT NULL, mag DOUBLE NOT NULL, ";
 			sql+= "   nphases INT, azgap INT, dmin DOUBLE, rms DOUBLE, nstimes INT, herr DOUBLE, verr DOUBLE, ";
 			sql+= "   magtype VARCHAR(1), rmk VARCHAR(1), PRIMARY KEY(eid,rid))";
@@ -205,8 +205,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 */
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag) {
-		
-		double[] dataRow;		
+
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
 		
@@ -214,7 +213,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			database.useDatabase(dbName);
 			
 			// build the sql
-			sql  = "SELECT a.j2ksec, a.rid, a.lon, a.lat, a.depth, a.mag ";
+			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.mag ";
 			sql += "FROM   hypocenters a, ranks c ";
 			sql += "WHERE  a.rid = c.rid ";
 			sql += "AND    a.j2ksec >= ? AND a.j2ksec <= ? ";
@@ -222,29 +221,46 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql += "AND    a.lat    >= ? AND a.lat    <= ? ";
 			sql += "AND    a.depth  >= ? AND a.depth  <= ? ";
 			sql += "AND    a.mag    >= ? AND a.mag    <= ? ";
-			sql += "AND    c.rank = (SELECT MAX(e.rank) " +
-            					    "FROM   hypocenters d, ranks e " +
-            					    "WHERE  d.rid = e.rid  " +
-            					    "AND    a.eid = d.eid) ";
+			
+			// BEST POSSIBLE DATA query
+			if (ranks && rid != 0) {
+				sql += "AND    c.rid  = ? ";
+			} else if (ranks && rid == 0) {
+				sql += "AND    c.rank = (SELECT MAX(e.rank) " +
+	            					    "FROM   hypocenters d, ranks e " +
+	            					    "WHERE  d.rid = e.rid  " +
+	            					    "AND    trim(a.eid) = trim(d.eid)) ";
+			}
+			
 			sql += "ORDER BY j2ksec ASC";
 			
 			ps = database.getPreparedStatement(sql);
-			ps.setInt(1,rid);
-			ps.setDouble(2, st);
-			ps.setDouble(3, et);
-			ps.setDouble(4, west);
-			ps.setDouble(5, east);
-			ps.setDouble(6, south);
-			ps.setDouble(7, north);
-			ps.setDouble(8, minDepth);
-			ps.setDouble(9, maxDepth);
-			ps.setDouble(10, minMag);
-			ps.setDouble(11, maxMag);
+			ps.setDouble(1, st);
+			ps.setDouble(2, et);
+			ps.setDouble(3, west);
+			ps.setDouble(4, east);
+			ps.setDouble(5, south);
+			ps.setDouble(6, north);
+			ps.setDouble(7, minDepth);
+			ps.setDouble(8, maxDepth);
+			ps.setDouble(9, minMag);
+			ps.setDouble(10, maxMag);
+			if (ranks && rid != 0) {
+				ps.setInt(11, rid);
+			}
 			rs = ps.executeQuery();
 			
-			while (rs.next()) {
-				dataRow = new double[] {rs.getDouble(1),rs.getDouble(2),rs.getDouble(3),rs.getDouble(4),rs.getDouble(5),rs.getDouble(6)};
-				pts.add(new Hypocenter(dataRow));
+			double j2ksec, lat, lon, depth, mag;
+			
+			// these will never be null
+			while (rs.next()) {				
+				j2ksec	= rs.getDouble(1);
+				rid		= rs.getInt(2);
+				lat		= rs.getDouble(3);
+				lon		= rs.getDouble(4);
+				depth	= rs.getDouble(5);
+				mag		= rs.getDouble(6);
+				pts.add(new Hypocenter(j2ksec, rid, lat, lon, depth, mag));
 			}
 			rs.close();
 			
@@ -266,28 +282,30 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		
 		try {
 			database.useDatabase(dbName);
-			sql = "INSERT IGNORE INTO hypocenters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			sql = "INSERT IGNORE INTO hypocenters ";
+			sql+= "       (j2ksec, eid, rid, lat, lon, depth, mag, nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk) ";
+			sql+= "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 			ps = database.getPreparedStatement(sql);
 			
 			// required fields
-			ps.setDouble(1, hc.getTime());
-			ps.setInt(2, hc.getEID());
-			ps.setInt(3, hc.getRID());
-			ps.setDouble(4, hc.getLat());
-			ps.setDouble(5, hc.getLon());
-			ps.setDouble(6, hc.getDepth());
-			ps.setDouble(7, hc.getMag());
+			ps.setDouble(1, hc.j2ksec);
+			ps.setString(2, hc.eid);
+			ps.setInt(3, hc.rid);
+			ps.setDouble(4, hc.lat);
+			ps.setDouble(5, hc.lon);
+			ps.setDouble(6, hc.depth);
+			ps.setDouble(7, hc.mag);
 			
 			// non-required fields
-			if (hc.getNPhases() == null)	ps.setNull(8,  java.sql.Types.INTEGER);	else ps.setInt(8, hc.getNPhases());
-			if (hc.getAzgap() == null)		ps.setNull(9,  java.sql.Types.INTEGER);	else ps.setInt(9, hc.getAzgap());
-			if (Double.isNaN(hc.getDmin()))	ps.setNull(10, java.sql.Types.DOUBLE);	else ps.setDouble(10, hc.getDmin());
-			if (Double.isNaN(hc.getRms()))	ps.setNull(11, java.sql.Types.DOUBLE);	else ps.setDouble(11, hc.getRms());
-			if (hc.getNstimes() == null)	ps.setNull(12, java.sql.Types.INTEGER);	else ps.setInt(12, hc.getNstimes());
-			if (Double.isNaN(hc.getHerr()))	ps.setNull(13, java.sql.Types.DOUBLE);	else ps.setDouble(13, hc.getHerr());
-			if (Double.isNaN(hc.getVerr()))	ps.setNull(14, java.sql.Types.DOUBLE);	else ps.setDouble(14, hc.getVerr());
-			if (hc.getMagtype() == null)	ps.setNull(15, java.sql.Types.VARCHAR);	else ps.setString(15, hc.getMagtype());
-			if (hc.getRemark() == null)		ps.setNull(16, java.sql.Types.VARCHAR);	else ps.setString(16, hc.getRemark());
+			if (hc.nphases == null)		ps.setNull(8,  java.sql.Types.INTEGER);	else ps.setInt(8, hc.nphases);
+			if (hc.azgap == null)		ps.setNull(9,  java.sql.Types.INTEGER);	else ps.setInt(9, hc.azgap);
+			if (Double.isNaN(hc.dmin))	ps.setNull(10, java.sql.Types.DOUBLE);	else ps.setDouble(10, hc.dmin);
+			if (Double.isNaN(hc.rms))	ps.setNull(11, java.sql.Types.DOUBLE);	else ps.setDouble(11, hc.rms);
+			if (hc.nstimes == null)		ps.setNull(12, java.sql.Types.INTEGER);	else ps.setInt(12, hc.nstimes);
+			if (Double.isNaN(hc.herr))	ps.setNull(13, java.sql.Types.DOUBLE);	else ps.setDouble(13, hc.herr);
+			if (Double.isNaN(hc.verr))	ps.setNull(14, java.sql.Types.DOUBLE);	else ps.setDouble(14, hc.verr);
+			if (hc.magtype == null)		ps.setNull(15, java.sql.Types.VARCHAR);	else ps.setString(15, hc.magtype);
+			if (hc.rmk == null)			ps.setNull(16, java.sql.Types.VARCHAR);	else ps.setString(16, hc.rmk);
 			
 			ps.execute();
 			
