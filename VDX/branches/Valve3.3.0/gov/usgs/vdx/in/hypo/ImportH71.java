@@ -102,7 +102,7 @@ public class ImportH71 extends Importer
 					throw new Exception("corrupt data at column 46");
 
 				System.out.println("HC: " + j2ksec + " : " + lon + " : " + lat + " : " + depth + " : " + mag);
-				Hypocenter hc = new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
+				Hypocenter hc = new Hypocenter(j2ksec, 0, lat, lon, depth, mag);
 				hypos.add(hc);
 			}
 			catch (Exception e)

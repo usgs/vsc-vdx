@@ -81,7 +81,7 @@ public class ImportEarthworm extends Importer
 				double mag		= Double.parseDouble(s.substring(47, 52).trim());
 
 				System.out.println("EW: " + j2ksec + " " + dateOut.format(date) + " " + lon + " " + lat + " " + depth + " " + mag);
-				Hypocenter ew	= new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
+				Hypocenter ew	= new Hypocenter(j2ksec, 0, lat, lon, depth, mag);
 				hypos.add(ew);
 			}
 			catch (Exception e)

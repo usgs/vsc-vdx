@@ -228,7 +228,7 @@ public class ImportHypoInverse {
 				if (!line.substring(45,46).equals(" "))
 					throw new Exception("corrupt data at column 46");
 				
-				Hypocenter hc	= new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
+				Hypocenter hc	= new Hypocenter(j2ksec, rank.getId(), lat, lon, depth, mag);
 				sqlHypocenterDataSource.insertHypocenter(hc);
 			}
 				

@@ -82,7 +82,7 @@ public class ImportUW extends Importer
 				double depth = -Double.parseDouble(s.substring(38, 43).trim());
 				double mag = Double.parseDouble(s.substring(45, 48));
 				
-				Hypocenter hc = new Hypocenter(new double[] {j2ksec, lon, lat, depth, mag});
+				Hypocenter hc = new Hypocenter(j2ksec, 0, lat, lon, depth, mag);
 				hypos.add(hc);
 			}
 			catch (Exception e)
