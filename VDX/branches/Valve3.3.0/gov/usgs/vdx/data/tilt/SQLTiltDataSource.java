@@ -33,7 +33,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= true;
 	public static final boolean columns			= true;
-	public static final boolean plotColumns		= true;
+	public static final boolean menuColumns		= true;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
 		new Column(1, "xTilt",		"East",					MICRO + "R",	false, true),
@@ -44,7 +44,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		new Column(6, "gndVolt",	"Ground Voltage",		"Volts",		false, true),
 		new Column(7, "rain",		"Rainfall",				"cm",			false, true)};
 	
-	public static final Column[] PLOT_COLUMNS	= new Column[] {
+	public static final Column[] MENU_COLUMNS	= new Column[] {
 		new Column(1, "radial",		"Radial",				MICRO + "R",	true,	true),
 		new Column(2, "tangetial",	"Tangetial",			MICRO + "R",	true,	true), 
 		new Column(3, "xTilt",		"East",					MICRO + "R",	false,	true),
@@ -67,7 +67,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -99,11 +99,16 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public boolean createDatabase() {
 		
 		try {
-			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
 			
 			// columns table
 			for (int i = 0; i < DATA_COLUMNS.length; i++) {
 				defaultInsertColumn(DATA_COLUMNS[i]);
+			}
+			
+			// menu columns table
+			for (int i = 0; i < MENU_COLUMNS.length; i++) {
+				defaultInsertMenuColumn(MENU_COLUMNS[i]);
 			}
 			
 			// translations table
@@ -134,10 +139,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, double azimuth) {
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
 		
 		try {
-			defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
+			defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
 			
 			// get the newly created channel id
 			Channel ch = defaultGetChannel(channelCode, channelTypes);
@@ -146,7 +151,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			database.useDatabase(dbName);
 			ps = database.getPreparedStatement("UPDATE channels SET azimuth = ? WHERE cid = ?");
 			ps.setDouble(1, azimuth);
-			ps.setInt(2, ch.getId());
+			ps.setInt(2, ch.getCID());
 			ps.execute();
 			
 			return true;
@@ -177,7 +182,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			return new TextResult(defaultGetRanks());			
 
 		} else if (action.equals("columns")) {
-			return new TextResult(defaultGetMenuColumns(plotColumns));
+			return new TextResult(defaultGetMenuColumns(menuColumns));
 			
 		} else if (action.equals("azimuths")) {
 			return new TextResult(getAzimuths());

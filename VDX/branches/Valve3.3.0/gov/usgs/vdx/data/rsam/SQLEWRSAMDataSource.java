@@ -29,7 +29,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= false;
 	public static final boolean columns			= true;
-	public static final boolean plotColumns		= false;
+	public static final boolean menuColumns		= false;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
 		new Column(1, "rsam",	"rsam",	"",	false, true)};
@@ -65,7 +65,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -88,7 +88,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	 * Create 'ewrsam' database
 	 */
 	public boolean createDatabase() {
-		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
 		
 		// columns table
 		for (int i = 0; i < DATA_COLUMNS.length; i++) {
@@ -110,11 +110,11 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
 		
 		// create an entry in the channels table but don't build the table
-		defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
+		defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
 		
 		// create a values and events table, and don't create an entry in the channels table
-		defaultCreateChannel(channelCode + "_values", "", 0, 0, 0, false, translations, ranks, columns);
-		defaultCreateChannel(channelCode + "_events", "", 0, 0, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_values", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_events", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
 		
 		return true;
 	}

@@ -29,7 +29,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= false;
 	public static final boolean columns			= true;
-	public static final boolean plotColumns		= false;
+	public static final boolean menuColumns		= false;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
 		new Column(1, "rsam",	"RSAM",	"RSAM",	false, true)};
@@ -44,7 +44,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -67,7 +67,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * Create generic fixed database
 	 */
 	public boolean createDatabase() {
-		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
 		
 		// columns table
 		for (int i = 0; i < DATA_COLUMNS.length; i++) {
@@ -87,7 +87,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @return true if successful
 	 */
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
 	}
 	
 	/**
