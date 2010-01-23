@@ -5,73 +5,35 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Rank;
-import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
 import gov.usgs.vdx.data.hypo.Hypocenter;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
+import gov.usgs.vdx.in.Importer;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
+import java.util.logging.Level;
 
 /**
- * Class for importing hypo71 format catalog files.
+ * Import HypoInverse files
  *  
  * @author Loren Antolik
  */
-public class ImportHypoInverse {
+public class ImportHypoInverse extends Importer {
 	
-	private Logger logger;
+	private String importerType	= "hypocenters";
 	
-	private ConfigFile params;
-	private ConfigFile vdxParams;
-	private ConfigFile rankParams;
-	
-	private String driver, prefix, url;
-
-	private int headerLines;
-	private String timestampMask;
-	private String timezone;
-	
-	private SimpleDateFormat dateIn;
-	private SimpleDateFormat dateOut;
-	
-	private Rank rank;
-	private String rankCode, rankName;
-	private int rankValue, rankDefault;
-	private List<String> rankList;
-	private Map<String, Rank> rankMap;
-	
-	private String dataSource;
-	private SQLHypocenterDataSource sqlHypocenterDataSource;
-	private SQLDataSourceHandler sqlDataSourceHandler;
-	private SQLDataSourceDescriptor sqlDataSourceDescriptor;
-	
-	int count;
-	int test;
+	private SQLHypocenterDataSource sqlDataSource;
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
 	 * @param cf configuration file
+	 * @param verbose true for info, false for severe
 	 */
-	public void initialize(String configFile, boolean verbose) {
-		
-		// initialize the logger		
-		logger = Logger.getLogger("gov.usgs.vdx.in.hypo.ImportHypoInverse");		
-		if (verbose) {
-			logger.setLevel(Level.ALL);
-		} else {
-			logger.setLevel(Level.INFO);
-		}
+	public void initialize(String importerClass, String configFile, boolean verbose) {
+		defaultInitialize(importerClass, verbose);
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -81,7 +43,7 @@ public class ImportHypoInverse {
 	 * Parse configuration file.  This sets class variables used in the importing process
 	 * @param configFile	name of the config file
 	 */
-	private void processConfigFile(String configFile) {
+	public void processConfigFile(String configFile) {
 		
 		logger.log(Level.INFO, "Reading config file " + configFile);
 		
@@ -89,7 +51,7 @@ public class ImportHypoInverse {
 		params		= new ConfigFile(configFile);
 		
 		// get the vdx parameter, and exit if it's missing
-		String vdxConfig	= params.getString("vdx.config");
+		vdxConfig	= params.getString("vdx.config");
 		if (vdxConfig == null) {
 			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
 			System.exit(-1);
@@ -104,31 +66,6 @@ public class ImportHypoInverse {
 		// define the data source handler that acts as a wrapper for data sources
 		sqlDataSourceHandler	= new SQLDataSourceHandler(driver, url, prefix);
 		
-		// information related to header lines in this file
-		headerLines	= Util.stringToInt(params.getString("headerlines"), 0);
-		
-		// information related to the timestamps
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateOut			= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-		dateIn.setTimeZone(TimeZone.getTimeZone(timezone));
-		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
-		
-		// get the list of ranks that are being used in this import
-		rankList					= params.getList("rank");
-		if (rankList != null) {
-			Iterator<String> rkIterator	= rankList.iterator();
-			rankMap						= new HashMap<String, Rank>();
-			while (rkIterator.hasNext()) {
-				rankCode		= params.getString("rank");
-				rankParams		= params.getSubConfig(rankCode);
-				rankName		= Util.stringToString(rankParams.getString("name"), rankCode);
-				rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-				rankDefault		= Util.stringToInt(rankParams.getString("default"), 1);
-				rank			= new Rank(0, rankName, rankValue, rankDefault);
-				rankMap.put(rankCode, rank);
-			}
-		}
-		
 		// get the list of data sources that are being used in this import
 		dataSource	= params.getString("dataSource");
 				
@@ -139,28 +76,61 @@ public class ImportHypoInverse {
 		}
 				
 		// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
-		sqlHypocenterDataSource	= (SQLHypocenterDataSource) sqlDataSourceDescriptor.getSQLDataSource();
+		sqlDataSource	= (SQLHypocenterDataSource)sqlDataSourceDescriptor.getSQLDataSource();
 		
-		if (sqlHypocenterDataSource.getType().equals("hypocenter")) {
-			logger.log(Level.SEVERE, "dataSource not a hypocenters data source");
+		if (!sqlDataSource.getType().equals(importerType)) {
+			logger.log(Level.SEVERE, "dataSource not a " + importerType + " data source");
 			System.exit(-1);
 		}
+		
+		// information related to the timestamps
+		timestampMask	= "yyyyMMddHHmmssSS";
+		timeZone		= "GMT";
+		dateIn			= new SimpleDateFormat(timestampMask);
+		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		
+		// get the list of ranks that are being used in this import
+		rankParams		= params.getSubConfig("rank");
+		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rank			= new Rank(0, rankName, rankValue, rankDefault);
 				
 		// create rank entry
-		if (sqlHypocenterDataSource.getRanksFlag()) {
-			sqlHypocenterDataSource.defaultInsertRank(rank);
+		if (sqlDataSource.getRanksFlag()) {
+			rank = sqlDataSource.defaultInsertRank(rank);
+			if (rank == null) {
+				logger.log(Level.SEVERE, "invalid rank");
+				System.exit(-1);
+			}
 		}
 	}
 	
 	/**
-	 * Parse H71 file from url (resource locator or file name)
+	 * Parse hypoinverse file from url (resource locator or file name)
+	 * @param filename
 	 */
 	public void process(String filename) {
+		
+		// initialize variables local to this method
+		double j2ksec, lat, lon, depth, prefmag;
+		String eid;
+		Double ampmag	= Double.NaN;
+		Double codamag	= Double.NaN;
+		Double dmin		= Double.NaN;
+		Double rms		= Double.NaN;
+		Double herr		= Double.NaN;
+		Double verr		= Double.NaN;
+		String magtype	= null;
+		String rmk		= null;
+		Integer nphases	= null;
+		Integer azgap	= null;
+		Integer nstimes	= null;
 		
 		try {
 			
 			// check that the file exists
-			ResourceReader rr = ResourceReader.getResourceReader(filename);
+			rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
 				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
 				return;
@@ -176,65 +146,167 @@ public class ImportHypoInverse {
 				return;
 			}
 			
-			logger.info("importing: " + filename);
-			
-			// if any header lines are defined then skip them
-			if (headerLines > 0) {
-				logger.log(Level.INFO, "skipping " + headerLines + " header lines");
-				for (int i = 0; i < headerLines; i++) {
-					line	= rr.nextLine();
-					lineNumber++;
-				}
-			}
-			
-			// we are now at the first row of data.  time to import!
+			logger.log(Level.INFO, "importing: " + filename);
+
 			while (line != null) {
 				
-				// DATE
-				String year		= line.substring(0,4);
-				String monthDay	= line.substring(4,8);
-				String hourMin	= line.substring(8,12);
-				String sec		= line.substring(12,14);
-				String secDec	= line.substring(14,16);
+				// do some validation
+				if (!line.substring(45,46).equals(" ")) {
+					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Corrupt data at column 46.");					
+					line	= rr.nextLine();
+					lineNumber++;
+					continue;
+					
+				// all systems go then
+				} else {					
+					logger.log(Level.INFO, "importing: line number " + lineNumber);
+				}
 				
-				Date date		= dateIn.parse(year + monthDay + hourMin + sec + "." + secDec);
-				double j2ksec	= Util.dateToJ2K(date);
+				// DATE
+				try {
+					String timestamp	= line.substring(0,16) + "0";
+					date				= dateIn.parse(timestamp);
+					j2ksec				= Util.dateToJ2K(date);
+				} catch (ParseException e) {
+					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Timestamp not valid.");					
+					line	= rr.nextLine();
+					lineNumber++;
+					continue;
+				}
+				
+				// EID
+				eid			= line.substring(136, 146).trim();
+				if (eid.trim().length() == 0) {
+					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Event ID not valid.");					
+					line	= rr.nextLine();
+					lineNumber++;
+					continue;
+				}
 
 				// LAT
 				double latdeg	= Double.parseDouble(line.substring(16, 18).trim());
 				double latmin	= Double.parseDouble(line.substring(19, 21).trim() + "." + line.substring(21, 23).trim());
-				double lat		= latdeg + ( latmin / 60.0d );
+				lat				= latdeg + ( latmin / 60.0d );
 				char ns			= line.charAt(18);
 				if (ns == 'S')
 					lat *= -1;
 
-
 				// LON
 				double londeg	= Double.parseDouble(line.substring(23, 26).trim());
 				double lonmin	= Double.parseDouble(line.substring(27, 29).trim() + "." + line.substring(29, 31).trim());
-				double lon		= londeg + ( lonmin / 60.0d );
+				lon				= londeg + ( lonmin / 60.0d );
 				char ew			= line.charAt(26);
 				if (ew != 'E')
 					lon *= -1;
 				
 				// DEPTH
-				double depth	= Double.parseDouble(line.substring(31, 34).trim() + "." + line.substring(34, 36).trim());
-				depth *= -1;
+				try {
+					depth		= Double.parseDouble(line.substring(31, 34).trim() + "." + line.substring(34, 36).trim());
+					depth *= -1;
+				} catch (NumberFormatException e) {
+					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Depth not valid.");					
+					line	= rr.nextLine();
+					lineNumber++;
+					continue;
+				}
 				
-				// MAGNITUDE
-				double mag		= -99.99;
-				try { mag = Double.parseDouble(line.substring(147, 150).trim()) / 100; } catch (Exception pe) {}
+				// PREFERRED MAGNITUDE
+				try {
+					prefmag 	= Double.parseDouble(line.substring(147, 150).trim()) / 100;
+				} catch (NumberFormatException e) {
+					prefmag		= Double.NaN;
+				}				
 				
-				if (!line.substring(45,46).equals(" "))
-					throw new Exception("corrupt data at column 46");
+				// AMPLITUDE MAGNITUDE
+				try {				
+					ampmag 		= Double.parseDouble(line.substring(36, 39).trim()) / 100;
+				} catch (NumberFormatException e) {
+					ampmag		= Double.NaN;
+				}
 				
-				Hypocenter hc	= new Hypocenter(j2ksec, rank.getId(), lat, lon, depth, mag);
-				sqlHypocenterDataSource.insertHypocenter(hc);
+				// CODA MAGNITUDE
+				try {
+					codamag 	= Double.parseDouble(line.substring(70, 73).trim()) / 100;
+				} catch (NumberFormatException e) {
+					codamag		= Double.NaN;
+				}
+				
+				// NPHASES
+				try {
+					nphases		= Integer.parseInt(line.substring(39, 42).trim());
+				} catch (NumberFormatException e) {
+					nphases		= 0;
+				}
+				
+				// AZGAP
+				try {
+					azgap		= Integer.parseInt(line.substring(42, 45).trim());
+				} catch (NumberFormatException e) {
+					azgap		= null;
+				}
+				
+				// DMIN
+				try {
+					dmin		= Double.parseDouble(line.substring(45, 48).trim());
+				} catch (NumberFormatException e) {
+					dmin		= Double.NaN;
+				}
+				
+				// RMS
+				try {
+					rms			= Double.parseDouble(line.substring(48, 52).trim()) / 100;
+				} catch (NumberFormatException e) {
+					rms			= Double.NaN;
+				}
+				
+				// NSTIMES
+				try {
+					nstimes		= Integer.parseInt(line.substring(82, 85).trim());
+				} catch (NumberFormatException e) {
+					nstimes		= 0;
+				}
+				
+				// HERR
+				try {
+					herr		= Double.parseDouble(line.substring(85, 89).trim()) / 100;
+				} catch (NumberFormatException e) {
+					herr		= Double.NaN;
+				}
+				
+				// VERR
+				try {
+					verr		= Double.parseDouble(line.substring(89, 93).trim()) / 100;
+				} catch (NumberFormatException e) {
+					verr		= Double.NaN;
+				}
+				
+				// RMK
+				rmk			= line.substring(80, 81).trim();
+				if (rmk.trim().length() == 0) {
+					rmk		= null;
+				}
+				
+				// MAGTYPE
+				magtype		= line.substring(146, 147).trim();
+				if (magtype.trim().length() == 0) {
+					magtype		= null;
+				}
+				
+				Hypocenter hc	= new Hypocenter(j2ksec, eid, rank.getId(), lat, lon, depth, prefmag, ampmag, codamag, 
+						nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk);
+				sqlDataSource.insertHypocenter(hc);
+				
+				line	= rr.nextLine();
+				lineNumber++;
 			}
 				
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "ImportHypoInverse.process(" + filename + ") failed.", e);
 		}
+	}
+	
+	public void outputInstructions(String importerClass, String message) {
+		defaultOutputInstructions(importerClass, message);
 	}
 
 	/**
@@ -247,39 +319,25 @@ public class ImportHypoInverse {
 	 */
 	public static void main(String as[]) {
 		
-		String configFile;
-		boolean verbose;
-		Set<String> flags;
-		Set<String> keys;
-		
-		flags	= new HashSet<String>();
-		keys	= new HashSet<String>();
-		keys.add("-c");
-		flags.add("-h");
-		flags.add("--help");
-		flags.add("-v");
+		ImportHypoInverse importer	= new ImportHypoInverse();
 		
 		Arguments args = new Arguments(as, flags, keys);
 		
-		if (args.flagged("-h") || args.flagged("--help")) {
-			System.err.println("java gov.usgs.vdx.in.ImportFile [-c configFile]");
+		if (args.flagged("-h")) {
+			importer.outputInstructions(importer.getClass().getName(), null);
 			System.exit(-1);
 		}
 		
 		if (!args.contains("-c")) {
-			System.err.println("config file required");
+			importer.outputInstructions(importer.getClass().getName(), "Config file required");
 			System.exit(-1);
 		}
-		
-		ImportHypoInverse ihi	= new ImportHypoInverse();
 
-		configFile	= args.get("-c");
-		verbose		= args.flagged("-v");
-		ihi.initialize(configFile, verbose);
+		importer.initialize(importer.getClass().getName(), args.get("-c"), args.flagged("-v"));
 
 		List<String> files	= args.unused();
 		for (String file : files) {
-			ihi.process(file);
+			importer.process(file);
 		}
 	}	
 }
