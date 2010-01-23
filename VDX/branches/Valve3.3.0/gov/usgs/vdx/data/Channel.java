@@ -95,7 +95,7 @@ public class Channel {
 	/**
 	 * Getter for channel id
 	 */
-	public int getId() {
+	public int getCID() {
 		return cid;
 	}
 
@@ -158,7 +158,7 @@ public class Channel {
 		Map<Integer, Channel> map = new HashMap<Integer, Channel>();
 		for (String s : ss) {
 			Channel ch = new Channel(s);
-			map.put(ch.getId(), ch);
+			map.put(ch.getCID(), ch);
 		}
 		return map;
 	}
@@ -171,6 +171,6 @@ public class Channel {
 		if (Double.isNaN(getLon()))    { lon    = "NaN"; } else { lon    = String.valueOf(getLon()); }
 		if (Double.isNaN(getLat()))    { lat    = "NaN"; } else { lat    = String.valueOf(getLat()); }
 		if (Double.isNaN(getHeight())) { height = "NaN"; } else { height = String.valueOf(getHeight()); }
-		return String.format("%d:%s:%s:%s:%s:%s:%d", getId(), getCode(), getName(), lon, lat, height, getCtid());
+		return String.format("%d:%s:%s:%s:%s:%s:%d", getCID(), getCode(), getName(), lon, lat, height, getCtid());
 	}
 }
