@@ -197,7 +197,7 @@ public class SchedulerImportStacov implements gov.usgs.vdx.in.scheduler.Importer
 				}
 				
 				// insert the solution into the db
-				dataSource.insertSolution(sid, ch.getId(), sp.dp);
+				dataSource.insertSolution(sid, ch.getCID(), sp.dp);
 			}
 //			ct.mark("write to database");
 //			ct.stop();
