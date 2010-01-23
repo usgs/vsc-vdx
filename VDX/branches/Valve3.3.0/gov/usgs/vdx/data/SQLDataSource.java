@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import cern.colt.matrix.DoubleMatrix2D;
 
 /**
- * Generic SQL data source. 
+ * SQL data source. 
  * Store reference to VDX database and provide methods to init default database structure.
  * 
  * TODO: use Statements for low rate queries.
@@ -24,6 +24,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * @author Dan Cervelli, Loren Antolik
  */
 abstract public class SQLDataSource {
+	
 	protected VDXDatabase database;
 	protected String dbName;
 	protected Logger logger;
@@ -48,7 +49,7 @@ abstract public class SQLDataSource {
 	abstract public boolean getTranslationsFlag();
 	abstract public boolean getRanksFlag();
 	abstract public boolean getColumnsFlag();
-	abstract public boolean getPlotColumnsFlag();
+	abstract public boolean getMenuColumnsFlag();
 	abstract public boolean getChannelTypesFlag();
 
 	/**
@@ -111,7 +112,7 @@ abstract public class SQLDataSource {
 	 * @param columns		if we need to create columns table
 	 * @return true if success
 	 */
-	public boolean defaultCreateDatabase(boolean channels, boolean translations, boolean channelTypes, boolean ranks, boolean columns, boolean plotColumns) {
+	public boolean defaultCreateDatabase(boolean channels, boolean translations, boolean channelTypes, boolean ranks, boolean columns, boolean menuColumns) {
 		try {
 			
 			// create the database on the database server and specify to use this database for all subsequent statements
@@ -135,8 +136,9 @@ abstract public class SQLDataSource {
 
 				// channel types. logically you must have a channels table to have channel types
 				if (channelTypes) {
-					sql = sql + ", ctid INT DEFAULT 0 NOT NULL";
+					sql = sql + ", ctid INT DEFAULT 1 NOT NULL";
 					ps.execute("CREATE TABLE channel_types (ctid INT PRIMARY KEY AUTO_INCREMENT, code VARCHAR(16) UNIQUE)");
+					ps.execute("INSERT INTO channel_types (code) VALUES ('DEFAULT')");
 				}
 
 				// complete the channels sql statement and execute it
@@ -150,8 +152,8 @@ abstract public class SQLDataSource {
 					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
 			}
 
-			if (plotColumns) {
-				ps.execute("CREATE TABLE plot_columns (colid INT PRIMARY KEY AUTO_INCREMENT, "
+			if (menuColumns) {
+				ps.execute("CREATE TABLE columns_menu (colid INT PRIMARY KEY AUTO_INCREMENT, "
 					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
 					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
 			}
@@ -160,7 +162,6 @@ abstract public class SQLDataSource {
 			if (ranks) {
 				ps.execute("CREATE TABLE ranks (rid INT PRIMARY KEY AUTO_INCREMENT,"
 					+ "code VARCHAR(24) UNIQUE, rank INT(10) UNSIGNED DEFAULT 0 NOT NULL, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
-				// ps.execute("INSERT INTO ranks (code, rank, user_default) VALUES ('Raw Data', 1, 1)");
 			}
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded. ");
@@ -186,14 +187,15 @@ abstract public class SQLDataSource {
 	 * Create default channel from values in the columns table
 	 * 
 	 * @param channel		channel object
+	 * @param tid			translation id
 	 * @param channels		if we need to add record in 'channels' table
 	 * @param translations	if we need to add tid field in channel table
 	 * @param ranks			if we need to add rid field in channel table
 	 * @param columns		if we need to create a channel table based on the columns table
 	 * @return true if success
 	 */
-	public boolean defaultCreateChannel(Channel channel, boolean channels, boolean translations, boolean ranks, boolean columns) {
-		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(),
+	public boolean defaultCreateChannel(Channel channel, int tid, boolean channels, boolean translations, boolean ranks, boolean columns) {
+		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(), tid,
 				channels, translations, ranks, columns);
 	}
 
@@ -205,6 +207,7 @@ abstract public class SQLDataSource {
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
+	 * @param tid			translation id
 	 * @param channels		if we need to add record in 'channels' table
 	 * @param translations	if we need to add tid field in channel table
 	 * @param ranks			if we need to add rid field in channel table
@@ -212,7 +215,7 @@ abstract public class SQLDataSource {
 	 * @return true if success
 	 */
 	public boolean defaultCreateChannel(String channelCode, String channelName, 
-			double lon, double lat, double height, 
+			double lon, double lat, double height, int tid,
 			boolean channels, boolean translations, boolean ranks, boolean columns) {
 
 		try {
@@ -232,13 +235,22 @@ abstract public class SQLDataSource {
 
 			// channels flag states we need to add a record to the channels table
 			if (channels) {
-				ps = database.getPreparedStatement("INSERT INTO channels (code, name, lon, lat, height) VALUES (?,?,?,?,?)");
+				String columnList	= "code, name, lon, lat, height";
+				String variableList	= "?,?,?,?,?";
+				
+				if (translations) {
+					columnList		= columnList + ",tid";
+					variableList	= variableList + ",?";
+				}
+				
+				ps = database.getPreparedStatement("INSERT INTO channels (" + columnList + ") VALUES (" + variableList + ")");
 				
 				ps.setString(1, channelCode);
 				ps.setString(2, channelName);				
 				if (Double.isNaN(lon))    { ps.setNull(3, java.sql.Types.DOUBLE); } else { ps.setDouble(3, lon);    }
 				if (Double.isNaN(lat))    { ps.setNull(4, java.sql.Types.DOUBLE); } else { ps.setDouble(4, lat);    }
 				if (Double.isNaN(height)) { ps.setNull(5, java.sql.Types.DOUBLE); } else { ps.setDouble(5, height); }
+				if (translations)         { ps.setInt(6, tid); }
 				ps.execute();
 			}
 
@@ -277,11 +289,35 @@ abstract public class SQLDataSource {
 				}
 			}
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") succeeded.");			
+			logger.log(Level.INFO, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+
+		return false;
+	}
+	
+	/**
+	 * Updates the channels table with the specified translation id
+	 * @param channelCode
+	 * @param tid
+	 * @return true if success
+	 */
+	public boolean defaultUpdateChannelTranslationID(String channelCode, int tid) {
+		try {
+			database.useDatabase(dbName);			
+			ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");			
+			ps.setInt(1, tid);
+			ps.setString(2, channelCode);
+			ps.execute();
+
+			logger.log(Level.INFO, "SQLDataSource.defaultUpdateChannelTranslationID(" + channelCode + "," + tid + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+			return true;
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.defaultUpdateChannelTranslationID(" + channelCode + "," + tid + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return false;
@@ -295,28 +331,42 @@ abstract public class SQLDataSource {
 	public boolean defaultCreateTranslation() {
 		try {
 			database.useDatabase(dbName);
+			
+			// check if the translations table already exists
+			boolean exists = false;
+			rs = database.getPreparedStatement("SHOW TABLES LIKE 'translations'").executeQuery();
+			if (rs.next()) {
+				exists = true;
+			}
+			rs.close();
 
-			List<Column> columns = defaultGetColumns(true, false);
-			if (columns.size() > 0) {
+			if (exists) {
+				return true;
+				
+			} else {
 
-				sql = "CREATE TABLE translations (tid INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255)";
-				for (int i = 0; i < columns.size(); i++) {
-					sql = sql + ",c" + columns.get(i).name + " DOUBLE DEFAULT 1,";
-					sql = sql + " d" + columns.get(i).name + " DOUBLE DEFAULT 0 ";
+				List<Column> columns = defaultGetColumns(true, false);
+				if (columns.size() > 0) {
+	
+					sql = "CREATE TABLE translations (tid INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255)";
+					for (int i = 0; i < columns.size(); i++) {
+						sql = sql + ",c" + columns.get(i).name + " DOUBLE DEFAULT 1,";
+						sql = sql + " d" + columns.get(i).name + " DOUBLE DEFAULT 0 ";
+					}
+					sql = sql + ")";
+	
+					// the translations table has a default row inserted which will
+					// be tid 1, which corresponds to the default tid in the channels table
+					ps.execute(sql);
+					ps.execute("INSERT INTO translations (name) VALUES ('DEFAULT')");
 				}
-				sql = sql + ")";
-
-				// the translations table has a default row inserted which will
-				// be tid 1, which corresponds to the default tid in the channels table
-				ps.execute(sql);
-				ps.execute("INSERT INTO translations (name) VALUES ('DEFAULT')");
+	
+				logger.log(Level.INFO, "SQLDataSource.defaultCreateTranslation() succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+				return true;
 			}
 
-			logger.log(Level.INFO, "SQLDataSource.defaultCreateTranslation() succeeded.");
-			return true;
-
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTranslation() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTranslation() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return false;
@@ -339,11 +389,11 @@ abstract public class SQLDataSource {
 			ps.setBoolean(6, column.active);
 			ps.execute();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded.");			
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertColumn(" + column.name + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertColumn(" + column.name + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		return false;
 	}
@@ -353,10 +403,10 @@ abstract public class SQLDataSource {
 	 * 
 	 * @param column	Column return true if successful
 	 */
-	public boolean defaultInsertPlotColumn(Column column) {
+	public boolean defaultInsertMenuColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO plot_columns (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
@@ -365,11 +415,11 @@ abstract public class SQLDataSource {
 			ps.setBoolean(6, column.active);
 			ps.execute();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") succeeded.");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		return false;
 	}
@@ -396,16 +446,21 @@ abstract public class SQLDataSource {
 			}			
 			rs.close();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertChannelType(" + code + ") succeeded.");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertChannelType(" + code + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertChannelType(" + code + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertChannelType(" + code + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
 	}
 	
-	public int defaultInsertRank(Rank rank) {
+	/**
+	 * Inserts rank into database.
+	 * @param rank
+	 * @return newly inserted rank.  null 
+	 */
+	public Rank defaultInsertRank(Rank rank) {
 		return defaultInsertRank(rank.getCode(), rank.getRank(), rank.getUserDefault());
 	}
 
@@ -415,17 +470,17 @@ abstract public class SQLDataSource {
 	 * @param code			rank display name
 	 * @param rank			integer value of rank
 	 * @param is_default	flag to set new rank as default
-	 * @return last inserted id or -1 if unsuccessful
+	 * @return Rank object using the specified 
 	 */
-	public int defaultInsertRank(String code, int rank, int is_default) {
-		int result = -1;
+	public Rank defaultInsertRank(String code, int rank, int is_default) {
+		Rank result = null;
 		int user_default = 0;
 
 		try {
 			
 			int rid	= defaultGetRankID(rank);
 			if (rid > 0) {
-				return rid;
+				return defaultGetRank(rid);
 			}
 			
 			database.useDatabase(dbName);
@@ -447,21 +502,20 @@ abstract public class SQLDataSource {
 			// get the id of the newly inserted rank
 			rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
 			if (rs.next()) {
-				result = rs.getInt(1);
+				result = defaultGetRank(rs.getInt(1));
 			}
 			rs.close();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertRank(" + rank + ") succeeded.");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertRank(" + code + "," + rank + "," + user_default + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertRank(" + rank + ") failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertRank(" + code + "," + rank + "," + user_default + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
 	}
 
 	/**
-	 * TODO: work out organization of GenericDataMatrix being passed 
 	 * Inserts a translation in the translations table, and assigns the channels table to use this translation as its default
 	 * 
 	 * @param channelCode	channel code
@@ -471,9 +525,9 @@ abstract public class SQLDataSource {
 	public int defaultInsertTranslation(String channelCode, GenericDataMatrix gdm) {
 
 		// default local variables
-		int tid = -1;
-		String columns = "";
-		String values = "";
+		int tid			= -1;
+		String columns	= "";
+		String values	= "";
 
 		try {
 			database.useDatabase(dbName);
@@ -484,35 +538,33 @@ abstract public class SQLDataSource {
 			// if this translation doesn't exist then create it
 			if (tid == -1) {
 
-				DoubleMatrix2D dm = gdm.getData();
-				String[] columnNames = gdm.getColumnNames();
+				DoubleMatrix2D dm		= gdm.getData();
+				String[] columnNames	= gdm.getColumnNames();
 
 				// iterate through the generic data matrix to get a list of the values
 				for (int i = 0; i < columnNames.length; i++) {
 					columns	+= columnNames[i] + ",";
 					values	+= dm.get(0, i) + ",";
 				}
-				columns += "code";
+				columns += "name";
 				values += "'" + channelCode + "'";
 
 				// insert the translation into the database
-				ps = database.getPreparedStatement("INSERT INTO translations (?) VALUES (?)");
-				ps.setString(1, columns);
-				ps.setString(2, values);
+				ps = database.getPreparedStatement("INSERT INTO translations (" + columns + ") VALUES (" + values + ")");
 				ps.execute();
 				tid = defaultGetTranslation(channelCode, gdm);
 			}
 
 			// update the channels table with the current tid
-			ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");
-			ps.setInt(1, tid);
-			ps.setString(2, channelCode);
-			ps.execute();
+			// ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");
+			// ps.setInt(1, tid);
+			// ps.setString(2, channelCode);
+			// ps.execute();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertTranslation() succeeded.");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertTranslation() succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertTranslation() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertTranslation() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return tid;
@@ -562,7 +614,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(cid) failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(cid) failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return ch;
@@ -590,7 +642,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(code) failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(code) failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return ch;
@@ -642,7 +694,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelsList() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelsList() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -664,7 +716,7 @@ abstract public class SQLDataSource {
 			}
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -687,7 +739,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTypes() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTypes() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -698,21 +750,21 @@ abstract public class SQLDataSource {
 	 * @param rid	rank id
 	 * @return rank
 	 */
-	public int defaultGetRank(int rid) {
-		int result	= -1;
+	public Rank defaultGetRank(int rid) {
+		Rank result	= null;
 		
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("SELECT rank FROM ranks WHERE rid = ?");
+			ps = database.getPreparedStatement("SELECT rid, code, rank, user_default FROM ranks WHERE rid = ?");
 			ps.setInt(1, rid);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				result = rs.getInt(1);
+				result = new Rank(rs.getInt(1), rs.getString(2), rs.getInt(3), rs.getInt(4));
 			}
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRank() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRank() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		
 		return result;
@@ -737,7 +789,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRankID() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRankID() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		
 		return result;
@@ -760,18 +812,17 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRanks() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetRanks() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
 	}
 
 	/**
-	 * TODO: work out naming and structure of GenericDataMatrix 
 	 * Gets translation id from database using the parameters passed. Used to determine if the
 	 * translation exists in the database for potentially inserting a new translation.
 	 * 
-	 * @param channelCode	station code
+	 * @param channelCode	channel code
 	 * @param gdm			generic data matrix containing the translations
 	 * @return tid translation id of the translation. -1 if not found.
 	 */
@@ -790,7 +841,7 @@ abstract public class SQLDataSource {
 			}
 
 			// build and execute the query
-			ps = database.getPreparedStatement("SELECT tid FROM translations WHERE code = ? " + sql);
+			ps = database.getPreparedStatement("SELECT tid FROM translations WHERE name = ? " + sql);
 			ps.setString(1, channelCode);
 			rs = ps.executeQuery();
 			if (rs.next()) {
@@ -799,7 +850,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetTranslation() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetTranslation() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -825,7 +876,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTranslationID() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTranslationID() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -835,8 +886,8 @@ abstract public class SQLDataSource {
 	 * Get List of columns from the database
 	 * @return String List of columns
 	 */
-	public List<String> defaultGetMenuColumns(boolean plotColumns) {
-		List<Column> columns = defaultGetColumns(false, plotColumns);
+	public List<String> defaultGetMenuColumns(boolean menuColumns) {
+		List<Column> columns = defaultGetColumns(false, menuColumns);
 		List<String> columnsString = new ArrayList<String>();
 		for (int i = 0; i < columns.size(); i++) {
 			columnsString.add(columns.get(i).toString());
@@ -847,18 +898,18 @@ abstract public class SQLDataSource {
 	/**
 	 * Getter for columns
 	 * @param allColumns	flag to retrieve only active columns from table
-	 * @param plotColumns	flag to retrieve database columns or plottable columns
+	 * @param menuColumns	flag to retrieve database columns or plottable columns
 	 * @return List of Columns, ordered by index
 	 */
-	public List<Column> defaultGetColumns(boolean allColumns, boolean plotColumns) {
+	public List<Column> defaultGetColumns(boolean allColumns, boolean menuColumns) {
 
 		Column column;
 		List<Column> columns = new ArrayList<Column>();
 		boolean checked, active;
 		String tableName	= "";
 		
-		if (plotColumns) {
-			tableName	= "plot_columns";
+		if (menuColumns) {
+			tableName	= "columns_menu";
 		} else {
 			tableName	= "columns";
 		}
@@ -867,7 +918,7 @@ abstract public class SQLDataSource {
 			database.useDatabase(dbName);
 			sql  = "SELECT idx, name, description, unit, checked, active ";
 			sql += "FROM " + tableName + " ";
-			if (!allColumns && !plotColumns) {
+			if (!allColumns && !menuColumns) {
 				sql += "WHERE active = 1 ";
 			}
 			sql += "ORDER BY idx, name";
@@ -890,7 +941,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumns()", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumns() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return columns;
@@ -939,7 +990,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumn(colid) failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumn(colid) failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return col;
@@ -967,7 +1018,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(code) failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(name) failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return col;
@@ -993,7 +1044,7 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetOptions() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetOptions() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -1019,14 +1070,13 @@ abstract public class SQLDataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetLastDataTime() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetLastDataTime() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return lastDataTime;
 	}
 
 	/**
-	 * TODO: work out subquery for best possible data
 	 * Get data from database
 	 * 
 	 * @param cid			channel id
@@ -1129,7 +1179,7 @@ abstract public class SQLDataSource {
 			}
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData()", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		
 		return result;
@@ -1181,7 +1231,7 @@ abstract public class SQLDataSource {
 				valuesBuffer.append("," + rid);
 			}
 
-			sql = "INSERT IGNORE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
+			sql = "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
 			ps = database.getPreparedStatement(sql);
 			
 			// loop through each of the rows and insert data
@@ -1201,10 +1251,10 @@ abstract public class SQLDataSource {
 				ps.execute();
 			}
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertData() succeeded.");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertData() succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertData() failed.", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 	}
 
