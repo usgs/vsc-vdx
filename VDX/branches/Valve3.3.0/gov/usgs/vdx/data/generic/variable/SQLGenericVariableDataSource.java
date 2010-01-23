@@ -28,7 +28,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= true;
 	public static final boolean columns			= true;
-	public static final boolean plotColumns		= false;
+	public static final boolean menuColumns		= false;
 
 	/**
 	 * Get database type, generic in this case
@@ -40,7 +40,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -72,7 +72,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	public boolean createDatabase() {
 		
 		try {
-			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
 			
 			// create channel column xref table that is unique to the generic variable schema
 			database.useDatabase(dbName);
@@ -113,8 +113,8 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param height		height
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
 	}
 	
 	/**

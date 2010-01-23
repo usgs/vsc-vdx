@@ -29,7 +29,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	public final boolean channelTypes	= false;
 	public final boolean ranks			= true;
 	public final boolean columns		= true;
-	public final boolean plotColumns	= false;
+	public final boolean menuColumns	= false;
 
 	/**
 	 * Get database type, generic in this case
@@ -41,7 +41,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -68,8 +68,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	public boolean createDatabase() {
 		
 		try {
-			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);			
+			logger.log(Level.INFO, "SQLGenericFixedDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+			return true;
 			
+			/*
 			// create metadata table that is unique to the generic fixed schema
 			database.useDatabase(dbName);			
 			st = database.getStatement();
@@ -77,11 +80,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 					"CREATE TABLE metadata (mid INT PRIMARY KEY AUTO_INCREMENT," +
 					"meta_key VARCHAR(255)," +
 					"meta_value VARCHAR(255))");
-			
-			return true;
+			*/
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGenericFixedDataSource.createDatabase() failed.", e);
+			logger.log(Level.SEVERE, "SQLGenericFixedDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") failed.", e);
 		}
 		
 		return false;
@@ -96,8 +98,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param height		height
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
 	}
 	
 	
@@ -121,7 +123,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return new TextResult(defaultGetChannels(channelTypes));
 			
 		} else if (action.equals("columns")) {
-			return new TextResult(defaultGetMenuColumns(plotColumns));
+			return new TextResult(defaultGetMenuColumns(menuColumns));
 			
 		} else if (action.equals("ranks")) {
 			return new TextResult(defaultGetRanks());

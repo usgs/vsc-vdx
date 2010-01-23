@@ -4,6 +4,7 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -27,12 +28,12 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	public static final boolean channelTypes	= true;
 	public static final boolean ranks			= true;
 	public static final boolean columns			= false;
-	public static final boolean plotColumns		= true;
+	public static final boolean menuColumns		= true;
 	
-	public static final Column[] PLOT_COLUMNS	= new Column[] {
-		new Column(1, "east",	"East",		"Meters",	false, false),
-		new Column(2, "north",	"North",	"Meters",	false, false), 
-		new Column(3, "up",		"Up",		"Meters",	false, false),
+	public static final Column[] MENU_COLUMNS	= new Column[] {
+		new Column(1, "east",	"East",		"Meters",	true, false),
+		new Column(2, "north",	"North",	"Meters",	true, false), 
+		new Column(3, "up",		"Up",		"Meters",	true, false),
 		new Column(4, "length",	"Length",	"Meters",	false, false)};
 
 	/**
@@ -45,7 +46,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
@@ -70,7 +71,12 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	public boolean createDatabase() {
 		
 		try {
-			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
+			
+			// menu columns table
+			for (int i = 0; i < MENU_COLUMNS.length; i++) {
+				defaultInsertMenuColumn(MENU_COLUMNS[i]);
+			}
 			
 			// create solutions and sources tables that are unique to the gps schema
 			database.useDatabase(dbName);
@@ -88,14 +94,13 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 					"sxy DOUBLE, sxz DOUBLE, syz DOUBLE," +
 					"PRIMARY KEY (sid, cid))");
 			
-			logger.info("Successfully created " + dbName + " database");
+			logger.log(Level.INFO, "SQLGPSDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.createDatabase() failed.", e);
+			logger.log(Level.SEVERE, "SQLGPSDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") failed.", e);
 		}
-		
-		logger.severe("Failed to create " + dbName + " database");
+
 		return false;
 	}
 	
@@ -109,13 +114,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @return true if successful
 	 */
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
-		boolean result = defaultCreateChannel(channelCode, channelName, lon, lat, height, channels, translations, ranks, columns);
-		if (result) {
-			logger.info("Successfully created " + channelCode + " channel");
-		} else {
-			logger.info("Failed to create " + channelCode + " channel");
-		}
-		return result;
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
 	}
 	
 	/**
@@ -140,7 +139,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			return new TextResult(defaultGetRanks());			
 
 		} else if (action.equals("columns")) {
-			return new TextResult(defaultGetMenuColumns(plotColumns));
+			return new TextResult(defaultGetMenuColumns(menuColumns));
 			
 		} else if (action.equals("data")) {
 			int cid			= Integer.parseInt(params.get("ch"));
@@ -275,7 +274,8 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			ps.setInt(2, rid);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				int rank, delcount;
+				Rank rank;
+				int delcount;
 				sid			= rs.getInt(1);
 				ps			= database.getPreparedStatement("DELETE FROM solutions WHERE sid = ?");
 				ps.setInt(1, sid);
@@ -284,7 +284,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setInt(1, sid);
 				ps.executeQuery();
 				rank		= defaultGetRank(rid);
-				logger.severe("deleted " + name + " rank " + rank + " (" + delcount + " solutions)");
+				logger.severe("deleted " + name + " rank " + rank.getCode() + " (" + delcount + " solutions)");
 			}
 			
 			// it is now safe to insert this NEW source
