@@ -1,125 +1,183 @@
 package gov.usgs.vdx.in.gps;
 
+import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
+import gov.usgs.vdx.data.Rank;
+import gov.usgs.vdx.data.SQLDataSourceHandler;
 import gov.usgs.vdx.data.gps.SolutionPoint;
 import gov.usgs.vdx.data.gps.GPS;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
+import gov.usgs.vdx.in.Importer;
 
 import java.io.File;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
- * Import station covariance file
+ * Import Stacov files
  * 
  * @author Dan Cervelli, Loren Antolik
  */
-public class ImportStacov {	
-	private SQLGPSDataSource dataSource;
+public class ImportStacov extends Importer {
+	
+	private String importerType	= "gps";
+	
+	private SQLGPSDataSource sqlDataSource;
+	
 	private Map<String, Channel> channels;
-	private int rid;
-	private Logger logger;
 
 	/**
-	 * Constructor
-	 * @param dataSource	name of the data source in vdxSources.config
-	 * @param rank			rank from the ranks table
+	 * takes a config file as a parameter and parses it to prepare for importing
+	 * @param cf configuration file
+	 * @param verbose true for info, false for severe
 	 */
-	public ImportStacov(String ds, int rank) {
-		logger = Logger.getLogger("gov.usgs.vdx");
+	public void initialize(String importerClass, String configFile, boolean verbose) {
+		defaultInitialize(importerClass, verbose);
 		
-		// open VDX.config and get the driver, url and prefix
-		ConfigFile params	= new ConfigFile("VDX.config");
-		params.put("dbname", "hvo_deformation");
+		// process the config file
+		processConfigFile(configFile);
+	}
+	
+	/**
+	 * Parse configuration file.  This sets class variables used in the importing process
+	 * @param configFile	name of the config file
+	 */
+	public void processConfigFile(String configFile) {
 		
-		// open vdxSources.config and get the database name
-		String name = ds;
+		logger.log(Level.INFO, "Reading config file " + configFile);
 		
-		// initialize the data source
-		dataSource = new SQLGPSDataSource();
-		dataSource.initialize(params);
-		logger.info("Initialized data source for " + name);
+		// instantiate the config file
+		params		= new ConfigFile(configFile);
 		
-		// define the rid from the user defined rank
-		rid	= dataSource.defaultGetRankID(rank);
-		if (rid == -1) {
-			logger.severe("Rank not found in database");
+		// get the vdx parameter, and exit if it's missing
+		vdxConfig	= params.getString("vdx.config");
+		if (vdxConfig == null) {
+			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
+		// get the vdx config as it's own config file object
+		vdxParams	= new ConfigFile(vdxConfig);
+		driver		= vdxParams.getString("vdx.driver");
+		url			= vdxParams.getString("vdx.url");
+		prefix		= vdxParams.getString("vdx.prefix");
+		
+		// define the data source handler that acts as a wrapper for data sources
+		sqlDataSourceHandler	= new SQLDataSourceHandler(driver, url, prefix);
+		
+		// get the list of data sources that are being used in this import
+		dataSource	= params.getString("dataSource");
+				
+		// lookup the data source from the list that is in vdxSources.config
+		sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
+		if (sqlDataSourceDescriptor == null) {
+			logger.log(Level.SEVERE, dataSource + " sql data source does not exist in vdxSources.config");
+		}
+				
+		// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
+		sqlDataSource	= (SQLGPSDataSource)sqlDataSourceDescriptor.getSQLDataSource();
+		
+		if (!sqlDataSource.getType().equals(importerType)) {
+			logger.log(Level.SEVERE, "dataSource not a " + importerType + " data source");
+			System.exit(-1);
+		}
+		
+		// information related to the timestamps
+		timestampMask	= "yyMMMdd";
+		timeZone		= "GMT";
+		dateIn			= new SimpleDateFormat(timestampMask);
+		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		
+		// get the list of ranks that are being used in this import
+		rankParams		= params.getSubConfig("rank");
+		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rank			= new Rank(0, rankName, rankValue, rankDefault);
+				
+		// create rank entry
+		if (sqlDataSource.getRanksFlag()) {
+			rank = sqlDataSource.defaultInsertRank(rank);
+			if (rank == null) {
+				logger.log(Level.SEVERE, "invalid rank");
+				System.exit(-1);
+			}
+		}
+		
 		// get the list of channels and create a hash map keyed with the channel code
-		List<Channel> chs = dataSource.getChannelsList();
-		channels = new HashMap<String, Channel>();
+		List<Channel> chs	= sqlDataSource.getChannelsList();
+		channels			= new HashMap<String, Channel>();
 		for (Channel ch : chs) {
 			channels.put(ch.getCode(), ch);
 		}
 	}
 	
 	/**
-	 * Import station covariance file
-	 * @param fn file name
+	 * Parse stacov file from url (resource locator or filename)
+	 * @param filename
 	 */
-	public void importFile(String filename) {
+	public void process(String filename) {
 		
-		String md5, s, sx, sy, sz, sc;
-		int numParams, sid, p1, p2, i1, i2;
-		double t0, t1, data;
+		// initialize variables local to this method
+		String sx, sy, sz, sc;
+		int p1, p2, i1, i2;
+		double data;
 		double llh[];
-		Date fileDate;
-		SimpleDateFormat dateIn, dateOut;
 		SolutionPoint sp;
-		SolutionPoint[] points;
-		ResourceReader rr;
-		Channel ch;
+		Channel channel;
 		boolean done;
 		
-		try {			
-			dateIn	= new SimpleDateFormat("yyMMMdd");
-			dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
-			dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
-			
-			md5	= Util.md5Resource(filename);
+		try {
 			
 			// check that the file exists
-			rr	= ResourceReader.getResourceReader(filename);
+			rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
-				logger.severe("skipping: " + filename + " (resource is invalid)");
+				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
 				return;
 			}
+			
+			// move to the first line in the file
+			String line		= rr.nextLine();
 			
 			// check that the file has data
-			s	= rr.nextLine();
-			if (s == null)	{
-				logger.severe("skipping: " + filename + " (resource is empty)");
+			if (line == null) {
+				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is empty)");
 				return;
 			}
 			
-			numParams	= Integer.parseInt(s.substring(0, 5).trim());
-			points		= new SolutionPoint[numParams / 3];
-			
-			fileDate	= dateIn.parse(s.substring(20, 27));
-			fileDate.setTime(fileDate.getTime() + 12 * 60 * 60 * 1000);
-			
-			t0			= (((double)fileDate.getTime() / (double)1000) - 946728000);
-			t1			= t0 + 86400;
+			// read the first line and get soltion count information
+			int numParams			= Integer.parseInt(line.substring(0, 5).trim());
+			SolutionPoint[] points	= new SolutionPoint[numParams / 3];
+
+			// read the first line and get date information, add 12 hours to the date to get it in the middle of the day
+			double j2ksec0, j2ksec1;
+			try {
+				String timestamp	= line.substring(20, 27);
+				date				= dateIn.parse(timestamp);
+				date.setTime(date.getTime() + 12 * 60 * 60 * 1000);
+				j2ksec0				= Util.dateToJ2K(date);
+				j2ksec1				= j2ksec0 + 86400;
+			} catch (ParseException e) {
+				logger.log(Level.SEVERE, "skipping: " + filename + "  (timestamp not valid)");
+				return;
+			}
 			
 			// attempt to insert this source.  this method will tell if this file has already been imported
-			sid	= dataSource.insertSource(new File(filename).getName(), md5, t0, t1, rid);
+			int sid	= sqlDataSource.insertSource(new File(filename).getName(), Util.md5Resource(filename), j2ksec0, j2ksec1, rank.getId());
 			if (sid == -1) {
-				logger.severe("skipping: " + filename + " (hash already exists)");
+				logger.log(Level.SEVERE, "skipping: " + filename + " (hash already exists)");
 				return;
-			} else {
-				logger.info("importing: " + filename);
 			}
+			
+			logger.log(Level.INFO, "importing: " + filename);
 			
 			for (int i = 0; i < numParams / 3; i++) {
 				sx	= rr.nextLine();
@@ -128,7 +186,7 @@ public class ImportStacov {
 				sp	= new SolutionPoint();
 				
 				sp.channel	= sx.substring(7, 11).trim();
-				sp.dp.t		= (t0 + t1) / 2;
+				sp.dp.t		= (j2ksec0 + j2ksec1) / 2;
 				sp.dp.x		= Double.parseDouble(sx.substring(25, 47).trim());
 				sp.dp.sxx	= Double.parseDouble(sx.substring(53, 74).trim());
 				
@@ -176,50 +234,58 @@ public class ImportStacov {
 				spt.dp.syy = spt.dp.syy * spt.dp.syy;
 				spt.dp.szz = spt.dp.szz * spt.dp.szz;
 				
-				ch	= channels.get(spt.channel);
+				channel	= channels.get(spt.channel);
 				
 				// if the channel isn't in the channel list from the db then it needs to be created
-				if (ch == null) {
+				if (channel == null) {
 					llh	= GPS.xyz2LLH(spt.dp.x, spt.dp.y, spt.dp.z);
-					dataSource.createChannel(spt.channel, spt.channel, llh[0], llh[1], llh[2]);
-					ch	= dataSource.getChannel(spt.channel);
-					channels.put(spt.channel, ch);
+					sqlDataSource.createChannel(spt.channel, spt.channel, llh[0], llh[1], llh[2]);
+					channel	= sqlDataSource.getChannel(spt.channel);
+					channels.put(spt.channel, channel);
 				}
 				
 				// insert the solution into the db
-				dataSource.insertSolution(sid, ch.getId(), spt.dp);
+				sqlDataSource.insertSolution(sid, channel.getCID(), spt.dp);
 			}
 
 		} catch (Exception e) {
-			e.printStackTrace();	
+			logger.log(Level.SEVERE, "ImportStacov.process(" + filename + ") failed.", e);	
 		}
+	}
+	
+	public void outputInstructions(String importerClass, String message) {
+		defaultOutputInstructions(importerClass, message);
 	}
 
 	/**
-	 * Main method
+	 * Main method.
+	 * Command line syntax:
+	 *  -h, --help print help message
+	 *  -c config file name
+	 *  -v verbose mode
+	 *  files ...
 	 */
-	public static void main(String args[]) {
+	public static void main(String as[]) {
 		
-		int rank = -1;
+		ImportStacov importer	= new ImportStacov();
 		
-		// check that the mininum number of parameters were passed
-		if (args.length < 3) {
-			System.err.println("java gov.usgs.vdx.data.in.gps.ImportStacov [data source] [rank] [files...]");
+		Arguments args = new Arguments(as, flags, keys);
+		
+		if (args.flagged("-h")) {
+			importer.outputInstructions(importer.getClass().getName(), null);
 			System.exit(-1);
 		}
 		
-		// check that the rank is actually an integer
-		try {
-			rank = Integer.parseInt(args[1]);
-		} catch (NumberFormatException e) {
-			System.err.println("specified rank is not a number");
+		if (!args.contains("-c")) {
+			importer.outputInstructions(importer.getClass().getName(), "Config file required");
 			System.exit(-1);
 		}
-		
-		ImportStacov is = new ImportStacov(args[0], rank);
-		
-		for (int i = 2; i < args.length; i++) {
-			is.importFile(args[i]);
+
+		importer.initialize(importer.getClass().getName(), args.get("-c"), args.flagged("-v"));
+
+		List<String> files	= args.unused();
+		for (String file : files) {
+			importer.process(file);
 		}
-	}
+	}	
 }
