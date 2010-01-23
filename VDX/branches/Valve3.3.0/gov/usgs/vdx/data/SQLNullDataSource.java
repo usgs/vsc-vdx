@@ -22,7 +22,7 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= false;
 	public static final boolean columns			= false;
-	public static final boolean plotColumns		= false;
+	public static final boolean menuColumns		= false;
 
 	/**
 	 * Get database type, generic in this case
@@ -34,7 +34,7 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
