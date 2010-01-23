@@ -346,7 +346,7 @@ public class HypocenterList implements BinaryDataSet
 		{
 			Hypocenter hc = hypocenters.get(i);
 			result.setQuick(i, 0, hc.j2ksec);
-			double mo = Math.pow(10, (321 / 20 + 3 * hc.mag / 2));
+			double mo = Math.pow(10, (321 / 20 + 3 * hc.prefmag / 2));
 			if (i == 0)
 				result.setQuick(i, 1, mo);
 			else

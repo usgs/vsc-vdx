@@ -417,7 +417,7 @@ public class HypocenterRenderer implements Renderer
         for (int i = 0; i < hcs.size(); i++)
         {
         	Hypocenter hc = hcs.get(i);
-            if (hc.mag != -99.99)
+            if (hc.prefmag != -99.99)
             {
             	switch(axes)
             	{
@@ -463,7 +463,7 @@ public class HypocenterRenderer implements Renderer
                 }
                 
                 g.setColor(color);
-				int ci = (int)Math.floor(hc.mag);
+				int ci = (int)Math.floor(hc.prefmag);
 				if (ci < 0)
 					ci = 0;
                 g.draw(circles[ci]);

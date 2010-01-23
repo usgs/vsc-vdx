@@ -22,7 +22,9 @@ public class Hypocenter
     public double lat;
     public double lon;
     public double depth;
-    public double mag;
+    public double prefmag;
+    public double ampmag;
+    public double codamag;
     public Integer nphases;
     public Integer azgap;
     public double dmin;
@@ -36,12 +38,12 @@ public class Hypocenter
 	/** Constructor that sets data.
 	 * @param d the data
 	 */
-    public Hypocenter(double j2ksec, Integer rid, double lat, double lon, double depth, double mag) {
-        this(j2ksec, (String)null, rid, lat, lon, depth, mag, 
+    public Hypocenter(double j2ksec, Integer rid, double lat, double lon, double depth, double prefmag) {
+        this(j2ksec, (String)null, rid, lat, lon, depth, prefmag, Double.NaN, Double.NaN,
         		(Integer)null, (Integer)null, Double.NaN, Double.NaN, (Integer)null, Double.NaN, Double.NaN, (String)null, (String)null);
     }
     
-    public Hypocenter(double j2ksec, String eid, Integer rid, double lat, double lon, double depth, double mag, 
+    public Hypocenter(double j2ksec, String eid, Integer rid, double lat, double lon, double depth, double prefmag, double ampmag, double codamag, 
     		Integer nphases, Integer azgap, double dmin, double rms, Integer nstimes, double herr, double verr, String magtype, String rmk) {
     	this.j2ksec		= j2ksec;
     	this.eid		= eid;
@@ -49,7 +51,9 @@ public class Hypocenter
     	this.lat		= lat;
     	this.lon		= lon;
     	this.depth		= depth;
-    	this.mag		= mag;
+    	this.prefmag	= prefmag;
+    	this.ampmag		= ampmag;
+    	this.codamag	= codamag;
     	this.nphases	= nphases;
     	this.azgap		= azgap;
     	this.dmin		= dmin;
@@ -82,7 +86,7 @@ public class Hypocenter
 	 */
     public String toString()
     {
-        return this.j2ksec + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.mag;
+        return this.j2ksec + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.prefmag;
     }
 	
     public void insertIntoByteBuffer(ByteBuffer buffer)
@@ -92,7 +96,7 @@ public class Hypocenter
     	buffer.putDouble(lat);
     	buffer.putDouble(lon);
     	buffer.putDouble(depth);
-    	buffer.putDouble(mag);
+    	buffer.putDouble(prefmag);
     }
     
 	/** Outputs an array of Earthquakes as raw data.

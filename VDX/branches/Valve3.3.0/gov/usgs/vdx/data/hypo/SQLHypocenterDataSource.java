@@ -26,7 +26,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public static final boolean channelTypes	= false;
 	public static final boolean ranks			= true;
 	public static final boolean columns			= false;
-	public static final boolean plotColumns		= false;
+	public static final boolean menuColumns		= false;
 
 	/**
 	 * Get database type, generic in this case
@@ -38,7 +38,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
 	public boolean getRanksFlag()			{ return ranks; }
 	public boolean getColumnsFlag()			{ return columns; }
-	public boolean getPlotColumnsFlag()		{ return plotColumns; }
+	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	public static final String REMARK	= "remark";
 	public static final String MAGTYPE	= "magtype";
@@ -94,7 +94,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public boolean createDatabase() {
 		
 		try {
-			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, plotColumns);
+			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
 			
 			// setup the database for running some statements
 			database.useDatabase(dbName);
@@ -102,7 +102,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			
 			// create the hypocenters table
 			sql	= "CREATE TABLE hypocenters (j2ksec DOUBLE NOT NULL, eid VARCHAR(45) NOT NULL, rid INT NOT NULL, ";
-			sql+= "   lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, depth DOUBLE NOT NULL, mag DOUBLE NOT NULL, ";
+			sql+= "   lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, depth DOUBLE NOT NULL, ";
+			sql+= "   prefmag DOUBLE, ampmag DOUBLE, codamag DOUBLE, ";
 			sql+= "   nphases INT, azgap INT, dmin DOUBLE, rms DOUBLE, nstimes INT, herr DOUBLE, verr DOUBLE, ";
 			sql+= "   magtype VARCHAR(1), rmk VARCHAR(1), PRIMARY KEY(eid,rid))";
 			st.execute(sql);
@@ -213,14 +214,15 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			database.useDatabase(dbName);
 			
 			// build the sql
-			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.mag ";
+			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag ";
 			sql += "FROM   hypocenters a, ranks c ";
 			sql += "WHERE  a.rid = c.rid ";
-			sql += "AND    a.j2ksec >= ? AND a.j2ksec <= ? ";
-			sql += "AND    a.lon    >= ? AND a.lon    <= ? ";
-			sql += "AND    a.lat    >= ? AND a.lat    <= ? ";
-			sql += "AND    a.depth  >= ? AND a.depth  <= ? ";
-			sql += "AND    a.mag    >= ? AND a.mag    <= ? ";
+			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
+			sql += "AND    a.lon     >= ? AND a.lon     <= ? ";
+			sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
+			sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
+			sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
+			sql += "AND    a.prefmag IS NOT NULL ";
 			
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
@@ -283,8 +285,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		try {
 			database.useDatabase(dbName);
 			sql = "INSERT IGNORE INTO hypocenters ";
-			sql+= "       (j2ksec, eid, rid, lat, lon, depth, mag, nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk) ";
-			sql+= "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			sql+= "       (j2ksec, eid, rid, lat, lon, depth, prefmag, ampmag, codamag, ";
+			sql+= "        nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk) ";
+			sql+= "VALUES (?,?,?,round(?, 4),round(?, 4),round(?, 2),round(?, 2),round(?, 2),round(?, 2),?,?,?,?,?,?,?,?,?)";
 			ps = database.getPreparedStatement(sql);
 			
 			// required fields
@@ -294,18 +297,20 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(4, hc.lat);
 			ps.setDouble(5, hc.lon);
 			ps.setDouble(6, hc.depth);
-			ps.setDouble(7, hc.mag);
 			
 			// non-required fields
-			if (hc.nphases == null)		ps.setNull(8,  java.sql.Types.INTEGER);	else ps.setInt(8, hc.nphases);
-			if (hc.azgap == null)		ps.setNull(9,  java.sql.Types.INTEGER);	else ps.setInt(9, hc.azgap);
-			if (Double.isNaN(hc.dmin))	ps.setNull(10, java.sql.Types.DOUBLE);	else ps.setDouble(10, hc.dmin);
-			if (Double.isNaN(hc.rms))	ps.setNull(11, java.sql.Types.DOUBLE);	else ps.setDouble(11, hc.rms);
-			if (hc.nstimes == null)		ps.setNull(12, java.sql.Types.INTEGER);	else ps.setInt(12, hc.nstimes);
-			if (Double.isNaN(hc.herr))	ps.setNull(13, java.sql.Types.DOUBLE);	else ps.setDouble(13, hc.herr);
-			if (Double.isNaN(hc.verr))	ps.setNull(14, java.sql.Types.DOUBLE);	else ps.setDouble(14, hc.verr);
-			if (hc.magtype == null)		ps.setNull(15, java.sql.Types.VARCHAR);	else ps.setString(15, hc.magtype);
-			if (hc.rmk == null)			ps.setNull(16, java.sql.Types.VARCHAR);	else ps.setString(16, hc.rmk);
+			if (Double.isNaN(hc.prefmag))	ps.setNull(7, java.sql.Types.DOUBLE);		else ps.setDouble(7, hc.prefmag);
+			if (Double.isNaN(hc.ampmag))	ps.setNull(8, java.sql.Types.DOUBLE);		else ps.setDouble(8, hc.ampmag);
+			if (Double.isNaN(hc.codamag))	ps.setNull(9, java.sql.Types.DOUBLE);		else ps.setDouble(9, hc.codamag);
+			if (hc.nphases == null)			ps.setNull(10,  java.sql.Types.INTEGER);	else ps.setInt(10, hc.nphases);
+			if (hc.azgap == null)			ps.setNull(11,  java.sql.Types.INTEGER);	else ps.setInt(11, hc.azgap);
+			if (Double.isNaN(hc.dmin))		ps.setNull(12, java.sql.Types.DOUBLE);		else ps.setDouble(12, hc.dmin);
+			if (Double.isNaN(hc.rms))		ps.setNull(13, java.sql.Types.DOUBLE);		else ps.setDouble(13, hc.rms);
+			if (hc.nstimes == null)			ps.setNull(14, java.sql.Types.INTEGER);		else ps.setInt(14, hc.nstimes);
+			if (Double.isNaN(hc.herr))		ps.setNull(15, java.sql.Types.DOUBLE);		else ps.setDouble(15, hc.herr);
+			if (Double.isNaN(hc.verr))		ps.setNull(16, java.sql.Types.DOUBLE);		else ps.setDouble(16, hc.verr);
+			if (hc.magtype == null)			ps.setNull(17, java.sql.Types.VARCHAR);		else ps.setString(17, hc.magtype);
+			if (hc.rmk == null)				ps.setNull(18, java.sql.Types.VARCHAR);		else ps.setString(18, hc.rmk);
 			
 			ps.execute();
 			
