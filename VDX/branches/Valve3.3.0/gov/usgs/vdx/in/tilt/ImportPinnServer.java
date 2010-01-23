@@ -82,7 +82,7 @@ public class ImportPinnServer extends Client
 		
 		// this is commented out for now until i figure out how i want to handle channel existence
 		// if (!ips.dataSource.defaultChannelExists("etilt", ips.channel)) {
-			if (ips.dataSource.createChannel(ips.channel, ips.channel, -999, -999, -999, 0))
+			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 0, 0))
 				ips.logger.info("created channel.");
 		// }
 		return ips;
@@ -104,7 +104,7 @@ public class ImportPinnServer extends Client
 		dm.setQuick(0, 5, sb.getVoltage());
 		dm.setQuick(0, 6, Double.NaN);
 		dm.setQuick(0, 7, Double.NaN);
-		String[] columnNames = {"j2ksec", "xTilt", "yTilt", "holtTemp", "boxTemp", "instVolt", "gndVolt", "rain"};
+		String[] columnNames = {"j2ksec", "xTilt", "yTilt", "holeTemp", "boxTemp", "instVolt", "gndVolt", "rain"};
 		GenericDataMatrix gdm = new GenericDataMatrix(dm);
 		gdm.setColumnNames(columnNames);
 		dataSource.insertData(channel, gdm, 0);

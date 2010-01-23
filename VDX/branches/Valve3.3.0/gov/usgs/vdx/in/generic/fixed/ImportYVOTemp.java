@@ -256,7 +256,7 @@ public class ImportYVOTemp
 	public void create ()
 	{
 		logger.info("Creating channel " + table);
-		dataSource.createChannel(table, table, lon, lat, 0);
+		dataSource.createChannel(table, table, lon, lat, Double.NaN, 0);
 	}
 	
 	/**
