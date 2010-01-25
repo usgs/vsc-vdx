@@ -205,8 +205,11 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * Insert data into the database using the parameters passed
 	 * @param channelCode
 	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
 	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm) {
-		defaultInsertData(channelCode, gdm, translations, ranks, 0);
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
+		defaultInsertData(channelCode, gdm, translations, ranks, rid);
 	}
 }

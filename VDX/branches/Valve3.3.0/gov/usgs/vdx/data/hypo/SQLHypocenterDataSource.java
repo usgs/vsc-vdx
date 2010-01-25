@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.hypo;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SelectOption;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
@@ -318,4 +319,14 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			logger.log(Level.SEVERE, "SQLHypocenterDataSource.insertHypocenter() failed.", e);
 		}
 	}
+	
+	/**
+	 * Insert data into the database using the parameters passed
+	 * @param channelCode
+	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
+	 */
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) { }
 }

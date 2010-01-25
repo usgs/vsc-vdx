@@ -4,6 +4,7 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -279,17 +280,21 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	}
 	
 	/**
-	 * Insert data for channel	 * 
-	 * @param channelCode	channel code
-	 * @param data			data matrix to insert
-	 * @param r				if we permit data replacing?
+	 * Insert data into the database using the parameters passed
+	 * @param channelCode
+	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
 	 */
-	public void insertData(String channelCode, DoubleMatrix2D data, boolean r) {
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
 		
 		try {
 			database.useDatabase(dbName);
 			
-			if (r) {
+			DoubleMatrix2D data = gdm.getData();
+			
+			if (true) {
 				sql = "REPLACE INTO ";
 			} else {
 				sql = "INSERT IGNORE INTO ";

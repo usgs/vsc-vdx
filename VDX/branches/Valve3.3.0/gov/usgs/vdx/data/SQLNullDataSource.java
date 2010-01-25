@@ -76,9 +76,10 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 		return null;
 	}
 	
-	public void insertData(String channel, DoubleMatrix2D data, boolean r)
+	public void insertData(String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid)
 	{
-			for (int i=0; i < data.rows(); i++)
-				System.out.println(Util.j2KToDateString(data.getQuick(i, 0)) + " : " + data.getQuick(i, 1));
+		DoubleMatrix2D data			= gdm.getData();
+		for (int i=0; i < data.rows(); i++)
+			System.out.println(Util.j2KToDateString(data.getQuick(i, 0)) + " : " + data.getQuick(i, 1));
 	}
 }

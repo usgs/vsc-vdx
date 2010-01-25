@@ -1,7 +1,6 @@
 package gov.usgs.vdx.data.generic.fixed;
 
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
@@ -235,8 +234,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Insert data into the database using the parameters passed
 	 * @param channelCode
 	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
 	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm, int rid) {
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
 		defaultInsertData(channelCode, gdm, translations, ranks, rid);
 	}
 	
@@ -246,90 +248,5 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	
 	public boolean insertColumn(Column column) {
 		return defaultInsertColumn(column);
-	}
-	
-	/**
-	 * Inserts data into VALVE2 Strain Database.  Assumes the translation and offsets are already set properly in the database.
-	 * 
-	 * @param code	station code
-	 * @param t		j2ksec
-	 * @param s1	strain1 value
-	 * @param s2	strain2 value
-	 * @param g		ground voltage
-	 * @param bar	barometer
-	 * @param h		hole temperature
-	 * @param i		instrument voltage
-	 * @param r		rainfall
-	 */
-	public void insertV2StrainData(String code, double t, double s1, double s2, double g, double bar, double h, double i, double r) {
-		
-		try {
-			
-			// default some variables
-			int tid = -1;
-			int eid = -1;
-            
-            // lower case the code because that's how the table names are in the database
-            code.toLowerCase();
-			
-			// set the database
-			database.useV2Database("strain");
-			
-			// get the translation and offset
-            ps = database.getPreparedStatement(
-            		"SELECT curTrans, curEnvTrans FROM stations WHERE code=?");
-            ps.setString(1, code);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-            	tid = rs.getInt(1);
-            	eid = rs.getInt(2);
-            }
-            rs.close();
-
-            // create the strain entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "strain VALUES (?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, s1);
-			ps.setDouble(4, s2);
-			ps.setDouble(5, g);
-			ps.setDouble(6, tid);
-			ps.execute();
-			
-			// create the environment entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, bar);
-			ps.setDouble(4, h);
-			ps.setDouble(5, i);
-			ps.setDouble(6, r);
-			ps.setDouble(7, g);
-			ps.setDouble(8, eid);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGenericFixedDataSource.insertV2StrainData() failed.", e);
-		}		
-	}
-	
-	public void insertV2GasData(int sid, double t, double co2) {
-		
-		try {
-			
-			// set the database
-			database.useV2Database("gas");
-
-            // create the tilt entry
-			ps = database.getPreparedStatement("INSERT IGNORE INTO co2 VALUES (?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setInt(2, sid);
-			ps.setString(3, Util.j2KToDateString(t));
-			ps.setDouble(4, co2);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGenericFixedDataSource.insertV2GasData() failed.", e);
-		}		
 	}
 }

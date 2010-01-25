@@ -4,6 +4,7 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
@@ -338,4 +339,14 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			logger.log(Level.SEVERE, "SQLGPSDataSource.insertSolution() failed.", e);
 		}
 	}
+	
+	/**
+	 * Insert data into the database using the parameters passed
+	 * @param channelCode
+	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
+	 */
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) { }
 }
