@@ -95,19 +95,16 @@ public class ImportPinnServer extends Client
 	public void handleStatusBlock(StatusBlock sb)
 	{
 		System.out.println(sb);
-		DoubleMatrix2D dm	= DoubleFactory2D.dense.make(1, 8);
+		DoubleMatrix2D dm	= DoubleFactory2D.dense.make(1, 5);
 		dm.setQuick(0, 0, sb.getJ2K());
 		dm.setQuick(0, 1, sb.getXMillis());
 		dm.setQuick(0, 2, sb.getYMillis());
 		dm.setQuick(0, 3, sb.getTemperature());
-		dm.setQuick(0, 4, Double.NaN);
-		dm.setQuick(0, 5, sb.getVoltage());
-		dm.setQuick(0, 6, Double.NaN);
-		dm.setQuick(0, 7, Double.NaN);
-		String[] columnNames = {"j2ksec", "xTilt", "yTilt", "holeTemp", "boxTemp", "instVolt", "gndVolt", "rain"};
+		dm.setQuick(0, 4, sb.getVoltage());
+		String[] columnNames = {"j2ksec", "xTilt", "yTilt", "holeTemp", "instVolt"};
 		GenericDataMatrix gdm = new GenericDataMatrix(dm);
 		gdm.setColumnNames(columnNames);
-		dataSource.insertData(channel, gdm, 0);
+		dataSource.insertData(channel, gdm, dataSource.getTranslationsFlag(), dataSource.getRanksFlag(), 1);
 	}
 	
 	/**

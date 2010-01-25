@@ -4,6 +4,7 @@ import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Time;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLNullDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
@@ -100,7 +101,9 @@ public class ImportBob {
 
 		// TODO: work out initialization
 		// sds.defaultInitialize(params, name);
-		sds.insertData(c, parseFile(f));
+		
+		// rework insert data functionality
+		// sds.defaultInsertData(c, parseFile(f), sds.getTranslationsFlag(), sds.getRanksFlag(), 1);
 
 	}
 

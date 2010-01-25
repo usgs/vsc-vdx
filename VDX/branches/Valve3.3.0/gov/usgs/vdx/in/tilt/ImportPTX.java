@@ -63,19 +63,16 @@ public class ImportPTX
 					PTXRecord ptx = new PTXRecord(buffer);
 					double[][] data = ptx.getImportData();
 					for (int i = 0; i < data.length; i++) {
-						DoubleMatrix2D dm	= DoubleFactory2D.dense.make(1, 8);
+						DoubleMatrix2D dm	= DoubleFactory2D.dense.make(1, 5);
 						dm.setQuick(0, 0, data[i][0]);
 						dm.setQuick(0, 1, data[i][1]);
 						dm.setQuick(0, 2, data[i][2]);
-						dm.setQuick(0, 3, data[i][4]);
-						dm.setQuick(0, 4, Double.NaN);
-						dm.setQuick(0, 5, data[i][3]);
-						dm.setQuick(0, 6, Double.NaN);
-						dm.setQuick(0, 7, Double.NaN);
-						String[] columnNames = {"j2ksec", "xTilt", "yTilt", "holtTemp", "boxTemp", "instVolt", "gndVolt", "rain"};
+						dm.setQuick(0, 3, data[i][3]);
+						dm.setQuick(0, 4, data[i][4]);
+						String[] columnNames = {"j2ksec", "xTilt", "yTilt", "instVolt", "holeTemp"};
 						GenericDataMatrix gdm = new GenericDataMatrix(dm);
 						gdm.setColumnNames(columnNames);
-						dataSource.insertData(channel, gdm, 0);
+						dataSource.insertData(channel, gdm, dataSource.getTranslationsFlag(), dataSource.getRanksFlag(), 1);
 					}
 				}
 				catch (Exception e)

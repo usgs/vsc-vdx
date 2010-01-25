@@ -2,13 +2,20 @@ package gov.usgs.vdx.in;
 
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.CurrentTime;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
@@ -16,6 +23,7 @@ import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
+import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
 
 import cern.colt.matrix.*;
@@ -25,7 +33,101 @@ import cern.colt.matrix.*;
  *  
  * @author Loren Antolik
  */
-public class ImportFile extends Importer {
+public class ImportFile implements Importer {
+	
+	public ResourceReader rr;
+	
+	public static Set<String> flags;
+	public static Set<String> keys;
+	
+	public String vdxConfig;
+	
+	public ConfigFile params;
+	public ConfigFile vdxParams;
+	public ConfigFile rankParams;
+	public ConfigFile columnParams;
+	public ConfigFile channelParams;
+	public ConfigFile dataSourceParams;
+	public ConfigFile translationParams;
+	public String driver, prefix, url;
+	
+	public SimpleDateFormat dateIn;
+	public SimpleDateFormat dateOut;
+	public Date date;
+	public Double j2ksec;
+
+	public String filenameMask;
+	public int headerLines;
+	public String timestampMask;
+	public String timeZone;
+	
+	public String importColumns;
+	public String[] importColumnArray;
+	public Map<Integer, String> importColumnMap;
+	
+	public String dataSource;
+	public SQLDataSource sqlDataSource;
+	public SQLDataSourceHandler sqlDataSourceHandler;
+	public SQLDataSourceDescriptor sqlDataSourceDescriptor;	
+	public List<String> dataSourceList;
+	public Map<String, String> dataSourceColumnMap;
+	public Map<String, String> dataSourceChannelMap;
+	public Map<String, SQLDataSource> sqlDataSourceMap;
+	public Iterator<String> dsIterator;
+	
+	public Rank rank;
+	public String rankName;
+	public int rankValue, rankDefault;
+	
+	public String channels;
+	public String[] channelArray;
+	public Map<String, Channel> channelMap;	
+	public Channel channel;
+	public String channelCode, channelName;
+	public double channelLon, channelLat, channelHeight, channelAzimuth;
+	public List<String> channelList;
+	public Iterator<String> chIterator;
+	public String defaultChannels;
+	
+	public String columns;
+	public String[] columnArray;
+	public HashMap<String, Column> columnMap;	
+	public Column column;
+	public String columnName, columnDescription, columnUnit;
+	public int columnIdx;
+	public boolean columnActive, columnChecked;
+	public List<String> columnList;
+	public Iterator<String> coIterator;
+	public String defaultColumns;
+	
+	public CurrentTime currentTime = CurrentTime.getInstance();
+	
+	public double azimuthInst;
+	
+	public int postConnectDelay;
+	public int betweenPollDelay;
+	public String deviceIP;
+	public int devicePort;
+	
+	public int connTimeout;
+	public int dataTimeout;
+	public int maxRetries;
+	public String timeSource;
+	public int syncInterval;
+	public String instrument;
+	public String delimiter;
+	
+	public String importerType;
+	
+	public Logger logger;
+	
+	static {
+		flags	= new HashSet<String>();
+		keys	= new HashSet<String>();
+		keys.add("-c");
+		flags.add("-h");
+		flags.add("-v");
+	}
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -33,7 +135,10 @@ public class ImportFile extends Importer {
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
-		defaultInitialize(importerClass, verbose);
+		
+		// initialize the logger for this importer
+		logger	= Logger.getLogger(importerClass);
+		logger.log(Level.INFO, "ImportFile.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -51,7 +156,7 @@ public class ImportFile extends Importer {
 		params		= new ConfigFile(configFile);
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= params.getString("vdx.config");
+		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
 			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
 			System.exit(-1);
@@ -522,7 +627,10 @@ public class ImportFile extends Importer {
 	}
 	
 	public void outputInstructions(String importerClass, String message) {
-		defaultOutputInstructions(importerClass, message);
+		if (message == null) {
+			System.err.println(message);
+		}
+		System.err.println(importerClass + " -c configfile filelist");
 	}
 
 	/**

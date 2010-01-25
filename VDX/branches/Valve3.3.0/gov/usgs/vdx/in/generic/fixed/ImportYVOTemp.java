@@ -150,8 +150,8 @@ public class ImportYVOTemp
 			colNames.add(c.name);
 		gd.setColumnNames(colNames.toArray(new String[0]));
 		
-		// default to rank id 0
-		dataSource.insertData(table, gd, 0);
+		// default to rank id 0, rebuild for new insert data function
+		// dataSource.insertData(table, gd, 0);
 	}
 
 	/**
