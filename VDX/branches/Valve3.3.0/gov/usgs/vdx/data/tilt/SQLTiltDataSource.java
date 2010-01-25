@@ -1,7 +1,6 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -140,27 +139,8 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @return true if successful
 	 */	
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
-		
-		try {
-			defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
-			
-			// get the newly created channel id
-			Channel ch = defaultGetChannel(channelCode, channelTypes);
-			
-			// update the channels table with the azimuth value
-			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("UPDATE channels SET azimuth = ? WHERE cid = ?");
-			ps.setDouble(1, azimuth);
-			ps.setInt(2, ch.getCID());
-			ps.execute();
-			
-			return true;
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.createChannel() failed.", e);
-		}
-		
-		return false;
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, height);
+		return defaultCreateTiltChannel(channel, tid, azimuth, channels, translations, ranks, columns);
 	}
 
 	/**
@@ -328,62 +308,11 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * Insert data into the database using the parameters passed
 	 * @param channelCode
 	 * @param gdm
+	 * @param translations
+	 * @param ranks
+	 * @param rid
 	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm, int rid) {
+	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
 		defaultInsertData(channelCode, gdm, translations, ranks, rid);
-	}
-	
-	public void insertV2Data (String code, double t, double x, double y, double h, double b, double i, double g, double r) {
-		try {
-			
-			// default some variables
-			int tid = -1;
-			int oid = -1;
-			int eid = -1;
-			
-			// set the database
-			database.useV2Database("tilt");
-			
-			// get the translation and offset
-            ps = database.getPreparedStatement("SELECT curTrans, curOffset, curEnv FROM stations WHERE code=?");
-            ps.setString(1, code);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-            	tid = rs.getInt(1);
-            	oid = rs.getInt(2);
-            	eid = rs.getInt(3);
-            }
-            rs.close();
-            
-            // lower case the code because that's how the table names are in the database
-            code.toLowerCase();
-
-            // create the tilt entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "tilt VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			if (Double.isNaN(x)) { ps.setNull(3, 8); } else { ps.setDouble(3, x); }
-			if (Double.isNaN(y)) { ps.setNull(4, 8); } else { ps.setDouble(4, y); }
-			if (Double.isNaN(g)) { ps.setNull(5, 8); } else { ps.setDouble(5, g); }
-			ps.setDouble(6, tid);
-			ps.setDouble(7, oid);
-			ps.setDouble(8, 0);
-			ps.execute();
-			
-			// create the environment entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			if (Double.isNaN(h)) { ps.setNull(3, 8); } else { ps.setDouble(3, h); }
-			if (Double.isNaN(b)) { ps.setNull(4, 8); } else { ps.setDouble(4, b); }
-			if (Double.isNaN(i)) { ps.setNull(5, 8); } else { ps.setDouble(5, i); }
-			if (Double.isNaN(r)) { ps.setNull(6, 8); } else { ps.setDouble(6, r); }
-			if (Double.isNaN(g)) { ps.setNull(7, 8); } else { ps.setDouble(7, g); }
-			ps.setDouble(8, eid);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.insertV2Data() failed.", e);
-		}
 	}
 }
