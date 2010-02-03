@@ -222,7 +222,7 @@ public class HelicorderRenderer extends FrameRenderer
 	{
 		if (x - hcMinX < 0)
 			return -1;
-		return (int)((x - hcMinX) / (double)timeChunk);
+		return (int)((x - hcMinX) / timeChunk);
 	}
 	
 	/**
@@ -396,7 +396,7 @@ public class HelicorderRenderer extends FrameRenderer
 		Color lastColor		= null;
 		for (int j = 0; j < numRows; j++) {
 			t1		= j2k.getQuick(j, 0);
-			int k	= ((int)((t1 - hcMinX) / (double)timeChunk)) % colors.length;
+			int k	= ((int)((t1 - hcMinX) / timeChunk)) % colors.length;
 			if (k < 0)
 				k = 0;
 			
