@@ -68,7 +68,7 @@ abstract public class SQLDataSource {
 	 * Insert data.  Concrete realization see in the inherited classes
 	 * @return true if success
 	 */
-	abstract public void insertData(String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid);
+	// abstract public void insertData(String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid);
 	
 	/**
 	 * Initialize Data Source
@@ -143,8 +143,8 @@ abstract public class SQLDataSource {
 				// channel types. logically you must have a channels table to have channel types
 				if (channelTypes) {
 					sql = sql + ", ctid INT DEFAULT 1 NOT NULL";
-					ps.execute("CREATE TABLE channel_types (ctid INT PRIMARY KEY AUTO_INCREMENT, code VARCHAR(16) UNIQUE)");
-					ps.execute("INSERT INTO channel_types (code) VALUES ('DEFAULT')");
+					ps.execute("CREATE TABLE channel_types (ctid INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(16) UNIQUE)");
+					ps.execute("INSERT INTO channel_types (name) VALUES ('DEFAULT')");
 				}
 
 				// complete the channels sql statement and execute it
@@ -167,7 +167,7 @@ abstract public class SQLDataSource {
 			// the usage of ranks does not depend on there being a channels table
 			if (ranks) {
 				ps.execute("CREATE TABLE ranks (rid INT PRIMARY KEY AUTO_INCREMENT,"
-					+ "code VARCHAR(24) UNIQUE, rank INT(10) UNSIGNED DEFAULT 0 NOT NULL, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
+					+ "name VARCHAR(24) UNIQUE, rank INT(10) UNSIGNED DEFAULT 0 NOT NULL, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
 			}
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded. ");
@@ -474,16 +474,16 @@ abstract public class SQLDataSource {
 	/**
 	 * Create new channel type
 	 * 
-	 * @param code	channel type display name
+	 * @param name	channel type display name
 	 * @return last inserted id or -1 if unsuccessful
 	 */
-	public int defaultInsertChannelType(String code) {
+	public int defaultInsertChannelType(String name) {
 		int result = -1;
 
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT INTO channel_types (code) VALUES (?)");
-			ps.setString(1, code);
+			ps = database.getPreparedStatement("INSERT INTO channel_types (name) VALUES (?)");
+			ps.setString(1, name);
 			ps.execute();
 
 			// get the id of the newly inserted channel type
@@ -493,10 +493,10 @@ abstract public class SQLDataSource {
 			}			
 			rs.close();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertChannelType(" + code + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertChannelType(" + name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertChannelType(" + code + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertChannelType(" + name + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
@@ -508,18 +508,18 @@ abstract public class SQLDataSource {
 	 * @return newly inserted rank.  null 
 	 */
 	public Rank defaultInsertRank(Rank rank) {
-		return defaultInsertRank(rank.getCode(), rank.getRank(), rank.getUserDefault());
+		return defaultInsertRank(rank.getName(), rank.getRank(), rank.getUserDefault());
 	}
 
 	/**
 	 * Create new rank
 	 * 
-	 * @param code			rank display name
+	 * @param name			rank display name
 	 * @param rank			integer value of rank
 	 * @param is_default	flag to set new rank as default
 	 * @return Rank object using the specified 
 	 */
-	public Rank defaultInsertRank(String code, int rank, int is_default) {
+	public Rank defaultInsertRank(String name, int rank, int is_default) {
 		Rank result = null;
 		int user_default = 0;
 
@@ -540,8 +540,8 @@ abstract public class SQLDataSource {
 			}
 
 			// create the new rank
-			ps = database.getPreparedStatement("INSERT INTO ranks (code, rank, user_default) VALUES (?,?,?)");
-			ps.setString(1, code);
+			ps = database.getPreparedStatement("INSERT INTO ranks (name, rank, user_default) VALUES (?,?,?)");
+			ps.setString(1, name);
 			ps.setInt(2, rank);
 			ps.setInt(3, user_default);
 			ps.execute();
@@ -553,60 +553,47 @@ abstract public class SQLDataSource {
 			}
 			rs.close();
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertRank(" + code + "," + rank + "," + user_default + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+			logger.log(Level.INFO, "SQLDataSource.defaultInsertRank(" + name + "," + rank + "," + user_default + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertRank(" + code + "," + rank + "," + user_default + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertRank(" + name + "," + rank + "," + user_default + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return result;
 	}
 
 	/**
-	 * Inserts a translation in the translations table, and assigns the channels table to use this translation as its default
+	 * Inserts a translation in the translations table
 	 * 
 	 * @param channelCode	channel code
 	 * @param gdm			generic data matrix containing the translations
-	 * @return tid translation id of this translation. -1 if not found
+	 * @return tid translation id of new translation.  -1 if failure
 	 */
 	public int defaultInsertTranslation(String channelCode, GenericDataMatrix gdm) {
 
 		// default local variables
-		int tid			= -1;
+		int tid			= 1;
 		String columns	= "";
 		String values	= "";
 
 		try {
 			database.useDatabase(dbName);
 
-			// lookup the translation to see if it exists in the database yet
-			tid = defaultGetTranslation(channelCode, gdm);
+			DoubleMatrix2D dm		= gdm.getData();
+			String[] columnNames	= gdm.getColumnNames();
 
-			// if this translation doesn't exist then create it
-			if (tid == -1) {
-
-				DoubleMatrix2D dm		= gdm.getData();
-				String[] columnNames	= gdm.getColumnNames();
-
-				// iterate through the generic data matrix to get a list of the values
-				for (int i = 0; i < columnNames.length; i++) {
-					columns	+= columnNames[i] + ",";
-					values	+= dm.get(0, i) + ",";
-				}
-				columns += "name";
-				values += "'" + channelCode + "'";
-
-				// insert the translation into the database
-				ps = database.getPreparedStatement("INSERT INTO translations (" + columns + ") VALUES (" + values + ")");
-				ps.execute();
-				tid = defaultGetTranslation(channelCode, gdm);
+			// iterate through the generic data matrix to get a list of the values
+			for (int i = 0; i < columnNames.length; i++) {
+				columns	+= columnNames[i] + ",";
+				values	+= dm.get(0, i) + ",";
 			}
+			columns += "name";
+			values += "'" + channelCode + "'";
 
-			// update the channels table with the current tid
-			// ps = database.getPreparedStatement("UPDATE channels SET tid = ? WHERE code = ?");
-			// ps.setInt(1, tid);
-			// ps.setString(2, channelCode);
-			// ps.execute();
+			// insert the translation into the database
+			ps = database.getPreparedStatement("INSERT INTO translations (" + columns + ") VALUES (" + values + ")");
+			ps.execute();
+			tid = defaultGetTranslation(channelCode, gdm);
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertTranslation() succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
@@ -770,7 +757,7 @@ abstract public class SQLDataSource {
 	}
 
 	/**
-	 * Get channel types list in format "ctid:code" from database
+	 * Get channel types list in format "ctid:name" from database
 	 * 
 	 * @return List of Strings with : separated values
 	 */
@@ -779,7 +766,7 @@ abstract public class SQLDataSource {
 
 		try {
 			database.useDatabase(dbName);
-			rs = database.getPreparedStatement("SELECT ctid, code FROM channel_types ORDER BY code").executeQuery();
+			rs = database.getPreparedStatement("SELECT ctid, name FROM channel_types ORDER BY name").executeQuery();
 			while (rs.next()) {
 				result.add(String.format("%d:%s", rs.getInt(1), rs.getString(2)));
 			}
@@ -794,6 +781,15 @@ abstract public class SQLDataSource {
 	
 	/**
 	 * Get rank from database
+	 * @param rank	user defined rank
+	 * @return rank, null if not found
+	 */
+	public Rank defaultGetRank(Rank rank) {
+		return defaultGetRank(defaultGetRankID(rank.getRank()));
+	}
+	
+	/**
+	 * Get rank from database
 	 * @param rid	rank id
 	 * @return rank
 	 */
@@ -802,7 +798,7 @@ abstract public class SQLDataSource {
 		
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("SELECT rid, code, rank, user_default FROM ranks WHERE rid = ?");
+			ps = database.getPreparedStatement("SELECT rid, name, rank, user_default FROM ranks WHERE rid = ?");
 			ps.setInt(1, rid);
 			rs = ps.executeQuery();
 			if (rs.next()) {
@@ -843,7 +839,7 @@ abstract public class SQLDataSource {
 	}
 
 	/**
-	 * Get ranks list in format "rid:code:rank:user_default" from database
+	 * Get ranks list in format "rid:name:rank:user_default" from database
 	 * 
 	 * @return List of Strings with : separated values
 	 */
@@ -852,7 +848,7 @@ abstract public class SQLDataSource {
 
 		try {
 			database.useDatabase(dbName);
-			rs = database.getPreparedStatement("SELECT rid, code, rank, user_default FROM ranks ORDER BY rank").executeQuery();
+			rs = database.getPreparedStatement("SELECT rid, name, rank, user_default FROM ranks ORDER BY rank").executeQuery();
 			while (rs.next()) {
 				result.add(String.format("%d:%s:%d:%d", rs.getInt(1), rs.getString(2), rs.getInt(3), rs.getInt(4)));
 			}
@@ -874,8 +870,7 @@ abstract public class SQLDataSource {
 	 * @return tid translation id of the translation. -1 if not found.
 	 */
 	public int defaultGetTranslation(String channelCode, GenericDataMatrix gdm) {
-		sql = "";
-		int result = -1;
+		int result = 1;
 
 		try {
 			database.useDatabase(dbName);
@@ -883,6 +878,7 @@ abstract public class SQLDataSource {
 			// iterate through the generic data matrix to get a list of the columns and their values
 			DoubleMatrix2D dm		= gdm.getData();
 			String[] columnNames	= gdm.getColumnNames();
+			sql						= "";
 			for (int i = 0; i < columnNames.length; i++) {
 				sql += "AND " + columnNames[i] + " = " + dm.get(0, i) + " ";
 			}
@@ -904,13 +900,13 @@ abstract public class SQLDataSource {
 	}
 
 	/**
-	 * lookup translation id based on translation code
+	 * lookup translation id based on channel code
 	 * 
 	 * @param channelCode
-	 * @return translation id, -1 if not found
+	 * @return translation id, 1 if not found
 	 */
 	public int defaultGetChannelTranslationID(String channelCode) {
-		int result = -1;
+		int result = 1;
 
 		try {
 			database.useDatabase(dbName);
@@ -997,9 +993,8 @@ abstract public class SQLDataSource {
 	/**
 	 * Get channel from database
 	 * 
-	 * @param cid			channel id
-	 * @param channelTypes	if the channels table has channel types
-	 * @return channel
+	 * @param colid			column id
+	 * @return column, null if not found
 	 */
 	public Column defaultGetColumn(int colid) {
 		Column col = null;
@@ -1046,9 +1041,8 @@ abstract public class SQLDataSource {
 	/**
 	 * Get channel from database
 	 * 
-	 * @param code			channel code
-	 * @param channelTypes	if the channels table has channel types
-	 * @return channel
+	 * @param name			column name
+	 * @return column
 	 */
 	public Column defaultGetColumn(String name) {
 		Column col	= null;
@@ -1072,7 +1066,7 @@ abstract public class SQLDataSource {
 	}
 
 	/**
-	 * Get ranks list in format "rid:code:rank:user_default" from database
+	 * Get options list in format "idx:code:name" from database
 	 * 
 	 * @return List of Strings with : separated values
 	 */
@@ -1214,7 +1208,7 @@ abstract public class SQLDataSource {
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
 					value	= rs.getDouble(i + 1);
-					if (rs.wasNull()) { value	= Double.NaN; }
+					if (rs.wasNull()) { value = Double.NaN; }
 					dataRow[i] = value;
 				}
 				pts.add(dataRow);
@@ -1243,13 +1237,13 @@ abstract public class SQLDataSource {
 	 */
 	public void defaultInsertData(String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
 
-		int j;
-		int tid = 0;
+		double value;
+		int tid						= 1;
 		String[] columnNames		= gdm.getColumnNames();
 		DoubleMatrix2D data			= gdm.getData();
-		StringBuffer columnBuffer = new StringBuffer();
-		StringBuffer valuesBuffer = new StringBuffer();
-		double value;
+		StringBuffer columnBuffer	= new StringBuffer();
+		StringBuffer valuesBuffer	= new StringBuffer();
+		String output, base;
 
 		try {
 			database.useDatabase(dbName);
@@ -1278,14 +1272,17 @@ abstract public class SQLDataSource {
 				valuesBuffer.append("," + rid);
 			}
 
-			sql = "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
+			sql		= "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
+			base	= channelCode + " (" + columnBuffer.toString() + ") (";			
+			
 			ps = database.getPreparedStatement(sql);
 			
 			// loop through each of the rows and insert data
-			for (int i = 0; i < gdm.rows(); i++) {
+			for (int i = 0; i < gdm.rows(); i++) {				
+				output = base;
 				
 				// loop through each of the columns and set it
-				for (j = 0; j < columnNames.length; j++) {
+				for (int j = 0; j < columnNames.length; j++) {
 					
 					// check for null values and use the correct setter function if so
 					value	= data.getQuick(i, j);
@@ -1294,11 +1291,13 @@ abstract public class SQLDataSource {
 					} else {
 						ps.setDouble(j + 1, value);
 					}
+					output = output + value + ",";
 				}
 				ps.execute();
+				if (translations)	output += tid + ",";
+				if (ranks)			output += rid + ",";
+				logger.log(Level.INFO, "InsertData() " + database.getDatabasePrefix() + "_" + dbName + "." + output.substring(0, output.length() - 1) + ")");
 			}
-			
-			logger.log(Level.INFO, "SQLDataSource.defaultInsertData() succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
 
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
