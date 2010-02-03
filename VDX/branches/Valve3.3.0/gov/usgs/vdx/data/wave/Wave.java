@@ -896,7 +896,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		double ts = 1 / samplingRate;
 		for (int i = 0; i < buffer.length; i++)
 		{
-			out.println((long)Math.round(ct * 1000) + " " + buffer[i]);
+			out.println(Math.round(ct * 1000) + " " + buffer[i]);
 			ct += ts;
 		}
 		out.close();
@@ -991,7 +991,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		for (int i = 0; i < this.buffer.length; i++)
 		{
 			sum += ((double)buffer[i] - mean);
-			d[i] = (double)sum * period;
+			d[i] = sum * period;
 		}
 
 		return d;
