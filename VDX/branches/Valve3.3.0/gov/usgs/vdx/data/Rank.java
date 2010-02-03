@@ -9,20 +9,22 @@ import java.util.Map;
  */
 public class Rank {
 	private int rid;
-	private String code;
+	private String name;
 	private int rank;
 	private int user_default;
+	
+	public Rank() { }
 	
 	/**
 	 * Constructor
 	 * @param rid			rank id
-	 * @param code			rank code
+	 * @param name			rank name
 	 * @param rank			rank
 	 * @param user_default	user default in menu
 	 */
-	public Rank(int rid, String code, int rank, int user_default) {
+	public Rank(int rid, String name, int rank, int user_default) {
 		this.rid			= rid;
-		this.code			= code;
+		this.name			= name;
 		this.rank			= rank;
 		this.user_default	= user_default;
 	}
@@ -30,9 +32,13 @@ public class Rank {
 	public Rank(String rk) {
 		String[] parts	= rk.split(":");
 		rid				= Integer.parseInt(parts[0]);
-		code			= parts[1];
+		name			= parts[1];
 		rank			= Integer.parseInt(parts[2]);
 		user_default	= Integer.parseInt(parts[3]);
+	}
+	
+	public Rank bestPossible() {
+		return new Rank(0, "Mixed Rank", 0, 0);
 	}
 
 	/**
@@ -43,10 +49,10 @@ public class Rank {
 	}
 
 	/**
-	 * Getter for rank code
+	 * Getter for rank name
 	 */
-	public String getCode() {
-		return code;
+	public String getName() {
+		return name;
 	}
 	
 	/**
@@ -81,6 +87,6 @@ public class Rank {
 	 * Conversion of objects to string
 	 */
 	public String toString() {
-		return String.format("%d:%s:%d:%d", getId(), getCode(), getRank(), getUserDefault());
+		return String.format("%d:%s:%d:%d", getId(), getName(), getRank(), getUserDefault());
 	}
 }
