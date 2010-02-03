@@ -46,7 +46,7 @@ public class EWRSAMData extends RSAMData
 			events = DoubleFactory2D.dense.make(rows, cols);
 			for (int i = 0; i < rows; i++)
 			{
-				double[] d = (double[])e.get(i);
+				double[] d = e.get(i);
 				for (int j = 0; j < cols; j++)
 					events.setQuick(i, j, d[j]);
 			}
