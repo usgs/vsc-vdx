@@ -49,6 +49,7 @@ public class ImportFile implements Importer {
 	public ConfigFile channelParams;
 	public ConfigFile dataSourceParams;
 	public ConfigFile translationParams;
+	
 	public String driver, prefix, url;
 	
 	public SimpleDateFormat dateIn;
@@ -70,14 +71,16 @@ public class ImportFile implements Importer {
 	public SQLDataSourceHandler sqlDataSourceHandler;
 	public SQLDataSourceDescriptor sqlDataSourceDescriptor;	
 	public List<String> dataSourceList;
+	public Iterator<String> dsIterator;
+	public Map<String, SQLDataSource> sqlDataSourceMap;
 	public Map<String, String> dataSourceColumnMap;
 	public Map<String, String> dataSourceChannelMap;
-	public Map<String, SQLDataSource> sqlDataSourceMap;
-	public Iterator<String> dsIterator;
+	public Map<String, Integer>	dataSourceRankMap;
 	
 	public Rank rank;
 	public String rankName;
 	public int rankValue, rankDefault;
+	public int rid;
 	
 	public String channels;
 	public String[] channelArray;
@@ -102,24 +105,12 @@ public class ImportFile implements Importer {
 	
 	public CurrentTime currentTime = CurrentTime.getInstance();
 	
-	public double azimuthInst;
-	
-	public int postConnectDelay;
-	public int betweenPollDelay;
-	public String deviceIP;
-	public int devicePort;
-	
-	public int connTimeout;
-	public int dataTimeout;
-	public int maxRetries;
-	public String timeSource;
-	public int syncInterval;
-	public String instrument;
-	public String delimiter;
-	
 	public String importerType;
 	
 	public Logger logger;
+
+	public double azimuthNom;
+	public double azimuthInst;
 	
 	static {
 		flags	= new HashSet<String>();
@@ -168,10 +159,8 @@ public class ImportFile implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to information in the filename for this file
+		// ImportFile specific directives
 		filenameMask	= Util.stringToString(params.getString("filenameMask"), "");
-		
-		// information related to header lines in this file
 		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
 		
 		// information related to the timestamps
@@ -198,6 +187,8 @@ public class ImportFile implements Importer {
 			while (chIterator.hasNext()) {
 				channelCode		= chIterator.next();
 				channelParams	= params.getSubConfig(channelCode);
+				
+				// settings related to this channel
 				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
 				channelLon		= Util.stringToDouble(channelParams.getString("lon"), Double.NaN);
 				channelLat		= Util.stringToDouble(channelParams.getString("lat"), Double.NaN);
@@ -254,10 +245,15 @@ public class ImportFile implements Importer {
 		
 		// get the list of data sources that are being used in this import
 		dataSourceList	= params.getList("dataSource");
-		if (dataSourceList != null) {
+		if (dataSourceList == null) {
+			logger.log(Level.SEVERE, "dataSource parameter(s) missing from config file");
+			System.exit(-1);
+			
+		} else  {
 			dsIterator				= dataSourceList.iterator();
 			dataSourceChannelMap	= new HashMap<String, String>();
-			dataSourceColumnMap		= new HashMap<String, String>();		
+			dataSourceColumnMap		= new HashMap<String, String>();
+			dataSourceRankMap		= new HashMap<String, Integer>();		
 			while (dsIterator.hasNext()) {
 				
 				// get the data source name and define the columns that it contains
@@ -290,20 +286,29 @@ public class ImportFile implements Importer {
 				// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 				sqlDataSource	= sqlDataSourceDescriptor.getSQLDataSource();
 				
+				// store the reference to the initialized data source in the map of initialized data sources
+				sqlDataSourceMap.put(dataSource, sqlDataSource);
+				
 				// create rank entry
 				if (sqlDataSource.getRanksFlag()) {
-					rank = sqlDataSource.defaultInsertRank(rank);
-					if (rank == null) {
-						logger.log(Level.SEVERE, "invalid rank");
+					Rank tempRank	= sqlDataSource.defaultGetRank(rank);
+					if (tempRank == null) {
+						tempRank = sqlDataSource.defaultInsertRank(rank);
+					}
+					if (tempRank == null) {
+						logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
 						System.exit(-1);
 					}
+					dataSourceRankMap.put(dataSource, tempRank.getId());
 				}
 					
 				// create columns entries
 				if (sqlDataSource.getColumnsFlag()) {
 					columnArray	= columns.split(",");
 					for (int i = 0; i < columnArray.length; i++) {
-						sqlDataSource.defaultInsertColumn(columnMap.get(columnArray[i]));
+						if (sqlDataSource.defaultGetColumn(columnArray[i]) == null) {
+							sqlDataSource.defaultInsertColumn(columnMap.get(columnArray[i]));
+						}
 					}
 				}
 				
@@ -315,50 +320,80 @@ public class ImportFile implements Importer {
 				// create channels tables
 				if (sqlDataSource.getChannelsFlag() && channels.length() > 0) {
 					channelArray = channels.split(",");
+					
 					for (int i = 0; i < channelArray.length; i++) {						
-						channel = channelMap.get(channelArray[i]);
+						channel 		= channelMap.get(channelArray[i]);
+						channelParams	= params.getSubConfig(channel.getCode());
+						
+						// if the channel doesn't exist then create it with the default tid of 1
+						if (sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag()) == null) {
+							if (sqlDataSource.getType().equals("tilt")) {
+								azimuthNom	= Util.stringToDouble(channelParams.getString("azimuth"), 0);
+								sqlDataSource.defaultCreateTiltChannel(channel, 1, azimuthNom, 
+									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
+									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
+							} else {
+								sqlDataSource.defaultCreateChannel(channel, 1, 
+									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
+									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
+							}
+							
+							// retrieve the new channel and store it off
+							channel	= sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag());
+							channelMap.put(channelArray[i], channel);
+						}
 						
 						// create a new translation if any non-default values were specified, and use the new tid for the create channel statement
-						int tid	= 1;
-						double multiplier, offset;
 						if (sqlDataSource.getTranslationsFlag()) {
-							channelParams			= params.getSubConfig(channel.getCode());
-							translationParams		= channelParams.getSubConfig("translation");
+							int tid			= 1;
+							int extraColumn	= 0;
+							double multiplier, offset;
+						
+							// get the translations sub config for this channel
+							translationParams		= channelParams.getSubConfig("translation"); 
 							List<Column> columnList	= sqlDataSource.defaultGetColumns(true, false);
-							DoubleMatrix2D dm		= DoubleFactory2D.dense.make(1, columnList.size() * 2);
-							String[] columnNames	= new String[columnList.size() * 2];
+							
+							// apply an offset if this is a tilt data source to include the installation azimuth
+							if (sqlDataSource.getType().equals("tilt")) {
+								extraColumn	= 1;
+							}
+							
+							// create a matrix to store the translation data
+							DoubleMatrix2D dm		= DoubleFactory2D.dense.make(1, columnList.size() * 2 + extraColumn);
+							String[] columnNames	= new String[columnList.size() * 2 + extraColumn];
+							
+							// save the installation azimuth if this is a tilt data source
+							if (sqlDataSource.getType().equals("tilt")) {
+								azimuthInst	= Util.stringToDouble(translationParams.getString("azimuth"), 0);
+								dm.setQuick(0, columnList.size() * 2, azimuthInst);
+								columnNames[columnList.size() * 2]	= "azimuth";
+							}
+							
+							// iterate through the column list to get the translation values
 							for (int j = 0; j < columnList.size(); j++) {
 								column		= columnList.get(j);
 								columnName	= column.name;
-								multiplier	= Util.stringToDouble(translationParams.getString("c" + columnName), 1.0);
-								offset		= Util.stringToDouble(translationParams.getString("d" + columnName), 0.0);
+								multiplier	= Util.stringToDouble(translationParams.getString("c" + columnName), 1);
+								offset		= Util.stringToDouble(translationParams.getString("d" + columnName), 0);
 								dm.setQuick(0, j * 2, multiplier);
 								dm.setQuick(0, j * 2 + 1, offset);
 								columnNames[j * 2]		= "c" + columnName;
 								columnNames[j * 2 + 1]	= "d" + columnName;
 							}
+							
 							GenericDataMatrix gdm = new GenericDataMatrix(dm);
 							gdm.setColumnNames(columnNames);
-							tid	= sqlDataSource.defaultInsertTranslation(channel.getCode(), gdm);
-							if (tid == -1) {
-								tid = 1;
-							}
-						}
-						
-						// if the channel exists then update the tid
-						if (sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag()) != null) {
-							sqlDataSource.defaultUpdateChannelTranslationID(channel.getCode(), tid);
 							
-						// if the channel doesn't exist then create it with the tid	
-						} else {
-							sqlDataSource.defaultCreateChannel(channel, tid, sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
-								sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
+							tid	= sqlDataSource.defaultGetTranslation(channel.getCode(), gdm);
+							if (tid == 1) {
+								tid	= sqlDataSource.defaultInsertTranslation(channel.getCode(), gdm);
+							}							
+							if (tid != sqlDataSource.defaultGetChannelTranslationID(channel.getCode())) {
+								sqlDataSource.defaultUpdateChannelTranslationID(channel.getCode(), tid);
+							}
 						}
 					}
 				}
-				
-				// store the reference to the initialized data source in the map of initialized data sources
-				sqlDataSourceMap.put(dataSource, sqlDataSource);
 			}
 		}
 	}
@@ -433,13 +468,8 @@ public class ImportFile implements Importer {
 				}
 				
 				// make sure the data row matches the defined data columns
-				if (importColumnMap.size() != valueMap.size()) {
-					if (importColumnMap.size() > valueMap.size()) {
-						logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (too few values)");
-					} else {
-						logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (too many values)");
-					}
-					line	= rr.nextLine();
+				if (importColumnMap.size() > valueMap.size()) {
+					logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (too few values)");
 					lineNumber++;
 					continue;
 				}
@@ -517,9 +547,11 @@ public class ImportFile implements Importer {
 				ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
 				
 				// iterate through each data source that was defined and assign data from this line to it
-				HashMap<Integer, String> dsColumnMap;
-				for (int i = 0; i < dataSourceList.size(); i++) {
-					dataSource		= dataSourceList.get(i);
+				dsIterator			= dataSourceList.iterator();		
+				while (dsIterator.hasNext()) {
+					
+					// get the data source name and it's associated sql data source
+					dataSource		= dsIterator.next();
 					sqlDataSource	= sqlDataSourceMap.get(dataSource);
 					
 					// check that the sql data source was initialized properly above
@@ -547,27 +579,26 @@ public class ImportFile implements Importer {
 					
 					// channel for this data source.  create it if it doesn't exist
 					if (sqlDataSource.getChannelsFlag()) {
-						channel = sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag());
-						if (channel == null) {
-							channel = new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN);
-							sqlDataSource.defaultCreateChannel(channel, 1,
+						if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
+							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
 									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
-							channel = sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag());
 						}
 					}
 					
 					// columns for this data source
 					columns			= dataSourceColumnMap.get(dataSource);
 					columnArray		= columns.split(",");
-					dsColumnMap		= new HashMap<Integer, String>();
+					HashMap<Integer, String> dsColumnMap	= new HashMap<Integer, String>();
 					for (int j = 0; j < columnArray.length; j++) {
 						dsColumnMap.put(j, columnArray[j]);
 					}
 					
 					// rank for this data source.  this should already exist in the database
 					if (sqlDataSource.getRanksFlag()) {
-						rank	= sqlDataSource.defaultGetRank(rank.getId());
+						rid	= dataSourceRankMap.get(dataSource);
+					} else {
+						rid	= 1;
 					}
 					
 					// create a data entry map for this data source, with the columns that it wants
@@ -592,19 +623,12 @@ public class ImportFile implements Importer {
 					// put the list of entries a double matrix and create a column names array
 					DoubleMatrix2D dm		= DoubleFactory2D.dense.make(1, dataSourceEntryMap.size());
 					String[] columnNames	= new String[dataSourceEntryMap.size()];
-					String lineOutput		= "";
 					for (int j = 0; j < dataSourceEntryMap.size(); j++) {
 						columnValue		= dataSourceEntryMap.get(j);
 						name			= columnValue.columnName;
 						value			= columnValue.columnValue;
 						columnNames[j]	= name;
 						dm.setQuick(0, j, value);
-						
-						if (name.equals("j2ksec")) {
-							lineOutput	= lineOutput + Util.j2KToDateString(value) + "(" + value + ")/";
-						} else {
-							lineOutput	= lineOutput + name + "=" + value + "/";
-						}
 					}
 					
 					// assign the double matrix and column names to a generic data matrix
@@ -612,8 +636,7 @@ public class ImportFile implements Importer {
 					gdm.setColumnNames(columnNames);
 					
 					// insert the data to the database
-					logger.log(Level.INFO, shortFilename + "[" + lineNumber + "] (" + dataSource + ") " + lineOutput);
-					sqlDataSource.defaultInsertData(channel.getCode(), gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rank.getId());
+					sqlDataSource.defaultInsertData(channelCode, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rid);
 				}
 				
 				line	= rr.nextLine();
