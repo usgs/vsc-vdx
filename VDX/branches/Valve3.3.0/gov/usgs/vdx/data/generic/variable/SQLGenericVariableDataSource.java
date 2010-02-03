@@ -409,18 +409,6 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 		}
 		return success;
 	}
-	
-	/**
-	 * Insert data into the database using the parameters passed
-	 * @param channelCode
-	 * @param gdm
-	 * @param translations
-	 * @param ranks
-	 * @param rid
-	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
-		defaultInsertData(channelCode, gdm, translations, ranks, rid);
-	}
 
 	/**
 	 * Get channels list in format "sid:org:lon:name:site_no" from database
