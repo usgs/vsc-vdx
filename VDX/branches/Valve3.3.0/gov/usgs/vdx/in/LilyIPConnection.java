@@ -40,7 +40,7 @@ public class LilyIPConnection extends IPConnection {
 					msgQueue.removeElementAt (0);
 
 					// the last char of a message must be <cr><lf>
-					if (((char)'$' == sb.charAt(0)) && ((char)'\n' == sb.charAt(sb.length() - 1)))
+					if (('$' == sb.charAt(0)) && ('\n' == sb.charAt(sb.length() - 1)))
 						return sb.toString();
 				}
 			}
