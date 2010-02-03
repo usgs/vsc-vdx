@@ -72,14 +72,16 @@ public class ImportStacov implements Importer {
 	public SQLDataSourceHandler sqlDataSourceHandler;
 	public SQLDataSourceDescriptor sqlDataSourceDescriptor;	
 	public List<String> dataSourceList;
+	public Iterator<String> dsIterator;
+	public Map<String, SQLDataSource> sqlDataSourceMap;
 	public Map<String, String> dataSourceColumnMap;
 	public Map<String, String> dataSourceChannelMap;
-	public Map<String, SQLDataSource> sqlDataSourceMap;
-	public Iterator<String> dsIterator;
+	public Map<String, Integer>	dataSourceRankMap;
 	
 	public Rank rank;
 	public String rankName;
 	public int rankValue, rankDefault;
+	public int rid;
 	
 	public String channels;
 	public String[] channelArray;
@@ -119,9 +121,11 @@ public class ImportStacov implements Importer {
 	 * @param cf configuration file
 	 * @param verbose true for info, false for severe
 	 */
-	public void initialize(String importerClass, String configFile, boolean verbose) {// initialize the logger for this importer
+	public void initialize(String importerClass, String configFile, boolean verbose) {
+		
+		// initialize the logger for this importer
 		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportStacov.defaultInitialize() succeeded.");
+		logger.log(Level.INFO, "ImportStacov.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -183,14 +187,17 @@ public class ImportStacov implements Importer {
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
-				
+		
 		// create rank entry
 		if (sqlDataSource.getRanksFlag()) {
-			rank = sqlDataSource.defaultInsertRank(rank);
+			if (sqlDataSource.defaultGetRank(rank) == null) {
+				rank = sqlDataSource.defaultInsertRank(rank);
+			}
 			if (rank == null) {
-				logger.log(Level.SEVERE, "invalid rank");
+				logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
 				System.exit(-1);
 			}
+			rid	= rank.getId();
 		}
 		
 		// get the list of channels and create a hash map keyed with the channel code
@@ -252,7 +259,7 @@ public class ImportStacov implements Importer {
 			}
 			
 			// attempt to insert this source.  this method will tell if this file has already been imported
-			int sid	= sqlDataSource.insertSource(new File(filename).getName(), Util.md5Resource(filename), j2ksec0, j2ksec1, rank.getId());
+			int sid	= sqlDataSource.insertSource(new File(filename).getName(), Util.md5Resource(filename), j2ksec0, j2ksec1, rid);
 			if (sid == -1) {
 				logger.log(Level.SEVERE, "skipping: " + filename + " (hash already exists)");
 				return;
