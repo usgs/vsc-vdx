@@ -1,13 +1,10 @@
 package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
 import gov.usgs.vdx.server.RequestResult;
 
 import java.util.List;
 import java.util.Map;
-
-import cern.colt.matrix.DoubleMatrix2D;
 
 /**
  * Stub class, it dumps information on stdout instead of insert it into the database
@@ -74,12 +71,5 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 	public RequestResult getData(Map<String, String> params)
 	{		
 		return null;
-	}
-	
-	public void insertData(String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid)
-	{
-		DoubleMatrix2D data			= gdm.getData();
-		for (int i=0; i < data.rows(); i++)
-			System.out.println(Util.j2KToDateString(data.getQuick(i, 0)) + " : " + data.getQuick(i, 1));
 	}
 }
