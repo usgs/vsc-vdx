@@ -5,7 +5,6 @@ import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -199,17 +198,5 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 		result2				= getRSAMData(ch2, st, et, period);
 		
 		return result1.getRatSAM(result2);
-	}
-	
-	/**
-	 * Insert data into the database using the parameters passed
-	 * @param channelCode
-	 * @param gdm
-	 * @param translations
-	 * @param ranks
-	 * @param rid
-	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
-		defaultInsertData(channelCode, gdm, translations, ranks, rid);
 	}
 }
