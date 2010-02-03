@@ -44,7 +44,9 @@ jar -- generates new ${jarfile}
 	</target>
 
 	<target name="compile" depends="init" description="compile the source">
-		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" target="1.5" debug="on"/>
+		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" target="1.5" debug="on">
+			<!--<compilerarg value="-Xlint"/>-->
+		</javac>
 	</target>
 
 	<target name="jar" depends="compile">
