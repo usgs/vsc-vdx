@@ -66,7 +66,7 @@ public class GenericDataMatrix implements BinaryDataSet
 		data = DoubleFactory2D.dense.make(rows, cols);
 		for (int i = 0; i < rows; i++)
 		{
-			double[] d = (double[])list.get(i);
+			double[] d = list.get(i);
 			for (int j = 0; j < cols; j++)
 				data.setQuick(i, j, d[j]);
 		}
