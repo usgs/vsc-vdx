@@ -2,7 +2,6 @@ package gov.usgs.vdx.data.generic.fixed;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.vdx.data.DataSource;
-import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
@@ -228,25 +227,5 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			return "-6h,-24h,-3d,-1w,-1m,-1y";
 		else
 			return ts;
-	}
-	
-	/**
-	 * Insert data into the database using the parameters passed
-	 * @param channelCode
-	 * @param gdm
-	 * @param translations
-	 * @param ranks
-	 * @param rid
-	 */
-	public void insertData (String channelCode, GenericDataMatrix gdm, boolean translations, boolean ranks, int rid) {
-		defaultInsertData(channelCode, gdm, translations, ranks, rid);
-	}
-	
-	public int insertTranslation (String channelCode, GenericDataMatrix gdm) {
-		return defaultInsertTranslation(channelCode, gdm);
-	}
-	
-	public boolean insertColumn(Column column) {
-		return defaultInsertColumn(column);
 	}
 }
