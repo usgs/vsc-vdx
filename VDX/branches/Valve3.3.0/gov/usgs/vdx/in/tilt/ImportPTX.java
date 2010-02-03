@@ -72,7 +72,7 @@ public class ImportPTX
 						String[] columnNames = {"j2ksec", "xTilt", "yTilt", "instVolt", "holeTemp"};
 						GenericDataMatrix gdm = new GenericDataMatrix(dm);
 						gdm.setColumnNames(columnNames);
-						dataSource.insertData(channel, gdm, dataSource.getTranslationsFlag(), dataSource.getRanksFlag(), 1);
+						dataSource.defaultInsertData(channel, gdm, dataSource.getTranslationsFlag(), dataSource.getRanksFlag(), 1);
 					}
 				}
 				catch (Exception e)
