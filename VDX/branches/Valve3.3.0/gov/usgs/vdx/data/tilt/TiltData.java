@@ -43,8 +43,7 @@ public class TiltData extends GenericDataMatrix
 		columnMap.put("holeTemp", 4);
 		columnMap.put("boxTemp", 5);
 		columnMap.put("instVolt", 6);
-		columnMap.put("gndVolt", 7);
-		columnMap.put("rain", 8);
+		columnMap.put("rainfall", 7);
 	}
 	
 	/** Get the time/east/north data for a specific row.
@@ -53,10 +52,10 @@ public class TiltData extends GenericDataMatrix
 	 */
     public double[] getTEN(int row)
     {
-        return new double[] {data.get(row, 0), data.get(row, 1), data.get(row, 2)};
+        return new double[] {data.get(row, 0), data.get(row, 2), data.get(row, 3)};
     }
 
-	/** Gets time/east/north/radial/tangential/magnitude/azimuth/holetemp/boxtemp/instvolt/gndvolt/rain 
+	/** Gets time/rid/radial/tangential/east/north/magnitude/azimuth/holetemp/boxtemp/instvolt/gndvolt/rain 
 	 * data using the specified azimuth.
 	 * @param theta azimuth in degrees
 	 * @return the Nx7 data matrix
@@ -64,10 +63,11 @@ public class TiltData extends GenericDataMatrix
     public DoubleMatrix2D getAllData(double theta)
     {
         return DoubleFactory2D.dense.compose(new DoubleMatrix2D[][] 
-                {{data.viewPart(0, 0, data.rows(), 4),
+                {{data.viewPart(0, 0, data.rows(), 2),
                   getRotatedDataWithoutTime(theta),
+                  data.viewPart(0, 2, data.rows(), 2),
                   getVelocityDataWithoutTime(),
-                  data.viewPart(0, 4, data.rows(), 4),
+                  data.viewPart(0, 4, data.rows(), 3),
                   getRainDataWithoutTime()}});
     }
     
@@ -79,7 +79,7 @@ public class TiltData extends GenericDataMatrix
 
 		double total	= 0;
 		double r		= 0;
-		double last		= data.getQuick(0, 8);
+		double last		= data.getQuick(0, 7);
 		
 		// set the initial amount of rainfall to be zero for this time period
 		rain.setQuick(0, 1, 0);
@@ -87,7 +87,7 @@ public class TiltData extends GenericDataMatrix
 		// iterate through all subsequent rows and assign a rainfall amount if the 
 		// data increases.  Keep the total if the rainfall is less than the previous reading
 		for (int i = 1; i < data.rows() - 1; i++) {
-			r = data.getQuick(i, 8);
+			r = data.getQuick(i, 7);
 			if (r < last) {
 				last = 0;
 			}
