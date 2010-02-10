@@ -200,7 +200,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				sql = sql + "AND   d.rank = (SELECT MAX(f.rank) " +
                                             "FROM   sources e, ranks f " +
                                             "WHERE  e.rid = f.rid " +
-                                            "AND   (c.j2ksec0 + c.j2ksec1) / 2 = (e.j2ksec0 + e.j2ksec1) / 2) ";
+                                            "AND   (c.j2ksec0 + c.j2ksec1) / 2 = (e.j2ksec0 + e.j2ksec1) / 2 " +
+                                            "AND    e.j2ksec0 >= ? " +
+                                            "AND    e.j2ksec1 <= ? ) ";
 			}
 			sql	= sql +	"ORDER BY 1 ASC";
 			
@@ -210,6 +212,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			ps.setDouble(3, et);
 			if (rid != 0) {
 				ps.setInt(4, rid);
+			} else {
+				ps.setDouble(4, st);
+				ps.setDouble(5, et);
 			}
 			rs = ps.executeQuery();
 			while (rs.next()) {
