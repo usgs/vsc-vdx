@@ -85,6 +85,7 @@ public class ImportPoll extends Poller implements Importer {
 	public Map<String, Channel> channelMap;	
 	public String channels;
 	public String[] channelArray;
+	public String[] dsChannelArray;
 	public String defaultChannels;
 	
 	public String channelCols;
@@ -96,13 +97,10 @@ public class ImportPoll extends Poller implements Importer {
 	public boolean columnActive, columnChecked;
 	public List<String> columnList;
 	public HashMap<String, Column> columnMap;
+	public Map<String, Column> dbColumnMap;
 	public String columns;
 	public String[] columnArray;	
-	public String defaultColumns;
-	
-	public String dbColumns;
-	public String[] dbColumnArray;
-	public Map<String, Column> dbColumnMap;
+	public String defaultColumns;	
 	
 	public CurrentTime currentTime = CurrentTime.getInstance();
 	
@@ -140,6 +138,8 @@ public class ImportPoll extends Poller implements Importer {
 		flags.add("-h");
 		flags.add("-v");
 	}
+	
+	public String timeDataSource = null;
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -269,8 +269,8 @@ public class ImportPoll extends Poller implements Importer {
 				
 				// channel related settings
 				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-				channelLon		= Util.stringToDouble(channelParams.getString("lon"), Double.NaN);
-				channelLat		= Util.stringToDouble(channelParams.getString("lat"), Double.NaN);
+				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
 				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
 				channelMap.put(channelCode, channel);
@@ -319,6 +319,12 @@ public class ImportPoll extends Poller implements Importer {
 			// get the data source name and define the columns that it contains
 			dataSource			= dataSourceList.get(i);
 			dataSourceParams	= params.getSubConfig(dataSource);
+			
+			// look up to see if this is the time data source
+			String timesource	= dataSourceParams.getString("timesource");
+			if (timesource != null && timesource.equals("true")) {
+				timeDataSource	= dataSource;
+			}
 			
 			// get the columns for this data source
 			columns				= dataSourceParams.getString("columns");
@@ -462,6 +468,11 @@ public class ImportPoll extends Poller implements Importer {
 			}
 		}
 		
+		if (timeDataSource == null) {
+			logger.log(Level.SEVERE, "dataSource time source not specified");
+			System.exit(-1);
+		}
+		
 		// output the connection settings for the config file
 		logger.log(Level.INFO, "");
 		logger.log(Level.INFO, "###### CONNECTION SETTINGS ######");
@@ -510,12 +521,14 @@ public class ImportPoll extends Poller implements Importer {
 				}
 				
 				// get the latest data time from the tilt database
-				Date lastDataTime = sqlDataSource.defaultGetLastDataTime(channelCode);
+				sqlDataSource		= sqlDataSourceMap.get(timeDataSource);
+				Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode);
 				if (lastDataTime == null) {
 					lastDataTime = new Date(0);
 				}
 				
 				// display logging information
+				logger.log(Level.INFO, "");
 				logger.log(Level.INFO, "Begin Polling [" + channelCode + "] (lastDataTime: " + dateOut.format(lastDataTime) + ")");
 				
 				// default some variables used in the loop
@@ -599,7 +612,7 @@ public class ImportPoll extends Poller implements Importer {
 									
 								// parse out the TIMESTAMP
 								} else if (name.equals("TIMESTAMP")) {
-									tsValue	= tsValue + valueMap.get(i) + " ";
+									tsValue	+= valueMap.get(i) + " ";
 									continue;
 									
 								// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
@@ -650,15 +663,15 @@ public class ImportPoll extends Poller implements Importer {
 								boolean	channelMemberOfDataSource = false;
 								channels	= dataSourceChannelMap.get(dataSource);
 								if (channels.length() > 0) {
-									channelArray	= channels.split(",");
-									for (int j = 0; j < channelArray.length; j++) {
-										if (channelCode.equals(channelArray[j])) {
+									dsChannelArray	= channels.split(",");
+									for (int j = 0; j < dsChannelArray.length; j++) {
+										if (channelCode.equals(dsChannelArray[j])) {
 											channelMemberOfDataSource = true;
 											continue;
 										}
 									}
 									if (!channelMemberOfDataSource) {
-										logger.log(Level.SEVERE, "Skipping line " + lineNumber + " dataSource " + dataSource + " (" + channelCode + " not a member of dataSource)");
+										// logger.log(Level.SEVERE, "Skipping line " + lineNumber + " dataSource " + dataSource + " (" + channelCode + " not a member of dataSource)");
 										continue;
 									}
 								}
@@ -748,21 +761,13 @@ public class ImportPoll extends Poller implements Importer {
 								} else if (dataSource.equals("hvo_deformation_strain") && sqlDataSource.getType().equals("genericfixed")) {
 									temp 		= gdm.getColumn("j2ksec");
 									j2ksec		= temp.getQuick(0, 0);
-									temp		= gdm.getColumn("strain1");
+									temp		= gdm.getColumn("dt01");
 									dt01		= temp.getQuick(0, 0);
-									temp		= gdm.getColumn("strain2");
+									temp		= gdm.getColumn("dt02");
 									dt02		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("gndVolt");
-									gndVolt		= temp.getQuick(0, 0);
 									temp		= gdm.getColumn("barometer");
 									barometer	= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("holeTemp");
-									holeTemp	= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("instVolt");
-									instVolt	= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("rainfall");
-									rainfall	= temp.getQuick(0, 0);
-									sqlDataSource.insertV2StrainData(channelCode.toLowerCase(), j2ksec, dt01, dt02, gndVolt, barometer, holeTemp, instVolt, rainfall);
+									sqlDataSource.insertV2StrainData(channelCode.toLowerCase(), j2ksec, dt01, dt02, barometer);
 								} else if (dataSource.equals("hvo_gas_co2") && sqlDataSource.getType().equals("genericfixed")) {
 									temp 		= gdm.getColumn("j2ksec");
 									j2ksec		= temp.getQuick(0, 0);
@@ -797,15 +802,16 @@ public class ImportPoll extends Poller implements Importer {
 				
 				// output a status message based on how everything went above
 				if (done) {					
-					logger.log(Level.INFO, "Successfully polled " + channelCode);
+					logger.log(Level.INFO, "End Polling [" + channelCode + "] Success");
 				} else {				
-					logger.log(Level.INFO, "Failed to poll " + channelCode);
+					logger.log(Level.INFO, "End Polling [" + channelCode + "] Failure");
 				}
 				
 				// sleep before accessing the next station
 				Thread.sleep(betweenPollDelay);
 			}
 			
+			logger.log(Level.INFO, "");
 			logger.log(Level.INFO, "END POLLING CYCLE");
 			
 		} catch (Exception e) {

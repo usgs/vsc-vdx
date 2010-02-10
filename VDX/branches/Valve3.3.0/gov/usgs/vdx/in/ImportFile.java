@@ -190,8 +190,8 @@ public class ImportFile implements Importer {
 				
 				// settings related to this channel
 				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-				channelLon		= Util.stringToDouble(channelParams.getString("lon"), Double.NaN);
-				channelLat		= Util.stringToDouble(channelParams.getString("lat"), Double.NaN);
+				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
 				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
 				channelMap.put(channelCode, channel);
