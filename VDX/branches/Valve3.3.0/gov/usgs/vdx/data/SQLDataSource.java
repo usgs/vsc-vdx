@@ -295,11 +295,11 @@ abstract public class SQLDataSource {
 				}
 			}
 			
-			logger.log(Level.INFO, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
+			logger.log(Level.INFO, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + "," + lat + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ", " + lat + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + "," + lat + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return false;
@@ -1189,7 +1189,9 @@ abstract public class SQLDataSource {
 				sql = sql + "AND   c.rank = (SELECT MAX(e.rank) " +
 				                            "FROM   " + channel.getCode() + " d, ranks e " +
 				                            "WHERE  d.rid = e.rid  " +
-				                            "AND    a.j2ksec = d.j2ksec) ";
+				                            "AND    a.j2ksec = d.j2ksec " +
+				                            "AND    d.j2ksec >= ? " +
+				                            "AND    d.j2ksec <= ? ) ";
 			}
 			sql = sql + "ORDER BY a.j2ksec ASC";
 
@@ -1198,6 +1200,9 @@ abstract public class SQLDataSource {
 			ps.setDouble(2, et);
 			if (ranks && rid != 0) {
 				ps.setInt(3, rid);
+			} else {
+				ps.setDouble(3, st);
+				ps.setDouble(4, et);
 			}
 			rs = ps.executeQuery();
 			
@@ -1273,7 +1278,7 @@ abstract public class SQLDataSource {
 			}
 
 			sql		= "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
-			base	= channelCode + " (" + columnBuffer.toString() + ") (";			
+			base	= channelCode + "(";			
 			
 			ps = database.getPreparedStatement(sql);
 			
@@ -1304,7 +1309,7 @@ abstract public class SQLDataSource {
 		}
 	}
 	
-	public void insertV2TiltData (String code, double t, double x, double y, double h, double b, double i, double g, double r) {
+	public void insertV2TiltData (String code, double j2ksec, double x, double y, double h, double b, double i, double g, double r) {
 		try {
 			
 			// default some variables
@@ -1331,8 +1336,8 @@ abstract public class SQLDataSource {
 
             // create the tilt entry
             ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "tilt VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(1, j2ksec);
+			ps.setString(2, Util.j2KToDateString(j2ksec));
 			if (Double.isNaN(x)) { ps.setNull(3, 8); } else { ps.setDouble(3, x); }
 			if (Double.isNaN(y)) { ps.setNull(4, 8); } else { ps.setDouble(4, y); }
 			if (Double.isNaN(g)) { ps.setNull(5, 8); } else { ps.setDouble(5, g); }
@@ -1343,8 +1348,8 @@ abstract public class SQLDataSource {
 			
 			// create the environment entry
             ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
+			ps.setDouble(1, j2ksec);
+			ps.setString(2, Util.j2KToDateString(j2ksec));
 			if (Double.isNaN(h)) { ps.setNull(3, 8); } else { ps.setDouble(3, h); }
 			if (Double.isNaN(b)) { ps.setNull(4, 8); } else { ps.setDouble(4, b); }
 			if (Double.isNaN(i)) { ps.setNull(5, 8); } else { ps.setDouble(5, i); }
@@ -1358,7 +1363,7 @@ abstract public class SQLDataSource {
 		}
 	}
 
-	public void insertV2StrainData(String code, double t, double s1, double s2, double g, double bar, double h, double i, double r) {		
+	public void insertV2StrainData(String code, double j2ksec, double dt01, double dt02, double barometer) {		
 		try {
 			
 			// default some variables
@@ -1383,25 +1388,20 @@ abstract public class SQLDataSource {
             rs.close();
 
             // create the strain entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "strain VALUES (?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, s1);
-			ps.setDouble(4, s2);
-			ps.setDouble(5, g);
-			ps.setDouble(6, tid);
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "strain (j2ksec, time, dt01, dt02, trans) VALUES (?,?,?,?,?)");
+			ps.setDouble(1, j2ksec);
+			ps.setString(2, Util.j2KToDateString(j2ksec));
+			ps.setDouble(3, dt01);
+			ps.setDouble(4, dt02);
+			ps.setDouble(5, tid);
 			ps.execute();
 			
 			// create the environment entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setString(2, Util.j2KToDateString(t));
-			ps.setDouble(3, bar);
-			ps.setDouble(4, h);
-			ps.setDouble(5, i);
-			ps.setDouble(6, r);
-			ps.setDouble(7, g);
-			ps.setDouble(8, eid);
+            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env (j2ksec, time, bar ,trans) VALUES (?,?,?,?)");
+			ps.setDouble(1, j2ksec);
+			ps.setString(2, Util.j2KToDateString(j2ksec));
+			ps.setDouble(3, barometer);
+			ps.setDouble(4, eid);
 			ps.execute();
 			
 		} catch (Exception e) {
