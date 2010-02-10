@@ -171,17 +171,26 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			return new TextResult(defaultGetOptions(action));
 			
 		} else if (action.equals("data")) {
-			int rid			= Integer.parseInt(params.get("rk"));
-			double st		= Double.parseDouble(params.get("st"));
-			double et		= Double.parseDouble(params.get("et"));
-			double west		= Double.parseDouble(params.get("west"));
-			double east		= Double.parseDouble(params.get("east"));
-			double south	= Double.parseDouble(params.get("south"));
-			double north	= Double.parseDouble(params.get("north"));
-			double minDepth	= Double.parseDouble(params.get("minDepth"));
-			double maxDepth	= Double.parseDouble(params.get("maxDepth"));
-			double minMag	= Double.parseDouble(params.get("minMag"));
-			double maxMag	= Double.parseDouble(params.get("maxMag"));	
+			int rid				= Integer.parseInt(params.get("rk"));
+			double st			= Double.parseDouble(params.get("st"));
+			double et			= Double.parseDouble(params.get("et"));
+			double west			= Double.parseDouble(params.get("west"));
+			double east			= Double.parseDouble(params.get("east"));
+			double south		= Double.parseDouble(params.get("south"));
+			double north		= Double.parseDouble(params.get("north"));
+			double minDepth		= Double.parseDouble(params.get("minDepth"));
+			double maxDepth		= Double.parseDouble(params.get("maxDepth"));
+			double minMag		= Double.parseDouble(params.get("minMag"));
+			double maxMag		= Double.parseDouble(params.get("maxMag"));	
+			Integer minNPhases	= Integer.parseInt(params.get("minNPhases"));	
+			Integer maxNPhases	= Integer.parseInt(params.get("maxNPhases"));
+			double minRMS		= Double.parseDouble(params.get("minRMS"));
+			double maxRMS		= Double.parseDouble(params.get("maxRMS"));	
+			double minHerr		= Double.parseDouble(params.get("minHerr"));
+			double maxHerr		= Double.parseDouble(params.get("maxHerr"));		
+			double minVerr		= Double.parseDouble(params.get("minVerr"));
+			double maxVerr		= Double.parseDouble(params.get("maxVerr"));
+			String rm			= params.get("rm");
 			HypocenterList data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag);
 			if (data != null && data.size() > 0)
 				return new BinaryResult(data);
@@ -231,7 +240,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				sql += "AND    c.rank = (SELECT MAX(e.rank) " +
 	            					    "FROM   hypocenters d, ranks e " +
 	            					    "WHERE  d.rid = e.rid  " +
-	            					    "AND    trim(a.eid) = trim(d.eid)) ";
+	            					    "AND    trim(a.eid) = trim(d.eid) " +
+	            					    "AND    d.j2ksec >= ? " +
+	            					    "AND    d.j2ksec <= ? ) ";
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
@@ -249,6 +260,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(10, maxMag);
 			if (ranks && rid != 0) {
 				ps.setInt(11, rid);
+			} else {
+				ps.setDouble(11, st);
+				ps.setDouble(12, et);
 			}
 			rs = ps.executeQuery();
 			
