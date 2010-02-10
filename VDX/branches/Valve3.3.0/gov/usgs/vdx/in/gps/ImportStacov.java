@@ -190,14 +190,15 @@ public class ImportStacov implements Importer {
 		
 		// create rank entry
 		if (sqlDataSource.getRanksFlag()) {
-			if (sqlDataSource.defaultGetRank(rank) == null) {
-				rank = sqlDataSource.defaultInsertRank(rank);
+			Rank tempRank	= sqlDataSource.defaultGetRank(rank);
+			if (tempRank == null) {
+				tempRank = sqlDataSource.defaultInsertRank(rank);
 			}
-			if (rank == null) {
+			if (tempRank == null) {
 				logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
 				System.exit(-1);
 			}
-			rid	= rank.getId();
+			rid	= tempRank.getId();
 		}
 		
 		// get the list of channels and create a hash map keyed with the channel code
