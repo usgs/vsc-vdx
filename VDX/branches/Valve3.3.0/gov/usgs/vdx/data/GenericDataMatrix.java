@@ -279,10 +279,11 @@ public class GenericDataMatrix implements BinaryDataSet
 	public double max(int c)
 	{
 		double m = -1E300;
-		for (int i = 0; i < rows(); i++)
+		for (int i = 0; i < rows(); i++) {
 			if (!Double.isNaN(data.getQuick(i, c))) {
 				m = Math.max(m, data.getQuick(i, c));
 			}
+		}
 		return m;
 	}
 
@@ -293,10 +294,11 @@ public class GenericDataMatrix implements BinaryDataSet
 	public double min(int c)
 	{
 		double m = 1E300;
-		for (int i = 0; i < rows(); i++)
+		for (int i = 0; i < rows(); i++) {
 			if (!Double.isNaN(data.getQuick(i, c))) {
 				m = Math.min(m, data.getQuick(i, c));
 			}
+		}
 		return m;
 	}
 	
@@ -315,7 +317,6 @@ public class GenericDataMatrix implements BinaryDataSet
 			}
 		}
 		return t / j;
-		// return t / (double)rows();
 	}
     
 	/** Returns the least squares fit line from a column.  Data are returned
@@ -340,7 +341,6 @@ public class GenericDataMatrix implements BinaryDataSet
         	}
         }
         double m = ssxy / ssxx;
-        //System.out.println(m);
         double b = ym - m * xm;
         return new double[] {m, b};
     }
@@ -349,8 +349,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	 * @return (0,0) value of matrix
 	 */
 	public double getStartTime()
-	{
-		
+	{		
 		if (data == null || data.size() == 0)
 			return Double.NaN;
 		else
