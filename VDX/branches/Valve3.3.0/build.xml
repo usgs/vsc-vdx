@@ -1,25 +1,3 @@
-<!--
-$Log: not supported by cvs2svn $
-Revision 1.6  2007/06/22 21:45:43  tparker
-Add seed-pdcc.jar
-
-Revision 1.5  2007/06/22 21:30:46  tparker
-initial commit
-
-Revision 1.4  2007/01/29 22:43:06  dcervelli
-Added JVM 1.5 target.
-
-Revision 1.3  2005/09/21 19:26:09  dcervelli
-Added pinnacle.jar.
-
-Revision 1.2  2005/09/03 21:10:41  dcervelli
-Fixed classpath.
-
-Revision 1.1  2005/08/26 20:39:00  dcervelli
-Initial avosouth commit.
-
--->
-
 <project name="VDX Classes" default="jar" basedir=".">
 	<description>USGS VDX Source Build File</description>
 
@@ -75,8 +53,8 @@ jar -- generates new ${jarfile}
 		<!-- Copy the distribution files -->
 		<copy todir="${bin-dir}/${dirname}">
 			<fileset dir="${source}">
-				<include name="data.config" />
-				<include name="VDX.config" />
+				<include name="dist-vdxSources.config" />
+				<include name="dist-VDX.config" />
 				<include name="VDX.sh" />
 				<include name="VDX.bat" />
 			</fileset>
