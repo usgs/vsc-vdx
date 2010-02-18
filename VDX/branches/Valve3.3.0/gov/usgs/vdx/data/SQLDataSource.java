@@ -285,7 +285,7 @@ abstract public class SQLDataSource {
 	
 					// when using ranks, the primary key is the combo of j2ksec and rid, otherwise, it's just the j2ksec
 					} else {
-						sql = sql + ",PRIMARY KEY(j2ksec)";
+						sql = sql + ",PRIMARY KEY(j2ksec), KEY index_j2ksec (j2ksec)";
 					}
 	
 					// place the closing parenthesis and execute the sql statement
