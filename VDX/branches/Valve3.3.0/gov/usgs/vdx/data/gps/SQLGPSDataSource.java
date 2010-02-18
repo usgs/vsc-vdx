@@ -86,7 +86,8 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 					"name VARCHAR(255), hash VARCHAR(32)," +
 					"j2ksec0 DOUBLE NOT NULL, j2ksec1 DOUBLE NOT NULL," + 
 					"rid INT," +
-					"PRIMARY KEY (sid, j2ksec0, j2ksec1))");
+					"PRIMARY KEY (sid, j2ksec0, j2ksec1)," +
+					"KEY index_j2ksec0 (j2ksec0), KEY index_j2ksec1 (j2ksec1))");
 			st.execute(
 					"CREATE TABLE solutions (sid INT, cid INT," +
 					"x DOUBLE, y DOUBLE, z DOUBLE," +
