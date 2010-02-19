@@ -40,7 +40,7 @@ jar -- generates new ${jarfile}
 	
 	<target name="bin-dist" depends="compile">
 		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
-			<property name="version" value="1.1.0"/>
+			<property name="version" value="3.3.0"/>
 			<property name="path" value="../VDX/gov/usgs/vdx"/>
 			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
