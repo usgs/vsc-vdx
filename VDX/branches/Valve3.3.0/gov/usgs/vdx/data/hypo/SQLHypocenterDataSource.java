@@ -105,7 +105,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql+= "   lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, depth DOUBLE NOT NULL, ";
 			sql+= "   prefmag DOUBLE, ampmag DOUBLE, codamag DOUBLE, ";
 			sql+= "   nphases INT, azgap INT, dmin DOUBLE, rms DOUBLE, nstimes INT, herr DOUBLE, verr DOUBLE, ";
-			sql+= "   magtype VARCHAR(1), rmk VARCHAR(1), PRIMARY KEY(eid,rid))";
+			sql+= "   magtype VARCHAR(1), rmk VARCHAR(1), PRIMARY KEY(eid,rid), KEY index_j2ksec (j2ksec))";
 			st.execute(sql);
 			
 			// create the remarks table
@@ -181,17 +181,18 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double minDepth		= Double.parseDouble(params.get("minDepth"));
 			double maxDepth		= Double.parseDouble(params.get("maxDepth"));
 			double minMag		= Double.parseDouble(params.get("minMag"));
-			double maxMag		= Double.parseDouble(params.get("maxMag"));	
-			Integer minNPhases	= Integer.parseInt(params.get("minNPhases"));	
+			double maxMag		= Double.parseDouble(params.get("maxMag"));
+			Integer minNPhases	= Integer.parseInt(params.get("minNPhases"));
 			Integer maxNPhases	= Integer.parseInt(params.get("maxNPhases"));
 			double minRMS		= Double.parseDouble(params.get("minRMS"));
-			double maxRMS		= Double.parseDouble(params.get("maxRMS"));	
+			double maxRMS		= Double.parseDouble(params.get("maxRMS"));
 			double minHerr		= Double.parseDouble(params.get("minHerr"));
-			double maxHerr		= Double.parseDouble(params.get("maxHerr"));		
+			double maxHerr		= Double.parseDouble(params.get("maxHerr"));
 			double minVerr		= Double.parseDouble(params.get("minVerr"));
 			double maxVerr		= Double.parseDouble(params.get("maxVerr"));
-			String rm			= params.get("rm");
-			HypocenterList data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag);
+			String rmk			= params.get("rmk");
+			HypocenterList data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
+					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk);
 			if (data != null && data.size() > 0)
 				return new BinaryResult(data);
 		}
@@ -201,20 +202,31 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	/**
 	 * Get Hypocenter data
 	 * 
-	 * @param rid		rank id
-	 * @param st		start time
-	 * @param et		end time
-	 * @param west		west boundary
-	 * @param east		east boundary
-	 * @param south		south boundary
-	 * @param north		north boundary
-	 * @param minDepth	minimum depth
-	 * @param maxDepth	maximum depth
-	 * @param minMag	minimum magnitude
-	 * @param maxMax	maximum magnitude
+	 * @param rid			rank id
+	 * @param st			start time
+	 * @param et			end time
+	 * @param west			west boundary
+	 * @param east			east boundary
+	 * @param south			south boundary
+	 * @param north			north boundary
+	 * @param minDepth		minimum depth
+	 * @param maxDepth		maximum depth
+	 * @param minMag		minimum magnitude
+	 * @param maxMax		maximum magnitude
+	 * @param minNPhases	minimum number of phases
+	 * @param maxNPhases	maximum number of phases
+	 * @param minRMS		minimum RMS
+	 * @param maxRMS		maximum RMS
+	 * @param minHerr		minimum horizontal error
+	 * @param maxHerr		maximum horizontal error
+	 * @param minVerr		minimum vertical error
+	 * @param maxVerr		maximum vertical error
+	 * @param rmk			remarks filter
 	 */
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
-			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag) {
+			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,
+			Integer minNPhases, Integer maxNPhases, double minRMS, double maxRMS, 
+			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk) {
 
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
@@ -229,9 +241,44 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
 			sql += "AND    a.lon     >= ? AND a.lon     <= ? ";
 			sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
-			sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
-			sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
+			
+			// depth filtering options
+			if (!(minDepth == -Double.MAX_VALUE && maxDepth == Double.MAX_VALUE)) {
+				sql += "AND    a.depth   >= " + minDepth + " AND a.depth   <= " + maxDepth + " ";
+			}
+			
+			// mag filtering options
+			if (!(minMag == -Double.MAX_VALUE && maxMag == Double.MAX_VALUE)) {
+				sql += "AND    a.prefmag >= " + minMag + " AND a.prefmag <= " + maxMag + " ";
+			}
+			
+			// dont' return values without a magnitude
 			sql += "AND    a.prefmag IS NOT NULL ";
+			
+			// number of phases filtering options
+			if (!(minNPhases == Integer.MIN_VALUE && maxNPhases == Integer.MAX_VALUE)) {
+				sql += "AND    a.nphases >= " + minNPhases + " AND a.nphases <= " + maxNPhases + " ";
+			}
+			
+			// rms filtering options
+			if (!(minRMS == -Double.MAX_VALUE && maxRMS == Double.MAX_VALUE)) {
+				sql += "AND    a.rms >= " + minRMS + " AND a.rms <= " + maxRMS + " ";
+			}
+			
+			// herr filtering options
+			if (!(minHerr == -Double.MAX_VALUE && maxHerr == Double.MAX_VALUE)) {
+				sql += "AND    a.herr >= " + minHerr + " AND a.herr <= " + maxHerr + " ";
+			}
+			
+			// verr filtering options
+			if (!(minVerr == -Double.MAX_VALUE && maxVerr == Double.MAX_VALUE)) {
+				sql += "AND    a.verr >= " + minVerr + " AND a.verr <= " + maxVerr + " ";
+			}
+			
+			// remarks filtering options
+			if (!rmk.equals("")) {
+				sql += "AND    a.rmk = '" + rmk + "' ";
+			}
 			
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
@@ -254,15 +301,11 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(4, east);
 			ps.setDouble(5, south);
 			ps.setDouble(6, north);
-			ps.setDouble(7, minDepth);
-			ps.setDouble(8, maxDepth);
-			ps.setDouble(9, minMag);
-			ps.setDouble(10, maxMag);
 			if (ranks && rid != 0) {
-				ps.setInt(11, rid);
+				ps.setInt(7, rid);
 			} else {
-				ps.setDouble(11, st);
-				ps.setDouble(12, et);
+				ps.setDouble(7, st);
+				ps.setDouble(8, et);
 			}
 			rs = ps.executeQuery();
 			
@@ -313,11 +356,11 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(6, hc.depth);
 			
 			// non-required fields
-			if (Double.isNaN(hc.prefmag))	ps.setNull(7, java.sql.Types.DOUBLE);		else ps.setDouble(7, hc.prefmag);
-			if (Double.isNaN(hc.ampmag))	ps.setNull(8, java.sql.Types.DOUBLE);		else ps.setDouble(8, hc.ampmag);
-			if (Double.isNaN(hc.codamag))	ps.setNull(9, java.sql.Types.DOUBLE);		else ps.setDouble(9, hc.codamag);
-			if (hc.nphases == null)			ps.setNull(10,  java.sql.Types.INTEGER);	else ps.setInt(10, hc.nphases);
-			if (hc.azgap == null)			ps.setNull(11,  java.sql.Types.INTEGER);	else ps.setInt(11, hc.azgap);
+			if (Double.isNaN(hc.prefmag))	ps.setNull(7,  java.sql.Types.DOUBLE);		else ps.setDouble(7, hc.prefmag);
+			if (Double.isNaN(hc.ampmag))	ps.setNull(8,  java.sql.Types.DOUBLE);		else ps.setDouble(8, hc.ampmag);
+			if (Double.isNaN(hc.codamag))	ps.setNull(9,  java.sql.Types.DOUBLE);		else ps.setDouble(9, hc.codamag);
+			if (hc.nphases == null)			ps.setNull(10, java.sql.Types.INTEGER);		else ps.setInt(10, hc.nphases);
+			if (hc.azgap == null)			ps.setNull(11, java.sql.Types.INTEGER);		else ps.setInt(11, hc.azgap);
 			if (Double.isNaN(hc.dmin))		ps.setNull(12, java.sql.Types.DOUBLE);		else ps.setDouble(12, hc.dmin);
 			if (Double.isNaN(hc.rms))		ps.setNull(13, java.sql.Types.DOUBLE);		else ps.setDouble(13, hc.rms);
 			if (hc.nstimes == null)			ps.setNull(14, java.sql.Types.INTEGER);		else ps.setInt(14, hc.nstimes);
