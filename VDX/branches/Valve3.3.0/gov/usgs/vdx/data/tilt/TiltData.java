@@ -66,7 +66,7 @@ public class TiltData extends GenericDataMatrix
                 {{data.viewPart(0, 0, data.rows(), 2),
                   getRotatedDataWithoutTime(theta),
                   data.viewPart(0, 2, data.rows(), 2),
-                  getVelocityDataWithoutTime(),
+                  getVelocityDataWithoutTime(),                  
                   data.viewPart(0, 4, data.rows(), 3),
                   getRainDataWithoutTime()}});
     }
@@ -75,25 +75,28 @@ public class TiltData extends GenericDataMatrix
      * convert the rainfall values to plottable time series values
      */
     public DoubleMatrix2D getRainDataWithoutTime() {
-    	DoubleMatrix2D rain = DoubleFactory2D.dense.make(data.rows(), 1);
+
+    	DoubleMatrix2D rain = DoubleFactory2D.dense.make(data.rows(), 1, Double.NaN);
 
 		double total	= 0;
 		double r		= 0;
 		double last		= data.getQuick(0, 7);
 		
 		// set the initial amount of rainfall to be zero for this time period
-		rain.setQuick(0, 1, 0);
+		rain.setQuick(0, 0, 0);
 		
 		// iterate through all subsequent rows and assign a rainfall amount if the 
-		// data increases.  Keep the total if the rainfall is less than the previous reading
-		for (int i = 1; i < data.rows() - 1; i++) {
+		// data increases.  Keep the total of the rainfall is less than the previous reading
+		for (int i = 1; i < data.rows(); i++) {
 			r = data.getQuick(i, 7);
-			if (r < last) {
-				last = 0;
+			if (!Double.isNaN(r)) {
+				if (r < last) {
+					last = 0;
+				}
+				total += (r - last);
+				last = r;
+				rain.setQuick(i, 0, total);
 			}
-			total += (r - last);
-			rain.setQuick(i, 1, total);
-			last = r;
 		}
     	return rain;
     }
@@ -148,7 +151,7 @@ public class TiltData extends GenericDataMatrix
                     return Math.atan2(y - oy, x - ox);
                 }
             }
-        );  
+        );
         return ma;
     }
     
