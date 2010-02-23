@@ -3,6 +3,7 @@ package gov.usgs.vdx.in.scheduler;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.in.Importer;
 
 import java.io.*;
 import java.util.Timer;
@@ -256,7 +257,7 @@ public class Scheduler {
 						archiveFile	= new File(archiveDirectory, file.getName());
 						CopyFile copyFile = new CopyFile();
 						try {
-							copyFile.copyFile(file, archiveFile);
+							CopyFile.copyFile(file, archiveFile);
 						} catch (IOException e) {
 							System.err.println("error copying file to archive directory");
 						}
