@@ -221,7 +221,7 @@ public class HypocenterRenderer implements Renderer
 		                g.drawString("Magnitude", (float)xStart - 4, (float)yStart - 40);
 		                g.setFont(new Font("Arial", Font.PLAIN, 10));
 		                
-		    			for (int i = 0; i < HypocenterRenderer.circles.length; i++)
+		    			for (int i = 0; i < HypocenterRenderer.circles.length - 2; i++)
 		                {
 		                    g.translate(xStart - HypocenterRenderer.circles[i].x + 8, HypocenterRenderer.circles[i].y + yStart + circleScaleOffset[i]);
 		                    g.setPaint(Color.WHITE);
