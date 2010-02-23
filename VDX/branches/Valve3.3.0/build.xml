@@ -29,7 +29,7 @@ jar -- generates new ${jarfile}
 
 	<target name="jar" depends="compile">
 		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
-			<property name="version" value="1.00"/>
+			<property name="version" value="3.3.0"/>
 			<property name="path" value="../VDX/gov/usgs/vdx"/>
 			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
@@ -69,12 +69,6 @@ jar -- generates new ${jarfile}
 		</copy>
 		
 		<jar destfile="${bin-dir}/${dirname}/lib/vdx.jar">
-			<fileset dir="${source}">
-				<include name="**/**.class" />	
-			</fileset>
-			<fileset dir="${source}/../Winston">
-				<include name="**/**.class" />	
-			</fileset>
 			<fileset dir="${source}/../Earthworm">
 				<include name="**/**.class" />	
 			</fileset>
@@ -84,10 +78,19 @@ jar -- generates new ${jarfile}
 			<fileset dir="${source}/../Net">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Util">
+			<fileset dir="${source}/../Pinnacle">
 				<include name="**/**.class" />	
 			</fileset>
 			<fileset dir="${source}/../Plot">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Util">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../VDX">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Winston">
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
