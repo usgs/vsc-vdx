@@ -36,7 +36,7 @@ abstract public class Poller extends Thread
     
     /** This function is called every time the polling time comes around.
      */
-    abstract public void poll();
+    abstract public void process(String filename);
     
     /** Kills the Poller.
      */
@@ -70,7 +70,7 @@ abstract public class Poller extends Thread
                 try { Thread.sleep(nextInterval); } catch (InterruptedException ex) {}
                 nextInterval = interval;
                 if (!stopped && !killThread)
-                    poll();
+                    process("");
             }
             else
             {

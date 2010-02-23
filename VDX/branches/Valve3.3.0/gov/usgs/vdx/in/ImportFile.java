@@ -143,8 +143,12 @@ public class ImportFile implements Importer {
 		
 		logger.log(Level.INFO, "Reading config file " + configFile);
 		
-		// instantiate the config file
+		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
+		if (!params.wasSuccessfullyRead()) {
+			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			System.exit(-1);
+		}
 		
 		// get the vdx parameter, and exit if it's missing
 		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
