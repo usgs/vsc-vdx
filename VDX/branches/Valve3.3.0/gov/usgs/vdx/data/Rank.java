@@ -38,7 +38,7 @@ public class Rank {
 	}
 	
 	public Rank bestPossible() {
-		return new Rank(0, "Mixed Rank", 0, 0);
+		return new Rank(0, "Best Possible Rank", 0, 0);
 	}
 
 	/**
