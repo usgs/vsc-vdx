@@ -20,6 +20,11 @@ public interface Importer {
 	public void processConfigFile(String configFile);
 	
 	/**
+	 * Process.  Reads a file and parses the contents to the database
+	 */
+	public void process(String filename);
+	
+	/**
 	 * Print usage.  Prints out usage instructions for the given importer
 	 */
 	public void outputInstructions(String importerClass, String message);
