@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,39 +28,41 @@ public class Scheduler {
 	public static Set<String> flags;
 	public static Set<String> keys;
 	
-	public Logger logger;
+	public static Logger logger;
+	public static FileHandler logHandler;
 	
-	public ConfigFile params;
-	public ConfigFile schedulerParams;
+	public static ConfigFile params;
+	public static ConfigFile schedulerParams;
 	
-	public Class importClass;
+	public static Class importClass;
 
-	public File dataDir;
-	public File	configFile;
-	public File logFile;
-	public File archiveDir;
+	public static File dataDir;
+	public static File configFile;
+	public static File logFile;
+	public static File archiveDir;
 	
 	// config file variables
-	public String		configDirectoryName;
-	public String		dataDirectoryName;
-	public String		logDirectoryName;
-	public String		archiveDirectoryName;
+	public static String	configDirectoryName;
+	public static String	dataDirectoryName;
+	public static String	logDirectoryName;
+	public static String	archiveDirectoryName;
 	
-	public String		importerName;
-	public String		dataDirName;
-	public String		configFileName;
-	public String		logFileName;
-	public String		archiveDirName;
-	public String		fileSuffix;
-	public int			cycle;
-	public boolean		archive;
-	public boolean		delete;
-	public boolean		verbose;
+	public static String	importerName;
+	public static String	dataDirName;
+	public static String	configFileName;
+	public static String	logFileName;
+	public static String	archiveDirName;
+	public static String	fileSuffix;
+	public static int		cycle;
+	public static boolean	archive;
+	public static boolean	delete;
+	public static boolean	verbose;
 	
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
 		keys.add("-c");
+		keys.add("-n");
 		flags.add("-h");
 		flags.add("-v");
 	}
@@ -79,6 +82,14 @@ public class Scheduler {
 		// instantiate this scheduler class by processing the config file and it's contents
 		Scheduler scheduler	= new Scheduler();
 		Timer timer			= new Timer();
+		
+		// setup a logger to the log file
+		try {
+			logHandler = new FileHandler(logFile.getAbsolutePath());
+			logger.addHandler(logHandler);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "unable to attach logger to log file");
+		}
 		
 		// the config file processed okay, so go ahead and start scheduling imports
 		timer.scheduleAtFixedRate(scheduler.new SchedulerTimerTask(), 0, cycle * 1000);		
@@ -197,18 +208,18 @@ public class Scheduler {
 		}
 		
 		if (!dataDir.isDirectory()) {
-			logger.log(Level.SEVERE, "dataDir " + dataDirName + " does not exist");
+			logger.log(Level.SEVERE, dataDirName + " does not exist");
 			System.exit(-1);
 		} else if (!dataDir.canRead()) {
-			logger.log(Level.SEVERE, "dataDir " + dataDirName + " is not readable");
+			logger.log(Level.SEVERE, dataDirName + " is not readable");
 			System.exit(-1);
-		}		
+		}
 		
 		if (!configFile.exists()) {
-			logger.log(Level.SEVERE, "configFile " + configFileName + " does not exist");
+			logger.log(Level.SEVERE, configFileName + " does not exist");
 			System.exit(-1);
 		} else if (!configFile.canRead()) {
-			logger.log(Level.SEVERE, "configFile " + configFileName + " is not readable");
+			logger.log(Level.SEVERE, configFileName + " is not readable");
 			System.exit(-1);
 		}
 		
@@ -226,21 +237,16 @@ public class Scheduler {
 				logFile	= new File(logFileName);
 			}
 		}
-			
-		if (!logFile.canWrite()) {
-			logger.log(Level.SEVERE, "logFile " + logFileName + " is not writable");
-			System.exit(-1);
-		}
 		
 		if (archive) {
 			if (!archiveDir.isDirectory()) {
-				logger.log(Level.SEVERE, "archiveDir " + archiveDirName + " does not exist");
+				logger.log(Level.SEVERE, archiveDirName + " does not exist");
 				System.exit(-1);
 			} else if (!archiveDir.canRead()) {
-				logger.log(Level.SEVERE, "archiveDir " + archiveDirName + " is not readable");
+				logger.log(Level.SEVERE, archiveDirName + " is not readable");
 				System.exit(-1);
 			} else if (!archiveDir.canWrite()) {
-				logger.log(Level.SEVERE, "archiveDir " + archiveDirName + " is not writable");
+				logger.log(Level.SEVERE, archiveDirName + " is not writable");
 				System.exit(-1);
 			}
 		}
