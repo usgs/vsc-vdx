@@ -181,7 +181,7 @@ public class ImportStream implements Importer {
 		timestampMask	= Util.stringToString(params.getString("timestampMask"), "yyyy-MM-dd HH:mm:ss");
 		timeZone		= Util.stringToString(params.getString("timezone"), "GMT");
 		dateIn			= new SimpleDateFormat(timestampMask);
-		dateOut			= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
