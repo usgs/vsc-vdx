@@ -75,10 +75,10 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	}
 	
 	/**
-	 * Close database connection
+	 * De-Initialize data source
 	 */
 	public void disconnect() {
-		database.close();
+		defaultDisconnect();
 	}
 
 	/**
