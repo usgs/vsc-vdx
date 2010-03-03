@@ -2,15 +2,18 @@ package gov.usgs.vdx.in;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.CurrentTime;
 import gov.usgs.util.Util;
 import gov.usgs.util.FileCopy;
 
 import java.io.*;
+import java.text.Collator;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,33 +29,28 @@ import java.util.logging.Logger;
 public class Scheduler {
 	
 	public static Set<String> flags;
-	public static Set<String> keys;
-	
+	public static Set<String> keys;	
 	public static Logger logger;
-	public static FileHandler logHandler;
-	
 	public static ConfigFile params;
-	public static ConfigFile schedulerParams;
-	
-	public static Class importClass;
+	public static ConfigFile schedulerParams;	
+	public static Class importClass;	
+	public CurrentTime currentTime = CurrentTime.getInstance();	
 
 	public static File dataDir;
 	public static File configFile;
-	public static File logFile;
 	public static File archiveDir;
 	
 	// config file variables
 	public static String	configDirectoryName;
 	public static String	dataDirectoryName;
-	public static String	logDirectoryName;
 	public static String	archiveDirectoryName;
 	
 	public static String	importerName;
 	public static String	dataDirName;
 	public static String	configFileName;
-	public static String	logFileName;
 	public static String	archiveDirName;
 	public static String	fileSuffix;
+	public static String	filePrefix;
 	public static int		cycle;
 	public static boolean	archive;
 	public static boolean	delete;
@@ -74,25 +72,39 @@ public class Scheduler {
 		
 		// initialize the logger for this importer
 		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "Scheduler.initialize() succeeded.");
 		
 		// parse out the values from the config file
 		processConfigFile(schedulerConfigFile, schedulerName);
+		
+		// output some information about this configuration
+		logger.log(Level.INFO, "importer:   " + importerName);
+		logger.log(Level.INFO, "cycle:      " + cycle);
+		logger.log(Level.INFO, "fileprefix: " + filePrefix);
+		logger.log(Level.INFO, "filesuffix: " + fileSuffix);
+		logger.log(Level.INFO, "delete:     " + delete);
+		logger.log(Level.INFO, "verbose:    " + verbose);
+		logger.log(Level.INFO, "archive:    " + archive);
+		logger.log(Level.INFO, "datadir:    " + dataDir.getAbsolutePath());
+		logger.log(Level.INFO, "configfile: " + configFile.getAbsolutePath());
+		if (archive) { logger.log(Level.INFO, "archivedir: " + archiveDir.getAbsolutePath()); }
 		
 		// instantiate this scheduler class by processing the config file and it's contents
 		Scheduler scheduler	= new Scheduler();
 		Timer timer			= new Timer();
 		
 		// setup a logger to the log file
+		/*
 		try {
-			logHandler = new FileHandler(logFile.getAbsolutePath());
-			logger.addHandler(logHandler);
+			fileHandler = new FileHandler(logFile.getAbsolutePath());
+			fileHandler.setFormatter(new SimpleFormatter());
+			logger.addHandler(fileHandler);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "unable to attach logger to log file");
 		}
+		*/
 		
 		// the config file processed okay, so go ahead and start scheduling imports
-		timer.scheduleAtFixedRate(scheduler.new SchedulerTimerTask(), 0, cycle * 1000);		
+		timer.scheduleAtFixedRate(scheduler.new SchedulerTimerTask(), 0, cycle * 1000);
 	}
 	
 	/**
@@ -110,7 +122,6 @@ public class Scheduler {
 		// get configuration wide params
 		configDirectoryName		= params.getString("configDirectory");
 		dataDirectoryName		= params.getString("dataDirectory");
-		logDirectoryName		= params.getString("logDirectory");
 		archiveDirectoryName	= params.getString("archiveDirectory");
 		
 		// get scheduler specific params
@@ -118,13 +129,13 @@ public class Scheduler {
 		importerName		= schedulerParams.getString("importer");
 		dataDirName			= schedulerParams.getString("dataDir");
 		configFileName		= schedulerParams.getString("configFile");
-		logFileName			= schedulerParams.getString("logFile");
 		archiveDirName		= schedulerParams.getString("archiveDir");
 		
+		filePrefix		= Util.stringToString(schedulerParams.getString("filePrefix"), "");
 		fileSuffix		= Util.stringToString(schedulerParams.getString("fileSuffix"), "");
 		cycle			= Util.stringToInt(schedulerParams.getString("cycle"), 3600);
 		archive			= Util.stringToBoolean(schedulerParams.getString("archive"), false);
-		delete			= Util.stringToBoolean(schedulerParams.getString("delete"), true);
+		delete			= Util.stringToBoolean(schedulerParams.getString("delete"), false);
 		verbose			= Util.stringToBoolean(schedulerParams.getString("verbose"), true);
 		
 		// validate the importer name
@@ -168,20 +179,6 @@ public class Scheduler {
 				}
 			}
 		}
-
-		if (logFileName == null) {
-			logger.log(Level.SEVERE, "logFile parameter empty");
-			System.exit(-1);
-		} else {
-			if (logFileName.indexOf("LOG_DIR") > -1) {
-				if (logDirectoryName != null) {
-					logFileName = logFileName.replaceAll("LOG_DIR", logDirectoryName);
-				} else {
-					logger.log(Level.SEVERE, "logDirectory parameter empty");
-					System.exit(-1);
-				}
-			}
-		}
 		
 		if (archive) {
 			if (archiveDirName == null) {
@@ -202,7 +199,6 @@ public class Scheduler {
 		// setup the proper data structures based on the default vals
 		dataDir		= new File(dataDirName);
 		configFile	= new File(configFileName);
-		logFile		= new File(logFileName);
 		if (archive) {
 			archiveDir	= new File(archiveDirName);
 		}
@@ -221,21 +217,6 @@ public class Scheduler {
 		} else if (!configFile.canRead()) {
 			logger.log(Level.SEVERE, configFileName + " is not readable");
 			System.exit(-1);
-		}
-		
-		if (logFile.exists()) {			
-			try {
-				String logFileNameCopy	= logFileName = ".sav";
-				File logFileCopy		= new File(logFileNameCopy);
-				logFileCopy.delete();
-				FileCopy.fileCopy(logFile, logFileCopy);
-				logger.log(Level.INFO, logFileName + " exists.  saving as " + logFileCopy);
-			} catch (IOException e) {
-				System.err.println("error copying file to archive directory");
-			}
-			if (logFile.delete()) {
-				logFile	= new File(logFileName);
-			}
 		}
 		
 		if (archive) {
@@ -301,7 +282,13 @@ public class Scheduler {
 		
 		// inherited method
 		public boolean accept(File file) {
-			return file.getName().toLowerCase().endsWith(fileSuffix);
+			boolean prefixMatches = file.getName().startsWith(filePrefix);
+			boolean suffixMatches = file.getName().endsWith(fileSuffix);
+			if (prefixMatches && suffixMatches) {
+				return true;
+			} else {
+				return false;
+			}
 		}
 	}
 	
@@ -311,7 +298,7 @@ public class Scheduler {
 		
 		// instance variables
 		private ImportFileFilter		importFileFilter;
-		private File[]					fileArray;
+		private File[]					selectedFiles;
 		private File					archiveFile;
 		private Importer				importer;
 		
@@ -324,12 +311,19 @@ public class Scheduler {
 		public void run(){
 			
 			// check for new files
-			fileArray	= dataDir.listFiles(importFileFilter);
+			selectedFiles	= dataDir.listFiles(importFileFilter);
+			
+			// sort the array by filename
+			Arrays.sort(selectedFiles, new FileComparator());
+			
+			// output information related to this scheduler
+			logger.log(Level.INFO, "");
+			logger.log(Level.INFO, currentTime.nowString() + " file count:" + selectedFiles.length);
 			
 			// if there are new file, then we can instantiate the class, thus creating a db connection
 			// only try and make a db connection if we need one, no need having a connection open
 			// all day long if we only use it for five seconds a day.
-			if (fileArray.length > 0) {
+			if (selectedFiles.length > 0) {
 				
 				// instantiate the import class
 				try {
@@ -350,11 +344,11 @@ public class Scheduler {
 					System.exit(-1);			
 				}
 				
+				// initialize the importer
+				importer.initialize(importerName, configFileName, verbose);
+				
 				// for each of the files we are processing
-				for (File file : fileArray) {
-
-					// call the init function to setup the importer
-					importer.initialize(importerName, configFileName, verbose);
+				for (File file : selectedFiles) {
 					
 					// process this file through the importer
 					importer.process(file.getAbsolutePath());
@@ -377,8 +371,31 @@ public class Scheduler {
 							logger.log(Level.SEVERE, "error deleting " + file.getName());
 						}
 					}
-				}			
+				}
+				
+				// de-initialize the importer
+				importer.deinitialize();
 			}
+		}
+	}
+	
+	private static class FileComparator implements Comparator {
+		
+		private Collator c = Collator.getInstance();
+		
+		public int compare(Object o1, Object o2) {
+			if(o1 == o2)
+				return 0;
+
+			File f1 = (File) o1;
+			File f2 = (File) o2;
+
+			if(f1.isDirectory() && f2.isFile())
+				return -1;
+			if(f1.isFile() && f2.isDirectory())
+				return 1;
+
+			return c.compare(f1.getName(), f2.getName());
 		}
 	}
 }
