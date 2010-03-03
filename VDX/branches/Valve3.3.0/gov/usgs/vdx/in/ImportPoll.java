@@ -156,6 +156,13 @@ public class ImportPoll extends Poller implements Importer {
 		processConfigFile(configFile);
 	}
 	
+	/**
+	 * disconnects from the database
+	 */
+	public void deinitialize() {
+		sqlDataSource.disconnect();
+	}
+	
 	/** 
 	 * default constructor
 	 */
@@ -393,9 +400,9 @@ public class ImportPoll extends Poller implements Importer {
 			}
 
 			// create channels tables
-			if (sqlDataSource.getChannelsFlag() && channels.length() > 0) {
+			if (sqlDataSource.getChannelsFlag() && channels.length() > 0) {				
+				channelArray = channels.split(",");
 				
-				channelArray = channels.split(",");				
 				for (int j = 0; j < channelArray.length; j++) {
 					channelCode		= channelArray[j];
 					channel 		= channelMap.get(channelCode);
