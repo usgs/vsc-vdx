@@ -50,6 +50,13 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			createDatabase();
 		}
 	}
+	
+	/**
+	 * De-Initialize data source
+	 */
+	public void disconnect() {
+		defaultDisconnect();
+	}
 
 	/**
 	 * Get flag if database exist
