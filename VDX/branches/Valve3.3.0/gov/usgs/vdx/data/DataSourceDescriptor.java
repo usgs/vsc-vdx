@@ -78,6 +78,18 @@ public class DataSourceDescriptor
 		}
 	}
 	
+	private void uninstantiateDataSource()
+	{
+		try
+		{
+			Class.forName(className).getMethod("disconnect").invoke(dataSource);
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Construct data source using internal information if it isn't exist
 	 * @return reference to constructed data source
@@ -88,6 +100,15 @@ public class DataSourceDescriptor
 			instantiateDataSource();
 		
 		return dataSource;
+	}
+	
+	/**
+	 * Deconstruct data source using internal information if it doesn't exist
+	 */
+	public void putDataSource()
+	{
+		if (dataSource != null && className != null)
+			uninstantiateDataSource();		
 	}
 	
 }
