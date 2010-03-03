@@ -15,6 +15,11 @@ public interface Importer {
 	public void initialize(String importerClass, String configFile, boolean verbose);
 	
 	/**
+	 * Deinitialize importer.  Concrete realization see in the inherited classes
+	 */
+	public void deinitialize();
+	
+	/**
 	 * Process config file.  Reads a config file and parses contents into local variables
 	 */
 	public void processConfigFile(String configFile);
