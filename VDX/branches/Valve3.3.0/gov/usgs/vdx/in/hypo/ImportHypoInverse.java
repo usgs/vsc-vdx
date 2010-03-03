@@ -130,6 +130,13 @@ public class ImportHypoInverse implements Importer {
 	}
 	
 	/**
+	 * disconnects from the database
+	 */
+	public void deinitialize() {
+		sqlDataSource.disconnect();
+	}
+	
+	/**
 	 * Parse configuration file.  This sets class variables used in the importing process
 	 * @param configFile	name of the config file
 	 */
@@ -440,5 +447,7 @@ public class ImportHypoInverse implements Importer {
 		for (String file : files) {
 			importer.process(file);
 		}
+		
+		importer.deinitialize();
 	}	
 }
