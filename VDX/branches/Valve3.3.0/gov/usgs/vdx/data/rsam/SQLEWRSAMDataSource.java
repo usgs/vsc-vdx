@@ -77,6 +77,13 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			createDatabase();
 		}
 	}
+	
+	/**
+	 * De-Initialize data source
+	 */
+	public void disconnect() {
+		defaultDisconnect();
+	}
 
 	/**
 	 * Get flag if database exist
