@@ -74,10 +74,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	}
 	
 	/**
-	 * Close database connection
+	 * De-Initialize data source
 	 */
 	public void disconnect() {
-		database.close();
+		defaultDisconnect();
 	}
 
 	/**
