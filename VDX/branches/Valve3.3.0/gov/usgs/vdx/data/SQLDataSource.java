@@ -65,6 +65,11 @@ abstract public class SQLDataSource {
 	abstract public boolean createDatabase();
 	
 	/**
+	 * Disconnect from database. Concrete realization see in the inherited classes
+	 */
+	abstract public void disconnect();
+	
+	/**
 	 * Insert data.  Concrete realization see in the inherited classes
 	 * @return true if success
 	 */
@@ -95,8 +100,9 @@ abstract public class SQLDataSource {
 	/**
 	 * Close database connection
 	 */
-	public void disconnect() {
+	public void defaultDisconnect() {
 		database.close();
+		logger.log(Level.INFO, "SQLDataSource.defaultDisconnect()");
 	}
 
 	/**
