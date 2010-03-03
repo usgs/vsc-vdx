@@ -43,6 +43,13 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 		}
 	}
 	
+	/**
+	 * De-Initialize data source
+	 */
+	public void disconnect() {
+		defaultDisconnect();
+	}
+	
 	public boolean createDatabase()
 	{
 		return true;
