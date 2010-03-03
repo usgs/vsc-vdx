@@ -53,10 +53,10 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	}
 	
 	/**
-	 * Close database connection
+	 * De-Initialize data source
 	 */
 	public void disconnect() {
-		database.close();
+		defaultDisconnect();
 	}
 
 	/**
