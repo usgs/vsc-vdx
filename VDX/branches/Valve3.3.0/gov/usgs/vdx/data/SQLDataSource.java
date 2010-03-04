@@ -102,7 +102,6 @@ abstract public class SQLDataSource {
 	 */
 	public void defaultDisconnect() {
 		database.close();
-		logger.log(Level.INFO, "SQLDataSource.defaultDisconnect()");
 	}
 
 	/**
