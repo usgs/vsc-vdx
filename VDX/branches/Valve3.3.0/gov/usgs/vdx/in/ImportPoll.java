@@ -100,16 +100,7 @@ public class ImportPoll extends Poller implements Importer {
 	public Map<String, Column> dbColumnMap;
 	public String columns;
 	public String[] columnArray;	
-	public String defaultColumns;	
-	
-	public CurrentTime currentTime = CurrentTime.getInstance();
-	
-	public String importerType;
-	
-	public Logger logger;
-
-	public double azimuthNom;
-	public double azimuthInst;
+	public String defaultColumns;
 
 	public String deviceIP;
 	public int devicePort;
@@ -130,6 +121,15 @@ public class ImportPoll extends Poller implements Importer {
 	public Map<String, ConnectionSettings> settingMap;
 	public ConnectionSettings settings;	
 	public FreewaveIPConnection connection;
+
+	public double azimuthNom;
+	public double azimuthInst;
+	
+	public String importerType;	
+	public Logger logger;
+	
+	// timing output
+	public CurrentTime currentTime = CurrentTime.getInstance();
 	
 	static {
 		flags	= new HashSet<String>();

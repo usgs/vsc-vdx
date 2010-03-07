@@ -106,15 +106,15 @@ public class ImportFile implements Importer {
 	public String columns;
 	public String[] columnArray;	
 	public String defaultColumns;
-	
-	public CurrentTime currentTime = CurrentTime.getInstance();
-	
-	public String importerType;
-	
-	public Logger logger;
 
 	public double azimuthNom;
 	public double azimuthInst;
+	
+	public String importerType;	
+	public Logger logger;
+	
+	// timing output
+	public CurrentTime currentTime = CurrentTime.getInstance();
 	
 	static {
 		flags	= new HashSet<String>();

@@ -100,15 +100,6 @@ public class ImportStream implements Importer {
 	public List<String> columnList;
 	public Iterator<String> coIterator;
 	public String defaultColumns;
-	
-	public CurrentTime currentTime = CurrentTime.getInstance();
-	
-	public String importerType;
-	
-	public Logger logger;
-
-	public double azimuthNom;
-	public double azimuthInst;
 
 	public String deviceIP;
 	public int devicePort;
@@ -125,6 +116,15 @@ public class ImportStream implements Importer {
 	public Map<String, ConnectionSettings> settingMap;
 	public ConnectionSettings settings;	
 	public LilyIPConnection connection;
+
+	public double azimuthNom;
+	public double azimuthInst;
+	
+	public String importerType;	
+	public Logger logger;
+	
+	// timing output
+	public CurrentTime currentTime = CurrentTime.getInstance();
 	
 	static {
 		flags	= new HashSet<String>();

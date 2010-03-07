@@ -28,13 +28,13 @@ import java.util.logging.Logger;
 
 public class Scheduler {
 	
+	// class variables
 	public static Set<String> flags;
 	public static Set<String> keys;	
 	public static Logger logger;
 	public static ConfigFile params;
 	public static ConfigFile schedulerParams;	
-	public static Class importClass;	
-	public CurrentTime currentTime = CurrentTime.getInstance();	
+	public static Class importClass;
 
 	public static File dataDir;
 	public static File configFile;
@@ -56,6 +56,9 @@ public class Scheduler {
 	public static boolean	delete;
 	public static boolean	verbose;
 	
+	// timing output
+	public CurrentTime currentTime = CurrentTime.getInstance();
+	
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
@@ -72,6 +75,7 @@ public class Scheduler {
 		
 		// initialize the logger for this importer
 		logger	= Logger.getLogger(importerClass);
+		logger.log(Level.INFO, "Scheduler.initialize() succeeded.");
 		
 		// parse out the values from the config file
 		processConfigFile(schedulerConfigFile, schedulerName);
@@ -318,7 +322,8 @@ public class Scheduler {
 			
 			// output information related to this scheduler
 			logger.log(Level.INFO, "");
-			logger.log(Level.INFO, currentTime.nowString() + " file count:" + selectedFiles.length);
+			logger.log(Level.INFO, currentTime.nowString() + " begin polling cycle");
+			logger.log(Level.INFO, "files:" + selectedFiles.length);
 			
 			// if there are new file, then we can instantiate the class, thus creating a db connection
 			// only try and make a db connection if we need one, no need having a connection open
@@ -375,7 +380,10 @@ public class Scheduler {
 				
 				// de-initialize the importer
 				importer.deinitialize();
-			}
+			}	
+			
+			// output some loggin info for this iteration
+			logger.log(Level.INFO, currentTime.nowString() + " end polling cycle");
 		}
 	}
 	
