@@ -6,7 +6,7 @@
 	<property name="jarfile" value="vdx.jar"/>
 	<property name="distjarfile" value="vdx-dist.jar"/>
 	<property name="bin-dir" value="../vdx-bin"/>
-	<property name="dirname" value="VDX" />
+	<property name="dirname" value="VDX-trunk" />
 
 		
 	<target name="help">
@@ -30,7 +30,7 @@ jar -- generates new ${jarfile}
 	<target name="jar" depends="compile">
 		<ant antfile="${source}/../USGS-trunk/buildversion.xml" target="version" dir="${source}/../USGS-trunk" inheritAll="true">
 			<property name="version" value="3.3.0"/>
-			<property name="path" value="../VDX/gov/usgs/vdx"/>
+			<property name="path" value="../VDX-trunk/gov/usgs/vdx"/>
 			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
 		<mkdir dir="${source}/../USGS-trunk/lib"/>
