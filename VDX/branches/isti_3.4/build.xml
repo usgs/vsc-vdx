@@ -1,0 +1,103 @@
+<project name="VDX Classes" default="jar" basedir=".">
+	<description>USGS VDX Source Build File</description>
+
+	<property name="source" location="."/>
+	<property name="classpath" location="../USGS-trunk/lib/net.jar;../USGS-trunk/lib/util.jar;../USGS-trunk/lib/plot.jar;../USGS-trunk/lib/math.jar;../USGS-trunk/contrib/colt.jar;../USGS-trunk/lib/pinnacle.jar;../USGS-trunk/contrib/seed-pdcc.jar"/>
+	<property name="jarfile" value="vdx.jar"/>
+	<property name="distjarfile" value="vdx-dist.jar"/>
+	<property name="bin-dir" value="../vdx-bin"/>
+	<property name="dirname" value="VDX-trunk" />
+
+		
+	<target name="help">
+		<echo>
+Available targets:
+
+compile [default] -- compiles Java code
+jar -- generates new ${jarfile}
+		</echo>
+	</target>
+	
+	<target name="init">
+	</target>
+
+	<target name="compile" depends="init" description="compile the source">
+		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" target="1.5" debug="on">
+			<!--<compilerarg value="-Xlint"/>-->
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<ant antfile="${source}/../USGS-trunk/buildversion.xml" target="version" dir="${source}/../USGS-trunk" inheritAll="true">
+			<property name="version" value="3.3.0"/>
+			<property name="path" value="../VDX-trunk/gov/usgs/vdx"/>
+			<property name="package" value="gov.usgs.vdx"/>
+		</ant>
+		<mkdir dir="${source}/../USGS-trunk/lib"/>
+		<jar destfile="${source}/../USGS-trunk/lib/${jarfile}" basedir="${source}" includes="**/*.class"/>
+		<delete file="../VDX-trunk/gov/usgs/vdx/Version.class"/>
+	</target>
+	
+	<target name="bin-dist" depends="compile">
+		<ant antfile="${source}/../USGS-trunk/buildversion.xml" target="version" dir="${source}/../USGS-trunk" inheritAll="true">
+			<property name="version" value="3.3.0"/>
+			<property name="path" value="../VDX-trunk/gov/usgs/vdx"/>
+			<property name="package" value="gov.usgs.vdx"/>
+		</ant>
+		
+		<delete dir="${bin-dir}/${dirname}" />
+
+		<!-- Create the distribution directory structure -->
+		<mkdir dir="${bin-dir}/${dirname}/lib/" />
+		
+		<!-- Copy the distribution files -->
+		<copy todir="${bin-dir}/${dirname}">
+			<fileset dir="${source}">
+				<include name="dist-vdxSources.config" />
+				<include name="dist-VDX.config" />
+				<include name="VDX.sh" />
+				<include name="VDX.bat" />
+			</fileset>
+		</copy>
+				
+		<copy todir="${bin-dir}/${dirname}/lib">
+			<fileset dir="${source}/../USGS-trunk/contrib">
+				<include name="colt.jar" />
+				<include name="mysql.jar" />
+				<include name="seed-pdcc.jar" />
+			</fileset>
+		</copy>
+		
+		<jar destfile="${bin-dir}/${dirname}/lib/vdx.jar">
+			<fileset dir="${source}/../Earthworm-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Math-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Net-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Pinnacle-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Plot-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Util-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../VDX-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Winston-trunk">
+				<include name="**/**.class" />	
+			</fileset>
+		</jar>
+		
+		<tar destfile="${source}/vdx-bin.tar.gz" basedir="${bin-dir}" compression="gzip" />
+		<zip destfile="${source}/vdx-bin.zip" basedir="${bin-dir}" />
+		
+		<delete file="${source}/gov/usgs/vdx/Version.class"/>
+	</target>
+</project>
