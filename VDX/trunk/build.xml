@@ -1,10 +1,12 @@
 <project name="VDX" default="compile" basedir=".">
 	<description>USGS VDX Build File</description>
 
+	<property name="package" value="gov.usgs.vdx"/>
+	<property name="version" value="3.3.0"/>
+	<property name="jarfile" value="vdx.jar"/>
 	<property name="source" location="."/>
 	<property name="destination" location="classes"/>
 	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/seed-pdcc.jar"/>
-	<property name="jarfile" value="vdx.jar"/>
 	
 	<property name="dist-basedir" value="../dist"/>
 	<property name="dist-dir" value="VDX" />
@@ -32,14 +34,14 @@ dist    -- creates a binary distribution
 	</target>
 
 	<target name="compile" depends="clean" description="compile the source">
-		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
-			<property name="package" value="gov.usgs.vdx"/>
-			<property name="version" value="3.3.0"/>
-			<property name="srcpath" value="../VDX/gov/usgs/vdx"/>
-			<property name="destpath" value="../VDX/${destination}/gov/usgs/vdx"/>
-		</ant>
 		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.5" debug="on"/>
 		<!--<compilerarg value="-Xlint"/>-->
+		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
+			<property name="package" value="${package}"/>
+			<property name="version" value="${version}"/>
+			<property name="srcpath" value="${source}"/>
+			<property name="destpath" value="${destination}"/>
+		</ant>
 	</target>
 
 	<target name="jar" depends="compile" description="generates new ${jarfile}">
@@ -78,28 +80,28 @@ dist    -- creates a binary distribution
 		</copy>
 		
 		<jar destfile="${dist-basedir}/${dist-dir}/lib/${dist-jarfile}">
-			<fileset dir="${source}/../Earthworm/${destination}">
+			<fileset dir="${source}/../Earthworm/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Math/${destination}">
+			<fileset dir="${source}/../Math/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Net/${destination}">
+			<fileset dir="${source}/../Net/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Pinnacle/${destination}">
+			<fileset dir="${source}/../Pinnacle/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Plot/${destination}">
+			<fileset dir="${source}/../Plot/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Util/${destination}">
+			<fileset dir="${source}/../Util/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../VDX/${destination}">
+			<fileset dir="${source}/../VDX/classes">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Winston/${destination}">
+			<fileset dir="${source}/../Winston/classes">
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
