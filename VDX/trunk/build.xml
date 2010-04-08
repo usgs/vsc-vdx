@@ -12,6 +12,7 @@
 	<property name="dist-tempdir" value="./temp"/>
 	<property name="dist-basedir" value="./dist" />
 	<property name="dist-jarfile" value="vdx.jar"/>
+	<property name="dist-jarfile-bin" value="vdx-bin.jar"/>
 	<property name="classdir" value="classes"/>
 
 	<target name="help">
@@ -83,7 +84,7 @@ dist    -- creates a binary distribution
 			</fileset>
 		</copy>
 		
-		<jar destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile}">
+		<jar destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile-bin}">
 			<fileset dir="${source}/../Earthworm/${classdir}">
 				<include name="**/**.class" />	
 			</fileset>
@@ -109,6 +110,8 @@ dist    -- creates a binary distribution
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
+		
+		<jar manifest="Manifest.txt" destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile}" />
 		
 		<tar destfile="${dist-basedir}/vdx-bin.tar.gz" basedir="${dist-tempdir}" compression="gzip" />
 		<zip destfile="${dist-basedir}/vdx-bin.zip"    basedir="${dist-tempdir}" />
