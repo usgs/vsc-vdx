@@ -1,10 +1,8 @@
 #!/bin/sh
 
-# vdx user, or whoever is running it, needs to have the following jar files in their $CLASSPATH
+# vdx user, or whoever is running it, needs to have the following jar file in their $CLASSPATH
 # /path/to/VDX/lib/vdx.jar
-# /path/to/VDX/lib/mysql.jar
-# /path/to/VDX/lib/colt.jar
-# /path/to/VDX/lib/commons-collections-3.2.1.jar
+# alternatively, you can use -cp flag with the path to the vdx.jar file in the java command
 
 JAVA=/path/to/bin/java
 BASE=/path/to/VDX
