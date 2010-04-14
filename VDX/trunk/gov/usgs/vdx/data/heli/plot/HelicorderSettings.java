@@ -24,7 +24,7 @@ public class HelicorderSettings {
 	public int left						= 70;
 	public int top						= 20;
 	
-	public int plotCount				= 1;
+	public int plotCount				= 0;
 
 	public int clipValue				= -1;
 	public int barRange					= -1;
