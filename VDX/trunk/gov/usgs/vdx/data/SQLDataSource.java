@@ -524,9 +524,8 @@ abstract public class SQLDataSource {
 	 * @param is_default	flag to set new rank as default
 	 * @return Rank object using the specified 
 	 */
-	public Rank defaultInsertRank(String name, int rank, int is_default) {
+	public Rank defaultInsertRank(String name, int rank, int user_default) {
 		Rank result = null;
-		int user_default = 0;
 
 		try {
 			
@@ -539,7 +538,7 @@ abstract public class SQLDataSource {
 
 			// if updating the default value then set all other default values
 			// to 0 (there can only be one row set to default)
-			if (is_default == 1) {
+			if (user_default == 1) {
 				ps = database.getPreparedStatement("UPDATE ranks set user_default = 0");
 				ps.execute();
 			}
