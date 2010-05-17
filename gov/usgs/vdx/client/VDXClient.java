@@ -4,6 +4,7 @@ import gov.usgs.net.InternetClient;
 import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.io.IOException;
@@ -84,7 +85,7 @@ public class VDXClient extends InternetClient
 	 * Command is map of parameters - param_name - param_value pairs.
 	 * @return Command result got from server and parsed in BinaryDataSet
 	 */
-	public BinaryDataSet getBinaryData(final Map<String, String> params)
+	public BinaryDataSet getBinaryData(final Map<String, String> params) throws UtilException
 	{
 		Retriable<BinaryDataSet> rt = new Retriable<BinaryDataSet>("VDXClient.getBinaryData()", MAX_RETRIES)
 				{
@@ -94,56 +95,55 @@ public class VDXClient extends InternetClient
 						connect();
 					}
 					
-					public boolean attempt()
+					public boolean attempt() throws UtilException
 					{
+						String rs = null;
 						try
 						{
-							String rs = submitCommand(params);
-							
-							String rc = rs.substring(0, rs.indexOf(':'));
-							String r = rs.substring(rs.indexOf(':') + 1);
-							result = null;
-							if (rc.equals("ok"))
-							{
-								System.out.println(r);
-								Map<String, String> map = Util.stringToMap(r);
-								if (map.get("bytes") != null)
-								{
+							rs = submitCommand(params);
+						}
+						catch (Exception e)
+						{
+							logger.warning("VDXClient.submitCommand() exception: " + e.getMessage());
+							return false;
+						}	
+						String rc = rs.substring(0, rs.indexOf(':'));
+						String r = rs.substring(rs.indexOf(':') + 1);
+						result = null;
+						if (rc.equals("ok")){
+							System.out.println(r);
+							Map<String, String> map = Util.stringToMap(r);
+							if (map.get("bytes") != null)
+							{	
+								try {
 									int bytes = Integer.parseInt(map.get("bytes"));
 									byte[] buffer = readBinary(bytes);
 									byte[] decompBuf = Util.decompress(buffer);
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
-									try
-									{
-										System.out.println(":VDX client got type " + map.get("type"));
-										String className = dataTypeMap.get(map.get("type"));
-										BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
-										ds.fromBinary(bb);
-										result = ds;
-									}
-									catch (Exception e)
-									{
-										// TODO: eliminate
-										e.printStackTrace();
-									}
+								
+									System.out.println(":VDX client got type " + map.get("type"));
+									String className = dataTypeMap.get(map.get("type"));
+									BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
+									ds.fromBinary(bb);
+									result = ds;
 								}
-								else 
-								{
-									System.out.println("error, expected binary");
+								catch (Exception e)
+								{	
+									logger.warning("VDXClient: binary dataset unpacking exception: " + e.getMessage());
+									return false;
 								}
 							}
-							else if (rc.equals("error"))
+							else 
 							{
-								// TODO: eliminate
-								System.out.println(r);
+								System.out.println("error, expected binary");
 							}
+							return true;
 						}
-						catch (Exception e)
+						else if (rc.equals("error"))
 						{
-							logger.warning("VDXClient.getData() exception: " + e.getMessage());
-							return false;
+							throw new UtilException(r);
 						}
-						return true;
+						return false;
 					}
 				};
 		return rt.go();
@@ -154,7 +154,7 @@ public class VDXClient extends InternetClient
 	 * Command is map of parameters - param_name - param_value pairs.
 	 * @return Command result got from server and parsed List<String>
 	 */
-	public List<String> getTextData(final Map<String, String> params)
+	public List<String> getTextData(final Map<String, String> params) throws UtilException
 	{
 		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTestData()", MAX_RETRIES)
 		{
@@ -164,42 +164,51 @@ public class VDXClient extends InternetClient
 				connect();
 			}
 			
-			public boolean attempt()
+			public boolean attempt() throws UtilException
 			{
-				try
-				{
-					logger.info("VDXClient.getData(): params = " + params);
-					String rs = submitCommand(params);
-					
-					String rc = rs.substring(0, rs.indexOf(':'));
-					String r = rs.substring(rs.indexOf(':') + 1);
-					result = null;
-					logger.info("VDXClient.getData(): rc = " + rc);
-					logger.info("VDXClient.getData(): r = " + r);
-				
-					if (rc.equals("ok"))
-					{
-						Map<String, String> map = Util.stringToMap(r);
-						if (map.get("lines") != null)
-						{
-							int lines = Integer.parseInt(map.get("lines"));
-							List<String> list = new ArrayList<String>();
-							for (int i = 0; i < lines; i++)
-								list.add(readString());
-							result = list;
-						}
-						else 
-						{
-							logger.warning("VDXClient.getData(): error, expected text");
-						}
-					}
+			
+				logger.info("VDXClient.getData(): params = " + params);
+				String rs =null;
+				try	{
+					rs= submitCommand(params);
 				}
 				catch (Exception e)
 				{
 					logger.warning("VDXClient.getData() exception: " + e.getMessage());
 					return false;
 				}
-				return true;
+				String rc = rs.substring(0, rs.indexOf(':'));
+				String r = rs.substring(rs.indexOf(':') + 1);
+				result = null;
+				logger.info("VDXClient.getData(): rc = " + rc);
+				logger.info("VDXClient.getData(): r = " + r);
+				
+				if (rc.equals("ok")){
+					Map<String, String> map = Util.stringToMap(r);
+					if (map.get("lines") != null){
+						try{
+							int lines = Integer.parseInt(map.get("lines"));
+							List<String> list = new ArrayList<String>();
+							for (int i = 0; i < lines; i++)
+								list.add(readString());
+							result = list;
+						}
+						catch (Exception e)	{	
+							logger.warning("VDXClient: text dataset unpacking exception: " + e.getMessage());
+							return false;
+						}
+					}
+					else {
+						logger.warning("VDXClient.getData(): error, expected text");
+					}
+					return true;
+				} 
+				else if (rc.equals("error"))
+				{
+					throw new UtilException(r);
+				}
+				
+				return false;
 			}
 		};
 		return rt.go();

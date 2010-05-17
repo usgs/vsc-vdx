@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.gps;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -154,7 +155,12 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			int rid			= Integer.parseInt(params.get("rk"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			GPSData data	= getGPSData(cid, rid, st, et);
+			GPSData data = null;
+			try{
+				data = getGPSData(cid, rid, st, et, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}	
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -184,7 +190,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @param st	start time
 	 * @param et	end time
 	 */
-	public GPSData getGPSData(int cid, int rid, double st, double et) {
+	public GPSData getGPSData(int cid, int rid, double st, double et, int maxrows) throws UtilException {
 		
 		DataPoint dp;
 		GPSData result = null;
@@ -213,7 +219,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
                                             "AND    e.j2ksec0 + e.j2ksec1 <= ? * 2 ) ";
 			}
 			sql	= sql +	"ORDER BY 1 ASC";
-			
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 			ps = database.getPreparedStatement(sql);
 			ps.setInt(1, cid);
 			ps.setDouble(2, st);
@@ -225,6 +233,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(5, et);
 			}
 			rs = ps.executeQuery();
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+			}
 			while (rs.next()) {
 				dp		= new DataPoint();
 				dp.t	= rs.getDouble(1);

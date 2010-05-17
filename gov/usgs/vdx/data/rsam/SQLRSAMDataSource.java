@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -116,7 +117,12 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
 			double period	= Util.stringToDouble(params.get("period"), 60.0);
-			RSAMData data	= getRSAMData(cid, st, et, period);
+			RSAMData data = null;
+			try{
+				data = getRSAMData(cid, st, et, period, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}	
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -126,7 +132,12 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
 			double period	= Util.stringToDouble(params.get("period"), 60.0);
-			RSAMData data	= getRatSAMData(cids, st, et, period);
+			RSAMData data = null;
+			try{
+				data = getRatSAMData(cids, st, et, period, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -142,7 +153,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param et	end time
 	 * @return 
 	 */
-	public RSAMData getRSAMData(int cid, double st, double et, double period) {
+	public RSAMData getRSAMData(int cid, double st, double et, double period, int maxrows) throws UtilException {
 
 		double[] dataRow;
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -161,12 +172,17 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			sql+= "AND    j2ksec <= ? ";
 			sql+= "GROUP BY FLOOR(j2ksec / ?) ";
 			sql+= "ORDER BY MIN(j2ksec)";
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 			ps	= database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			ps.setDouble(3, period);
 			rs	= ps.executeQuery();
-			
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+			}
 			// iterate through all results and create a double array to store the data, index 1 is the j2ksec
 			while (rs.next()) {
 				dataRow		= new double[2];
@@ -194,15 +210,15 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param period
 	 * @return
 	 */
-	public RSAMData getRatSAMData(String ch, double st, double et, double period) {
+	public RSAMData getRatSAMData(String ch, double st, double et, double period, int maxrows) throws UtilException {
 		RSAMData result1	= null;
 		RSAMData result2	= null;
 		
 		String[] channels	= ch.split(",");
 		int ch1				= Integer.valueOf(channels[0]);
 		int ch2				= Integer.valueOf(channels[1]);
-		result1				= getRSAMData(ch1, st, et, period);
-		result2				= getRSAMData(ch2, st, et, period);
+		result1				= getRSAMData(ch1, st, et, period, maxrows);
+		result2				= getRSAMData(ch2, st, et, period, maxrows);
 		
 		return result1.getRatSAM(result2);
 	}
