@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.generic.fixed;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -138,7 +139,12 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			int rid		= Integer.parseInt(params.get("rk"));
 			double st	= Double.parseDouble(params.get("st"));
 			double et	= Double.parseDouble(params.get("et"));
-			GenericDataMatrix data = getGenericFixedData(cid, rid, st, et);
+			GenericDataMatrix data = null;
+			try {
+				data = getGenericFixedData(cid, rid, st, et, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -162,8 +168,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param et	end time
 	 * @return GenericDataMatrix
 	 */
-	public GenericDataMatrix getGenericFixedData(int cid, int rid, double st, double et) {
-		return defaultGetData(cid, rid, st, et, translations, ranks);
+	public GenericDataMatrix getGenericFixedData(int cid, int rid, double st, double et, int maxrows) throws UtilException {
+		return defaultGetData(cid, rid, st, et, translations, ranks, maxrows);
 	}
 	
 

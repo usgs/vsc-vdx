@@ -9,7 +9,6 @@ import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -167,9 +166,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			int rid			= Integer.parseInt(params.get("rk"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			TiltData data	= getTiltData(cid, rid, st, et);
-			if (data != null)
-				return new BinaryResult(data);
+			return getTiltData(cid, rid, st, et, getMaxRows(params));
 		}
 		return null;
 	}
@@ -182,11 +179,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param et	end time
 	 * @return
 	 */	
-	public TiltData getTiltData(int cid, int rid, double st, double et) {
+	public RequestResult getTiltData(int cid, int rid, double st, double et, int maxrows) {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
-		TiltData result		= null;
 		int columnsReturned	= 0;
 		double value;
 		
@@ -222,6 +218,9 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 			
 			ps	= database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
@@ -230,7 +229,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 				ps.setInt(3, rid);
 			}
 			rs = ps.executeQuery();
-
+		
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				return getErrorResult("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+			}
 			while (rs.next()) {
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
@@ -243,14 +245,13 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			rs.close();
 			
 			if (pts.size() > 0) {
-				return new TiltData(pts);
+				return new BinaryResult(new TiltData(pts));
 			}
-
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			return null;
 		}
-		
-		return result;
+		return null;
 	}
 
 	/**

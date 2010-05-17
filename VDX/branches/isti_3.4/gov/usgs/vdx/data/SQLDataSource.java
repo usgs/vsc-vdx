@@ -2,14 +2,19 @@ package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.db.VDXDatabase;
+import gov.usgs.vdx.server.RequestResult;
+import gov.usgs.vdx.server.TextResult;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -68,6 +73,38 @@ abstract public class SQLDataSource {
 	 * Disconnect from database. Concrete realization see in the inherited classes
 	 */
 	abstract public void disconnect();
+	
+	public int getMaxRows(Map<String, String> params){
+		int maxrows = 0;
+		if(params.get("maxrows") != null){
+			maxrows = Integer.parseInt(params.get("maxrows"));
+		}
+		return maxrows;
+	}
+	
+	public int getResultSetSize(ResultSet rs) throws SQLException {
+		int size =0;
+		int currentRow = rs.getRow();
+		if (rs != null){  
+		   rs.beforeFirst();  
+		   rs.last();  
+		   size = rs.getRow();
+		   if(currentRow==0){
+			   rs.beforeFirst();   
+		   } else {
+			   rs.absolute(currentRow);
+		   }
+		}
+		return size;   
+	}
+	
+	public RequestResult getErrorResult(String errMessage){
+		List<String> text = new ArrayList<String>();
+		text.add(errMessage);
+		TextResult result = new TextResult(text);
+		result.setError(true);
+		return result;
+	}
 	
 	/**
 	 * Insert data.  Concrete realization see in the inherited classes
@@ -1133,7 +1170,7 @@ abstract public class SQLDataSource {
 	 * @param ranks			if the database has ranks
 	 * @return GenericDataMatrix containing the data
 	 */
-	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks) {
+	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks, int maxrows) throws UtilException {
 
 		double[] dataRow;
 		List<double[]> pts			= new ArrayList<double[]>();
@@ -1199,6 +1236,10 @@ abstract public class SQLDataSource {
 				                            "AND    d.j2ksec <= ? ) ";
 			}
 			sql = sql + "ORDER BY a.j2ksec ASC";
+			
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
@@ -1211,6 +1252,9 @@ abstract public class SQLDataSource {
 			}
 			rs = ps.executeQuery();
 			
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+			}
 			// loop through each result and add to the list
 			while (rs.next()) {
 				
@@ -1229,7 +1273,7 @@ abstract public class SQLDataSource {
 				result = new GenericDataMatrix(pts);
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		

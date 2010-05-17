@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.hypo;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SelectOption;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -191,8 +192,13 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double minVerr		= Double.parseDouble(params.get("minVerr"));
 			double maxVerr		= Double.parseDouble(params.get("maxVerr"));
 			String rmk			= params.get("rmk");
-			HypocenterList data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
-					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk);
+			HypocenterList data = null;
+			try{
+				data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
+					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null && data.size() > 0)
 				return new BinaryResult(data);
 		}
@@ -226,7 +232,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,
 			Integer minNPhases, Integer maxNPhases, double minRMS, double maxRMS, 
-			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk) {
+			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, int maxrows) throws UtilException {
 
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
@@ -293,7 +299,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
-			
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
@@ -308,9 +316,11 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				ps.setDouble(8, et);
 			}
 			rs = ps.executeQuery();
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+			}
 			
 			double j2ksec, lat, lon, depth, mag;
-			
 			// these will never be null
 			while (rs.next()) {				
 				j2ksec	= rs.getDouble(1);

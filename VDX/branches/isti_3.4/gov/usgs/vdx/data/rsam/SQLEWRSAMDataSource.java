@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -148,7 +149,12 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			double et		= Double.parseDouble(params.get("et"));
 			int p			= Integer.parseInt(params.get("period"));
 			String plotType	= params.get("plotType");
-			RSAMData data	= getEWRSAMData(cid, st, et, p, plotType);
+			RSAMData data = null;
+			try{
+				data = getEWRSAMData(cid, st, et, p, plotType, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -200,7 +206,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param p		period
 	 * @param type	data type (EVENTS/VALUES)
 	 */
-	public RSAMData getEWRSAMData(int cid, double st, double et, int p, String plotType) {
+	public RSAMData getEWRSAMData(int cid, double st, double et, int p, String plotType, int maxrows) throws UtilException {
 		
 		double[] dataRow;
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -219,6 +225,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				sql	   += "FROM   ?_values ";
 				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? ";
 				sql	   += "GROUP BY FLOOR(j2ksec / ?) ";
+				if(maxrows !=0){
+					sql += " LIMIT " + (maxrows+1);
+				}
 				ps		= database.getPreparedStatement(sql);
 				ps.setDouble(1, p);
 				ps.setString(2, ch.getCode());
@@ -226,6 +235,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(4, et);
 				ps.setDouble(5, p);
 				rs		= ps.executeQuery();
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+				}
 				pts 	= new ArrayList<double[]>();
 				
 				// iterate through all results and create a double array to store the data
@@ -242,12 +254,18 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				sql		= "SELECT j2ksec, rsam ";
 				sql    += "FROM   ?_events ";
 				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? and rsam != 0";
+				if(maxrows !=0){
+					sql += " LIMIT " + (maxrows+1);
+				}
+				
 				ps		= database.getPreparedStatement(sql);
 				ps.setString(1, ch.getCode());
 				ps.setDouble(2, st);
 				ps.setDouble(3, et);
 				rs		= ps.executeQuery();
-				
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+				}
 				// setup the initial value
 				count 		= 0;
 				dataRow		= new double[2];				

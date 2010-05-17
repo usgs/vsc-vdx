@@ -33,6 +33,11 @@ abstract public class RequestResult
 		parameters.put(k, v);
 	}
 	
+	public void setError(boolean error){
+		this.error = error;
+	}
+			
+	
 	public void prepare()
 	{}
 	

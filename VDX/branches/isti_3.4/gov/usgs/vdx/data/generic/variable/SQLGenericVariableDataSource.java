@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.generic.variable;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -137,7 +138,12 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			double st				= Double.parseDouble(params.get("st"));
 			double et				= Double.parseDouble(params.get("et"));
 			String selectedTypes	= params.get("selectedTypes");
-			GenericDataMatrix data = getGenericVariableData(cid, st, et, selectedTypes);
+			GenericDataMatrix data = null;
+			try{
+				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(params));
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -153,8 +159,8 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param selectedTypes	???
 	 * @return GenericDataMatrix
 	 */
-	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes) {		
-		return defaultGetData(cid, 0, st, et, translations, ranks);
+	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes, int maxrows) throws UtilException {		
+		return defaultGetData(cid, 0, st, et, translations, ranks, maxrows);
 		
 		/*
 		GenericDataMatrix result = null;

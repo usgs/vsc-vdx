@@ -2,11 +2,12 @@
 	<description>USGS VDX Source Build File</description>
 
 	<property name="source" location="."/>
-	<property name="classpath" location="../USGS-trunk/lib/net.jar;../USGS-trunk/lib/util.jar;../USGS-trunk/lib/plot.jar;../USGS-trunk/lib/math.jar;../USGS-trunk/contrib/colt.jar;../USGS-trunk/lib/pinnacle.jar;../USGS-trunk/contrib/seed-pdcc.jar"/>
+	<property name="destination" location="classes"/>
+	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/seed-pdcc.jar"/>
 	<property name="jarfile" value="vdx.jar"/>
-	<property name="distjarfile" value="vdx-dist.jar"/>
+	<property name="distjarfile" value="dist-vdx.jar"/>
 	<property name="bin-dir" value="../vdx-bin"/>
-	<property name="dirname" value="VDX-trunk" />
+	<property name="dirname" value="VDX" />
 
 		
 	<target name="help">
@@ -22,26 +23,26 @@ jar -- generates new ${jarfile}
 	</target>
 
 	<target name="compile" depends="init" description="compile the source">
-		<javac srcdir="${source}" destdir="${source}" classpath="${classpath}" target="1.5" debug="on">
+		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.5" debug="on">
 			<!--<compilerarg value="-Xlint"/>-->
 		</javac>
 	</target>
 
 	<target name="jar" depends="compile">
-		<ant antfile="${source}/../USGS-trunk/buildversion.xml" target="version" dir="${source}/../USGS-trunk" inheritAll="true">
+		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
 			<property name="version" value="3.3.0"/>
-			<property name="path" value="../VDX-trunk/gov/usgs/vdx"/>
+			<property name="path" value="../VDX/gov/usgs/vdx"/>
 			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
-		<mkdir dir="${source}/../USGS-trunk/lib"/>
-		<jar destfile="${source}/../USGS-trunk/lib/${jarfile}" basedir="${source}" includes="**/*.class"/>
-		<delete file="../VDX-trunk/gov/usgs/vdx/Version.class"/>
+		<mkdir dir="${source}/../USGS/lib"/>
+		<jar destfile="${source}/../USGS/lib/${jarfile}" basedir="${destination}" includes="**/*.class"/>
+		<delete file="../VDX/gov/usgs/vdx/Version.class"/>
 	</target>
 	
 	<target name="bin-dist" depends="compile">
-		<ant antfile="${source}/../USGS-trunk/buildversion.xml" target="version" dir="${source}/../USGS-trunk" inheritAll="true">
+		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
 			<property name="version" value="3.3.0"/>
-			<property name="path" value="../VDX-trunk/gov/usgs/vdx"/>
+			<property name="path" value="../VDX/gov/usgs/vdx"/>
 			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
 		
@@ -61,36 +62,36 @@ jar -- generates new ${jarfile}
 		</copy>
 				
 		<copy todir="${bin-dir}/${dirname}/lib">
-			<fileset dir="${source}/../USGS-trunk/contrib">
+			<fileset dir="${source}/../USGS/contrib">
 				<include name="colt.jar" />
 				<include name="mysql.jar" />
 				<include name="seed-pdcc.jar" />
 			</fileset>
 		</copy>
 		
-		<jar destfile="${bin-dir}/${dirname}/lib/vdx.jar">
-			<fileset dir="${source}/../Earthworm-trunk">
+		<jar destfile="${bin-dir}/${dirname}/lib/${distjarfile}">
+			<fileset dir="${source}/../Earthworm">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Math-trunk">
+			<fileset dir="${source}/../Math">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Net-trunk">
+			<fileset dir="${source}/../Net">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Pinnacle-trunk">
+			<fileset dir="${source}/../Pinnacle">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Plot-trunk">
+			<fileset dir="${source}/../Plot">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Util-trunk">
+			<fileset dir="${source}/../Util">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../VDX-trunk">
+			<fileset dir="${source}/../VDX">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Winston-trunk">
+			<fileset dir="${source}/../Winston">
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
