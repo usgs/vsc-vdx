@@ -1,6 +1,7 @@
 package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.vdx.ExportConfig;
 import gov.usgs.util.Log;
 
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 /**
@@ -25,6 +27,7 @@ public class DataSourceHandler
 	private String driver;
 	private String url;
 	private String prefix;
+	protected TreeMap<String,ExportConfig> exportConfigs;
 	
 	/**
 	 * Constructor
@@ -39,6 +42,7 @@ public class DataSourceHandler
 		
 		logger		= Log.getLogger("gov.usgs.vdx");
 		dataSources	= new HashMap<String, DataSourceDescriptor>();
+		exportConfigs = new TreeMap<String,ExportConfig>();
 		processConfigFile();
 	}
 
@@ -58,6 +62,9 @@ public class DataSourceHandler
 			sub.put("vdx.driver", driver);
 			sub.put("vdx.url", url);
 			sub.put("vdx.prefix", prefix);
+			
+			exportConfigs.put( source, new ExportConfig( source, sub ) );
+
 			DataSourceDescriptor dsd = new DataSourceDescriptor(source, className, description, sub);
 			dataSources.put(source, dsd);
 			logger.fine("read data source: " + source);
@@ -88,5 +95,21 @@ public class DataSourceHandler
 		List<DataSourceDescriptor> result = new ArrayList<DataSourceDescriptor>();
 		result.addAll(dataSources.values());
 		return result;
+	}
+
+	/**
+	 * Getter for export config
+	 */
+	public ExportConfig getExportConfig( String source ) 
+	{
+		return exportConfigs.get(source);
+	}
+
+	/**
+	 * Setter for export config
+	 */
+	public void putExportConfig( String source, ExportConfig ec ) 
+	{
+		exportConfigs.put(source, ec);
 	}
 }
