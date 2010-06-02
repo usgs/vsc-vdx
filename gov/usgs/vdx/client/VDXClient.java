@@ -21,7 +21,37 @@ import java.util.Map;
  * @author Dan Cervelli
  */
 public class VDXClient extends InternetClient
-{
+{	
+	public enum DownsamplingType
+	{
+		NONE("N"), DECIMATE("D"), MEAN("M");
+		
+		public String code;
+		
+		private DownsamplingType(String c)
+		{
+			code = c;
+		}
+		
+		public static DownsamplingType fromString(String s)
+		{
+			if (s == null)
+				return null;
+			
+			if (s.equals("N") || s.equals("None"))
+				return NONE;
+			else if (s.equals("D") || s.equals("Decimation"))
+				return DECIMATE;
+			else if (s.equals("M") || s.equals("Mean filter"))
+				return MEAN;
+			else 
+				return null;
+		}
+		
+		public String toString(){
+			return code;
+		}
+	}
 	private static final int MAX_RETRIES = 3;
 	protected static Map<String, String> dataTypeMap; 
 	

@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.generic.fixed;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -139,9 +140,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			int rid		= Integer.parseInt(params.get("rk"));
 			double st	= Double.parseDouble(params.get("st"));
 			double et	= Double.parseDouble(params.get("et"));
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			GenericDataMatrix data = null;
 			try {
-				data = getGenericFixedData(cid, rid, st, et, getMaxRows(params));
+				data = getGenericFixedData(cid, rid, st, et, getMaxRows(params),  ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -168,8 +171,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param et	end time
 	 * @return GenericDataMatrix
 	 */
-	public GenericDataMatrix getGenericFixedData(int cid, int rid, double st, double et, int maxrows) throws UtilException {
-		return defaultGetData(cid, rid, st, et, translations, ranks, maxrows);
+	public GenericDataMatrix getGenericFixedData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
+		return defaultGetData(cid, rid, st, et, translations, ranks, maxrows,  ds, dsInt);
 	}
 	
 

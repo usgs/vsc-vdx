@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -11,6 +12,7 @@ import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -147,11 +149,12 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			int cid			= Integer.parseInt(params.get("channel"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			int p			= Integer.parseInt(params.get("period"));
 			String plotType	= params.get("plotType");
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			RSAMData data = null;
 			try{
-				data = getEWRSAMData(cid, st, et, p, plotType, getMaxRows(params));
+				data = getEWRSAMData(cid, st, et, plotType, getMaxRows(params), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -203,10 +206,9 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param cid	channel id
 	 * @param st	start time
 	 * @param et	end time
-	 * @param p		period
 	 * @param type	data type (EVENTS/VALUES)
 	 */
-	public RSAMData getEWRSAMData(int cid, double st, double et, int p, String plotType, int maxrows) throws UtilException {
+	public RSAMData getEWRSAMData(int cid, double st, double et, String plotType, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		
 		double[] dataRow;
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -221,30 +223,42 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 			if (plotType.equals("VALUES")) {
 				
-				sql		= "SELECT j2ksec + ? / 2, avg(rsam) ";
+				sql		= "SELECT j2ksec, rsam ";
 				sql	   += "FROM   ?_values ";
 				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? ";
-				sql	   += "GROUP BY FLOOR(j2ksec / ?) ";
+				sql	   += "ORDER BY j2ksec";
+				
+				try{
+					sql = getDownsamplingSQL(sql, ds, dsInt);
+				} catch (UtilException e){
+					throw new UtilException("Can't downsample dataset: " + e.getMessage());
+				}
 				if(maxrows !=0){
 					sql += " LIMIT " + (maxrows+1);
 				}
 				ps		= database.getPreparedStatement(sql);
-				ps.setDouble(1, p);
-				ps.setString(2, ch.getCode());
-				ps.setDouble(3, st);
-				ps.setDouble(4, et);
-				ps.setDouble(5, p);
+				if(ds.equals(DownsamplingType.MEAN)){
+					ps.setDouble(1, st);
+					ps.setInt(2, dsInt);
+					ps.setString(3, ch.getCode());
+					ps.setDouble(4, st);
+					ps.setDouble(5, et);
+				} else {
+					ps.setString(1, ch.getCode());
+					ps.setDouble(2, st);
+					ps.setDouble(3, et);
+				}
 				rs		= ps.executeQuery();
 				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
 				}
 				pts 	= new ArrayList<double[]>();
 				
 				// iterate through all results and create a double array to store the data
 				while (rs.next()) {
 					dataRow		= new double[2];
-					dataRow[0]	= rs.getDouble(1);
-					dataRow[1]	= rs.getDouble(2);
+					dataRow[0]	= getDoubleNullCheck(rs, 1);
+					dataRow[1]	= getDoubleNullCheck(rs, 2);
 					pts.add(dataRow);
 				}
 				rs.close();
@@ -264,7 +278,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(3, et);
 				rs		= ps.executeQuery();
 				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+					throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded.");
 				}
 				// setup the initial value
 				count 		= 0;
@@ -294,11 +308,10 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			if (pts.size() > 0) {
-				// result = new EWRSAMData(pts, events);
 				result	= new RSAMData(pts);
 			}
 			
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLEWRSAMDataSource.getEWRSAMData()", e);
 		}
 		return result;
