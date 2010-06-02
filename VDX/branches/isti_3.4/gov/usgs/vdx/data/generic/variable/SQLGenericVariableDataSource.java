@@ -3,6 +3,7 @@ package gov.usgs.vdx.data.generic.variable;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -138,9 +139,11 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			double st				= Double.parseDouble(params.get("st"));
 			double et				= Double.parseDouble(params.get("et"));
 			String selectedTypes	= params.get("selectedTypes");
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			GenericDataMatrix data = null;
 			try{
-				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(params));
+				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(params), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -159,8 +162,8 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param selectedTypes	???
 	 * @return GenericDataMatrix
 	 */
-	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes, int maxrows) throws UtilException {		
-		return defaultGetData(cid, 0, st, et, translations, ranks, maxrows);
+	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {		
+		return defaultGetData(cid, 0, st, et, translations, ranks, maxrows, ds, dsInt);
 		
 		/*
 		GenericDataMatrix result = null;

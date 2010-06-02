@@ -317,18 +317,18 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			rs = ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use decimation.");
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
 			}
 			
 			double j2ksec, lat, lon, depth, mag;
 			// these will never be null
 			while (rs.next()) {				
-				j2ksec	= rs.getDouble(1);
+				j2ksec	= getDoubleNullCheck(rs, 1);
 				rid		= rs.getInt(2);
-				lat		= rs.getDouble(3);
-				lon		= rs.getDouble(4);
-				depth	= rs.getDouble(5);
-				mag		= rs.getDouble(6);
+				lat		= getDoubleNullCheck(rs, 3);
+				lon		= getDoubleNullCheck(rs, 4);
+				depth	= getDoubleNullCheck(rs, 5);
+				mag		= getDoubleNullCheck(rs, 6);
 				pts.add(new Hypocenter(j2ksec, rid, lat, lon, depth, mag));
 			}
 			rs.close();
