@@ -73,7 +73,7 @@ import java.awt.geom.Rectangle2D;
  */
 public class SliceWaveRenderer extends FrameRenderer
 {
-	private SliceWave wave;
+	protected SliceWave wave;
 	
 	protected boolean autoScale = true;
 	protected boolean removeBias = true;

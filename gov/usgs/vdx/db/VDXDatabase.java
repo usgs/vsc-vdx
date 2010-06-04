@@ -5,6 +5,7 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 import gov.usgs.vdx.data.generic.variable.SQLGenericVariableDataSource;
@@ -178,12 +179,17 @@ public class VDXDatabase {
 		if (connected)
 			return true;
 		else {
-			new Retriable<Object>() {
-				public boolean attempt() {
-					connect();
-					return connected;
-				}
-			}.go();
+			try{
+				new Retriable<Object>() {
+					public boolean attempt() throws UtilException {
+						connect();
+						return connected;
+					}
+				}.go();
+			}
+			catch(UtilException e){
+				//Do nothing 
+			}
 			return connected;
 		}
 	}
@@ -215,25 +221,29 @@ public class VDXDatabase {
 	 * @return true if success
 	 */
 	public boolean execute(final String sql) {
-		Boolean b = new Retriable<Boolean>() {
-			public void attemptFix() {
-				close();
-				connect();
-			}
-
-			public boolean attempt() {
-				try {
-					statement.execute(sql);
-					result = new Boolean(true);
-					return true;
-				} catch (SQLException e) {
-					logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+		Boolean b = null;
+		try{
+			b = new Retriable<Boolean>() {
+				public void attemptFix() {
+					close();
+					connect();
 				}
-				result = new Boolean(false);
-				return false;
-			}
-		}.go();
-
+				public boolean attempt() throws UtilException {
+					try {
+						statement.execute(sql);
+						result = new Boolean(true);
+						return true;
+					} catch (SQLException e) {
+						logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+					}
+					result = new Boolean(false);
+					return false;
+				}
+			}.go();
+		}
+		catch(UtilException e){
+			//Do nothing 
+		}
 		return b != null && b.booleanValue();
 	}
 
@@ -243,23 +253,27 @@ public class VDXDatabase {
 	 * @return result set given from database
 	 */
 	public ResultSet executeQuery(final String sql) {
-		ResultSet rs = new Retriable<ResultSet>() {
-			public void attemptFix() {
-				close();
-				connect();
-			}
-
-			public boolean attempt() {
-				try {
-					result = statement.executeQuery(sql);
-					return true;
-				} catch (SQLException e) {
-					logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+		ResultSet rs = null;
+		try{
+			rs = new Retriable<ResultSet>() {
+				public void attemptFix() {
+					close();
+					connect();
 				}
-				return false;
-			}
-		}.go();
-
+				public boolean attempt() {
+					try {
+						result = statement.executeQuery(sql);
+						return true;
+					} catch (SQLException e) {
+						logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+					}
+					return false;
+				}
+			}.go();
+		}
+		catch(UtilException e){
+			//Do nothing 
+		}
 		return rs;
 	}
 

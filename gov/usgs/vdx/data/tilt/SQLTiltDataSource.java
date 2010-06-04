@@ -1,6 +1,9 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -9,7 +12,6 @@ import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -167,9 +169,9 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			int rid			= Integer.parseInt(params.get("rk"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			TiltData data	= getTiltData(cid, rid, st, et);
-			if (data != null)
-				return new BinaryResult(data);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			return getTiltData(cid, rid, st, et, getMaxRows(params), ds, dsInt);
 		}
 		return null;
 	}
@@ -182,11 +184,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param et	end time
 	 * @return
 	 */	
-	public TiltData getTiltData(int cid, int rid, double st, double et) {
+	public RequestResult getTiltData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
-		TiltData result		= null;
 		int columnsReturned	= 0;
 		double value;
 		
@@ -222,35 +223,53 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
-			
+			try{
+				sql = getDownsamplingSQL(sql, ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult("Can't downsample dataset: " + e.getMessage());
+			}
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
+
 			ps	= database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			if (ranks && rid != 0) {
-				ps.setInt(3, rid);
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
+				ps.setDouble(3, st);
+				ps.setDouble(4, et);
+				if (ranks && rid != 0) {
+					ps.setInt(5, rid);
+				}
+			} else {
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				if (ranks && rid != 0) {
+					ps.setInt(3, rid);
+				}
 			}
 			rs = ps.executeQuery();
-
+		
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				return getErrorResult("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+			}
 			while (rs.next()) {
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
-					value	= rs.getDouble(i + 1);
-					if (rs.wasNull()) { value	= Double.NaN; }
-					dataRow[i] = value;
+					dataRow[i] = getDoubleNullCheck(rs, i+1);
 				}
 				pts.add(dataRow);
 			}
 			rs.close();
 			
 			if (pts.size() > 0) {
-				return new TiltData(pts);
+				return new BinaryResult(new TiltData(pts));
 			}
-
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			return null;
 		}
-		
-		return result;
+		return null;
 	}
 
 	/**

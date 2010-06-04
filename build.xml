@@ -1,123 +1,104 @@
-<project name="VDX" default="compile" basedir=".">
-	<description>USGS VDX Build File</description>
+<project name="VDX Classes" default="jar" basedir=".">
+	<description>USGS VDX Source Build File</description>
 
-	<property name="package" value="gov.usgs.vdx"/>
-	<property name="version" value="3.3.0"/>
-	<property name="jarfile" value="vdx.jar"/>
-	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/seed-pdcc.jar"/>
 	<property name="source" location="."/>
-	<property name="destination" location="./classes"/>
+	<property name="destination" location="classes"/>
+	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/seed-pdcc.jar"/>
+	<property name="jarfile" value="vdx.jar"/>
+	<property name="distjarfile" value="dist-vdx.jar"/>
+	<property name="bin-dir" value="../vdx-bin"/>
+	<property name="dirname" value="VDX" />
 
-	<property name="dist-appdir" value="VDX" />
-	<property name="dist-tempdir" value="./temp"/>
-	<property name="dist-basedir" value="./dist" />
-	<property name="dist-jarfile" value="vdx.jar"/>
-	<property name="dist-jarfile-bin" value="vdx-bin.jar"/>
-	<property name="classdir" value="classes"/>
-
+		
 	<target name="help">
 		<echo>
-Available targets:			
-help    -- displays this help information
-init    -- 
-clean   -- remove the classes directory
-compile -- compile the source
-jar     -- generates new jarfile
-deploy  -- build usgs.jar file
-dist    -- creates a binary distribution
+Available targets:
+
+compile [default] -- compiles Java code
+jar -- generates new ${jarfile}
 		</echo>
 	</target>
 	
 	<target name="init">
 	</target>
 
-	<target name="clean" description="remove the classes directory">
-		<delete dir="${destination}"/>
-		<mkdir  dir="${destination}"/>
+	<target name="compile" depends="init" description="compile the source">
+		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.5" debug="on">
+			<!--<compilerarg value="-Xlint"/>-->
+		</javac>
 	</target>
 
-	<target name="compile" depends="clean" description="compile the source">
-		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.5" debug="on"/>
-		<!--<compilerarg value="-Xlint"/>-->
+	<target name="jar" depends="compile">
 		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
-			<property name="package" value="${package}"/>
-			<property name="version" value="${version}"/>
-			<property name="srcpath" value="${source}"/>
-			<property name="destpath" value="${destination}"/>
+			<property name="version" value="3.3.0"/>
+			<property name="path" value="../VDX/gov/usgs/vdx"/>
+			<property name="package" value="gov.usgs.vdx"/>
 		</ant>
-	</target>
-
-	<target name="jar" depends="compile" description="generates new jarfile">
 		<mkdir dir="${source}/../USGS/lib"/>
 		<jar destfile="${source}/../USGS/lib/${jarfile}" basedir="${destination}" includes="**/*.class"/>
+		<delete file="../VDX/gov/usgs/vdx/Version.class"/>
 	</target>
 	
-	<target name="deploy">
-		<ant target="jar" inheritAll="false" antfile="../USGS/build.xml" />
-	</target>
-	
-	<target name="dist" depends="deploy">
+	<target name="bin-dist" depends="compile">
+		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
+			<property name="version" value="3.3.0"/>
+			<property name="path" value="../VDX/gov/usgs/vdx"/>
+			<property name="package" value="gov.usgs.vdx"/>
+		</ant>
 		
-		<!-- rebuild the dist dir -->
-		<delete dir="${dist-basedir}"/>
-		<mkdir  dir="${dist-basedir}"/>
+		<delete dir="${bin-dir}/${dirname}" />
 
 		<!-- Create the distribution directory structure -->
-		<mkdir dir="${dist-tempdir}/${dist-appdir}/lib/" />
+		<mkdir dir="${bin-dir}/${dirname}/lib/" />
 		
 		<!-- Copy the distribution files -->
-		<copy todir="${dist-tempdir}/${dist-appdir}">
+		<copy todir="${bin-dir}/${dirname}">
 			<fileset dir="${source}">
 				<include name="dist-vdxSources.config" />
 				<include name="dist-VDX.config" />
-				<include name="dist-vdx.sh" />
-				<include name="dist-vdx.bat" />
+				<include name="VDX.sh" />
+				<include name="VDX.bat" />
 			</fileset>
 		</copy>
 				
-		<copy todir="${dist-tempdir}/${dist-appdir}/lib">
+		<copy todir="${bin-dir}/${dirname}/lib">
 			<fileset dir="${source}/../USGS/contrib">
 				<include name="colt.jar" />
 				<include name="mysql.jar" />
 				<include name="seed-pdcc.jar" />
-				<include name="commons-collections-3.2.1.jar" />
 			</fileset>
 		</copy>
 		
-		<jar destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile-bin}">
-			<fileset dir="${source}/../Earthworm/${classdir}">
+		<jar destfile="${bin-dir}/${dirname}/lib/${distjarfile}">
+			<fileset dir="${source}/../Earthworm">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Math/${classdir}">
+			<fileset dir="${source}/../Math">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Net/${classdir}">
+			<fileset dir="${source}/../Net">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Pinnacle/${classdir}">
+			<fileset dir="${source}/../Pinnacle">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Plot/${classdir}">
+			<fileset dir="${source}/../Plot">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Util/${classdir}">
+			<fileset dir="${source}/../Util">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../VDX/${classdir}">
+			<fileset dir="${source}/../VDX">
 				<include name="**/**.class" />	
 			</fileset>
-			<fileset dir="${source}/../Winston/${classdir}">
+			<fileset dir="${source}/../Winston">
 				<include name="**/**.class" />	
 			</fileset>
 		</jar>
 		
-		<jar manifest="Manifest.txt" destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile}" />
+		<tar destfile="${source}/vdx-bin.tar.gz" basedir="${bin-dir}" compression="gzip" />
+		<zip destfile="${source}/vdx-bin.zip" basedir="${bin-dir}" />
 		
-		<tar destfile="${dist-basedir}/vdx-bin.tar.gz" basedir="${dist-tempdir}" compression="gzip" />
-		<zip destfile="${dist-basedir}/vdx-bin.zip"    basedir="${dist-tempdir}" />
-		
-		<!-- Delete the temporary distribution folder -->
-		<delete dir="${dist-tempdir}" />
-		
+		<delete file="${source}/gov/usgs/vdx/Version.class"/>
 	</target>
 </project>

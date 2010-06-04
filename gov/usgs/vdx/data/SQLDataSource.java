@@ -2,14 +2,20 @@ package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.db.VDXDatabase;
+import gov.usgs.vdx.server.RequestResult;
+import gov.usgs.vdx.server.TextResult;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -68,6 +74,78 @@ abstract public class SQLDataSource {
 	 * Disconnect from database. Concrete realization see in the inherited classes
 	 */
 	abstract public void disconnect();
+	
+	public int getMaxRows(Map<String, String> params){
+		int maxrows = 0;
+		if(params.get("maxrows") != null){
+			maxrows = Integer.parseInt(params.get("maxrows"));
+		}
+		return maxrows;
+	}
+	
+	/**
+	 * @param rs ResultSet to query 
+	 * @return Count of records in given ResultSet
+	 * @throws SQLException
+	 */
+	public static int getResultSetSize(ResultSet rs) throws SQLException {
+		int size =0;
+		int currentRow = rs.getRow();
+		if (rs != null){  
+		   rs.beforeFirst();  
+		   rs.last();  
+		   size = rs.getRow();
+		   if(currentRow==0){
+			   rs.beforeFirst();   
+		   } else {
+			   rs.absolute(currentRow);
+		   }
+		}
+		return size;   
+	}
+	
+	/**
+	 * @param errMessage message to pack
+	 * @return TextResult which contains error message
+	 */
+	public static RequestResult getErrorResult(String errMessage){
+		List<String> text = new ArrayList<String>();
+		text.add(errMessage);
+		TextResult result = new TextResult(text);
+		result.setError(true);
+		return result;
+	}
+	
+	/**
+	 * @param sql Query to compress
+	 * @param ds Type of compressing: currently decimate/mean by time interval/none
+	 * @param dsInt time interval to average values, in seconds
+	 * @return sql that get only subset of records from original sql
+	 * @throws UtilException in case of unknown downsampling type
+	 */
+	public static String getDownsamplingSQL(String sql, DownsamplingType ds, int dsInt) throws UtilException{
+		if(!ds.equals(DownsamplingType.NONE) && dsInt<=1)
+			throw new UtilException("Downsampling interval should be more than 1");
+		if(ds.equals(DownsamplingType.NONE))
+			return sql;
+		else if(ds.equals(DownsamplingType.DECIMATE))
+			return "SELECT * FROM(SELECT fullQuery.*, @row := @row+1 AS rownum FROM (" + sql + ") fullQuery, (SELECT @row:=0) r) ranked WHERE rownum % " + dsInt + " = 1";
+		else if (ds.equals(DownsamplingType.MEAN)){
+			String sql_select_clause = sql.substring(6, sql.toUpperCase().indexOf("FROM")-1);
+			String sql_from_where_clause = sql.substring(sql.toUpperCase().indexOf("FROM")-1, sql.toUpperCase().lastIndexOf("ORDER BY")-1);
+			String[] columns = sql_select_clause.split(",");
+			String avg_sql = "SELECT ";
+			for(String column: columns){
+				avg_sql += "AVG("+column.trim()+"), ";
+			}
+			avg_sql += "((j2ksec- ?) DIV ?) intNum ";
+			avg_sql += sql_from_where_clause;
+			avg_sql += " GROUP BY intNum";
+			return avg_sql;
+		}
+		else
+			throw new UtilException("Unknown downsampling type: " + ds);
+	}
 	
 	/**
 	 * Insert data.  Concrete realization see in the inherited classes
@@ -524,8 +602,9 @@ abstract public class SQLDataSource {
 	 * @param is_default	flag to set new rank as default
 	 * @return Rank object using the specified 
 	 */
-	public Rank defaultInsertRank(String name, int rank, int user_default) {
+	public Rank defaultInsertRank(String name, int rank, int is_default) {
 		Rank result = null;
+		int user_default = 0;
 
 		try {
 			
@@ -538,7 +617,7 @@ abstract public class SQLDataSource {
 
 			// if updating the default value then set all other default values
 			// to 0 (there can only be one row set to default)
-			if (user_default == 1) {
+			if (is_default == 1) {
 				ps = database.getPreparedStatement("UPDATE ranks set user_default = 0");
 				ps.execute();
 			}
@@ -1132,7 +1211,7 @@ abstract public class SQLDataSource {
 	 * @param ranks			if the database has ranks
 	 * @return GenericDataMatrix containing the data
 	 */
-	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks) {
+	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
 		double[] dataRow;
 		List<double[]> pts			= new ArrayList<double[]>();
@@ -1198,27 +1277,49 @@ abstract public class SQLDataSource {
 				                            "AND    d.j2ksec <= ? ) ";
 			}
 			sql = sql + "ORDER BY a.j2ksec ASC";
+			try{
+				sql = getDownsamplingSQL(sql, ds, dsInt);
+			} catch (UtilException e){
+				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			}
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 
 			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			if (ranks && rid != 0) {
-				ps.setInt(3, rid);
-			} else {
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
 				ps.setDouble(3, st);
 				ps.setDouble(4, et);
+				if (ranks && rid != 0) {
+					ps.setInt(5, rid);
+				} else {
+					ps.setDouble(5, st);
+					ps.setDouble(6, et);
+				}
+			} else {
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				if (ranks && rid != 0) {
+					ps.setInt(3, rid);
+				} else {
+					ps.setDouble(3, st);
+					ps.setDouble(4, et);
+				}
 			}
 			rs = ps.executeQuery();
 			
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+			}
 			// loop through each result and add to the list
 			while (rs.next()) {
 				
 				// loop through each of the columns and convert to Double.NaN if it was null in the DB
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
-					value	= rs.getDouble(i + 1);
-					if (rs.wasNull()) { value = Double.NaN; }
-					dataRow[i] = value;
+					dataRow[i] = getDoubleNullCheck(rs, i+1);
 				}
 				pts.add(dataRow);
 			}
@@ -1228,11 +1329,28 @@ abstract public class SQLDataSource {
 				result = new GenericDataMatrix(pts);
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Retrieves the value of the designated column in the current row
+     * of <code>ResultSet</code> object as
+     * a <code>double</code> in the Java programming language
+	 * @param rs result set to extract data
+	 * @param columnIndex the first column is 1, the second is 2, ...
+	 * @return column value; not like ResultSet.getData(), if the value is SQL <code>NULL</code>, the
+     * value returned is <code>Double.NaN</code>
+	 * @throws SQLException
+	 */
+	
+	public double getDoubleNullCheck(ResultSet rs, int columnIndex) throws SQLException{
+		double value	= rs.getDouble(columnIndex);
+		if (rs.wasNull()) { value = Double.NaN; }
+		return  value;
 	}
 
 	/**

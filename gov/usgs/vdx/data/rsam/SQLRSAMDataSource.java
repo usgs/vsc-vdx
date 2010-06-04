@@ -2,6 +2,8 @@ package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -115,8 +117,14 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			int cid			= Integer.parseInt(params.get("ch"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			double period	= Util.stringToDouble(params.get("period"), 60.0);
-			RSAMData data	= getRSAMData(cid, st, et, period);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			RSAMData data = null;
+			try{
+				data = getRSAMData(cid, st, et, getMaxRows(params), ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}	
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -125,8 +133,14 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			String cids		= params.get("ch");
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			double period	= Util.stringToDouble(params.get("period"), 60.0);
-			RSAMData data	= getRatSAMData(cids, st, et, period);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			RSAMData data = null;
+			try{
+				data = getRatSAMData(cids, st, et, getMaxRows(params), ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
@@ -142,7 +156,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param et	end time
 	 * @return 
 	 */
-	public RSAMData getRSAMData(int cid, double st, double et, double period) {
+	public RSAMData getRSAMData(int cid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
 		double[] dataRow;
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -155,23 +169,38 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			Channel ch	= defaultGetChannel(cid, channelTypes);
 			
 			// build the sql
-			sql = "SELECT MIN(j2ksec), AVG(rsam) ";
+			sql = "SELECT j2ksec, rsam ";
 			sql+= "FROM   " + ch.getCode() + " ";
 			sql+= "WHERE  j2ksec >= ? ";
 			sql+= "AND    j2ksec <= ? ";
-			sql+= "GROUP BY FLOOR(j2ksec / ?) ";
-			sql+= "ORDER BY MIN(j2ksec)";
+			sql+= "ORDER BY j2ksec";
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
+			try{
+				sql = getDownsamplingSQL(sql, ds, dsInt);
+			} catch (UtilException e){
+				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			}
 			ps	= database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			ps.setDouble(3, period);
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
+				ps.setDouble(3, st);
+				ps.setDouble(4, et);
+			} else {
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+			}
 			rs	= ps.executeQuery();
-			
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+			}
 			// iterate through all results and create a double array to store the data, index 1 is the j2ksec
 			while (rs.next()) {
 				dataRow		= new double[2];
-				dataRow[0]	= rs.getDouble(1);
-				dataRow[1]	= rs.getDouble(2);
+				dataRow[0]	= getDoubleNullCheck(rs, 1);
+				dataRow[1]	= getDoubleNullCheck(rs, 2);
 				pts.add(dataRow);
 			}
 			rs.close();
@@ -191,18 +220,17 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param channel
 	 * @param st
 	 * @param et
-	 * @param period
 	 * @return
 	 */
-	public RSAMData getRatSAMData(String ch, double st, double et, double period) {
+	public RSAMData getRatSAMData(String ch, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		RSAMData result1	= null;
 		RSAMData result2	= null;
 		
 		String[] channels	= ch.split(",");
 		int ch1				= Integer.valueOf(channels[0]);
 		int ch2				= Integer.valueOf(channels[1]);
-		result1				= getRSAMData(ch1, st, et, period);
-		result2				= getRSAMData(ch2, st, et, period);
+		result1				= getRSAMData(ch1, st, et, maxrows, ds, dsInt);
+		result2				= getRSAMData(ch2, st, et, maxrows, ds, dsInt);
 		
 		return result1.getRatSAM(result2);
 	}

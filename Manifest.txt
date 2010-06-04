@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Class-Path: vdx-bin.jar colt.jar mysql.jar commons-collections-3.2.1.jar
+Class-Path: vdx-bin.jar colt.jar mysql.jar 
