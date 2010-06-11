@@ -1,15 +1,20 @@
 package gov.usgs.vdx.data.wave.plot;
 
+import gov.usgs.plot.DataPointRenderer;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
+import gov.usgs.plot.LegendRenderer;
+import gov.usgs.plot.ShapeRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 import gov.usgs.vdx.data.wave.Wave;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -83,8 +88,6 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected double highlightX2;
 	protected double viewStartTime;
 	protected double viewEndTime; 
-	
-	protected boolean displayLabels = true;
 	
 	protected Color color = Color.BLUE;
 	
@@ -222,14 +225,6 @@ public class SliceWaveRenderer extends FrameRenderer
 	}
 	
 	/**
-	 * Set flag if we display axis labels
-	 */
-	public void setDisplayLabels(boolean b)
-	{
-		displayLabels = b;
-	}
-	
-	/**
 	 * Set Y axis label
 	 */
 	public void setYLabel(String s)
@@ -252,6 +247,26 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		decorator = new DefaultWaveFrameDecorator();
 	}
+	
+	/** Creates a standard legend, a small line and point sample followed by
+	 * the specified names.
+	 * @param s the legend names
+	 */
+    public void createDefaultLegendRenderer(String[] s)
+    {
+        legendRenderer = new LegendRenderer();
+        legendRenderer.x = graphX + 6;
+        legendRenderer.y = graphY + 6;
+        ShapeRenderer sr = new ShapeRenderer(new GeneralPath(GeneralPath.WIND_NON_ZERO, 1));
+        sr.antiAlias		= true;
+        sr.color			= color;
+        sr.stroke			= new BasicStroke();
+        for (int i = 0; i < s.length; i++) 
+            if (s[i] != null)
+            {
+                 legendRenderer.addLine(sr, null, s[i]);
+            }
+    }
 	
 	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
 	{
@@ -282,7 +297,9 @@ public class SliceWaveRenderer extends FrameRenderer
 	 */
 	public void render(Graphics2D g)
 	{
-		Shape origClip = g.getClip();
+	    Color origColor			= g.getColor();
+	    Stroke origStroke		= g.getStroke();
+	    Shape origClip			= g.getClip();
 		
 		if (axis != null)
 			axis.render(g);
@@ -378,9 +395,15 @@ public class SliceWaveRenderer extends FrameRenderer
         	}
         }
         
+        if (legendRenderer != null)
+    		g.setColor(Color.BLACK);
+            legendRenderer.render(g);
+        
 		g.setClip(origClip);
 		
 		if (axis != null)
 			axis.postRender(g);
+		g.setStroke(origStroke);
+	    g.setColor(origColor);
 	}
 }
