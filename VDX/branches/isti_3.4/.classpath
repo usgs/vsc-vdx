@@ -10,8 +10,6 @@
 	<classpathentry kind="lib" path="/USGS/contrib/mysql.jar"/>
 	<classpathentry kind="lib" path="/USGS/contrib/commons-collections-3.2.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Util"/>
-	<classpathentry kind="lib" path="/USGS/lib/winston.jar" sourcepath="/Winston"/>
-	<classpathentry kind="lib" path="/USGS/lib/earthworm.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Plot"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
