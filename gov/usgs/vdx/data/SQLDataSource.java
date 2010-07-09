@@ -15,7 +15,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -39,6 +38,7 @@ abstract public class SQLDataSource {
 	protected PreparedStatement ps;
 	protected ResultSet rs;
 	protected String sql;
+	private int maxrows = 0;
 	
 	/**
 	 * Initialize the data source.  Concrete realization see in the inherited classes
@@ -75,12 +75,12 @@ abstract public class SQLDataSource {
 	 */
 	abstract public void disconnect();
 	
-	public int getMaxRows(Map<String, String> params){
-		int maxrows = 0;
-		if(params.get("maxrows") != null){
-			maxrows = Integer.parseInt(params.get("maxrows"));
-		}
+	public int getMaxRows(){
 		return maxrows;
+	}
+	
+	protected void setMaxRows(int maxrows){
+		this.maxrows = maxrows;
 	}
 	
 	/**
@@ -123,7 +123,7 @@ abstract public class SQLDataSource {
 	 * @return sql that get only subset of records from original sql
 	 * @throws UtilException in case of unknown downsampling type
 	 */
-	public static String getDownsamplingSQL(String sql, DownsamplingType ds, int dsInt) throws UtilException{
+	public static String getDownsamplingSQL(String sql, String time_column, DownsamplingType ds, int dsInt) throws UtilException{
 		if(!ds.equals(DownsamplingType.NONE) && dsInt<=1)
 			throw new UtilException("Downsampling interval should be more than 1");
 		if(ds.equals(DownsamplingType.NONE))
@@ -136,9 +136,18 @@ abstract public class SQLDataSource {
 			String[] columns = sql_select_clause.split(",");
 			String avg_sql = "SELECT ";
 			for(String column: columns){
-				avg_sql += "AVG("+column.trim()+"), ";
+				String groupFunction = "AVG";
+				String[] column_parts = column.trim().split("\\sas\\s");
+				if(column_parts[0].equals(time_column)){
+					groupFunction = "MIN";
+				}
+				if(column_parts.length>1){
+					avg_sql += groupFunction + "("+column_parts[0]+") as " + column_parts[1] + ", ";
+				} else {
+					avg_sql += groupFunction + "("+column_parts[0]+"), ";
+				}
 			}
-			avg_sql += "((j2ksec- ?) DIV ?) intNum ";
+			avg_sql += "(((" + time_column + ") - ?) DIV ?) intNum ";
 			avg_sql += sql_from_where_clause;
 			avg_sql += " GROUP BY intNum";
 			return avg_sql;
@@ -169,7 +178,7 @@ abstract public class SQLDataSource {
 		
 		// dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
 		dbName			= params.getString("vdx.name") + "$" + getType();
-		
+		maxrows			= Util.stringToInt(params.getString("maxrows"), 0); 
 		// initialize the logger for this data source
 		logger			= Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
 		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
@@ -1237,7 +1246,7 @@ abstract public class SQLDataSource {
 			}
 
 			// SELECT sql
-			sql = "SELECT a.j2ksec";
+			sql = "SELECT j2ksec";
 			
 			if (ranks) {
 				sql = sql + ", c.rid";
@@ -1278,7 +1287,7 @@ abstract public class SQLDataSource {
 			}
 			sql = sql + "ORDER BY a.j2ksec ASC";
 			try{
-				sql = getDownsamplingSQL(sql, ds, dsInt);
+				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
 			} catch (UtilException e){
 				throw new UtilException("Can't downsample dataset: " + e.getMessage());
 			}

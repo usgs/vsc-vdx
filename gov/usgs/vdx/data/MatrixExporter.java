@@ -81,14 +81,14 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 	}
 	
 	public Double[] getNextExportRow() {
-		if ( expIndex >= data.rows() )
+		if ( expIndex >= getData().rows() )
 			return null;
 		Double[] row = new Double[numCols+1];
-		row[0] = data.getQuick(expIndex, 0) + timeOffset;
+		row[0] = getData().getQuick(expIndex, 0) + timeOffset;
 		int jr = 0;
 		for (int j = 0; j < numCols; j++)
 			if ( visible[j] ) {
-				row[jr+1] = data.getQuick(expIndex, jr + offset);
+				row[jr+1] = getData().getQuick(expIndex, jr + getOffset());
 				jr++;
 			}
 		expIndex++;

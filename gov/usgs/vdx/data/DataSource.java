@@ -18,6 +18,11 @@ public interface DataSource
 	public String getType();
 	
 	/**
+	 * Get max row count
+	 */
+	public int getMaxRows();
+	
+	/**
 	 * Retrieve data from data source
 	 * @param params command as map of strings for 'parameter-value' pairs to specify query
 	 * @return retrieved result of command execution

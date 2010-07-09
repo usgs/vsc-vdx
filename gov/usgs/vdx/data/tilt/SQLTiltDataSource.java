@@ -171,7 +171,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			double et		= Double.parseDouble(params.get("et"));
 			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
-			return getTiltData(cid, rid, st, et, getMaxRows(params), ds, dsInt);
+			return getTiltData(cid, rid, st, et, getMaxRows(), ds, dsInt);
 		}
 		return null;
 	}
@@ -199,7 +199,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			columnsReturned	= 8;
 
 			// build the sql
-			sql  = "SELECT a.j2ksec, c.rid, ";
+			sql  = "SELECT j2ksec, c.rid, ";
 			sql += "       COS(RADIANS(b.azimuth))  * (xTilt * cxTilt + dxTilt) + SIN(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
 			sql += "       -SIN(RADIANS(b.azimuth)) * (xTilt * cxTilt + dxTilt) + COS(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
 			sql += "       holeTemp * choleTemp + dholeTemp, ";
@@ -224,7 +224,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			
 			sql += "ORDER BY j2ksec ASC";
 			try{
-				sql = getDownsamplingSQL(sql, ds, dsInt);
+				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult("Can't downsample dataset: " + e.getMessage());
 			}

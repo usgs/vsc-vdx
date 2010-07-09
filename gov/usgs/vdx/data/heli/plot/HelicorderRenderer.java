@@ -355,11 +355,11 @@ public class HelicorderRenderer extends FrameRenderer
 	 * @param s the legend names
 	 */
     public void createDefaultLegendRenderer(String[] s) {    	
-        legendRenderer		= new LegendRenderer();
-        legendRenderer.x	= graphX + 6;
-        legendRenderer.y	= graphY + 6;
+        setLegendRenderer(new LegendRenderer());
+        getLegendRenderer().x	= graphX + 6;
+        getLegendRenderer().y	= graphY + 6;
         for (int i = 0; i < s.length; i++) {
-            legendRenderer.addLine(null, null, s[i]);
+            getLegendRenderer().addLine(null, null, s[i]);
         }
     }
 	
@@ -453,8 +453,8 @@ public class HelicorderRenderer extends FrameRenderer
 		g.setColor(origColor);
 		g.setTransform(origAT);
         
-        if (legendRenderer != null)
-            legendRenderer.render(g);
+        if (getLegendRenderer() != null)
+            getLegendRenderer().render(g);
 		
 		if (axis != null)
 			axis.postRender(g);

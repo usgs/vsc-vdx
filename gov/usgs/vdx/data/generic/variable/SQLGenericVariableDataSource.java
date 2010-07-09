@@ -143,7 +143,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			GenericDataMatrix data = null;
 			try{
-				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(params), ds, dsInt);
+				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}

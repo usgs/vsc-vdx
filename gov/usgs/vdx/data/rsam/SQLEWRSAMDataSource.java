@@ -154,7 +154,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			RSAMData data = null;
 			try{
-				data = getEWRSAMData(cid, st, et, plotType, getMaxRows(params), ds, dsInt);
+				data = getEWRSAMData(cid, st, et, plotType, getMaxRows(), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -229,7 +229,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				sql	   += "ORDER BY j2ksec";
 				
 				try{
-					sql = getDownsamplingSQL(sql, ds, dsInt);
+					sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
 				} catch (UtilException e){
 					throw new UtilException("Can't downsample dataset: " + e.getMessage());
 				}
