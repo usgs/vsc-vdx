@@ -161,7 +161,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			GPSData data = null;
 			try{
-				data = getGPSData(cid, rid, st, et, getMaxRows(params), ds, dsInt);
+				data = getGPSData(cid, rid, st, et, getMaxRows(), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}	
@@ -225,7 +225,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			sql	= sql +	"ORDER BY 1 ASC";
 			
 			try{
-				sql = getDownsamplingSQL(sql, ds, dsInt);
+				sql = getDownsamplingSQL(sql, "(j2ksec0 + j2ksec1) / 2", ds, dsInt);
 			} catch (UtilException e){
 				throw new UtilException("Can't downsample dataset: " + e.getMessage());
 			}

@@ -195,7 +195,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			HypocenterList data = null;
 			try{
 				data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
-					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, getMaxRows(params));
+					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, getMaxRows());
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}

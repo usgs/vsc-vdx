@@ -254,9 +254,9 @@ public class SliceWaveRenderer extends FrameRenderer
 	 */
     public void createDefaultLegendRenderer(String[] s)
     {
-        legendRenderer = new LegendRenderer();
-        legendRenderer.x = graphX + 6;
-        legendRenderer.y = graphY + 6;
+        setLegendRenderer(new LegendRenderer());
+        getLegendRenderer().x = graphX + 6;
+        getLegendRenderer().y = graphY + 6;
         ShapeRenderer sr = new ShapeRenderer(new GeneralPath(GeneralPath.WIND_NON_ZERO, 1));
         sr.antiAlias		= true;
         sr.color			= color;
@@ -264,7 +264,7 @@ public class SliceWaveRenderer extends FrameRenderer
         for (int i = 0; i < s.length; i++) 
             if (s[i] != null)
             {
-                 legendRenderer.addLine(sr, null, s[i]);
+                 getLegendRenderer().addLine(sr, null, s[i]);
             }
     }
 	
@@ -395,9 +395,9 @@ public class SliceWaveRenderer extends FrameRenderer
         	}
         }
         
-        if (legendRenderer != null)
+        if (getLegendRenderer() != null)
     		g.setColor(Color.BLACK);
-            legendRenderer.render(g);
+            getLegendRenderer().render(g);
         
 		g.setClip(origClip);
 		

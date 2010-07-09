@@ -144,7 +144,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			GenericDataMatrix data = null;
 			try {
-				data = getGenericFixedData(cid, rid, st, et, getMaxRows(params),  ds, dsInt);
+				data = getGenericFixedData(cid, rid, st, et, getMaxRows(),  ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}

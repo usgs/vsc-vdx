@@ -121,7 +121,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			RSAMData data = null;
 			try{
-				data = getRSAMData(cid, st, et, getMaxRows(params), ds, dsInt);
+				data = getRSAMData(cid, st, et, getMaxRows(), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}	
@@ -137,7 +137,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			RSAMData data = null;
 			try{
-				data = getRatSAMData(cids, st, et, getMaxRows(params), ds, dsInt);
+				data = getRatSAMData(cids, st, et, getMaxRows(), ds, dsInt);
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -178,7 +178,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 				sql += " LIMIT " + (maxrows+1);
 			}
 			try{
-				sql = getDownsamplingSQL(sql, ds, dsInt);
+				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
 			} catch (UtilException e){
 				throw new UtilException("Can't downsample dataset: " + e.getMessage());
 			}
