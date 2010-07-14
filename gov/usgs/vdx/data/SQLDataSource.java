@@ -15,6 +15,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -247,13 +248,13 @@ abstract public class SQLDataSource {
 			if (columns) {
 				ps.execute("CREATE TABLE columns (colid INT PRIMARY KEY AUTO_INCREMENT, "
 					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
+					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
 			}
 
 			if (menuColumns) {
 				ps.execute("CREATE TABLE columns_menu (colid INT PRIMARY KEY AUTO_INCREMENT, "
 					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
+					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
 			}
 
 			// the usage of ranks does not depend on there being a channels table
@@ -519,13 +520,14 @@ abstract public class SQLDataSource {
 	public boolean defaultInsertColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
+			ps.setBoolean(7, column.bypassmanipulations);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
@@ -545,13 +547,14 @@ abstract public class SQLDataSource {
 	public boolean defaultInsertMenuColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
+			ps.setBoolean(7, column.bypassmanipulations);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
@@ -1040,7 +1043,7 @@ abstract public class SQLDataSource {
 
 		Column column;
 		List<Column> columns = new ArrayList<Column>();
-		boolean checked, active;
+		boolean checked, active, bypassmanipulations;
 		String tableName	= "";
 		
 		if (menuColumns) {
@@ -1051,7 +1054,7 @@ abstract public class SQLDataSource {
 
 		try {
 			database.useDatabase(dbName);
-			sql  = "SELECT idx, name, description, unit, checked, active ";
+			sql  = "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
 			sql += "FROM " + tableName + " ";
 			if (!allColumns && !menuColumns) {
 				sql += "WHERE active = 1 ";
@@ -1070,7 +1073,12 @@ abstract public class SQLDataSource {
 				} else {
 					active = true;
 				}
-				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active);
+				if (rs.getInt(7) == 0) {
+					bypassmanipulations = false;
+				} else {
+					bypassmanipulations = true;
+				}
+				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active, bypassmanipulations);
 				columns.add(column);
 			}
 			rs.close();
@@ -1092,12 +1100,12 @@ abstract public class SQLDataSource {
 		Column col = null;
 		int idx;
 		String name, description, unit;
-		boolean checked, active;
+		boolean checked, active, bypassmanipulations;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT idx, name, description, unit, checked, active ";
+			sql	= "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
 			sql = sql + "FROM  columns ";
 			sql = sql + "WHERE colid = ?";
 			
@@ -1119,7 +1127,12 @@ abstract public class SQLDataSource {
 				} else {
 					active = true;
 				}
-				col	= new Column(idx, name, description, unit, checked, active);
+				if (rs.getInt(7) == 0) {
+					bypassmanipulations = false;
+				} else {
+					bypassmanipulations = true;
+				}
+				col	= new Column(idx, name, description, unit, checked, active, bypassmanipulations);
 			}
 			rs.close();
 

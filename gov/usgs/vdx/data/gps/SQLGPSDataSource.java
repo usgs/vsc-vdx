@@ -34,10 +34,10 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= true;
 	
 	public static final Column[] MENU_COLUMNS	= new Column[] {
-		new Column(1, "east",	"East",		"Meters",	true, false),
-		new Column(2, "north",	"North",	"Meters",	true, false), 
-		new Column(3, "up",		"Up",		"Meters",	true, false),
-		new Column(4, "length",	"Length",	"Meters",	false, false)};
+		new Column(1, "east",	"East",		"Meters",	true,  false, false),
+		new Column(2, "north",	"North",	"Meters",	true,  false, false), 
+		new Column(3, "up",		"Up",		"Meters",	true,  false, false),
+		new Column(4, "length",	"Length",	"Meters",	false, false, false)};
 
 	/**
 	 * Get database type, generic in this case

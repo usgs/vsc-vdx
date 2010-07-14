@@ -33,7 +33,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= false;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "rsam",	"RSAM",	"RSAM",	false, true)};
+		new Column(1, "rsam",	"RSAM",	"RSAM",	false, true, false)};
 
 	/**
 	 * Get database type, generic in this case

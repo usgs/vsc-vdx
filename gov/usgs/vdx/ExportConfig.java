@@ -83,9 +83,9 @@ public class ExportConfig {
 		str = config.getString("exportDataWidth");
 		if ( str != null )
 			try {
-				String[] width_str = str.split( "," );
+				String[] width_str = str.split( "[.]" );
 				if ( width_str.length != 2 )
-					throw new Exception( "requires 2 values (not "+width_str.length+")" );
+					throw new Exception( "requires 2 values (not "+width_str.length+"): '" + str + "'" );
 				width = new int[2];
 				String edwName = "first";
 				int i;
@@ -137,8 +137,11 @@ public class ExportConfig {
 	 * @param over source of overrides
 	 */
 	public void override( ExportConfig over ) {
-		if ( over.exportable != -1 )
+		if ( exportable == -1 ) {
 			exportable = over.exportable;
+		} else if ( exportable == 1 && over.exportable == 0 ) {
+			exportable = 0;
+		}
 		if ( over.width != null )
 			width = over.width;
 		if ( over.numCommentLines != -1 )
@@ -155,8 +158,11 @@ public class ExportConfig {
 	 * @param under source of underrides
 	 */
 	public void underride( ExportConfig under ) {
-		if ( exportable == -1 )
+		if ( exportable == -1 ) {
 			exportable = under.exportable;
+		} else if ( exportable == 1 && under.exportable == 0 ) {
+			exportable = 0;
+		}
 		if ( width == null )
 			width = under.width;
 		if ( numCommentLines == -1 )
