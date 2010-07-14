@@ -13,12 +13,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.Math;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 /**
  * <p>
@@ -86,6 +90,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	private transient int max = Integer.MIN_VALUE;
 	private transient int min = Integer.MAX_VALUE;
 	private transient int[] dataRange = null;
+	private transient int first = NO_DATA;
+
+	private String dataType;
 
 	/**
 	 * Empty constructor.
@@ -116,9 +123,27 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 */
 	public Wave(int[] b, double st, double sr)
 	{
+		makeWave( b, st, sr, "s4" );
+	}
+	
+	/**
+	 * Constructs a <code>Wave</code> from variables.
+	 * 
+	 * @param b the samples buffer
+	 * @param st the start time
+	 * @param sr the sampling rate
+	 */
+	public Wave(int[] b, double st, double sr, String dt)
+	{
+		makeWave( b, st, sr, dt );
+	}
+	
+	public void makeWave(int[] b, double st, double sr, String dt)
+	{
 		buffer = b;
 		startTime = st;
 		samplingRate = sr;
+		dataType = dt;
 	}
 
 	/**
@@ -273,6 +298,14 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	}
 
 	/**
+	 * Set datatype
+	 */
+	public void setDataType(String dt)
+	{
+		dataType = dt;
+	}
+
+	/**
 	 * Set start time
 	 */
 	public void setStartTime(double st)
@@ -317,6 +350,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		rsam = Double.NaN;
 		max = Integer.MIN_VALUE;
 		min = Integer.MAX_VALUE;
+		first = NO_DATA;
 	}
 
 	/**
@@ -330,11 +364,13 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 			rsam = 0;
 			max = 0;
 			min = 0;
+			first = 0;
 			return;
 		}
 		int noDatas = 0;
 		long sum = 0;
 		long rs = 0;
+		boolean firstSet = false;
 		for (int i = 0; i < buffer.length; i++)
 		{
 			int d = buffer[i];
@@ -344,6 +380,10 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 				rs += Math.abs(d);
 				min = Math.min(min, d);
 				max = Math.max(max, d);
+				if ( !firstSet ) {
+					first = d;
+					firstSet = true;
+				}
 			}
 			else
 				noDatas++;
@@ -352,6 +392,18 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		mean = (double)sum / (double)(buffer.length - noDatas);
 		rsam = (double)rs / (double)(buffer.length - noDatas);
 		dataRange = new int[] { min, max };
+	}
+
+	/**
+	 * Gets the first of the samples. Ignores NO_DATA samples.
+	 * 
+	 * @return the mean or bias
+	 */
+	public int first()
+	{
+		if ( first == NO_DATA )
+			deriveStatistics();
+		return first;
 	}
 
 	/**
@@ -437,6 +489,16 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	public void convertToJ2K()
 	{
 		startTime = Util.ewToJ2K(startTime);
+	}
+
+	/**
+	 * Gets the data type.
+	 * 
+	 * @return the data type
+	 */
+	public String getDataType()
+	{
+		return dataType;
 	}
 
 	/**
@@ -569,12 +631,14 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		int length1 = buffer.length / 2;
 		sw1.buffer = new int[length1];
 		System.arraycopy(buffer, 0, sw1.buffer, 0, length1);
+		sw1.dataType = dataType;
 
 		sw2.startTime = startTime + (double)length1 * (1 / samplingRate);
 		sw2.samplingRate = samplingRate;
 		int length2 = buffer.length / 2 + (buffer.length % 2);
 		sw2.buffer = new int[length2];
 		System.arraycopy(buffer, length1, sw2.buffer, 0, length2);
+		sw2.dataType = dataType;
 
 		return new Wave[] { sw1, sw2 };
 	}
@@ -598,6 +662,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 			Wave sw = new Wave();
 			sw.startTime = ct;
 			sw.samplingRate = samplingRate;
+			sw.dataType = dataType;
 			sw.buffer = new int[numSamples];
 			System.arraycopy(buffer, j, sw.buffer, 0, numSamples);
 			ct += (double)numSamples * (1 / samplingRate);
@@ -626,6 +691,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		Wave sw = new Wave();
 		sw.startTime = t1;
 		sw.samplingRate = samplingRate;
+		sw.dataType = dataType;
 		sw.registrationOffset = registrationOffset;
 		sw.buffer = new int[samples];
 		System.arraycopy(buffer, offset, sw.buffer, 0, samples);
@@ -652,6 +718,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 			buffer = null;
 			startTime = Double.NaN;
 			samplingRate = Double.NaN;
+			dataType = null;
 		}
 		
 		if (t2 > getStartTime() && t2 <= getEndTime())
@@ -1056,14 +1123,17 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 */
 	public ByteBuffer toBinary()
 	{
-		ByteBuffer bb = ByteBuffer.allocate(28 + 4 * buffer.length);
+		ByteBuffer bb = ByteBuffer.allocate(28 + 4 * buffer.length + 4);
 		bb.putDouble(startTime);
 		bb.putDouble(samplingRate);
 		bb.putDouble(registrationOffset);
 		bb.putInt(buffer.length);
 		for (int i = 0; i < buffer.length; i++)
 			bb.putInt(buffer[i]);
-
+		if ( dataType != null ) {
+			bb.putChar(dataType.charAt(0));
+			bb.putChar(dataType.charAt(1));
+		}
 		return bb;
 	}
 	
@@ -1080,6 +1150,15 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 		for (int i = 0; i < length; i++)
 			buffer[i] = bb.getInt();
+		try {
+			char[] ca = new char[2];
+			ca[0] = bb.getChar();
+			ca[1] = bb.getChar();
+			dataType = new String( ca );
+		} catch (Exception e) {
+			System.out.println("Extracting dt from Wave failed: " + e);
+			dataType = null;
+		}
 	}
 
 	/**
@@ -1093,7 +1172,8 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 				+ getEndTime() + ", samplingRate=" + samplingRate
 				+ ", samples=" + buffer.length 
 				+ "\nstartDate=" + Util.j2KToDateString(startTime) 
-			 	+ "\nendDate=" + Util.j2KToDateString(getEndTime());
+			 	+ "\nendDate=" + Util.j2KToDateString(getEndTime())
+			 	+ ((dataType == null) ? "" : ("\ndataType=" + dataType));
 	}
 	
 	/**
@@ -1146,4 +1226,339 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		
 		return w;
 	}
+	
+	public void detrend() {
+
+        double xm	= this.buffer.length/2;
+		double ym	= mean();
+        double ssxx	= 0;
+        double ssxy	= 0;        
+        for (int i = 0; i < this.buffer.length; i++) {
+			ssxy += (i - xm) * ((double)buffer[i] - ym);
+			ssxx += (i - xm) * (i - xm);
+        }
+        
+        double m	= ssxy / ssxx;
+        double b	= ym - m * xm;
+        for (int i = 0; i < this.buffer.length; i++) {
+			//data.setQuick(i, c, data.getQuick(i, c) - (data.getQuick(i, 0) * m + b));
+			buffer[i] -= ((double)buffer[i] * m + b);
+        }
+	}
+	
+	/**
+	 * Despike data from column c using period p
+	 * @param p period used for despiking
+	 */
+	public void despike( double p ) {
+		set2mean( p );
+	}		
+
+	/**
+	 * Replace data in column c with rolling mean of period p
+	 * @param c column to change
+	 * @param p period used for rolling mean
+	 */
+	public void set2mean( double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = 0; // time of oldest value in window
+		Meaner window = new Meaner();
+		window.add( (double)buffer[0] );
+		int r = this.buffer.length;
+		for ( int i=1; i<r; i++ ) {
+			double itime = i*samplingRate;
+			double ival = (double)buffer[i];
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = i*samplingRate;
+			}
+			buffer[i] = (int)Math.round(window.avg());
+		}
+	}
+
+	/**
+	 * Replace data in column c with rolling median of period p
+	 * @param c column to change
+	 * @param p period used for rolling median
+	 */
+	public void set2median( double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = 0; // time of oldest value in window
+		Medianer window = new Medianer();
+		window.add( (double)buffer[0] );
+		int r = this.buffer.length;
+		for ( int i=1; i<r; i++ ) {
+			double itime = i*samplingRate;
+			double ival = (double)buffer[i];
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = i*samplingRate;
+			}
+			buffer[i] = (int)Math.round(window.avg());
+		}
+	}
+	
+	/** Class to maintain a FIFO of doubles & report its mean 
+	 */
+	private class Meaner {
+		private LinkedList<Double> data;	// the values
+		private double sum;					// their sum
+		
+		Meaner() {
+			data = new LinkedList<Double>();
+			sum = 0;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			data.addLast( val );
+			sum += val;
+		}
+		
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public double removeOldest() {
+			Double datum = data.removeFirst();
+			sum -= datum;
+			return datum;
+		}
+		
+		/** Mean of values in queue
+		 * 
+		 * @return the mean
+		 */
+		public double avg() {
+			return sum / data.size();
+		}
+	}
+	
+		
+	/** Class to maintain a FIFO of doubles & report its median 
+	 */
+	private class Medianer {
+		
+		private class MultiMap {
+			private TreeMap<Double,LinkedList<Integer>> mm;
+			private TreeMap<Integer,Double>unmm;
+			
+			MultiMap() {
+				mm = new TreeMap<Double,LinkedList<Integer>>();
+				unmm = new TreeMap<Integer,Double>();
+			}
+			
+			protected void put( Double key, Integer val ) {
+				LinkedList<Integer> entry = mm.get( key );
+				if ( entry == null ) {
+					entry = new LinkedList<Integer>();
+				}
+				unmm.put( val, key );
+				if ( entry.size() == 0 ) {
+					entry.add( val );
+					mm.put( key, entry );
+					return;
+				}
+				if ( val < entry.getFirst() )
+					entry.addFirst( val );
+				else
+					entry.addLast( val );
+			}
+			
+			protected Double lastKey() {
+				return mm.lastKey();
+			}
+			
+			protected Integer removeLastIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeLast();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			protected Double firstKey() {
+				return mm.firstKey();
+			}
+			
+			protected Integer removeFirstIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeFirst();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			public int size() {
+				return unmm.size();
+			}
+			
+			public void addLo( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key >= other.firstKey() ) {
+					other.put( key, val );
+					key = other.firstKey();
+					val = other.removeFirstIndex( key );
+				}
+				put( key, val );
+			}
+						
+			public void addHi( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key <= other.lastKey() ) {
+					other.put( key, val );
+					key = other.lastKey();
+					val = other.removeLastIndex( key );
+				}
+				put( key, val );
+			}
+			
+			public boolean indexIsMember( Integer val ) {
+				return unmm.containsKey( val );
+			}
+			
+			public boolean removeIndex( Integer val ) {
+				Double key = unmm.remove( val );
+				if ( key == null )
+					return false;
+				List<Integer> entry = mm.get( key );
+				if ( entry.size() == 1 )
+					mm.remove( key );
+				else
+					entry.remove( val );
+				return true;
+			}
+			
+			public void dump() {
+				for ( Double d: mm.keySet() ) {
+					List<Integer> d_ids = mm.get(d);
+					if ( d_ids == null || d_ids.size() == 0 )
+						continue;
+					System.out.print( d );
+					if ( d_ids.size() > 1 )
+						System.out.print( "x" + mm.get(d).size());
+					System.out.print( " " );
+				}
+			}
+		}		
+
+		private MultiMap loHalf;	// values in lower half
+		private MultiMap hiHalf;	// values in upper half
+		private int idx1, idx2;	// values window have indices idx1..idx2
+		
+		Medianer() {
+			// Invariant: |loHalf| - |hiHalf| = 0 or 1
+			//				All keys in loHalf <= all keys in hiHalf
+			loHalf = new MultiMap();
+			hiHalf = new MultiMap();
+			idx1 = 0;
+			idx2 = -1;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			idx2++;
+			if ( loHalf.size() == hiHalf.size() )
+				loHalf.addLo( val, idx2, hiHalf );
+			else
+				hiHalf.addHi( val, idx2, loHalf );
+		}
+		
+		public void dump() {
+			System.out.print( "[" );
+			loHalf.dump();
+			System.out.print( "]:[" );
+			hiHalf.dump();
+			System.out.println("]");
+		}
+
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public void removeOldest() {
+			if ( !loHalf.removeIndex( idx1 ) ) {
+				hiHalf.removeIndex( idx1 );
+			}
+			idx1++;
+			int loSize = loHalf.size();
+			int hiSize = hiHalf.size();
+			if ( loSize < hiSize ) {
+				// Shift min of hi to lo
+				Double d = hiHalf.firstKey();
+				Integer ix = hiHalf.removeFirstIndex( d );
+				loHalf.put( d, ix );
+			} else if ( loSize > hiSize+1 ) {
+				// Shift max of lo to hi
+				Double d = loHalf.lastKey();
+				Integer ix = loHalf.removeLastIndex( d );
+				hiHalf.put( d, ix );
+			}
+		}
+		
+		/** Median of values in queue
+		 * 
+		 * @return the median
+		 */
+		public double avg() {
+			if ( loHalf.size() == hiHalf.size() )
+				return (loHalf.lastKey() + hiHalf.firstKey()) / 2;
+			return loHalf.lastKey();
+		}
+	}
+
+	/**
+	 * Subtract rolling mean from column c using period p
+	 * @param p period for rolling mean
+	 *
+	public void despike_mean(double p ) {
+		double sum = (double)buffer[0];
+		double x0 = 0;
+		int i = 1;
+		int r = this.buffer.length;
+		
+		// Initialize window
+		for ( i=1; i<r; i++ ) {
+			if ( (i-x0)*samplingRate > p )
+				break;
+			sum += buffer[i];
+		}
+		int count = i;
+		int j = 0;
+		
+		do {
+			// Remove 1st element in the window & despike it
+			buffer[j] -= (sum/count);
+			j++;
+			x0 = buffer[j];
+			count--;
+			// Refill window
+			for ( ; i<r; i++ ) {
+				if ( (i-x0)*samplingRate > p )
+					break;
+				sum += (double)buffer[i];
+				count++;
+			}
+		} while ( i<r );
+		
+		// Despike elements left in window
+		double mean = (sum/count);
+		for ( ; j<r; j++ )
+			buffer[j] -= mean;
+	}
+	*/
 }

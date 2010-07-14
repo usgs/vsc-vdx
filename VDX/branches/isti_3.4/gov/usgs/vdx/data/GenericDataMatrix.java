@@ -5,6 +5,8 @@ import gov.usgs.util.Util;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.LinkedList;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -272,6 +274,294 @@ public class GenericDataMatrix implements BinaryDataSet
         }
 	}
 	
+	/**
+	 * Despike data from column c using period p
+	 * @param c column to despike
+	 * @param p period used for despiking
+	 */
+	public void despike(int c, double p ) {
+		set2mean( c, p );
+	}		
+
+	/**
+	 * Replace data in column c with rolling mean of period p
+	 * @param c column to change
+	 * @param p period used for rolling mean
+	 */
+	public void set2mean( int c, double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = data.getQuick(0,0); // time of oldest value in window
+		Meaner window = new Meaner();
+		window.add( data.getQuick(0,c) );
+		int r = rows();
+		for ( int i=1; i<r; i++ ) {
+			double itime = data.getQuick(i,0);
+			double ival = data.getQuick(i,c);
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = data.getQuick(j,0);
+			}
+			data.setQuick(i,c,window.avg());
+		}
+	}
+
+	/**
+	 * Replace data in column c with rolling median of period p
+	 * @param c column to change
+	 * @param p period used for rolling median
+	 */
+	public void set2median( int c, double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = data.getQuick(0,0); // time of oldest value in window
+		Medianer window = new Medianer();
+		window.add( data.getQuick(0,c) );
+		int r = rows();
+		for ( int i=1; i<r; i++ ) {
+			double itime = data.getQuick(i,0);
+			double ival = data.getQuick(i,c);
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = data.getQuick(j,0);
+			}
+			data.setQuick(i,c,window.avg());
+		}
+	}
+	
+	/** Class to maintain a FIFO of doubles & report its mean 
+	 */
+	private class Meaner {
+		private LinkedList<Double> data;	// the values
+		private double sum;					// their sum
+		
+		Meaner() {
+			data = new LinkedList<Double>();
+			sum = 0;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			data.addLast( val );
+			sum += val;
+		}
+		
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public double removeOldest() {
+			Double datum = data.removeFirst();
+			sum -= datum;
+			return datum;
+		}
+		
+		/** Mean of values in queue
+		 * 
+		 * @return the mean
+		 */
+		public double avg() {
+			return sum / data.size();
+		}
+	}
+	
+		
+	/** Class to maintain a FIFO of doubles & report its median 
+	 */
+	private class Medianer {
+		
+		private class MultiMap {
+			private TreeMap<Double,LinkedList<Integer>> mm;
+			private TreeMap<Integer,Double>unmm;
+			
+			MultiMap() {
+				mm = new TreeMap<Double,LinkedList<Integer>>();
+				unmm = new TreeMap<Integer,Double>();
+			}
+			
+			protected void put( Double key, Integer val ) {
+				LinkedList<Integer> entry = mm.get( key );
+				if ( entry == null ) {
+					entry = new LinkedList<Integer>();
+				}
+				unmm.put( val, key );
+				if ( entry.size() == 0 ) {
+					entry.add( val );
+					mm.put( key, entry );
+					return;
+				}
+				if ( val < entry.getFirst() )
+					entry.addFirst( val );
+				else
+					entry.addLast( val );
+			}
+			
+			protected Double lastKey() {
+				return mm.lastKey();
+			}
+			
+			protected Integer removeLastIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeLast();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			protected Double firstKey() {
+				return mm.firstKey();
+			}
+			
+			protected Integer removeFirstIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeFirst();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			public int size() {
+				return unmm.size();
+			}
+			
+			public void addLo( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key >= other.firstKey() ) {
+					other.put( key, val );
+					key = other.firstKey();
+					val = other.removeFirstIndex( key );
+				}
+				put( key, val );
+			}
+						
+			public void addHi( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key <= other.lastKey() ) {
+					other.put( key, val );
+					key = other.lastKey();
+					val = other.removeLastIndex( key );
+				}
+				put( key, val );
+			}
+			
+			public boolean indexIsMember( Integer val ) {
+				return unmm.containsKey( val );
+			}
+			
+			public boolean removeIndex( Integer val ) {
+				Double key = unmm.remove( val );
+				if ( key == null )
+					return false;
+				List<Integer> entry = mm.get( key );
+				if ( entry.size() == 1 )
+					mm.remove( key );
+				else
+					entry.remove( val );
+				return true;
+			}
+			
+			public void dump() {
+				for ( Double d: mm.keySet() ) {
+					List<Integer> d_ids = mm.get(d);
+					if ( d_ids == null || d_ids.size() == 0 )
+						continue;
+					System.out.print( d );
+					if ( d_ids.size() > 1 )
+						System.out.print( "x" + mm.get(d).size());
+					System.out.print( " " );
+				}
+			}
+		}		
+
+		private MultiMap loHalf;	// values in lower half
+		private MultiMap hiHalf;	// values in upper half
+		private int idx1, idx2;	// values window have indices idx1..idx2
+		
+		Medianer() {
+			// Invariant: |loHalf| - |hiHalf| = 0 or 1
+			//				All keys in loHalf <= all keys in hiHalf
+			loHalf = new MultiMap();
+			hiHalf = new MultiMap();
+			idx1 = 0;
+			idx2 = -1;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			idx2++;
+			if ( loHalf.size() == hiHalf.size() )
+				loHalf.addLo( val, idx2, hiHalf );
+			else
+				hiHalf.addHi( val, idx2, loHalf );
+		}
+		
+		public void dump() {
+			System.out.print( "[" );
+			loHalf.dump();
+			System.out.print( "]:[" );
+			hiHalf.dump();
+			System.out.println("]");
+		}
+
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public void removeOldest() {
+			if ( !loHalf.removeIndex( idx1 ) ) {
+				hiHalf.removeIndex( idx1 );
+			}
+			idx1++;
+			int loSize = loHalf.size();
+			int hiSize = hiHalf.size();
+			if ( loSize < hiSize ) {
+				// Shift min of hi to lo
+				Double d = hiHalf.firstKey();
+				Integer ix = hiHalf.removeFirstIndex( d );
+				loHalf.put( d, ix );
+			} else if ( loSize > hiSize+1 ) {
+				// Shift max of lo to hi
+				Double d = loHalf.lastKey();
+				Integer ix = loHalf.removeLastIndex( d );
+				hiHalf.put( d, ix );
+			}
+		}
+		
+		/** Median of values in queue
+		 * 
+		 * @return the median
+		 */
+		public double avg() {
+			if ( loHalf.size() == hiHalf.size() )
+				return (loHalf.lastKey() + hiHalf.firstKey()) / 2;
+			return loHalf.lastKey();
+		}
+	}
+
+	/**
+	 * Get first value in column
+	 * @param c column number
+	 */
+	public double first(int c)
+	{
+		if ( rows() == 0 )
+			return Double.NaN;
+		return data.getQuick(0,c);
+	}
+
+
 	/**
 	 * Get maximum value in column
 	 * @param c column number

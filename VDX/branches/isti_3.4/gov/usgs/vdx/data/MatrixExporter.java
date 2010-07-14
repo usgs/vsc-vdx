@@ -86,13 +86,12 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 		Double[] row = new Double[numCols+1];
 		row[0] = getData().getQuick(expIndex, 0) + timeOffset;
 		int jr = 0;
-		for (int j = 0; j < numCols; j++)
+		for (int j = 0; j < visible.length; j++)
 			if ( visible[j] ) {
 				row[jr+1] = getData().getQuick(expIndex, jr + getOffset());
 				jr++;
 			}
 		expIndex++;
-		System.out.println( "ME: " + row[1] + " @ " + row[0] );
 		return row;
 	}
 

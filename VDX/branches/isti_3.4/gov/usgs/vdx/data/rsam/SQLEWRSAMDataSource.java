@@ -36,7 +36,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= false;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "rsam",	"rsam",	"",	false, true)};
+		new Column(1, "rsam",	"rsam",	"",	false, true, false)};
 	private String tableSuffix;
 	
 	/**

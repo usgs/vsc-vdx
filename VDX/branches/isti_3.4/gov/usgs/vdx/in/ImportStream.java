@@ -96,7 +96,7 @@ public class ImportStream implements Importer {
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
 	public int columnIdx;
-	public boolean columnActive, columnChecked;
+	public boolean columnActive, columnChecked, columnBypassmanipulations;
 	public List<String> columnList;
 	public Iterator<String> coIterator;
 	public String defaultColumns;
@@ -269,7 +269,8 @@ public class ImportStream implements Importer {
 			columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
 			columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
 			columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-			column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
+			columnBypassmanipulations = Util.stringToBoolean(columnParams.getString("bypassmanipulations"), true);
+			column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive, columnBypassmanipulations);
 			columnMap.put(columnName, column);
 			defaultColumns		= defaultColumns + columnName + ",";
 		}

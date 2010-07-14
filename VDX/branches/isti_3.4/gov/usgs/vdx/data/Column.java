@@ -17,6 +17,7 @@ public class Column
 	public String unit;
 	public boolean checked;
 	public boolean active;
+	public boolean bypassmanipulations;
 	
 	/**
 	 * Constructor
@@ -27,13 +28,14 @@ public class Column
 	 * @param b is checked?
 	 * @param a is active? (detrendable for plot columns)
 	 */
-	public Column(int i, String n, String d, String u, boolean b, boolean a) {
+	public Column(int i, String n, String d, String u, boolean b, boolean a, boolean m) {
 		idx			= i;
 		name		= n;
 		description	= d;
 		unit		= u;
 		checked		= b;
 		active		= a;
+		bypassmanipulations = m;
 	}
 
 	/**
@@ -51,6 +53,7 @@ public class Column
 		unit		= u;
 		checked		= b;
 		active		= true;
+		bypassmanipulations = true;
 	}
 	
 	/**
@@ -65,13 +68,14 @@ public class Column
 		unit		= ss[3];
 		checked		= ss[4].equals("T");
 		active		= ss[5].equals("T");
+		bypassmanipulations = ss[6].equals("T");
 	}
 	
 	/**
 	 * Get string representation of class
 	 */
 	public String toString() {
-		return(String.format("%d:%s:%s:%s:%s:%s", idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F")));
+		return(String.format("%d:%s:%s:%s:%s:%s:%s", idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F"), (bypassmanipulations ? "T" : "F")));
 	}
 	
 	/**

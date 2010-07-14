@@ -93,7 +93,8 @@ public class ImportYVOTemp
 			String unit = sub.getString("unit");
 			boolean checked = sub.getString("checked").equals("1");
 			boolean active = sub.getString("active").equals("1");
-			Column gc = new Column(index, column, description, unit, checked, active);
+			boolean bypassmanipulations = sub.getString("bypassmanipulations").equals("1");
+			Column gc = new Column(index, column, description, unit, checked, active, bypassmanipulations);
 			fileCols.add(gc);
 		}
 	}
