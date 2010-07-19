@@ -27,6 +27,7 @@ public class Column
 	 * @param u measurement unit
 	 * @param b is checked?
 	 * @param a is active? (detrendable for plot columns)
+	 * @param m disable data manipulation options?
 	 */
 	public Column(int i, String n, String d, String u, boolean b, boolean a, boolean m) {
 		idx			= i;
@@ -39,7 +40,26 @@ public class Column
 	}
 
 	/**
-	 * Constructor.  Defaults active to true.
+	 * Constructor.  Defaults bypassmanipulations to false.
+	 * @param i column index
+	 * @param n name
+	 * @param d description
+	 * @param u measurement unit
+	 * @param b is checked?
+	 * @param a is active? (detrendable for plot columns)
+	 */
+	public Column(int i, String n, String d, String u, boolean b, boolean a) {
+		idx			= i;
+		name		= n;
+		description	= d;
+		unit		= u;
+		checked		= b;
+		active		= a;
+		bypassmanipulations = false;
+	}
+
+	/**
+	 * Constructor.  Defaults active to true, bypassmanipulations to false.
 	 * @param i column index
 	 * @param n name
 	 * @param d description
@@ -53,7 +73,7 @@ public class Column
 		unit		= u;
 		checked		= b;
 		active		= true;
-		bypassmanipulations = true;
+		bypassmanipulations = false;
 	}
 	
 	/**
