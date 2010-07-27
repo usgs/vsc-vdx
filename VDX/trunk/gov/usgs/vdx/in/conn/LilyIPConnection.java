@@ -1,4 +1,5 @@
-package gov.usgs.vdx.in;
+package gov.usgs.vdx.in.conn;
+
 
 public class LilyIPConnection extends IPConnection {
 	

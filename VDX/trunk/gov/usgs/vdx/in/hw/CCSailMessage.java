@@ -1,4 +1,4 @@
-package gov.usgs.vdx.in;
+package gov.usgs.vdx.in.hw;
 
 import java.text.*;
 import java.util.*;

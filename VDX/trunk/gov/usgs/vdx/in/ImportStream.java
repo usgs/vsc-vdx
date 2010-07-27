@@ -24,6 +24,8 @@ import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
+import gov.usgs.vdx.in.conn.ConnectionSettings;
+import gov.usgs.vdx.in.conn.LilyIPConnection;
 
 import cern.colt.matrix.*;
 
@@ -100,11 +102,15 @@ public class ImportStream implements Importer {
 	public List<String> columnList;
 	public Iterator<String> coIterator;
 	public String defaultColumns;
-
-	public String deviceIP;
-	public int devicePort;
+	
 	public int postConnectDelay;
 	public int betweenPollDelay;
+	
+	public String deviceIP;
+	public int devicePort;
+	public int callNumber;
+	public int repeater;
+	public int dataLines;
 	
 	public int connTimeout;
 	public int dataTimeout;
@@ -223,6 +229,11 @@ public class ImportStream implements Importer {
 				
 				// get connection settings related to this channel
 				settingMap		= new HashMap<String, ConnectionSettings>();
+				deviceIP		= Util.stringToString(channelParams.getString("deviceIP"), "");
+				devicePort		= Util.stringToInt(channelParams.getString("deviceIP"), 0);
+				callNumber		= Util.stringToInt(channelParams.getString("callNumber"), 0);
+				repeater		= Util.stringToInt(channelParams.getString("repeater"), 0);
+				dataLines		= Util.stringToInt(channelParams.getString("dataLines"), 50);
 				connTimeout		= Util.stringToInt(channelParams.getString("connTimeout"), 50000);	
 				dataTimeout		= Util.stringToInt(channelParams.getString("dataTimeout"), 50000);
 				maxRetries		= Util.stringToInt(channelParams.getString("maxRetries"), 2);
@@ -230,7 +241,7 @@ public class ImportStream implements Importer {
 				instrument		= Util.stringToString(channelParams.getString("instrument"), "lily");
 				delimiter		= Util.stringToString(channelParams.getString("delimiter"), ",");
 				tiltid			= Util.stringToInt(channelParams.getString("tiltid"), 0);
-				settings		= new ConnectionSettings(0, 0, 0, connTimeout, dataTimeout, maxRetries, timeSource, instrument, delimiter, tiltid);
+				settings		= new ConnectionSettings(deviceIP, devicePort, callNumber, repeater, dataLines, connTimeout, dataTimeout, maxRetries, timeSource, instrument, delimiter, tiltid);
 				settingMap.put(channelCode, settings);
 			}
 			defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
@@ -477,7 +488,7 @@ public class ImportStream implements Importer {
 			channelCode	= channel.getCode();
 			
 			// default the connection to the station
-			connection	= new LilyIPConnection(deviceIP, devicePort);
+			connection	= new LilyIPConnection(settings.deviceIP, settings.devicePort);
 			
 			// get the latest data time from the tilt database
 			Date lastDataTime = sqlDataSource.defaultGetLastDataTime(channelCode);
