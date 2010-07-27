@@ -263,6 +263,28 @@ abstract public class SQLDataSource {
 					+ "name VARCHAR(24) UNIQUE, rank INT(10) UNSIGNED DEFAULT 0 NOT NULL, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
 			}
 			
+			ps.execute( "CREATE TABLE supp_data (sdid INT NOT NULL AUTO_INCREMENT, st DOUBLE NOT NULL, et DOUBLE, sdtypeid INT NOT NULL, "
+					+ "sd_short VARCHAR(90) NOT NULL, sd TEXT NOT NULL, PRIMARY KEY (sdid))" );
+			
+			ps.execute( "CREATE TABLE supp_data_type (sdtypeid INT NOT NULL AUTO_INCREMENT, supp_data_type VARCHAR(20), "
+					+ "PRIMARY KEY (sdtypeid), UNIQUE KEY (supp_data_type) )" );
+			
+			sql = "CREATE TABLE supp_data_xref ( sdid INT NOT NULL, cid INT NOT NULL, colid INT NOT NULL, ";
+			String key = "UNIQUE KEY (sdid,cid,colid";
+			if ( ranks ) {
+				sql = sql + "rid INT NOT NULL, ";
+				key = key + ",rid";
+			}
+			ps.execute( sql + key + "))" ); 
+
+			sql = "CREATE TABLE channelmetadata ( cmid INT NOT NULL, cid INT NOT NULL, colid INT NOT NULL, ";
+			if ( ranks )
+				sql = sql + "rid INT NOT NULL, ";
+			sql = sql + "name VARCHAR(20) NOT NULL, value TEXT NOT NULL, UNIQUE KEY (cmid,cid,colid";
+			if ( ranks )
+				sql = sql + ",rid";
+			ps.execute( sql + "))" );
+
 			logger.log(Level.INFO, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded. ");
 			return true;
 
