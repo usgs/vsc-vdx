@@ -140,7 +140,7 @@ public class FreewaveIPConnection extends IPConnection
 	 *
 	 * @return the oldest message from the queue
 	 */
-	protected String getMsg (long timeout) throws Exception
+	public String getMsg (long timeout) throws Exception
 	{
 		if (!open)
 			throw new Exception("Connection not open.");
