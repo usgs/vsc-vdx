@@ -23,7 +23,7 @@ public class LilyIPConnection extends IPConnection {
 	 *
 	 * @return the oldest message from the queue
 	 */
-	protected String getMsg (long timeout) throws Exception {
+	public String getMsg (long timeout) throws Exception {
 			
 		long start = System.currentTimeMillis();
 		long end   = start + timeout;
