@@ -24,6 +24,9 @@ import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
+import gov.usgs.vdx.in.conn.ConnectionSettings;
+import gov.usgs.vdx.in.conn.FreewaveIPConnection;
+import gov.usgs.vdx.in.hw.CCSAILMessage;
 
 import cern.colt.matrix.*;
 
@@ -102,11 +105,13 @@ public class ImportPoll extends Poller implements Importer {
 	public String[] columnArray;	
 	public String defaultColumns;
 
-	public String deviceIP;
-	public int devicePort;
+	public String masterIP;
+	public int masterPort;
 	public int postConnectDelay;
 	public int betweenPollDelay;
 	
+	public String deviceIP;
+	public int devicePort;
 	public int callNumber;
 	public int repeater;
 	public int dataLines;
@@ -215,8 +220,8 @@ public class ImportPoll extends Poller implements Importer {
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
 		// get connection settings related to this instance
-		deviceIP			= params.getString("deviceIP");
-		devicePort			= Util.stringToInt(params.getString("devicePort"));
+		masterIP			= params.getString("masterIP");
+		masterPort			= Util.stringToInt(params.getString("masterPort"));
 		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 5000);	
 		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 5000);	
 		
@@ -294,7 +299,9 @@ public class ImportPoll extends Poller implements Importer {
 				channelColumnMap.put(channelCode, channelCols);
 				
 				// channel connection related settings
-				callNumber		= Util.stringToInt(channelParams.getString("callNumber"));
+				deviceIP		= Util.stringToString(channelParams.getString("deviceIP"), "");
+				devicePort		= Util.stringToInt(channelParams.getString("deviceIP"), 0);
+				callNumber		= Util.stringToInt(channelParams.getString("callNumber"), 0);
 				repeater		= Util.stringToInt(channelParams.getString("repeater"), 0);
 				dataLines		= Util.stringToInt(channelParams.getString("dataLines"), 50);
 				connTimeout		= Util.stringToInt(channelParams.getString("connTimeout"), 50000);	
@@ -304,7 +311,7 @@ public class ImportPoll extends Poller implements Importer {
 				instrument		= Util.stringToString(channelParams.getString("instrument"), "zeno");
 				delimiter		= Util.stringToString(channelParams.getString("delimiter"), ",");
 				tiltid			= Util.stringToInt(channelParams.getString("tiltid"), 0);
-				settings		= new ConnectionSettings(callNumber, repeater, dataLines, connTimeout, dataTimeout, maxRetries, timeSource, instrument, delimiter, tiltid);
+				settings		= new ConnectionSettings(deviceIP, devicePort, callNumber, repeater, dataLines, connTimeout, dataTimeout, maxRetries, timeSource, instrument, delimiter, tiltid);
 				settingMap.put(channelCode, settings);
 			}
 			defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
@@ -557,7 +564,7 @@ public class ImportPoll extends Poller implements Importer {
 						
 						// instantiate the connection out of the observatory
 						if (connection == null) {
-							connection = new FreewaveIPConnection(deviceIP, devicePort, settings.dataTimeout);
+							connection = new FreewaveIPConnection(masterIP, masterPort, settings.dataTimeout);
 						}
 						
 						// connect to the station
@@ -831,11 +838,11 @@ public class ImportPoll extends Poller implements Importer {
 	}
 	
 	public String outputConnectionInfo() {
-		return deviceIP + "|" + devicePort + "|" + postConnectDelay + "|" + betweenPollDelay;
+		return masterIP + "|" + masterPort + "|" + postConnectDelay + "|" + betweenPollDelay;
 	}
 	
 	public String outputConnectionHeader() {
-		return "deviceIP|devicePort|postConnectDelay|betweenPollDelay";
+		return "masterIP|masterPort|postConnectDelay|betweenPollDelay";
 	}
 	
 	public void outputInstructions(String importerClass, String message) {

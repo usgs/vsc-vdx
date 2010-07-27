@@ -1,4 +1,4 @@
-package gov.usgs.vdx.in;
+package gov.usgs.vdx.in.conn;
 
 import java.net.*;
 import java.io.*;
