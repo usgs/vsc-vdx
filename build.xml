@@ -66,14 +66,7 @@ dist    -- creates a binary distribution
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/lib/" />
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/bin/" />
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/config/" />
-		<mkdir dir="${dist-basedir}/${dist-appdir}/libexec"/>
-		
-		<!-- Copy the libexec files -->
-		<copy todir="${dist-tempdir}/${dist-appdir}/libexec">
-			<fileset dir="${source}/perl">
-				<include name="exportData.pl" />
-			</fileset>
-		</copy>
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/libexec/" />
 
 		<!-- Copy the distribution files -->
 		<copy todir="${dist-tempdir}/${dist-appdir}">
@@ -91,6 +84,12 @@ dist    -- creates a binary distribution
 				<include name="mysql.jar" />
 				<include name="seed-pdcc.jar" />
 				<include name="commons-collections-3.2.1.jar" />
+			</fileset>
+		</copy>
+
+		<copy todir="${dist-tempdir}/${dist-appdir}/libexec">
+			<fileset dir="${source}/perl">
+				<include name="exportData.pl" />
 			</fileset>
 		</copy>
 		
