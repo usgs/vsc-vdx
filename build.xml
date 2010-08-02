@@ -63,10 +63,11 @@ dist    -- creates a binary distribution
 		<mkdir  dir="${dist-basedir}"/>
 
 		<!-- Create the distribution directory structure -->
-		<mkdir dir="${dist-tempdir}/${dist-appdir}/lib/" />
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/bin/" />
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/config/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/lib/" />
 		<mkdir dir="${dist-tempdir}/${dist-appdir}/libexec/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/log/" />
 
 		<!-- Copy the distribution files -->
 		<copy todir="${dist-tempdir}/${dist-appdir}">
