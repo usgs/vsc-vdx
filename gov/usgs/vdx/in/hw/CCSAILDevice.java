@@ -34,7 +34,7 @@ import java.util.*;
  * @author Ralf Krug
  *
  */
-public class CCSAILMessage
+public class CCSAILDevice implements Device
 {
     private String stationNrString;
 
@@ -45,7 +45,7 @@ public class CCSAILMessage
      *                      or from which the ccsail command is expected.
      * @exception Exception if station number is not in range (1,...,9999).
      */
-    public CCSAILMessage (int stationNumber) throws Exception
+    public CCSAILDevice (int stationNumber) throws Exception
     {
         if ( (stationNumber > 0) && (stationNumber < 10000) )
         {
@@ -54,6 +54,64 @@ public class CCSAILMessage
         }
         else
             throw new Exception ("Invalid station number");
+    }
+    
+    /**
+     * parses a CCSAIL command, checks it's components and returns the MSG part.
+     * The CCSAIL command can be preceded by an CR/LF
+     *
+     * @param str the CCSAIL command string which should be parsed
+     * @param ignoreWrongAddress if true, a wrong ADR in the message is not considered as an error
+     *        this happens e.g. for timeset, changeGain commands (not for get data commands)
+     *
+     * @return the message (MSG) part of the <code>str</code>
+     *
+     * @exception Exception if the string does not match the CCSAIL format,
+     *                            if it has an incorrect checksum,
+     *                            if it has an incorrect station number
+     */
+    public String validateMessage (String message, boolean ignoreWrongAddress) throws Exception
+    {
+        String  token;
+        int     len = message.length();
+
+        if (message.startsWith ("\r\n")) {
+        	message = message.substring (2, len);
+            len -= 2;
+        }
+
+        if (len < 12) {
+            throw new Exception ("Too short. Len = " + len);
+		}
+
+        if ('#' != message.charAt (0)) {
+            throw new Exception ("Wrong ATN: " + message.charAt(0));
+		}
+
+        if ((char)3 != message.charAt (len - 1)) {
+            throw new Exception ("Wrong ETX: " + message.charAt (len - 1));
+		}
+
+        int checkSumIs   = (message.charAt (len - 3) - '0') * 10;
+            checkSumIs  += (message.charAt (len - 2) - '0');
+        int checkSumCalc = calculateChecksum (message, true);
+        if (checkSumIs != checkSumCalc) {
+            throw new Exception ("Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc);
+		}
+
+        token = message.substring (1, 5);
+        if (!token.equals ("0000") && !ignoreWrongAddress) {
+            throw new Exception ("Wrong ADR: " + token);
+		}
+
+        token = message.substring (5, 9);
+        if (!token.equals (stationNrString) && !ignoreWrongAddress) {
+            throw new Exception ("Wrong RTN: " + token);
+		}
+
+        // get the message
+        token = message.substring (9, len - 3);
+        return token;
     }
 
     /**
@@ -93,7 +151,7 @@ public class CCSAILMessage
      * @exception Exception if <code>samplesInRequest</code> are not in range 1,...,9999
      * @return the complete CCSAIL command string
      */
-    public String makeDA (Date startDate, int samplesInRequest) throws Exception
+    public String requestData (Date startDate, int samplesInRequest) throws Exception
     {
         String cmd = "DA";
 
@@ -121,7 +179,7 @@ public class CCSAILMessage
      *
      * @return the complete CCSAIL command string
      */
-    public String makeDB (Date startDate, Date stopDate)
+    public String requestData (Date startDate, Date stopDate)
     {
         String cmd = "DB";
 
@@ -142,7 +200,7 @@ public class CCSAILMessage
      * @exception Exception if <code>numberOfValues</code> is not in range 1,...,9999
      * @return the complete CCSAIL command string
      */
-    public String makeDL (int numberOfValues) throws Exception
+    public String requestData (int numberOfValues) throws Exception
     {
         if ((numberOfValues < 1) || (numberOfValues > 9999))
             throw new Exception ("DL: number of values (" + numberOfValues + ") not in range 1,...,9999");
@@ -160,7 +218,7 @@ public class CCSAILMessage
      *
      * @return the complete CCSAIL command string
      */
-    public String makeTM ()
+    public String setTime ()
     {
         Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("UTC"));
         SimpleDateFormat formater = new SimpleDateFormat ("yyMMddHHmmss");
@@ -225,63 +283,6 @@ public class CCSAILMessage
         catch (Exception ccex) { } // should not happen
 
         return cmd;
-    }
-    /**
-     * parses a CCSAIL command, checks it's components and returns the MSG part.
-     * The CCSAIL command can be preceded by an CR/LF
-     *
-     * @param str the CCSAIL command string which should be parsed
-     * @param ignoreWrongAddress if true, a wrong ADR in the message is not considered as an error
-     *        this happens e.g. for timeset, changeGain commands (not for get data commands)
-     *
-     * @return the message (MSG) part of the <code>str</code>
-     *
-     * @exception Exception if the string does not match the CCSAIL format,
-     *                            if it has an incorrect checksum,
-     *                            if it has an incorrect station number
-     */
-    public String getMsg (String str, boolean ignoreWrongAddress) throws Exception
-    {
-        String  token;
-        int     len = str.length();
-
-        if (str.startsWith ("\r\n")) {
-            str = str.substring (2, len);
-            len -= 2;
-        }
-
-        if (len < 12) {
-            throw new Exception ("Too short. Len = " + len);
-		}
-
-        if ('#' != str.charAt (0)) {
-            throw new Exception ("Wrong ATN: " + str.charAt(0));
-		}
-
-        if ((char)3 != str.charAt (len - 1)) {
-            throw new Exception ("Wrong ETX: " + str.charAt (len - 1));
-		}
-
-        int checkSumIs   = (str.charAt (len - 3) - '0') * 10;
-            checkSumIs  += (str.charAt (len - 2) - '0');
-        int checkSumCalc = calculateChecksum (str, true);
-        if (checkSumIs != checkSumCalc) {
-            throw new Exception ("Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc);
-		}
-
-        token = str.substring (1, 5);
-        if (!token.equals ("0000") && !ignoreWrongAddress) {
-            throw new Exception ("Wrong ADR: " + token);
-		}
-
-        token = str.substring (5, 9);
-        if (!token.equals (stationNrString) && !ignoreWrongAddress) {
-            throw new Exception ("Wrong RTN: " + token);
-		}
-
-        // get the message
-        token = str.substring (9, len - 3);
-        return token;
     }
 
 
