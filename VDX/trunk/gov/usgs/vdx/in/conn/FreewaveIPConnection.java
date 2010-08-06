@@ -11,7 +11,7 @@ import java.text.*;
  * @author Dan Cervelli, Ralf Krug
  * @version 1.2
  */
-public class FreewaveIPConnection extends IPConnection
+public class FreewaveIPConnection extends IPConnection implements Connection
 {
 	/** number of seconds before a timeout waiting for an OK */
 	private static final int WAIT4OK_TIMEOUT = 2;
@@ -25,17 +25,24 @@ public class FreewaveIPConnection extends IPConnection
 	/** a number format for properly dialing the radio phone number */
 	private DecimalFormat radioNumberFormatter;
 	
+	private int radioNumber;
+	private int repeaterEntry;
+	private int timeout;
+	
 	/** Creates a new FreewaveIPConnection given the specific IP address, port, and 
 	 * data timeout
 	 * @param i the IP address
 	 * @param p the port
 	 * @param rto the data timeout
 	 */
-	public FreewaveIPConnection(String i, int p, long rto)
+	public FreewaveIPConnection(String deviceIP, int devicePort, int radioNumber, int repeaterEntry, int timeout, long rto)
 	{
-		super(i, p);
+		super(deviceIP, devicePort);
 		radioNumberFormatter = new DecimalFormat ("#######");
 		receiveTimeout = rto;
+		this.radioNumber = radioNumber;
+		this.repeaterEntry = repeaterEntry;
+		this.timeout = timeout;
 	}
 	
 	/** Connects to a FreeWave.
@@ -44,18 +51,12 @@ public class FreewaveIPConnection extends IPConnection
 	 * @param timeout the timeout in milliseconds (-1 == none)
 	 * @throws Exception various exceptions can be thrown with different messages depending on the outcome
 	 */
-	public void connect(int repeaterEntry, int radioNumber, int timeout) throws Exception
-	{
-		try
-		{
+	public void connect() throws Exception {
+		try {
 			open();
-		}
-		catch (UnknownHostException e)
-		{
+		} catch (UnknownHostException e) {
 			throw new Exception("Unknown host: " + ip + ":" + port);
-		}
-		catch (IOException e)
-		{
+		} catch (IOException e) {
 			throw new Exception("Couldn't open socket input/output streams");
 		}
 		 
@@ -77,7 +78,7 @@ public class FreewaveIPConnection extends IPConnection
 	 * @param establishConnectionTimeout the timeout (ms)
 	 */
 	private void call(int radioNumber, int establishConnectionTimeout) throws Exception
-	{
+	 {
 		String cmd = "ATD" + radioNumberFormatter.format(radioNumber);
 
 		writeString(cmd);
