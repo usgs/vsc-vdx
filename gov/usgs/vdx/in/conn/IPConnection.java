@@ -10,13 +10,13 @@ import java.util.*;
  * @author Dan Cervelli
  * @version 1.2
  */
-public class IPConnection extends Thread
+public class IPConnection extends Thread implements Connection
 {
 	/** the IP address of the socket */
-	protected String ip;
+	protected String deviceIP;
 	
 	/** the port number of the socket */
-	protected int port;
+	protected int devicePort;
 	
 	/** the actual socket for communication */
 	private Socket socket;
@@ -29,6 +29,7 @@ public class IPConnection extends Thread
 	
 	/** a character buffer for reading from the socket */	
 	private char buffer[];
+	
 	/** the size of the character buffer */
 	private static final int BUFFER_SIZE = 2048;
 	
@@ -51,22 +52,56 @@ public class IPConnection extends Thread
 	 * @param i the IP address
 	 * @param p the port
 	 */
-	public IPConnection(String i, int p) 
-	{
-		super("IPConnection Thread");
-		ip = i;
-		port = p;
-		buffer = new char[BUFFER_SIZE];
-		msgQueue = new Vector(100);
-		echo = false;
+	public IPConnection(String i, int p, String threadName) {
+		super(threadName);
+		deviceIP		= i;
+		devicePort		= p;
+		buffer			= new char[BUFFER_SIZE];
+		msgQueue		= new Vector(100);
+		echo			= false;
+	}
+	
+	public IPConnection(String i, int p) {
+		this(i, p, "IPConnection Thread");
 	}
 	
 	/** Sets whether or not to echo received bytes to standard out
 	 * @param b the echo state
 	 */
-	public void setEcho(boolean b)
-	{
+	public void setEcho(boolean b) {
 		echo = b;
+	}
+	
+	public void connect() throws Exception {
+		open();
+	}
+	
+	public void disconnect() {
+		close();
+	}
+
+	/** Writes a string to the socket.
+	 * @param s the string
+	 */
+	public void writeString(String s) {
+		int len = s.length();
+		int idx = 0;
+		while (idx < len)
+			out.write ((int)s.charAt(idx++));
+		
+		out.flush();
+	}
+	
+	/** Gets the first message in the queue.
+	 * @return the message
+	 */
+	public synchronized String readString(long timeout) {
+		String msg = null;
+		if (msgQueue.size() != 0) {
+			msg = (String)msgQueue.elementAt(0);
+			msgQueue.removeElementAt(0);
+		}
+		return msg;
 	}
 	
 	/** Opens the socket for communication.
@@ -74,15 +109,14 @@ public class IPConnection extends Thread
 	 * @throws IOException if the socket fails to open
 	 * @return whether or not the operation was successful
 	 */
-	public boolean open() throws UnknownHostException, IOException
-	{
-		boolean result = false;
-		socket = new Socket(ip, port);
-		out = new PrintWriter(socket.getOutputStream());
-		in = new InputStreamReader(socket.getInputStream());
-		result = true;
-		open = true;
-		stopThread = false;
+	private boolean open() throws UnknownHostException, IOException {
+		boolean result	= false;
+		socket			= new Socket(deviceIP, devicePort);
+		out				= new PrintWriter(socket.getOutputStream());
+		in				= new InputStreamReader(socket.getInputStream());
+		result			= true;
+		open			= true;
+		stopThread		= false;
 		if (!this.isAlive())
 			start();
 		
@@ -91,22 +125,17 @@ public class IPConnection extends Thread
 	
 	/** Closes the connection and stops waiting for bytes.
 	 */
-	public void close()
-	{
-		try
-		{
-			if (open)
-			{
-				open = false;
-				stopThread = true;
+	private void close() {
+		try {
+			if (open) {
+				open		= false;
+				stopThread	= true;
 				out.close();
 				in.close();
 				socket.close();
 				msgQueue.removeAllElements();
 			}
-		}
-		catch (IOException e)
-		{
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -114,33 +143,23 @@ public class IPConnection extends Thread
 	/** Gets the open state of this connection.
 	 * @return the open state
 	 */
-	public boolean isOpen()
-	{
+	public boolean isOpen() {
 		return open;
 	}
 	
 	/** Thread run() implementation.  Just constantly trys reading bytes from the socket.
 	 */
-	public void run()
-	{
-		while (true)
-		{
-			try
-			{
-				if (open && !stopThread)
-				{
+	public void run() {
+		while (true) {
+			try {
+				if (open && !stopThread) {
 					int count = in.read(buffer);
 					receiveData(buffer, count);
-				}
-				else
+				} else
 					Thread.sleep(300);
-			}
-			catch (SocketException sockEx)
-			{
+			} catch (SocketException sockEx) {
 				// this occurs whenever the socket closes, this is normal
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -150,49 +169,20 @@ public class IPConnection extends Thread
 	 * @param data the received bytes
 	 * @param count the number of bytes (note count != data.length)
 	 */
-	private synchronized void receiveData(char[] data, int count)
-	{
-		lockQueue = true;
-		String msg = new String(data, 0, count);
+	private synchronized void receiveData(char[] data, int count) {
+		lockQueue	= true;
+		String msg	 = new String(data, 0, count);
 		msgQueue.add(msg);
 		if (echo)
 			System.out.print(msg);
 		lockQueue = false;
 	}
-	
-	/** Gets the first message in the queue.
-	 * @return the message
-	 */
-	public synchronized String getMessage()
-	{
-		String msg = null;
-		if (msgQueue.size() != 0)
-		{
-			msg = (String)msgQueue.elementAt(0);
-			msgQueue.removeElementAt(0);
-		}
-		return msg;
-	}
 
 	/** Writes a character to the socket.
 	 * @param c the character
 	 */	
-	public void writeChar(char c)
-	{
+	public void writeChar(char c) {
 		out.print(c);
-		out.flush();
-	}
-
-	/** Writes a string to the socket.
-	 * @param s the string
-	 */
-	public void writeString(String s)
-	{
-		int len = s.length();
-		int idx = 0;
-		while (idx < len)
-			out.write ((int)s.charAt(idx++));
-		
 		out.flush();
 	}
 }
