@@ -1,6 +1,5 @@
 package gov.usgs.vdx.data.wave.plot;
 
-import gov.usgs.plot.DataPointRenderer;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
@@ -395,10 +394,10 @@ public class SliceWaveRenderer extends FrameRenderer
         	}
         }
         
-        if (getLegendRenderer() != null)
+        if (getLegendRenderer() != null){
     		g.setColor(Color.BLACK);
             getLegendRenderer().render(g);
-        
+        }
 		g.setClip(origClip);
 		
 		if (axis != null)
