@@ -2,7 +2,6 @@ package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.client.VDXClient;
 import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
