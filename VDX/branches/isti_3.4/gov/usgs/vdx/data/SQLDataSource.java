@@ -4,6 +4,8 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
 import gov.usgs.vdx.client.VDXClient.DownsamplingType;
+import gov.usgs.vdx.data.MetaDatum;
+import gov.usgs.vdx.data.SuppDatum;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
@@ -12,12 +14,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.TimeZone;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -1592,5 +1596,284 @@ abstract public class SQLDataSource {
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.insertV2GasData() failed.", e);
 		}		
+	}
+	
+	/**
+	 * Insert a piece of metadata
+	 * 
+	 * @param md the MetaDatum to be added
+	 */
+	public void insertMetaDatum( MetaDatum md ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO channelmetadata (cid,colid,rid,name,value) VALUES (" + md.cid + "," + md.colid + "," + md.rid + ",\"" + md.name + "\",\"" + md.value + "\");";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+	}
+	
+	/**
+	 * Retrieve a piece of metadata
+	 * 
+	 * @param cmid the ID of the metadata to retrieve
+	 * @returns MetaDatum the desired metadata (null if not found)
+	 */
+	public MetaDatum getMetaDatum( int cmid ) {
+		try {
+			database.useDatabase(dbName);
+			MetaDatum md = null;
+			sql = "SELECT * FROM channelmetadata WHERE cmid = " + cmid;
+			ps = database.getPreparedStatement( sql );
+			rs	= ps.executeQuery();
+			if (rs.next()) {
+				md = new MetaDatum();
+				md.cmid    = rs.getInt(1);
+				md.cid     = rs.getInt(2);
+				md.colid   = rs.getInt(3);
+				md.rid     = rs.getInt(4);
+				md.name    = rs.getString(5);
+				md.value   = rs.getString(6);
+				md.chName  = rs.getString(7);
+				md.colName = rs.getString(8);
+				md.rkName  = rs.getString(9);
+			}
+			rs.close();
+			return md;
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}	
+
+	/**
+	 * Retrieve a collection of metadata
+	 * 
+	 * @param md the pattern to match (integers < 0 & null strings are ignored)
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @returns List<MetaDatum> the desired metadata (null if an error occurred)
+	 */
+	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT MD.*, CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
+			String where = "WHERE MD.cid=CH.cid AND MD.colid=COL.colid AND MD.rid=RK.rid";
+			
+			if ( md.chName != null )
+				where = where + " AND CH.code='" + md.chName + "'";
+			else if ( md.cid >= 0 )
+				where = where + " AND MD.cid=" + md.cid;
+			if ( md.colName != null )
+				where = where + " AND COL.name='" + md.colName + "'";
+			else if ( md.colid >= 0 )
+				where = where + " AND MD.colid=" + md.colid;
+			if ( md.rkName != null )
+				where = where + " AND RK.name='" + md.rkName + "'";
+			else if ( md.rid >= 0 )
+				where = where + " AND MD.rid=" + md.rid;
+			if ( md.name != null )
+				where = where + " AND MD.name=" + md.name;
+			if ( md.value != null )
+				where = where + " AND MD.value=" + md.value;
+				
+			logger.info( "SQL: " + sql + where );
+			ps = database.getPreparedStatement( sql + where );
+			rs	= ps.executeQuery();
+			List<MetaDatum> result = new ArrayList<MetaDatum>();
+			while (rs.next()) {
+				md = new MetaDatum();
+				md.cmid    = rs.getInt(1);
+				md.cid     = rs.getInt(2);
+				md.colid   = rs.getInt(3);
+				md.rid     = rs.getInt(4);
+				md.name    = rs.getString(5);
+				md.value   = rs.getString(6);
+				md.chName  = rs.getString(7);
+				md.colName = rs.getString(8);
+				md.rkName  = rs.getString(9);
+				result.add( md );
+			}
+			rs.close();
+			return result;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMatchingMetaData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}
+
+	/**
+	 * Retrieve a collection of supplementary data
+	 * 
+	 * @param sd the pattern to match (integers < 0 & null strings are ignored)
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @returns List<SuppDatum> the desired supplementary data (null if an error occurred)
+	 */
+	public List<SuppDatum> getMatchingSuppData( SuppDatum sd, boolean cm ) {
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT SD.*, CH.code, COL.name, RK.name, ST.supp_data_type, ST.supp_color, SX.cid, SX.colid, SX.rid, ST.draw_line " +
+				"FROM supp_data as SD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK, supp_data_type as ST, supp_data_xref as SX "; // channelmetadata";
+			String where = "WHERE SD.et >= " + sd.st + " AND SD.st <= " + sd.et + " AND SD.sdid=SX.sdid AND SD.sdtypeid=ST.sdtypeid AND SX.cid=CH.cid AND SX.colid=COL.colid AND SX.rid=RK.rid";
+			
+			if ( sd.chName != null )
+				where = where + " AND CH.code='" + sd.chName + "'";
+			else if ( sd.cid >= 0 )
+				where = where + " AND SD.cid=" + sd.cid;
+			if ( sd.colName != null )
+				where = where + " AND COL.name='" + sd.colName + "'";
+			else if ( sd.colid >= 0 )
+				where = where + " AND MD.colid=" + sd.colid;
+			if ( sd.rkName != null )
+				where = where + " AND RK.name='" + sd.rkName + "'";
+			else if ( sd.rid >= 0 )
+				where = where + " AND SD.rid=" + sd.rid;
+			if ( sd.name != null )
+				where = where + " AND SD.name=" + sd.name;
+			if ( sd.value != null )
+				where = where + " AND SD.value=" + sd.value;
+			if ( sd.typeName != null )
+				where = where + " AND ST.supp_data_type='" + sd.typeName + "'";
+			else if ( sd.tid >= 0 )
+				where = where + " AND SD.sdtypeid=" + sd.tid;
+				
+			logger.info( "SQL: " + sql + where );
+			ps = database.getPreparedStatement( sql + where );
+			rs	= ps.executeQuery();
+			List<SuppDatum> result = new ArrayList<SuppDatum>();
+			while (rs.next()) {
+				result.add( new SuppDatum(rs) );
+			}
+			rs.close();
+			return result;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMatchingSuppData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}
+	
+	/**
+	 * Process a getData request for metadata from this datasource
+	 * 
+	 * @param params parameters for this request
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @returns RequestResult the desired meta data (null if an error occurred)
+	 */
+	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
+		String arg = params.get("byID");
+		List<MetaDatum> data = null;
+		MetaDatum md_s;
+		if ( arg != null && arg.equals("true") ) {
+			int cid			= Integer.parseInt(params.get("ch"));
+			arg = params.get("col");
+			int colid;
+			if ( arg==null || arg=="" )
+				colid = -1;
+			else
+				colid = Integer.parseInt(arg);
+			arg = params.get("rk");
+			int rid;
+			if ( arg==null || arg=="" )
+				rid = -1;
+			else
+				rid = Integer.parseInt(arg);
+			md_s = new MetaDatum( cid, colid, rid );
+		} else {
+			String chName   = params.get("ch");
+			String colName  = params.get("col");
+			String rkName   = params.get("rk");
+			md_s = new MetaDatum( chName, colName, rkName );
+		}
+		data = getMatchingMetaData( md_s, cm );
+		if (data != null) {
+			List<String> result = new ArrayList<String>();
+			for ( MetaDatum md: data )
+				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
+			return new TextResult(result);
+		}
+		return null;
+	}
+
+	/**
+	 * Process a getData request for supplementary data from this datasource
+	 * 
+	 * @param params parameters for this request
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @returns RequestResult the desired supplementary data (null if an error occurred)
+	 */
+	protected RequestResult getSuppData(Map<String, String> params, boolean cm) {
+		double st, et;
+		String arg = null;
+		List<SuppDatum> data = null;
+		SuppDatum sd_s;
+		
+		String tz = params.get("tz");
+		if ( tz==null || tz=="" )
+			tz = "UTC";
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		df.setTimeZone(TimeZone.getTimeZone(tz));
+		
+		try {
+			arg = params.get("st");
+			st =  Util.dateToJ2K(df.parse(arg));
+			arg = params.get("et");
+			if ( arg==null || arg=="" )
+				et = Double.MAX_VALUE;
+			else
+				et = Util.dateToJ2K(df.parse(arg));
+		} catch (Exception e) {
+			return getErrorResult("Illegal time string: " + arg + ", " + e);
+		}
+
+		arg = params.get("byID");
+		if ( arg != null && arg.equals("true") ) {
+			int cid			= Integer.parseInt(params.get("ch"));
+			arg = params.get("col");
+			int colid;
+			if ( arg==null || arg=="" )
+				colid = -1;
+			else
+				colid = Integer.parseInt(arg);
+			arg = params.get("rk");
+			int rid;
+			if ( arg==null || arg=="" )
+				rid = -1;
+			else
+				rid = Integer.parseInt(arg);
+			arg = params.get("et");
+			if ( arg==null || arg=="" )
+				et = Double.MAX_VALUE;
+			else
+				et = Double.parseDouble(arg);
+			arg = params.get("type");
+			int tid;
+			if ( arg==null || arg=="" )
+				tid = -1;
+			else
+				tid = Integer.parseInt(arg);
+			sd_s = new SuppDatum( st, et, cid, colid, rid, tid );
+		} else {
+			String chName   = params.get("ch");
+			String colName  = params.get("col");
+			String rkName   = params.get("rk");
+			String typeName = params.get("type");
+			sd_s = new SuppDatum( st, et, chName, colName, rkName, typeName );
+		}
+		data = getMatchingSuppData( sd_s, cm );
+		if (data != null) {
+			List<String> result = new ArrayList<String>();
+			for ( SuppDatum sd: data )
+				result.add(String.format("%d,%f,%f,%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					sd.sdid, sd.st, sd.et, sd.cid, sd.tid, sd.colid, sd.rid, sd.name, sd.value, sd.chName, sd.typeName, sd.colName, sd.rkName ));
+			return new TextResult(result);
+		}
+		return null;
 	}
 }

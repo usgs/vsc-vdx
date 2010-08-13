@@ -164,6 +164,13 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			
 		} else if (action.equals("ewRsamMenu")) {
 			return new TextResult(getTypes());
+			
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+			
 		}
 		return null;
 	}
