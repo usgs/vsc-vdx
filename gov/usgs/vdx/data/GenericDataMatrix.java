@@ -600,9 +600,11 @@ public class GenericDataMatrix implements BinaryDataSet
 	{
 		double t = 0;
 		double j = 0;
-		for (int i = 0; i < rows(); i++) {
-			if (!Double.isNaN(data.getQuick(i, c))) {
-				t += data.getQuick(i, c);
+		int r = rows();
+		for (int i = 0; i < r; i++) {
+			double val = data.getQuick(i, c);
+			if (!Double.isNaN(val)) {
+				t += val;
 				j++;
 			}
 		}

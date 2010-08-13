@@ -171,6 +171,13 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			return getTiltData(cid, rid, st, et, getMaxRows(), ds, dsInt);
+			
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+
 		}
 		return null;
 	}

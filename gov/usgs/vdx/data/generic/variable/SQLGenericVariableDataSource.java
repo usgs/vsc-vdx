@@ -150,6 +150,12 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			if (data != null) {
 				return new BinaryResult(data);
 			}
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+
 		}
 		return null;
 	}

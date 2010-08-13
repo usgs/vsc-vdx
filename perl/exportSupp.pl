@@ -20,9 +20,8 @@ my $querymap = {};	# map of query args to their valuse
 #			(values will be comma-separated)
 #		* = special case for columns
 #	Rest of value is name used in query string
-my %arg_def = ("source"=>"!src.0", "channel"=>"!chNames.0", "start"=>"!st.0", 
-	"end"=>"?et.0", "timezone"=>"?tz", 
-	"datatype"=>"+dt", "column"=>"*colNames", "rank"=>"?rkName" );
+my %arg_def = ("source"=>"!src", "channel"=>"?ch", "column"=>"?col", "rank"=>"?rk",
+	"start"=>"!st", "end"=>"?et", "tz"=>"?tz", "type"=>"?type");
 my %cols = ();
 
 # Walk the command-line arguments, filling querymap
@@ -71,41 +70,19 @@ while (($key,$spec) = each ( %arg_def )) {
 	}
 }
 
-# Validate -output value; handle default
-if ( exists $querymap{ "o" } ) {
-	my $o = $querymap{ "o" };
-	if ( $o eq "csv" ) {
-		$querymap{ "o" } = "xml";
-	} elsif ( $o eq "binary" ) {
-		$querymap{ "o" } = "bin";
-	} else {
-		$abortmsg = $abortmsg . "-output must be csv or binary\n";
-	}
-} else {
-	$querymap{"o"} = "csv";
-}
-
 die $abortmsg unless $abortmsg eq "";
 
-# Handle default for -timezone
-if ( ! exists $querymap{ "tz" } ) {
-	$querymap{"tz"} = "UTC";
-}
-
-# Handle columns
-foreach $key (keys %cols) {
-	$querymap{ $key . ".0" } = "T";
-}
-
 # Build the string of query arguments
-my $csv_request_args = "&chCnt.0=1";
+my $csv_request_args = "";
 my $vkey;
 while (($key,$vkey) = each ( %querymap ) ) {
 	$csv_request_args = $csv_request_args . "&" . $key . "=" . uri_escape( $vkey );
 }
 
 # Now we can build the whole URL
-my $csv_request_url = $csv_request_path . "?a=rawData" . $csv_reqtype . $csv_request_args;
+my $csv_request_url = $csv_request_path . "?a=data&da=suppdata" . $csv_request_args;
+
+# print $csv_request_url, "\n";
 
 # Make request of server; should get back XML containing data file's URL
 use LWP;
@@ -114,27 +91,46 @@ my $browser = LWP::UserAgent->new;
 my $response = $browser->get( $csv_request_url );
 die "Can't get $url -- ", $response->status_line
 	unless $response->is_success;
+	
+if ( $response->content_type eq 'text/html' ) {
+	die "Unexpected response; maybe VDX isn't running?";
+} 
 die "Was expecting XML; got ", $response->content_type
 	unless $response->content_type eq 'text/xml';
-
-my $xml_with_csv_url = $response->content;
 
 # Parse the XML and extract URL of CSV file
 use XML::Simple;
 $xml = new XML::Simple;
-$parsed_xml = $xml->XMLin( $xml_with_csv_url );
-$csv_url = $parsed_xml->{'rawData'}->{'url'};
+$parsed_xml = $xml->XMLin( $response->content );
 
-# Now ask server for the csv file itself
-$response = $browser->get( $csv_url );
-die "Can't get $url -- ", $response->status_line
-	unless $response->is_success;
+# Extract the lines into an array
+my @lines;
+if ( ref($parsed_xml->{'list-item'}) eq "ARRAY" ) {
+	# Multiple items returned
+	@lines = @{$parsed_xml->{'list-item'}};
+} elsif ( $parsed_xml->{'list-item'} == null ) {
+	# No items returned
+	@lines = ();
+} else {
+	# Only 1 item returned
+	@lines = ( $parsed_xml->{'list-item'} );
+}
 
-my $type_expected = 'application/octet-stream';
-die "Was expecting " . $type_expected . "; got ", $response->content_type
-	unless $response->content_type eq $type_expected;
-
-# Dump the csv file
-print $response->content;
-
-exit;
+# Format & write the lines to output file
+my $fn = ">supp_$querymap{'src'}_$querymap{'st'}.cvs";
+open (MYFILE, $fn);
+foreach $e (@lines) {
+	#print $e . "\n";
+	my @qp = split(/"/, $e );
+	my @cp = split(/,/, $qp[0]);
+	my @st = split(/[.]/, $cp[1]);
+	my @et = split(/[.]/, $cp[2]);
+	#print $#cp, "\n";
+	print MYFILE "$cp[0], $st[0], $et[0], $qp[5], $qp[7], \"$qp[1]\", \"$qp[3]\"";
+	if ( $#cp < 6 ) {
+		print MYFILE "\n";
+	} else {
+		print MYFILE ",$qp[9], $qp[11]\n";
+	}
+}
+close(MYFILE);

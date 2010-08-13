@@ -394,7 +394,7 @@ public class SliceWaveRenderer extends FrameRenderer
         	}
         }
         
-        if (getLegendRenderer() != null){
+        if (getLegendRenderer() != null) {
     		g.setColor(Color.BLACK);
             getLegendRenderer().render(g);
         }
