@@ -6,6 +6,7 @@ import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.ImageDataRenderer;
 import gov.usgs.plot.Jet;
 import gov.usgs.plot.Spectrum;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;
@@ -56,8 +57,16 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected double viewStartTime;
 	protected double viewEndTime;
 	protected double overlap;
-	protected double xLabel;
-	protected double yLabel;
+		
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+	public boolean yUnits = true;
+	public boolean yLabel = false;
+    protected String timeZone;
 	
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
@@ -66,8 +75,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected Image im;
 	
 	protected SliceWave wave;
-	
-	protected double timeZoneOffset;
 	
 	protected FrameDecorator decorator;
 	
@@ -128,14 +135,22 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		public DefaultWaveFrameDecorator()
 		{
-			yAxisLabel = "Frequency (Hz)";
+			if(yUnits){
+				this.yAxisLabel = "Frequency (Hz)";
+			}
+			if(xUnits){
+				this.xAxisLabel = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+			}
+			this.xAxisLabels = xTickValues;
+			this.yAxisLabels = yTickValues;
+			if(!xTickMarks){
+				vTicks=0;
+			}
+			if(!yTickMarks){
+				hTicks=0;
+			}
 			this.title = channelTitle;
 			this.titleBackground = Color.WHITE;
-		}
-		
-		public void setYAxisLabel(String s)
-		{
-			yAxisLabel = s;
 		}
 	}
 	
@@ -237,8 +252,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		
 		this.setImage(im);
 		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
-		this.setDataExtents(wave.getStartTime() + timeZoneOffset, wave.getEndTime() + timeZoneOffset, 0, wave.getSamplingRate() / 2);
-		this.setExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, minF, maxF);
+		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getSamplingRate() / 2);
+		this.setExtents(viewStartTime, viewEndTime, minF, maxF);
 		decorator.decorate(this);
 
 		return maxMag;
@@ -322,6 +337,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
+	 * Set Time Zone name.
+	 */
+	public void setTimeZone(String timeZone)
+	{
+		this.timeZone = timeZone;
+	}
+	
+	/**
 	 * Set slice to process
 	 */
 	public void setWave(SliceWave wave)
@@ -343,35 +366,5 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public void setVTicks(int ticks)
 	{
 		vTicks = ticks;
-	}
-	
-	public void setTimeZoneOffset(double tzo)
-	{
-		timeZoneOffset = tzo;
-	}
-	
-	/**
-	 * Set Y label
-	 */
-	public void setYLabel(int i)
-	{
-		yLabel = i;
-	}
-
-	/**
-	 * Set Y axis label
-	 */
-	public void setYAxisLabel(String s)
-	{
-		if (decorator instanceof DefaultWaveFrameDecorator)
-			((DefaultWaveFrameDecorator)decorator).setYAxisLabel(s);
-	}
-
-	/**
-	 * Set X label
-	 */
-	public void setXLabel(int i)
-	{
-		xLabel = i;
 	}
 }

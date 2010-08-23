@@ -39,6 +39,17 @@ public class SpectraRenderer extends MatrixRenderer
 	private boolean autoScale;
 	private String channelTitle;
 	
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+	public boolean yUnits = true;
+	public boolean yLabel = false;
+	
+	protected String timeZone;
+	
 	protected FrameDecorator decorator;
 	
 	/**
@@ -75,6 +86,22 @@ public class SpectraRenderer extends MatrixRenderer
 	{
 		public DefaultSpectraFrameDecorator()
 		{
+			if(yUnits){
+				this.yAxisLabel = "Power";
+			}
+			if(xUnits){
+				this.xAxisLabel = "Frequency (Hz)";
+			}
+			this.xAxisLabels = xTickValues;
+			this.yAxisLabels = yTickValues;
+			if(!xTickMarks){
+				hTicks=0;
+				xAxisGrid = Grid.NONE;
+			}
+			if(!yTickMarks){
+				vTicks=0;
+				yAxisGrid = Grid.NONE;
+			}
 			this.title = channelTitle;
 			this.titleBackground = Color.WHITE;
 		}
@@ -90,8 +117,6 @@ public class SpectraRenderer extends MatrixRenderer
 				yAxis = DefaultFrameDecorator.YAxis.LOG;
 			else
 				yAxis = DefaultFrameDecorator.YAxis.LINEAR;
-			
-			yAxisLabel = "Power";
 		}
 	}
 	
