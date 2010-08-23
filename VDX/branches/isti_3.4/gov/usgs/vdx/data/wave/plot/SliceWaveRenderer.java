@@ -5,6 +5,7 @@ import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.plot.LegendRenderer;
 import gov.usgs.plot.ShapeRenderer;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 import gov.usgs.vdx.data.wave.Wave;
 
@@ -87,14 +88,24 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected double highlightX2;
 	protected double viewStartTime;
 	protected double viewEndTime; 
+	protected String timeZone;
 	
 	protected Color color = Color.BLUE;
 	
-	protected String yLabel = "Counts";
+	protected String yLabelText = "";
 	
 	protected String title;
 	
 	protected FrameDecorator decorator;
+	
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+	public boolean yUnits = true;
+	public boolean yLabel = false;
 	
 	/**
 	 * Set frame decorator to draw graph's frame
@@ -209,10 +220,11 @@ public class SliceWaveRenderer extends FrameRenderer
 	 * @param t1 start time
 	 * @param t2 end time
 	 */
-	public void setViewTimes(double t1, double t2)
+	public void setViewTimes(double t1, double t2, String timeZone)
 	{
 	    viewStartTime = t1;
 	    viewEndTime = t2;
+	    this.timeZone = timeZone;
 	}
 	
 	/**
@@ -226,9 +238,9 @@ public class SliceWaveRenderer extends FrameRenderer
 	/**
 	 * Set Y axis label
 	 */
-	public void setYLabel(String s)
+	public void setYLabelText(String s)
 	{
-		yLabel = s;
+		yLabelText = s;
 	}
 
 	/**
@@ -271,7 +283,22 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		public DefaultWaveFrameDecorator()
 		{
-			yAxisLabel = yLabel;
+			if(yUnits){
+				this.yAxisLabel = yLabelText;
+			}
+			if(xUnits){
+				this.xAxisLabel = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+			}
+			this.xAxisLabels = xTickValues;
+			this.yAxisLabels = yTickValues;
+			if(!xTickMarks){
+				hTicks=0;
+				xAxisGrid = Grid.NONE;
+			}
+			if(!yTickMarks){
+				vTicks=0;
+				yAxisGrid = Grid.NONE;
+			}
 			title = SliceWaveRenderer.this.title;
 			titleBackground = Color.WHITE;
 			// TODO: should probably have x-axis label be "time"
@@ -286,7 +313,7 @@ public class SliceWaveRenderer extends FrameRenderer
 		if (decorator == null)
 			createDefaultFrameDecorator();
 		if (decorator instanceof DefaultFrameDecorator)
-			   ((DefaultFrameDecorator)decorator).yAxisLabel = yLabel;
+			   ((DefaultFrameDecorator)decorator).yAxisLabel = yLabelText;
 		this.setExtents(viewStartTime, viewEndTime, minY, maxY);
 		decorator.decorate(this);
 	}

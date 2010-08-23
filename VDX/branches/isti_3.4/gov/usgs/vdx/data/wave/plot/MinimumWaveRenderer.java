@@ -17,7 +17,7 @@ public class MinimumWaveRenderer extends SliceWaveRenderer
 		int vTicks = graphHeight / 24;
 		this.createDefaultAxis(hTicks, vTicks);
 		this.setXAxisToTime(hTicks, false);
-		this.getAxis().setInnerLeftLabelAsText(yLabel, -46);
+		this.getAxis().setInnerLeftLabelAsText(yLabelText, -46);
 		if (title != null)
 			this.getAxis().setLeftLabelAsText(title, -56);
 	}

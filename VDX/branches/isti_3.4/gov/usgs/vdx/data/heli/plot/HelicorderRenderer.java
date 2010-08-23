@@ -70,6 +70,15 @@ public class HelicorderRenderer extends FrameRenderer
 	private FrameDecorator decorator;
 	private boolean showDecorator = true;
 	
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+	public boolean yUnits = true;
+	public boolean yLabel = false;
+	
 	/**
 	 * Default constructor
 	 */
@@ -527,10 +536,11 @@ public class HelicorderRenderer extends FrameRenderer
 			else if (minutes >= 360)
 				majorTicks = minutes / 20;
 			double[] mjt = SmartTick.intervalTick(minX, maxX, majorTicks);
-			
-			axis.createBottomTicks(null, mjt);
-			axis.createTopTicks(null, mjt);
-			axis.createVerticalGridLines(mjt);
+			if(xTickMarks){
+				axis.createBottomTicks(null, mjt);
+				axis.createTopTicks(null, mjt);
+				axis.createVerticalGridLines(mjt);
+			}
 			
 			String[] btl = new String[mjt.length];
 			for (int i = 0; i < mjt.length; i++)
@@ -560,15 +570,19 @@ public class HelicorderRenderer extends FrameRenderer
 		 			pixelsPast = 0;
 		 		}
 	 		}
-
-			axis.createLeftTickLabels(labelPosLR, leftLabelText);
-			axis.addRenderer(new TextRenderer(graphX, graphY - 3, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
+	 		if(yTickValues){
+	 			axis.createLeftTickLabels(labelPosLR, leftLabelText);
+	 		}
+	 		if(xUnits)
+	 			axis.addRenderer(new TextRenderer(graphX, graphY - 3, channel + ", " + dayFormat.format(Util.j2KToDate(hcMaxX))));
 			
 			double[] hg = new double[numRows - 1];
 			for(int i = 0; i < numRows - 1; i++)
 				hg[i] = i + 1.0;
-				
-			axis.createHorizontalGridLines(hg); 
+			
+			if(yTickMarks){
+				axis.createHorizontalGridLines(hg); 
+			}
 
 			axis.setBackgroundColor(Color.white);
 		}
@@ -601,18 +615,19 @@ public class HelicorderRenderer extends FrameRenderer
 			else if (minutes > 180)
 				minorTicks = minutes / 5;
 			double[] mnt = SmartTick.intervalTick(minX, maxX, minorTicks);
-			
-			axis.createBottomTicks(mjt, mnt);
-			axis.createTopTicks(mjt, mnt);
-			axis.createVerticalGridLines(mjt);
-			
+			if(xTickMarks){
+				axis.createBottomTicks(mjt, mnt);
+				axis.createTopTicks(mjt, mnt);
+				axis.createVerticalGridLines(mjt);
+			}
 			String[] btl = new String[mjt.length];
 			for (int i = 0; i < mjt.length; i++)
 				btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
-				
-			axis.createBottomTickLabels(mjt, btl);
+			if(xTickValues){	
+				axis.createBottomTickLabels(mjt, btl);
+			}
 			
-			if (showDecorator) {
+			if (showDecorator && xUnits) {
 				axis.setBottomLabelAsText("+ Minutes");
 			}
 			
@@ -672,11 +687,11 @@ public class HelicorderRenderer extends FrameRenderer
 		 			pixelsPast = 0;
 		 		}
 	 		}
-
-			axis.createLeftTickLabels(labelPosLR, leftLabelText);
-			axis.createRightTickLabels(labelPosLR, rightLabelText);
-			
-			if (showDecorator) {
+	 		if(yTickValues){
+	 			axis.createLeftTickLabels(labelPosLR, leftLabelText);
+	 			axis.createRightTickLabels(labelPosLR, rightLabelText);
+	 		}
+			if (showDecorator && xUnits) {
 				axis.setBottomLeftLabelAsText("Time (" + timeZone.getDisplayName(dst, TimeZone.SHORT) + ")");
 				if (timeOffset != 0)
 					axis.setBottomRightLabelAsText("Time (UTC)");
@@ -685,8 +700,10 @@ public class HelicorderRenderer extends FrameRenderer
 			double[] hg = new double[numRows - 1];
 			for(int i = 0; i < numRows - 1; i++)
 				hg[i] = i + 1.0;
-				
-			axis.createHorizontalGridLines(hg); 
+			
+			if(yTickMarks){
+				axis.createHorizontalGridLines(hg);
+			}
 			axis.setBackgroundColor(Color.white);
 		}
 	}
