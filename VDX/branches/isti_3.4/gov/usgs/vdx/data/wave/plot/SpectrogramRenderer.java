@@ -64,10 +64,9 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public boolean xLabel = false;
 	public boolean yTickMarks = true;
 	public boolean yTickValues = true;
-	public boolean yUnits = true;
-	public boolean yLabel = false;
     protected String timeZone;
-	
+	private String yLabelText = null;
+	private String yUnitText = null;
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
 	protected AxisRenderer axis;
@@ -135,11 +134,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		public DefaultWaveFrameDecorator()
 		{
-			if(yUnits){
-				this.yAxisLabel = "Frequency (Hz)";
+			if(yUnitText != null){
+				this.yUnit = yUnitText;
+			}
+			if(yLabelText != null){
+				this.yAxisLabel = yLabelText;
 			}
 			if(xUnits){
-				this.xAxisLabel = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
 			}
 			this.xAxisLabels = xTickValues;
 			this.yAxisLabels = yTickValues;
@@ -342,6 +344,22 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public void setTimeZone(String timeZone)
 	{
 		this.timeZone = timeZone;
+	}
+	
+	/**
+	 * Set Y axis label
+	 */
+	public void setYLabelText(String s)
+	{
+		yLabelText = s;
+	}
+	
+	/**
+	 * Set Y axis unit
+	 */
+	public void setYUnitText(String s)
+	{
+		yUnitText = s;
 	}
 	
 	/**
