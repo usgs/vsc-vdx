@@ -4,6 +4,7 @@ import gov.usgs.math.FFT;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.MatrixRenderer;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;
@@ -45,9 +46,8 @@ public class SpectraRenderer extends MatrixRenderer
 	public boolean xLabel = false;
 	public boolean yTickMarks = true;
 	public boolean yTickValues = true;
-	public boolean yUnits = true;
-	public boolean yLabel = false;
-	
+	private String yLabelText = null;
+	private String yUnitText = null;
 	protected String timeZone;
 	
 	protected FrameDecorator decorator;
@@ -86,11 +86,14 @@ public class SpectraRenderer extends MatrixRenderer
 	{
 		public DefaultSpectraFrameDecorator()
 		{
-			if(yUnits){
-				this.yAxisLabel = "Power";
+			if(yUnitText != null){
+				this.yUnit = yUnitText;
+			}
+			if(yLabelText != null){
+				this.yAxisLabel = yLabelText;
 			}
 			if(xUnits){
-				this.xAxisLabel = "Frequency (Hz)";
+				this.xUnit = "Frequency (Hz)";
 			}
 			this.xAxisLabels = xTickValues;
 			this.yAxisLabels = yTickValues;
@@ -284,5 +287,20 @@ public class SpectraRenderer extends MatrixRenderer
 	public void setMinFreq(double minFreq)
 	{
 		this.minFreq = minFreq;
+	}
+	
+	/**
+	 * Set Y axis label
+	 */
+	public void setYLabelText(String s)
+	{
+		yLabelText = s;
+	}
+	/**
+	 * Set Y axis unit
+	 */
+	public void setYUnitText(String s)
+	{
+		yUnitText = s;
 	}
 }

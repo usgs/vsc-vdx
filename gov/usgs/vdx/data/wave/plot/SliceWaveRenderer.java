@@ -92,7 +92,8 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	protected Color color = Color.BLUE;
 	
-	protected String yLabelText = "";
+	protected String yLabelText = null;
+	protected String yUnitText = null;
 	
 	protected String title;
 	
@@ -104,8 +105,6 @@ public class SliceWaveRenderer extends FrameRenderer
 	public boolean xLabel = false;
 	public boolean yTickMarks = true;
 	public boolean yTickValues = true;
-	public boolean yUnits = true;
-	public boolean yLabel = false;
 	
 	/**
 	 * Set frame decorator to draw graph's frame
@@ -242,6 +241,14 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		yLabelText = s;
 	}
+	
+	/**
+	 * Set Y axis unit
+	 */
+	public void setYUnitText(String s)
+	{
+		yUnitText = s;
+	}
 
 	/**
 	 * Set graph title
@@ -250,7 +257,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		title = s;
 	}
-
+	
 	/**
 	 * Create default decorator to render frame
 	 */
@@ -283,11 +290,14 @@ public class SliceWaveRenderer extends FrameRenderer
 	{
 		public DefaultWaveFrameDecorator()
 		{
-			if(yUnits){
-				this.yAxisLabel = yLabelText;
+			if(yUnitText != null){
+				this.yUnit = yUnitText;
 			}
 			if(xUnits){
-				this.xAxisLabel = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+			}
+			if(yLabelText != null){
+				this.yAxisLabel = yLabelText;
 			}
 			this.xAxisLabels = xTickValues;
 			this.yAxisLabels = yTickValues;
