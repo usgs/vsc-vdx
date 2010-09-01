@@ -52,6 +52,12 @@ public class SuppDatum
 	public String color;
 	public int dl;
 	
+	/**
+	 * SuppDatum default constructor
+	 */
+	public SuppDatum() {
+	}
+
 	public SuppDatum( Double st, Double et, int cid, int colid, int rid, int tid ) {
 		sdid = 0;
 		this.cid = cid;
