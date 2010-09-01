@@ -33,7 +33,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * 
  * @author Dan Cervelli, Loren Antolik
  */
-abstract public class SQLDataSource {
+abstract public class SQLDataSource implements DataSource {
 	
 	protected VDXDatabase database;
 	protected String dbName;
@@ -1619,6 +1619,28 @@ abstract public class SQLDataSource {
 	}
 	
 	/**
+	 * Update a piece of metadata
+	 * 
+	 * @param md the MetaDatum to be updated
+	 */
+	public void updateMetaDatum( MetaDatum md ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "UPDATE channelmetadata SET cid='" + md.cid + "', colid='" + md.colid +
+				"', rid='" + md.rid + "', name='" + md.name + "', value='" + md.value +
+				"' WHERE cmid='" + md.cmid + "'";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.updateMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+	}
+	
+	/**
 	 * Retrieve a piece of metadata
 	 * 
 	 * @param cmid the ID of the metadata to retrieve
@@ -1708,6 +1730,49 @@ abstract public class SQLDataSource {
 	}
 
 	/**
+	 * Process a getData request for metadata from this datasource
+	 * 
+	 * @param params parameters for this request
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @returns RequestResult the desired meta data (null if an error occurred)
+	 */
+	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
+		String arg = params.get("byID");
+		List<MetaDatum> data = null;
+		MetaDatum md_s;
+		if ( arg != null && arg.equals("true") ) {
+			int cid			= Integer.parseInt(params.get("ch"));
+			arg = params.get("col");
+			int colid;
+			if ( arg==null || arg=="" )
+				colid = -1;
+			else
+				colid = Integer.parseInt(arg);
+			arg = params.get("rk");
+			int rid;
+			if ( arg==null || arg=="" )
+				rid = -1;
+			else
+				rid = Integer.parseInt(arg);
+			md_s = new MetaDatum( cid, colid, rid );
+		} else {
+			String chName   = params.get("ch");
+			String colName  = params.get("col");
+			String rkName   = params.get("rk");
+			md_s = new MetaDatum( chName, colName, rkName );
+		}
+		data = getMatchingMetaData( md_s, cm );
+		if (data != null) {
+			List<String> result = new ArrayList<String>();
+			for ( MetaDatum md: data )
+				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
+			return new TextResult(result);
+		}
+		return null;
+	}
+
+	/**
 	 * Retrieve a collection of supplementary data
 	 * 
 	 * @param sd the pattern to match (integers < 0 & null strings are ignored)
@@ -1759,46 +1824,146 @@ abstract public class SQLDataSource {
 	}
 	
 	/**
-	 * Process a getData request for metadata from this datasource
+	 * Insert a piece of supplemental data
 	 * 
-	 * @param params parameters for this request
-	 * @param cm = "is the name of the columns table coulmns_menu?"
-	 * @returns RequestResult the desired meta data (null if an error occurred)
+	 * @param sd the SuppDatum to be added
+	 * @returns ID of the record, -ID if already present, 0 if failed
 	 */
-	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
-		String arg = params.get("byID");
-		List<MetaDatum> data = null;
-		MetaDatum md_s;
-		if ( arg != null && arg.equals("true") ) {
-			int cid			= Integer.parseInt(params.get("ch"));
-			arg = params.get("col");
-			int colid;
-			if ( arg==null || arg=="" )
-				colid = -1;
-			else
-				colid = Integer.parseInt(arg);
-			arg = params.get("rk");
-			int rid;
-			if ( arg==null || arg=="" )
-				rid = -1;
-			else
-				rid = Integer.parseInt(arg);
-			md_s = new MetaDatum( cid, colid, rid );
-		} else {
-			String chName   = params.get("ch");
-			String colName  = params.get("col");
-			String rkName   = params.get("rk");
-			md_s = new MetaDatum( chName, colName, rkName );
+	public int insertSuppDatum( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO supp_data (sdtypeid,st,et,sd_short,sd) VALUES (" + 
+				sd.tid + "," + sd.st + "," + sd.et + ",\"" + sd.name  + "\",\"" + sd.value + 
+				"\")";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			rs = ps.getGeneratedKeys(); 
+
+			rs.next();
+			
+			return rs.getInt(1); 
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return 0;
+			}
 		}
-		data = getMatchingMetaData( md_s, cm );
-		if (data != null) {
-			List<String> result = new ArrayList<String>();
-			for ( MetaDatum md: data )
-				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
-					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
-			return new TextResult(result);
+		try {
+			sql = "SELECT sdid FROM supp_data WHERE sdtypeid=" + sd.tid + " AND st=" + sd.st +
+				" AND et=" + sd.et + " AND sd_short='" + sd.name + "'";
+			ps = database.getPreparedStatement(sql);
+			
+			int sdid = 0;
+
+			rs = ps.executeQuery();
+
+			rs.next();
+
+			return -rs.getInt(1);
+		} catch ( SQLException e2 ) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. (" + 
+				database.getDatabasePrefix() + "_" + dbName + ")", e2 );
+			return 0;
 		}
-		return null;
+	}
+	
+	/**
+	 * Update a piece of supplemental data
+	 * 
+	 * @param sd the SuppDatum to be added
+	 * @returns ID of the record, 0 if failed
+	 */
+	public int updateSuppDatum( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "UPDATE supp_data SET sdtypeid='" + sd.tid + "',st='" + sd.st + "',et='" + sd.et + 
+				"',sd_short='" + sd.name + "',sd='" + sd.value + "' WHERE sdid='" + sd.sdid + "'";
+				
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			return sd.sdid;
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, "SQLDataSource.updateSuppDatum() failed. (" + 
+				database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return 0;
+		}
+	}	
+								
+	/**
+	 * Insert a supplemental data xref
+	 * 
+	 * @param sdx the SuppDatum xref to be added
+	 */
+	public boolean insertSuppDatumXref( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+			sql		= "INSERT INTO supp_data_xref (sdid, cid, colid, rid) VALUES (" +
+				sd.sdid + "," + sd.cid + "," + sd.colid + "," + sd.rid + ");";
+
+			ps = database.getPreparedStatement(sql);
+		
+			ps.execute();
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatumXref() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return false;
+			}
+			logger.info( "SQLDataSource.insertSuppDatumXref: SDID " + 
+				sd.sdid + " xref already exists for given parameters" );
+		}
+		return true;
+	}
+
+	/**
+	 * Insert a supplemental datatype
+	 * 
+	 * @param sd the datatype to be added
+	 * @returns ID of the datatype, -ID if already present, 0 if failed
+	 */
+	public int insertSuppDataType( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO supp_data_type (supp_data_type,supp_color,draw_line) VALUES (" + 
+				"\"" + sd.typeName + "\",\"" + sd.color + "\"," + sd.dl + ");";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			rs = ps.getGeneratedKeys(); 
+
+			rs.next();
+			
+			return rs.getInt(1); 
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return 0;
+			}
+		}
+		try {
+			sql = "SELECT sdid FROM supp_data WHERE sdtypeid=" + sd.tid + " AND st=" + sd.st +
+				" AND et=" + sd.et + " AND sd_short='" + sd.name + "'";
+			ps = database.getPreparedStatement(sql);
+			rs = ps.executeQuery();
+			rs.next();
+			return -rs.getInt(1);
+			
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return 0;
+		}
 	}
 
 	/**
@@ -1876,4 +2041,35 @@ abstract public class SQLDataSource {
 		}
 		return null;
 	}
+	
+	/**
+	 * Retrieve the collection of supplementary data types
+	 * 
+	 * @returns List<SuppDatum> the desired supplementary data types (null if an error occurred)
+	 */
+	public List<SuppDatum> getSuppDataTypes() {
+
+		List<SuppDatum> types = new ArrayList<SuppDatum>();
+		try {
+			database.useDatabase(dbName);
+			sql  = "SELECT * FROM supp_data_type";
+			ps = database.getPreparedStatement(sql);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				SuppDatum sd = new SuppDatum( 0.0, 0.0, -1, -1, -1, rs.getInt(1) );
+				sd.typeName  = rs.getString(2);
+				sd.color     = rs.getString(3);
+				sd.dl        = rs.getInt(4);
+				types.add(sd);
+			}
+			rs.close();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getSuppDataTypes() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+
+		return types;
+	}
+	
 }
