@@ -48,6 +48,7 @@ public class SpectraRenderer extends MatrixRenderer
 	public boolean yTickValues = true;
 	private String yLabelText = null;
 	private String yUnitText = null;
+	private Color color = null;
 	protected String timeZone;
 	
 	protected FrameDecorator decorator;
@@ -190,7 +191,7 @@ public class SpectraRenderer extends MatrixRenderer
 //		getAxis().setLeftLabelAsText("Power", -52);
 //		getAxis().setBottomLeftLabelAsText("Freq.");
 
-		createDefaultLineRenderers();
+		createDefaultLineRenderers(color);
 		decorator.decorate(this);
 		
 		return maxp;
@@ -302,5 +303,13 @@ public class SpectraRenderer extends MatrixRenderer
 	public void setYUnitText(String s)
 	{
 		yUnitText = s;
+	}
+	
+	/**
+	 * Set color
+	 */
+	public void setColor(Color color)
+	{
+		this.color = color;
 	}
 }

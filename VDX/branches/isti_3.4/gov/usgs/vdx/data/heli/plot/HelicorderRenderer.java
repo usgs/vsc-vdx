@@ -48,8 +48,9 @@ public class HelicorderRenderer extends FrameRenderer
 	private double hcMaxX;
 	private double hcMinY;
 	private double hcMaxY;
-	private Color[] colors = 
+	private Color[] defaultColors = 
 		new Color[] {new Color(0, 0, 255), new Color(0, 0, 205), new Color(0, 0, 155), new Color(0, 0, 105)};
+	private Color color = null;
 		
 	private TimeZone timeZone = TimeZone.getTimeZone("UTC");
 	
@@ -343,11 +344,19 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/**
-	 * Set colors to render
+	 * Set default colors to render
 	 */
-	public void setColors(Color[] cs)
+	public void setDefaultColors(Color[] cs)
 	{
-		colors = cs;
+		defaultColors = cs;
+	}
+	
+	/**
+	 * Set color to render
+	 */
+	public void setColor(Color color)
+	{
+		this.color = color;
 	}
 	
 	/**
@@ -403,15 +412,20 @@ public class HelicorderRenderer extends FrameRenderer
 		int lastRow			= -1;
 		int numRows			= j2k.rows();
 		Color lastColor		= null;
+		if(color!=null){
+			g.setColor(color);
+		}
 		for (int j = 0; j < numRows; j++) {
 			t1		= j2k.getQuick(j, 0);
-			int k	= ((int)((t1 - hcMinX) / timeChunk)) % colors.length;
+			int k	= ((int)((t1 - hcMinX) / timeChunk)) % defaultColors.length;
 			if (k < 0)
 				k = 0;
 			
-			if (lastColor != colors[k]) {
-				g.setColor(colors[k]);
-				lastColor = colors[k];
+			if(color==null){
+				if (lastColor != defaultColors[k]) {
+					g.setColor(defaultColors[k]);
+					lastColor = defaultColors[k];
+				}
 			}
 			
 			t2		= t1 + 1;
@@ -436,9 +450,11 @@ public class HelicorderRenderer extends FrameRenderer
 			
 			if (showClip && (ymax >= clipValue || ymin <= -clipValue)) {
 				lastClipTime = t1;
-				if (lastColor != Color.red) {
-					g.setColor(Color.red);
-					lastColor = Color.red;
+				if(color==null){
+					if (lastColor != Color.red) {
+						g.setColor(Color.red);
+						lastColor = Color.red;
+					}
 				}
 			}
 			
