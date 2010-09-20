@@ -15,8 +15,9 @@ import java.util.logging.Logger;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
 import gov.usgs.util.CurrentTime;
+import gov.usgs.util.Util;
+
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
@@ -24,9 +25,9 @@ import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
-import gov.usgs.vdx.in.conn.ConnectionSettings;
-import gov.usgs.vdx.in.conn.FreewaveIPConnection;
-import gov.usgs.vdx.in.hw.CCSAILMessage;
+
+import gov.usgs.vdx.in.conn.Connection;
+import gov.usgs.vdx.in.hw.Device;
 
 import cern.colt.matrix.*;
 
@@ -47,6 +48,8 @@ public class ImportPoll extends Poller implements Importer {
 	public ConfigFile rankParams;
 	public ConfigFile columnParams;
 	public ConfigFile channelParams;
+	public ConfigFile deviceParams;
+	public ConfigFile connectionParams;
 	public ConfigFile dataSourceParams;
 	public ConfigFile translationParams;
 	
@@ -59,8 +62,6 @@ public class ImportPoll extends Poller implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
-	public String timeZone;
 	
 	public String importColumns;
 	public String[] importColumnArray;
@@ -74,7 +75,8 @@ public class ImportPoll extends Poller implements Importer {
 	public Map<String, SQLDataSource> sqlDataSourceMap;
 	public Map<String, String> dataSourceColumnMap;
 	public Map<String, String> dataSourceChannelMap;
-	public Map<String, Integer>	dataSourceRankMap;
+	public Map<String, Integer>	dataSourceRankMap;	
+	public String timeDataSource = null;
 	
 	public Rank rank;
 	public String rankName;
@@ -85,14 +87,15 @@ public class ImportPoll extends Poller implements Importer {
 	public String channelCode, channelName;
 	public double channelLon, channelLat, channelHeight;
 	public List<String> channelList;
-	public Map<String, Channel> channelMap;	
+	public Map<String, Channel> channelMap;
+	public Map<String, Device> channelDeviceMap;
+	public Map<String, Connection> channelConnectionMap;
 	public String channels;
 	public String[] channelArray;
-	public String[] dsChannelArray;
 	public String defaultChannels;
+	public String[] dsChannelArray;	
 	
-	public String channelCols;
-	public Map<String, String> channelColumnMap;
+	public String deviceCols;
 	
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
@@ -104,34 +107,16 @@ public class ImportPoll extends Poller implements Importer {
 	public String columns;
 	public String[] columnArray;	
 	public String defaultColumns;
-
-	public String masterIP;
-	public int masterPort;
+	
 	public int postConnectDelay;
 	public int betweenPollDelay;
 	
-	public String deviceIP;
-	public int devicePort;
-	public int callNumber;
-	public int repeater;
-	public int dataLines;
-	
-	public int connTimeout;
-	public int dataTimeout;
-	public int maxRetries;
-	public String timeSource;
-	public String instrument;
-	public String delimiter;
-	public int tiltid;	
-	public Map<String, ConnectionSettings> settingMap;
-	public ConnectionSettings settings;	
-	public FreewaveIPConnection connection;
+	public Connection connection;	
+	public Device device;
+	public Logger logger;
 
 	public double azimuthNom;
 	public double azimuthInst;
-	
-	public String importerType;	
-	public Logger logger;
 	
 	// timing output
 	public CurrentTime currentTime = CurrentTime.getInstance();
@@ -143,8 +128,6 @@ public class ImportPoll extends Poller implements Importer {
 		flags.add("-h");
 		flags.add("-v");
 	}
-	
-	public String timeDataSource = null;
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -187,7 +170,7 @@ public class ImportPoll extends Poller implements Importer {
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
 			System.exit(-1);
 		}
 		
@@ -204,13 +187,9 @@ public class ImportPoll extends Poller implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to the timestamps
-		timestampMask	= Util.stringToString(params.getString("timestampMask"), "yyyy-MM-dd HH:mm:ss");
-		timeZone		= Util.stringToString(params.getString("timezone"), "GMT");
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
-		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+		// information related to the output timestamps
+		dateOut		= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("UTC"));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
@@ -218,12 +197,6 @@ public class ImportPoll extends Poller implements Importer {
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
-		
-		// get connection settings related to this instance
-		masterIP			= params.getString("masterIP");
-		masterPort			= Util.stringToInt(params.getString("masterPort"));
-		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 5000);	
-		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 5000);	
 		
 		columnList	= params.getList("column");
 		if (columnList != null) {
@@ -265,13 +238,17 @@ public class ImportPoll extends Poller implements Importer {
 			System.exit(-1);
 		}
 		
+		// get connection settings related to this instance
+		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
+		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
+		
 		// get the list of channels that are being used in this import
 		defaultChannels	= "";
 		channelList		= params.getList("channel");
 		if (channelList != null) {
-			channelMap			= new HashMap<String, Channel>();
-			settingMap			= new HashMap<String, ConnectionSettings>();
-			channelColumnMap	= new HashMap<String, String>();
+			channelMap				= new HashMap<String, Channel>();
+			channelDeviceMap		= new HashMap<String, Device>();
+			channelConnectionMap	= new HashMap<String, Connection>();
 			for (int i = 0; i < channelList.size(); i++) {
 				
 				// channel configuration
@@ -281,9 +258,10 @@ public class ImportPoll extends Poller implements Importer {
 				defaultChannels+= channelCode + ",";
 				
 				// channel params
-				channelParams	= params.getSubConfig(channelCode);
+				channelParams		= params.getSubConfig(channelCode);
 				
 				// channel related settings
+				channelCode		= Util.stringToString(channelParams.getString("code"), channelCode);
 				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
 				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
 				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
@@ -291,28 +269,41 @@ public class ImportPoll extends Poller implements Importer {
 				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
 				channelMap.put(channelCode, channel);
 				
-				// channel columns
-				channelCols		= channelParams.getString("columns");
-				if (channelCols == null) {
-					channelCols	= importColumns;
-				}
-				channelColumnMap.put(channelCode, channelCols);
+				// lookup the device and connection parameters
+				deviceParams		= channelParams.getSubConfig("device");
+				connectionParams	= channelParams.getSubConfig("connection");
 				
-				// channel connection related settings
-				deviceIP		= Util.stringToString(channelParams.getString("deviceIP"), "");
-				devicePort		= Util.stringToInt(channelParams.getString("deviceIP"), 0);
-				callNumber		= Util.stringToInt(channelParams.getString("callNumber"), 0);
-				repeater		= Util.stringToInt(channelParams.getString("repeater"), 0);
-				dataLines		= Util.stringToInt(channelParams.getString("dataLines"), 50);
-				connTimeout		= Util.stringToInt(channelParams.getString("connTimeout"), 50000);	
-				dataTimeout		= Util.stringToInt(channelParams.getString("dataTimeout"), 50000);
-				maxRetries		= Util.stringToInt(channelParams.getString("maxRetries"), 2);
-				timeSource		= Util.stringToString(channelParams.getString("timeSource"), "tilt");
-				instrument		= Util.stringToString(channelParams.getString("instrument"), "zeno");
-				delimiter		= Util.stringToString(channelParams.getString("delimiter"), ",");
-				tiltid			= Util.stringToInt(channelParams.getString("tiltid"), 0);
-				settings		= new ConnectionSettings(deviceIP, devicePort, callNumber, repeater, dataLines, connTimeout, dataTimeout, maxRetries, timeSource, instrument, delimiter, tiltid);
-				settingMap.put(channelCode, settings);
+				// device columns
+				deviceCols		= deviceParams.getString("columns");
+				if (deviceCols == null) {
+					deviceCols	= importColumns;
+				}
+				deviceParams.put("columns", deviceCols);
+				
+				// try to create a device object
+				try {
+					device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
+					device.initialize(deviceParams);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Device driver initialization failed", e);
+					System.exit(-1);
+				}
+				channelDeviceMap.put(channelCode, device);
+				
+				// try to create a connection object
+				try {						
+					connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+					connection.initialize(connectionParams);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Connection driver initialization failed", e);
+					System.exit(-1);
+				}
+				channelConnectionMap.put(channelCode, connection);
+				
+				// display configuration information related to this channel
+				logger.log(Level.INFO, channel.toString());
+				logger.log(Level.INFO, device.toString());
+				logger.log(Level.INFO, connection.toString());
 			}
 			defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
 		}
@@ -339,8 +330,7 @@ public class ImportPoll extends Poller implements Importer {
 			dataSourceParams	= params.getSubConfig(dataSource);
 			
 			// look up to see if this is the time data source
-			String timesource	= dataSourceParams.getString("timesource");
-			if (timesource != null && timesource.equals("true")) {
+			if (Util.stringToBoolean(dataSourceParams.getString("timesource"), false)) {
 				timeDataSource	= dataSource;
 			}
 			
@@ -490,359 +480,382 @@ public class ImportPoll extends Poller implements Importer {
 			logger.log(Level.SEVERE, "dataSource time source not specified");
 			System.exit(-1);
 		}
-		
-		// output the connection settings for the config file
-		logger.log(Level.INFO, "");
-		logger.log(Level.INFO, "###### CONNECTION SETTINGS ######");
-		logger.log(Level.INFO, "###### MASTER ######");
-		logger.log(Level.INFO, outputConnectionHeader());
-		logger.log(Level.INFO, outputConnectionInfo());
-		channelArray = defaultChannels.split(",");
-		for (int c = 0; c < channelArray.length; c++) {	
-			channel		= channelMap.get(channelArray[c]);
-			settings	= settingMap.get(channelArray[c]);
-			logger.log(Level.INFO, "###### " + channel.getCode() + " ######");
-			logger.log(Level.INFO, settings.headerString());
-			logger.log(Level.INFO, settings.toString());
-		}
-		logger.log(Level.INFO, "");
 	}
 	
-	/** 
-	 * this is where the program lives most of the time, except for startup
-	 */	
+	/**
+	 * Parse file from url (resource locator or file name)
+	 * @param filename
+	 */
 	public void process(String filename) {
+			
+		// output initial polling message
+		logger.log(Level.INFO, "");
+		logger.log(Level.INFO, "BEGIN POLLING CYCLE");
 		
-		try {
+		// create an array of all the channels used in this polling process
+		channelArray = defaultChannels.split(",");
+		
+		// iterate through each of the channels
+		for (int c = 0; c < channelArray.length; c++) {
 			
-			// output initial polling message
-			logger.log(Level.INFO, "");
-			logger.log(Level.INFO, "BEGIN POLLING CYCLE");
+			// define the channel and settings for this instance
+			channel		= channelMap.get(channelArray[c]);
+			channelCode	= channel.getCode();
+			device		= channelDeviceMap.get(channelCode);
+			connection	= channelConnectionMap.get(channelCode);
 			
-			// create an array of all the channels used in this polling process
-			channelArray = defaultChannels.split(",");
+			// get the import line definition for this channel
+			importColumnArray	= device.getColumns().split(",");
+			importColumnMap		= new HashMap<Integer, String>();
+			for (int i = 0; i < importColumnArray.length; i++) {
+				importColumnMap.put(i, importColumnArray[i].trim());
+			}
 			
-			// iterate through each of the channels
-			for (int c = 0; c < channelArray.length; c++) {
+			// get the latest data time from the tilt database
+			sqlDataSource		= sqlDataSourceMap.get(timeDataSource);
+			Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode);
+			if (lastDataTime == null) {
+				lastDataTime = new Date(0);
+			}
+			
+			// display logging information
+			logger.log(Level.INFO, "Begin Polling [" + channelCode + "] (lastDataTime: " + dateOut.format(lastDataTime) + ")");
+			
+			// initialize data objects related to this device
+			dateIn	= new SimpleDateFormat(device.getTimestamp());
+			dateIn.setTimeZone(TimeZone.getTimeZone(device.getTimezone()));
+			
+			// default some variables used in the loop
+			int tries		= 0;
+			boolean done	= false;
+			String line;
+			int lineNumber;
+			
+			// iterate through the maximum number of retries as specified in the config file
+			while (tries < device.getTries() && !done) {
 				
-				// define the channel and settings for this instance
-				channel		= channelMap.get(channelArray[c]);
-				channelCode	= channel.getCode();
-				settings	= settingMap.get(channelCode);				
-				channelCols	= channelColumnMap.get(channelCode);
+				// increment the tries variable
+				tries++;
+				logger.log(Level.INFO, "Try " + tries + "/" + device.getTries());
 				
-				// get the import line definition for this channel
-				importColumnArray	= channelCols.split(",");
-				importColumnMap		= new HashMap<Integer, String>();
-				for (int i = 0; i < importColumnArray.length; i++) {
-					importColumnMap.put(i, importColumnArray[i].trim());
-				}
-				
-				// get the latest data time from the tilt database
-				sqlDataSource		= sqlDataSourceMap.get(timeDataSource);
-				Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode);
-				if (lastDataTime == null) {
-					lastDataTime = new Date(0);
-				}
-				
-				// display logging information
-				logger.log(Level.INFO, "");
-				logger.log(Level.INFO, "Begin Polling [" + channelCode + "] (lastDataTime: " + dateOut.format(lastDataTime) + ")");
-				
-				// default some variables used in the loop
-				int tries		= 1;
-				boolean done	= false;
-				
-				// iterate through the maximum number of retries as specified in the config file
-				while (tries < settings.maxRetries + 1 && !done) {
-					
-					String line		= "";
-					int lineNumber	= 1;	
-					
-					// try to create a connection to the station
+				// force a disconnect if this is a subsequent try
+				if (tries > 1) {
 					try {
-						
-						// instantiate the connection out of the observatory
-						if (connection == null) {
-							connection = new FreewaveIPConnection(masterIP, masterPort, settings.dataTimeout);
-						}
-						
-						// connect to the station
-						connection.connect(settings.repeater, settings.callNumber, settings.connTimeout);
-						Thread.sleep(postConnectDelay);
-						CCSAILMessage ccMsg	= new CCSAILMessage(settings.tiltid);
-						
-						// build the data request string
-						String dataRequest	= ccMsg.makeDA(lastDataTime, settings.dataLines);
-						connection.writeString(dataRequest);
-						
-						// get the response from the instrument
-						String reply		= connection.getMsg(settings.dataTimeout);
-						String replyString	= ccMsg.getMsg(reply, true);
-						
-						// parse the response by lines
-						StringTokenizer st	= new StringTokenizer(replyString, "\n");
-						
-						// iterate through each line
-						while (st.hasMoreTokens()) {
-							
-							// if this is a valid message, then parse it
-							line = st.nextToken();
-							
-							// validate that this is a line with data
-							if (line.startsWith("EOF") || line.startsWith("#") || line.length() <= 1) {
-								continue;
-							}
-							
-							// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-							String[] valueArray					= line.split(settings.delimiter, -1);
-							HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
-							for (int i = 0; i < valueArray.length; i++) {
-								valueMap.put(i, valueArray[i].trim());
-							}
-							
-							// make sure the data row matches the defined data columns
-							if (importColumnMap.size() > valueMap.size()) {
-								logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (too few values)");
-								lineNumber++;
-								continue;
-							}
-							
-							// map the columns to the values.  look for the TIMESTAMP and CHANNEL flags
-							HashMap<Integer, ColumnValue> columnValueMap = new HashMap<Integer, ColumnValue>();
-							ColumnValue columnValue;
-							String name;
-							double value;
-							int count		= 0;
-							String tsValue	= "";
-							for (int i = 0; i < importColumnMap.size(); i++) {
-								
-								name		= importColumnMap.get(i);
-								
-								// skip IGNORE columns
-								if (name.equals("IGNORE")) {
-									continue;
-
-								// parse out the CHANNEL
-								} else if (name.equals("CHANNEL")) {
-									channelCode	= valueMap.get(i);
-									continue;
-									
-								// parse out the TIMESTAMP
-								} else if (name.equals("TIMESTAMP")) {
-									tsValue	+= valueMap.get(i) + " ";
-									continue;
-									
-								// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
-								} else {					
-									if (valueMap.get(i).length() == 0) {
-										value	= Double.NaN;
-									} else {
-										value	= Double.parseDouble(valueMap.get(i));
-									}
-									columnValue	= new ColumnValue(name, value);
-									columnValueMap.put(count, columnValue);
-									count++;
-								}
-							}
-							
-							// make sure that the timestamp has something in it
-							if (tsValue.length() == 0) {
-								logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (timestamp not found)");
-								continue;
-							}
-							
-							// convert the timezone of the input date and convert to j2ksec
-							try {
-								String timestamp	= tsValue.trim();
-								date				= dateIn.parse(timestamp);				
-								j2ksec				= Util.dateToJ2K(date);
-							} catch (ParseException e) {
-								logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (timestamp parse error)");
-								continue;
-							}
-							
-							ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
-							
-							// iterate through each data source that was defined and assign data from this line to it
-							for (int i = 0; i < dataSourceList.size(); i++) {
-								
-								// get the data source name and it's associated sql data source
-								dataSource		= dataSourceList.get(i);
-								sqlDataSource	= sqlDataSourceMap.get(dataSource);
-								
-								// check that the sql data source was initialized properly above
-								if (sqlDataSource == null) {
-									logger.log(Level.SEVERE, "Skipping dataSource " + dataSource + " for line " + lineNumber);
-									continue;
-								}
-								
-								// lookup in the channels map to see if we are filtering on stations
-								boolean	channelMemberOfDataSource = false;
-								channels	= dataSourceChannelMap.get(dataSource);
-								if (channels.length() > 0) {
-									dsChannelArray	= channels.split(",");
-									for (int j = 0; j < dsChannelArray.length; j++) {
-										if (channelCode.equals(dsChannelArray[j])) {
-											channelMemberOfDataSource = true;
-											continue;
-										}
-									}
-									if (!channelMemberOfDataSource) {
-										// logger.log(Level.SEVERE, "Skipping line " + lineNumber + " dataSource " + dataSource + " (" + channelCode + " not a member of dataSource)");
-										continue;
-									}
-								}
-								
-								// channel for this data source.  create it if it doesn't exist
-								if (sqlDataSource.getChannelsFlag()) {
-									if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-										sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
-												sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
-												sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
-									}
-								}
-								
-								// columns for this data source
-								columns			= dataSourceColumnMap.get(dataSource);
-								columnArray		= columns.split(",");
-								HashMap<Integer, String> dsColumnMap	= new HashMap<Integer, String>();
-								for (int j = 0; j < columnArray.length; j++) {
-									dsColumnMap.put(j, columnArray[j]);
-								}
-								
-								// rank for this data source.  this should already exist in the database
-								if (sqlDataSource.getRanksFlag()) {
-									rid	= dataSourceRankMap.get(dataSource);
-								} else {
-									rid	= 1;
-								}
-								
-								// create a data entry map for this data source, with the columns that it wants
-								HashMap<Integer, ColumnValue> dataSourceEntryMap = new HashMap<Integer, ColumnValue>();
-								count	= 0;
-								dataSourceEntryMap.put(count, tsColumn);
-								count++;
-								
-								// store the remaining data columns
-								for (int j = 0; j < columnValueMap.size(); j++) {
-									columnValue = columnValueMap.get(j);
-									name		= columnValue.columnName;
-									value		= columnValue.columnValue;
-									for (int k = 0; k < dsColumnMap.size(); k++) {
-										if (name.equals(dsColumnMap.get(k))) {
-											dataSourceEntryMap.put(count, columnValue);
-											count++;
-										}
-									}
-								}
-								
-								// put the list of entries a double matrix and create a column names array
-								DoubleMatrix2D dm		= DoubleFactory2D.dense.make(1, dataSourceEntryMap.size());
-								String[] columnNames	= new String[dataSourceEntryMap.size()];
-								for (int j = 0; j < dataSourceEntryMap.size(); j++) {
-									columnValue		= dataSourceEntryMap.get(j);
-									name			= columnValue.columnName;
-									value			= columnValue.columnValue;
-									columnNames[j]	= name;
-									dm.setQuick(0, j, value);
-								}
-								
-								// assign the double matrix and column names to a generic data matrix
-								GenericDataMatrix gdm = new GenericDataMatrix(dm);
-								gdm.setColumnNames(columnNames);
-								
-								// insert the data to the database
-								sqlDataSource.defaultInsertData(channelCode, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rid);
-								
-								// VALVE2 HACK
-								double j2ksec, xTilt, yTilt, holeTemp, boxTemp, instVolt, gndVolt, rainfall, dt01, dt02, barometer, co2l, co2h;
-								DoubleMatrix2D temp;
-								if (dataSource.equals("hvo_deformation_tilt") && sqlDataSource.getType().equals("tilt")) {
-									temp 		= gdm.getColumn("j2ksec");
-									j2ksec		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("xTilt");
-									xTilt		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("yTilt");
-									yTilt		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("holeTemp");
-									holeTemp	= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("boxTemp");
-									boxTemp		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("instVolt");
-									instVolt	= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("gndVolt");
-									gndVolt		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("rainfall");
-									rainfall	= temp.getQuick(0, 0);
-									sqlDataSource.insertV2TiltData(channelCode.toLowerCase(), j2ksec, xTilt, yTilt, holeTemp, boxTemp, instVolt, gndVolt, rainfall);
-								} else if (dataSource.equals("hvo_deformation_strain") && sqlDataSource.getType().equals("genericfixed")) {
-									temp 		= gdm.getColumn("j2ksec");
-									j2ksec		= temp.getQuick(0, 0);
-									temp		= gdm.getColumn("dt01");
-									dt01		= temp.getQuick(0, 0);
-									temp		= gdm.getColumn("dt02");
-									dt02		= temp.getQuick(0, 0);
-									temp		= gdm.getColumn("barometer");
-									barometer	= temp.getQuick(0, 0);
-									sqlDataSource.insertV2StrainData(channelCode.toLowerCase(), j2ksec, dt01, dt02, barometer);
-								} else if (dataSource.equals("hvo_gas_co2") && sqlDataSource.getType().equals("genericfixed")) {
-									temp 		= gdm.getColumn("j2ksec");
-									j2ksec		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("co2l");
-									co2l		= temp.getQuick(0, 0);
-									temp 		= gdm.getColumn("co2h");
-									co2h		= temp.getQuick(0, 0);
-									sqlDataSource.insertV2GasData(1, j2ksec, co2l);
-									sqlDataSource.insertV2GasData(2, j2ksec, co2h);
-								}
-							}
-							
-							lineNumber++;
-						}
-						
-						// if we made it here then no exceptions were thrown, and we got the data
-						done = true;
-
+						connection.disconnect();
+						logger.log(Level.INFO, "Disconnected");
+						Thread.sleep(1000);
 					} catch (Exception e) {
-						logger.log(Level.SEVERE, "ImportPoll.process() failed for channel " + channel.getCode() + " try " + tries, e);
+						logger.log(Level.SEVERE, "Device Disconnection failed", e);
+						continue;
+					}
+				}
+				
+				// try to connect to the device
+				try {
+					connection.connect();
+					logger.log(Level.INFO, "Connected (" + postConnectDelay + "ms postConnectDelay)");
+					Thread.sleep(postConnectDelay);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Device Connection failed", e);
+					continue;
+				}
+				
+				// try to build the data request string
+				String dataRequest = "";
+				try {
+					dataRequest	= device.requestData(lastDataTime);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Device create request failed", e);
+					continue;
+				}
+					
+				// send the request to the device
+				if (dataRequest.length() > 0) {
+					try {
+						connection.writeString(dataRequest);
+						logger.log(Level.INFO, "dataRequest:" + dataRequest + " (" + device.getTimeout() + "ms timeout)");
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Connection write request failed", e);
+						continue;
+					}
+				}
+					
+				// try wait (eh) for the response from the device
+				String dataResponse = "";
+				try {
+					dataResponse	= connection.readString(device);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Device receive request failed", e);
+					continue;
+				}
+				
+				// try to validate the response from the device
+				try {
+					device.validateMessage(dataResponse, true);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Message validation failed", e);
+					continue;
+				}
+				
+				// we can now disconnect from the device
+				connection.disconnect();
+				logger.log(Level.INFO, "Disconnected");
+					
+				// format the response based on the type of device
+				String dataMessage	= device.formatMessage(dataResponse);
+					
+				// parse the response by lines
+				StringTokenizer st	= new StringTokenizer(dataMessage, "\n");
+				
+				// reset the counter variables
+				lineNumber = 0;
+					
+				// iterate through each line
+				while (st.hasMoreTokens()) {
+					
+					// increment the line number variable
+					lineNumber++;
 						
-					// disconnect from the device, we will reconnect if we are trying again
-					} finally {
-						if (connection != null) {
-							connection.disconnect();
+					// save this token for processing
+					line = st.nextToken();
+						
+					// try to validate this data line
+					try {
+						device.validateLine(line);
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Line " + lineNumber + " validation failed", e);
+						continue;
+					}
+					
+					// format this data line
+					line = device.formatLine(line);
+						
+					// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
+					String[] valueArray					= line.split(device.getDelimiter(), -1);
+					HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
+					for (int i = 0; i < valueArray.length; i++) {
+						valueMap.put(i, valueArray[i].trim());
+					}
+					
+					// make sure the data row matches the defined data columns
+					if (importColumnMap.size() > valueMap.size()) {
+						logger.log(Level.SEVERE, "Line " + lineNumber + " has too few values");
+						continue;
+					}
+					
+					// map the columns to the values.  look for the TIMESTAMP and CHANNEL flags
+					HashMap<Integer, ColumnValue> columnValueMap = new HashMap<Integer, ColumnValue>();
+					ColumnValue columnValue;
+					String name;
+					double value;
+					int count		= 0;
+					String tsValue	= "";
+					for (int i = 0; i < importColumnMap.size(); i++) {								
+						name		= importColumnMap.get(i);
+						
+						// skip IGNORE columns
+						if (name.equals("IGNORE")) {
+							continue;
+
+						// parse out the CHANNEL
+						} else if (name.equals("CHANNEL")) {
+							channelCode	= valueMap.get(i);
+							continue;
+							
+						// parse out the TIMESTAMP
+						} else if (name.equals("TIMESTAMP")) {
+							tsValue	+= valueMap.get(i) + " ";
+							continue;
+							
+						// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
+						} else {					
+							if (valueMap.get(i).length() == 0) {
+								value	= Double.NaN;
+							} else {
+								value	= Double.parseDouble(valueMap.get(i));
+							}
+							columnValue	= new ColumnValue(name, value);
+							columnValueMap.put(count, columnValue);
+							count++;
 						}
 					}
 					
-					// update the number of tries so we don't waste all day trying
-					tries++;
+					// make sure that the timestamp has something in it
+					if (tsValue.length() == 0) {
+						logger.log(Level.SEVERE, "Line " + lineNumber + " timestamp not found");
+						continue;
+					}
+					
+					// convert the timezone of the input date and convert to j2ksec
+					try {
+						String timestamp	= tsValue.trim();
+						date				= dateIn.parse(timestamp);				
+						j2ksec				= Util.dateToJ2K(date);
+					} catch (ParseException e) {
+						logger.log(Level.SEVERE, "Line " + lineNumber + " timestamp parse error");
+						continue;
+					}
+						
+					ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
+					
+					// echo the line to the log
+					logger.log(Level.INFO, line);
+						
+					// iterate through each data source that was defined and assign data from this line to it
+					for (int i = 0; i < dataSourceList.size(); i++) {
+						
+						// get the data source name and it's associated sql data source
+						dataSource		= dataSourceList.get(i);
+						sqlDataSource	= sqlDataSourceMap.get(dataSource);
+						
+						// check that the sql data source was initialized properly above
+						if (sqlDataSource == null) {
+							logger.log(Level.SEVERE, "Line " + lineNumber + " data source " + dataSource + " not initialized");
+							continue;
+						}
+						
+						// lookup in the channels map to see if we are filtering on stations
+						boolean	channelMemberOfDataSource = false;
+						channels	= dataSourceChannelMap.get(dataSource);
+						if (channels.length() > 0) {
+							dsChannelArray	= channels.split(",");
+							for (int j = 0; j < dsChannelArray.length; j++) {
+								if (channelCode.equals(dsChannelArray[j])) {
+									channelMemberOfDataSource = true;
+									continue;
+								}
+							}
+							if (!channelMemberOfDataSource) {
+								logger.log(Level.SEVERE, "Line " + lineNumber + " dataSource " + dataSource + " " + channelCode + " not member of data source");
+								continue;
+							}
+						}
+						
+						// channel for this data source.  create it if it doesn't exist
+						if (sqlDataSource.getChannelsFlag()) {
+							if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
+								sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
+										sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
+										sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
+							}
+						}
+						
+						// columns for this data source
+						columns			= dataSourceColumnMap.get(dataSource);
+						columnArray		= columns.split(",");
+						HashMap<Integer, String> dsColumnMap	= new HashMap<Integer, String>();
+						for (int j = 0; j < columnArray.length; j++) {
+							dsColumnMap.put(j, columnArray[j]);
+						}
+						
+						// rank for this data source.  this should already exist in the database
+						if (sqlDataSource.getRanksFlag()) {
+							rid	= dataSourceRankMap.get(dataSource);
+						} else {
+							rid	= 1;
+						}
+						
+						// create a data entry map for this data source, with the columns that it wants
+						HashMap<Integer, ColumnValue> dataSourceEntryMap = new HashMap<Integer, ColumnValue>();
+						count	= 0;
+						dataSourceEntryMap.put(count, tsColumn);
+						count++;
+						
+						// store the remaining data columns
+						for (int j = 0; j < columnValueMap.size(); j++) {
+							columnValue = columnValueMap.get(j);
+							name		= columnValue.columnName;
+							value		= columnValue.columnValue;
+							for (int k = 0; k < dsColumnMap.size(); k++) {
+								if (name.equals(dsColumnMap.get(k))) {
+									dataSourceEntryMap.put(count, columnValue);
+									count++;
+								}
+							}
+						}
+						
+						// put the list of entries a double matrix and create a column names array
+						DoubleMatrix2D dm		= DoubleFactory2D.dense.make(1, dataSourceEntryMap.size());
+						String[] columnNames	= new String[dataSourceEntryMap.size()];
+						for (int j = 0; j < dataSourceEntryMap.size(); j++) {
+							columnValue		= dataSourceEntryMap.get(j);
+							name			= columnValue.columnName;
+							value			= columnValue.columnValue;
+							columnNames[j]	= name;
+							dm.setQuick(0, j, value);
+						}
+						
+						// assign the double matrix and column names to a generic data matrix
+						GenericDataMatrix gdm = new GenericDataMatrix(dm);
+						gdm.setColumnNames(columnNames);
+						
+						// insert the data to the database
+						sqlDataSource.defaultInsertData(channelCode, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rid);
+						
+						// VALVE2 HACK
+						double j2ksec, xTilt, yTilt, holeTemp, boxTemp, instVolt, gndVolt, rainfall, dt01, dt02, barometer, co2l, co2h;
+						DoubleMatrix2D temp;
+						if (dataSource.equals("hvo_deformation_tilt") && sqlDataSource.getType().equals("tilt")) {
+							temp 		= gdm.getColumn("j2ksec");
+							j2ksec		= temp.getQuick(0, 0);
+							temp 		= gdm.getColumn("xTilt");
+							if (temp != null) { xTilt = temp.getQuick(0, 0); } else { xTilt = Double.NaN; }
+							temp 		= gdm.getColumn("yTilt");
+							if (temp != null) { yTilt = temp.getQuick(0, 0); } else { yTilt = Double.NaN; }
+							temp 		= gdm.getColumn("holeTemp");
+							if (temp != null) { holeTemp = temp.getQuick(0, 0); } else { holeTemp = Double.NaN; }
+							temp 		= gdm.getColumn("boxTemp");
+							if (temp != null) { boxTemp = temp.getQuick(0, 0); } else { boxTemp = Double.NaN; }
+							temp 		= gdm.getColumn("instVolt");
+							if (temp != null) { instVolt = temp.getQuick(0, 0); } else { instVolt = Double.NaN; }
+							temp 		= gdm.getColumn("gndVolt");
+							if (temp != null) { gndVolt = temp.getQuick(0, 0); } else { gndVolt = Double.NaN; }
+							temp 		= gdm.getColumn("rainfall");
+							if (temp != null) { rainfall = temp.getQuick(0, 0); } else { rainfall = Double.NaN; }
+							sqlDataSource.insertV2TiltData(channelCode.toLowerCase(), j2ksec, xTilt, yTilt, holeTemp, boxTemp, instVolt, gndVolt, rainfall);
+						} else if (dataSource.equals("hvo_deformation_strain") && sqlDataSource.getType().equals("genericfixed")) {
+							temp 		= gdm.getColumn("j2ksec");
+							j2ksec		= temp.getQuick(0, 0);
+							temp		= gdm.getColumn("dt01");
+							if (temp != null) { dt01 = temp.getQuick(0, 0); } else { dt01 = Double.NaN; }
+							temp		= gdm.getColumn("dt02");
+							if (temp != null) { dt02 = temp.getQuick(0, 0); } else { dt02 = Double.NaN; }
+							temp		= gdm.getColumn("barometer");
+							if (temp != null) { barometer = temp.getQuick(0, 0); } else { barometer = Double.NaN; }
+							sqlDataSource.insertV2StrainData(channelCode.toLowerCase(), j2ksec, dt01, dt02, barometer);
+						} else if (dataSource.equals("hvo_gas_co2") && sqlDataSource.getType().equals("genericfixed")) {
+							temp 		= gdm.getColumn("j2ksec");
+							j2ksec		= temp.getQuick(0, 0);
+							temp 		= gdm.getColumn("co2l");
+							if (temp != null) { co2l = temp.getQuick(0, 0); } else { co2l = Double.NaN; }
+							temp 		= gdm.getColumn("co2h");
+							if (temp != null) { co2h = temp.getQuick(0, 0); } else { co2h = Double.NaN; }
+							sqlDataSource.insertV2GasData(1, j2ksec, co2l);
+							sqlDataSource.insertV2GasData(2, j2ksec, co2h);
+						}
+					}
+					
+					// if we made it here then no exceptions were thrown, then we got the data
+					done = true;
 				}
-				
-				// output a status message based on how everything went above
-				if (done) {					
-					logger.log(Level.INFO, "End Polling [" + channelCode + "] Success");
-				} else {				
-					logger.log(Level.INFO, "End Polling [" + channelCode + "] Failure");
-				}
-				
-				// sleep before accessing the next station
-				Thread.sleep(betweenPollDelay);
 			}
 			
-			logger.log(Level.INFO, "");
-			logger.log(Level.INFO, "END POLLING CYCLE");
+			// output a status message based on how everything went above
+			if (done) {					
+				logger.log(Level.INFO, "End Polling [" + channelCode + "] Success");
+			} else {				
+				logger.log(Level.INFO, "End Polling [" + channelCode + "] Failure");
+			}
 			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "DataPoller.process() failed.", e);
-		}
-	}
-	
-	public String outputConnectionInfo() {
-		return masterIP + "|" + masterPort + "|" + postConnectDelay + "|" + betweenPollDelay;
-	}
-	
-	public String outputConnectionHeader() {
-		return "masterIP|masterPort|postConnectDelay|betweenPollDelay";
+			// try to sleep before accessing the next station
+			try {
+				logger.log(Level.INFO, "Sleeping (" + postConnectDelay + "ms betweenPollDelay)");
+				Thread.sleep(betweenPollDelay);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Thread.sleep(betweenPollDelay) failed.", e);
+			}
+		}		
+		logger.log(Level.INFO, "END POLLING CYCLE");
 	}
 	
 	public void outputInstructions(String importerClass, String message) {

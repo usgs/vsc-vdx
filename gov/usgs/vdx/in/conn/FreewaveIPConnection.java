@@ -1,128 +1,122 @@
 package gov.usgs.vdx.in.conn;
 
+import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
 
-import java.io.*;
-import java.net.*;
 import java.text.*;
 
 /**
  * An extension of IPConnection for dealing with FreeWave communication over IP.
  *
- * @author Dan Cervelli, Ralf Krug
- * @version 1.2
+ * @author Dan Cervelli, Ralf Krug, Loren Antolik
+ * @version 1.3
  */
-public class FreewaveIPConnection extends IPConnection implements Connection
-{
-	/** number of seconds before a timeout waiting for an OK */
-	private static final int WAIT4OK_TIMEOUT = 2;
+public class FreewaveIPConnection extends IPConnection implements Connection {
 	
-	/** number of milliseconds to wait before a data timeout */
-	private long receiveTimeout;
+	/** number of milliseconds before a timeout waiting for an OK */
+	private static final int WAIT4OK_TIMEOUT = 2000;
 	
-	/** whether or not the connection is in CCSAIL mode */
-	private boolean CCSAILMode;
+	/** the call number of the freewave */
+	protected int callnumber;
+	
+	/** the repeater entry for the freewave */
+	protected int repeater;
 	
 	/** a number format for properly dialing the radio phone number */
 	private DecimalFormat radioNumberFormatter;
 	
-	private int radioNumber;
-	private int repeaterEntry;
-	private int timeout;
-	
-	/** Creates a new FreewaveIPConnection given the specific IP address, port, and 
-	 * data timeout
-	 * @param i the IP address
-	 * @param p the port
-	 * @param rto the data timeout
+	/**
+	 * Initialize FreewaveIPConnection
 	 */
-	public FreewaveIPConnection(String deviceIP, int devicePort, int radioNumber, int repeaterEntry, int timeout, long rto)
-	{
-		super(deviceIP, devicePort);
-		radioNumberFormatter = new DecimalFormat ("#######");
-		receiveTimeout = rto;
-		this.radioNumber = radioNumber;
-		this.repeaterEntry = repeaterEntry;
-		this.timeout = timeout;
+	public void initialize(ConfigFile params) throws Exception {
+		super.initialize(params);
+		callnumber				= Util.stringToInt(params.getString("callnumber"));
+		repeater				= Util.stringToInt(params.getString("repeater"));
+		radioNumberFormatter	= new DecimalFormat ("#######");
 	}
 	
-	/** Connects to a FreeWave.
+	/**
+	 * Get settings
+	 */
+	public String getSettings() {
+		String settings	= super.toString();
+		settings	   += "callnumber:" + callnumber + "/";
+		settings	   += "repeater:" + repeater + "/";
+		return settings;
+	}
+	
+	/** 
+	 * Connects to a FreeWave.
 	 * @param repeaterEntry the repeater entry number in the FreeWave callbook
 	 * @param radioNumber the radio phone number
 	 * @param timeout the timeout in milliseconds (-1 == none)
 	 * @throws Exception various exceptions can be thrown with different messages depending on the outcome
 	 */
 	public void connect() throws Exception {
-		try {
-			open();
-		} catch (UnknownHostException e) {
-			throw new Exception("Unknown host: " + ip + ":" + port);
-		} catch (IOException e) {
-			throw new Exception("Couldn't open socket input/output streams");
-		}
-		 
-		setRepeater(repeaterEntry);
-		call(radioNumber, timeout);
-		CCSAILMode = true;
+		super.connect();		 
+		setRepeater(repeater);
+		call(callnumber);
 	}
 	
-	/** Disconnects from the FreeWave.
-	 */
-	public void disconnect()
-	{
-		close();
-		CCSAILMode = false;
-	}
-	
-	/** Calls the FreeWave.
+	/** 
+	 * Calls the FreeWave.
 	 * @param radioNumber the radio phone number
 	 * @param establishConnectionTimeout the timeout (ms)
 	 */
-	private void call(int radioNumber, int establishConnectionTimeout) throws Exception
-	 {
+	private void call(int radioNumber) throws Exception {
 		String cmd = "ATD" + radioNumberFormatter.format(radioNumber);
-
 		writeString(cmd);
-		wait4OK(); // throws FreewaveConnectionException if no 'OK' answer
-		wait4Connect (establishConnectionTimeout);  // throws FreewaveConnectionException if no 'CONNECT' answer
+		
+		// throws FreewaveConnectionException if no 'OK' answer
+		wait4OK();
+		
+		// throws FreewaveConnectionException if no 'CONNECT' answer
+		wait4Connect(timeout);
 	}
 	
-	/** Sets the repeater path.
+	/** 
+	 * Sets the repeater path.
 	 * @param repeaterEntry the repeater entry in the FreeWave phone book
 	 */
-	private void setRepeater(int repeaterEntry) throws Exception
-	{
-		String cmd = "ATXC" + (char)('0' + repeaterEntry);
+	private void setRepeater(int repeater) throws Exception {
+		String cmd = "ATXC" + (char)('0' + repeater);
 		writeString(cmd);
 		wait4OK();
 	}
 	
-	/** Waits for an OK from the FreeWave.
+	/** 
+	 * Waits for an OK from the FreeWave.
 	 * @throws Exception if there was a problem
 	 */
-	private void wait4OK() throws Exception
-	{
-		String msg = getMsg ((long)WAIT4OK_TIMEOUT * 1000L); // throws SerialConnectionException if timeout
+	private void wait4OK() throws Exception {
+		
+		// throws SerialConnectionException if timeout
+		String msg = readString(WAIT4OK_TIMEOUT);
 
 		if (0 != msg.indexOf ("OK"))
-			throw new Exception ("'OK' expected but '" + msg + "' received");
+			throw new Exception("'OK' expected but '" + msg + "' received");
 
-		//sometimes "CONNECT" comes immediately after "OK"
-		int idx = msg.indexOf ("CONNECT");
-		if (-1 != idx)
-			putMsg (msg.substring (idx)); // put the rest back to the message queue
+		//sometimes "CONNECT" comes immediately after "OK", if so put the rest back to the message queue
+		int idx = msg.indexOf("CONNECT");
+		if (-1 != idx) {
+			msgQueue.add(msg.substring(idx));
+			// writeString(msg.substring(idx));
+		}
 	}
 	
-	/** Waits for a CONNECT from the FreeWave.
+	/** 
+	 * Waits for a CONNECT from the FreeWave.
 	 * @param establishConnectionTimeout the timeout (ms) (-1 == none)
 	 * @throws Exception if there was a problem
 	 */
-	private void wait4Connect (int establishConnectionTimeout) throws Exception
-	{
+	private void wait4Connect (int timeout) throws Exception {
+		
 		// throws SerialConnectionException if timeout
-		String msg = getMsg ((-1 == establishConnectionTimeout) ? -1L : ((long)establishConnectionTimeout));
+		String msg = readString((-1 == timeout) ? -1 : (timeout));
 
-		if (0 != msg.indexOf ("CONNECT"))
+		if (0 != msg.indexOf ("CONNECT")) {
 			throw new Exception ("'CONNECT' expected but '" + msg + "' received");
+		}
 	}
 	
 	/**
@@ -141,8 +135,8 @@ public class FreewaveIPConnection extends IPConnection implements Connection
 	 *
 	 * @return the oldest message from the queue
 	 */
-	public String getMsg (long timeout) throws Exception
-	{
+	/*
+	public String readString (Device device, long timeout) throws Exception {
 		if (!open)
 			throw new Exception("Connection not open.");
 			
@@ -155,19 +149,24 @@ public class FreewaveIPConnection extends IPConnection implements Connection
 			delay = timeout;
 
 		StringBuffer sb = new StringBuffer();
-		while ( (now < end) || (-1L == timeout) )
-		{
-			if (!lockQueue)
-			{
-				if (!msgQueue.isEmpty())
-				{
-					//msg += (String)msgQueue.firstElement();
+		while ( (now < end) || (-1L == timeout) ) {
+			if (!lockQueue) {
+				if (!msgQueue.isEmpty()) {
 					sb.append(msgQueue.firstElement());
 					msgQueue.removeElementAt (0);
+					
+					// if we are talking to the device attached to the radio
+					if (device != null) {
+						if (device.messageCompleted(sb)) {
+							return sb.toString();
+						}
+					} else {
+						return sb.toString();
+					}
 
 					// In CCSAIL mode the last char of a message must be (char)3
-					if (!CCSAILMode || ((char)3 == sb.charAt (sb.length() - 1)) )
-						return sb.toString();
+					// if (!CCSAILMode || ((char)3 == sb.charAt (sb.length() - 1)) )
+						// return sb.toString();
 				}
 			}
 
@@ -182,39 +181,40 @@ public class FreewaveIPConnection extends IPConnection implements Connection
 		}
 
 		String txt = "Timeout while waiting for data.";
-		if (sb.length() > 0)
-		{
+		if (sb.length() > 0) {
 			txt += " Already received: ";
 			txt += sb.toString();
 		}
-		throw new Exception (txt);
+		throw new Exception(txt);
 	}
+	*/
 
-	/** Puts a message into the message queue.
+	/** 
+	 * Puts a message into the message queue.
 	 * @param msg the message
 	 * @return success state
 	 */	
-	protected boolean putMsg (String msg)
-	{
+	/*
+	public boolean writeString (String msg) {
 		if (!open) return false;
 
-		if (lockQueue) // is a new message arriving?
-		{
+		 // is a new message arriving?
+		if (lockQueue) {
 			// wait till the end of the receive timeout
-			try
-			{
+			try {
 				Thread.sleep(receiveTimeout);
-			}
-			catch (InterruptedException e) {}
+			} catch (InterruptedException e) {}
 
 			// if the queue is still locked, something is going wrong...
 			if (lockQueue) return false;
 		}
 
+		// place the message in the queue
 		lockQueue = true;
 		msgQueue.insertElementAt(new String (msg), 0);
 		lockQueue = false;
 
 		return true;
 	}
+	*/
 }

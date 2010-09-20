@@ -1305,7 +1305,7 @@ abstract public class SQLDataSource {
 				ps.execute();
 				if (translations)	output += tid + ",";
 				if (ranks)			output += rid + ",";
-				logger.log(Level.INFO, "InsertData() " + database.getDatabasePrefix() + "_" + dbName + "." + output.substring(0, output.length() - 1) + ")");
+				// logger.log(Level.INFO, "InsertData() " + database.getDatabasePrefix() + "_" + dbName + "." + output.substring(0, output.length() - 1) + ")");
 			}
 
 		} catch (Exception e) {

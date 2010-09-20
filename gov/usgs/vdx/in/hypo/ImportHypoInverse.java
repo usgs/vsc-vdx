@@ -147,7 +147,7 @@ public class ImportHypoInverse implements Importer {
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
 			System.exit(-1);
 		}
 		
@@ -255,17 +255,7 @@ public class ImportHypoInverse implements Importer {
 
 			while (line != null) {
 				
-				// do some validation
-				if (!line.substring(45,46).equals(" ")) {
-					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Corrupt data at column 46.");					
-					line	= rr.nextLine();
-					lineNumber++;
-					continue;
-					
-				// all systems go then
-				} else {					
-					logger.log(Level.INFO, "importing: line number " + lineNumber);
-				}
+				logger.log(Level.INFO, "importing: line number " + lineNumber);
 				
 				// DATE
 				try {

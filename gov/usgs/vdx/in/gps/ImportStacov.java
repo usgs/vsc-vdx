@@ -149,7 +149,7 @@ public class ImportStacov implements Importer {
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
 			System.exit(-1);
 		}
 		
