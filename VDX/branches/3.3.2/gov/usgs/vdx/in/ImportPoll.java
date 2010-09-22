@@ -88,12 +88,12 @@ public class ImportPoll extends Poller implements Importer {
 	public double channelLon, channelLat, channelHeight;
 	public List<String> channelList;
 	public Map<String, Channel> channelMap;
-	public Map<String, Device> channelDeviceMap;
-	public Map<String, Connection> channelConnectionMap;
 	public String channels;
 	public String[] channelArray;
 	public String defaultChannels;
 	public String[] dsChannelArray;	
+	public Map<String, ConfigFile> channelDeviceParamsMap;
+	public Map<String, ConfigFile> channelConnectionParamsMap;
 	
 	public String deviceCols;
 	
@@ -246,9 +246,9 @@ public class ImportPoll extends Poller implements Importer {
 		defaultChannels	= "";
 		channelList		= params.getList("channel");
 		if (channelList != null) {
-			channelMap				= new HashMap<String, Channel>();
-			channelDeviceMap		= new HashMap<String, Device>();
-			channelConnectionMap	= new HashMap<String, Connection>();
+			channelMap					= new HashMap<String, Channel>();
+			channelDeviceParamsMap		= new HashMap<String, ConfigFile>();
+			channelConnectionParamsMap	= new HashMap<String, ConfigFile>();
 			for (int i = 0; i < channelList.size(); i++) {
 				
 				// channel configuration
@@ -279,34 +279,18 @@ public class ImportPoll extends Poller implements Importer {
 					deviceCols	= importColumns;
 				}
 				deviceParams.put("columns", deviceCols);
-				
-				// try to create a device object
-				try {
-					device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
-					device.initialize(deviceParams);
-				} catch (Exception e) {
-					logger.log(Level.SEVERE, "Device driver initialization failed", e);
-					System.exit(-1);
-				}
-				channelDeviceMap.put(channelCode, device);
-				
-				// try to create a connection object
-				try {						
-					connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
-					connection.initialize(connectionParams);
-				} catch (Exception e) {
-					logger.log(Level.SEVERE, "Connection driver initialization failed", e);
-					System.exit(-1);
-				}
-				channelConnectionMap.put(channelCode, connection);
+				channelDeviceParamsMap.put(channelCode, deviceParams);				
+				channelConnectionParamsMap.put(channelCode, connectionParams);
 				
 				// display configuration information related to this channel
 				logger.log(Level.INFO, channel.toString());
-				logger.log(Level.INFO, device.toString());
-				logger.log(Level.INFO, connection.toString());
+				// logger.log(Level.INFO, device.toString());
+				// logger.log(Level.INFO, connection.toString());
 			}
 			defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
 		}
+		
+		logger.log(Level.INFO, "defaultChannels:" + defaultChannels);
 		
 		// get the list of data sources that are being used in this import
 		dataSourceList	= params.getList("dataSource");
@@ -328,6 +312,8 @@ public class ImportPoll extends Poller implements Importer {
 			// get the data source name and define the columns that it contains
 			dataSource			= dataSourceList.get(i);
 			dataSourceParams	= params.getSubConfig(dataSource);
+			
+			logger.log(Level.INFO, "dataSource:" + dataSource);
 			
 			// look up to see if this is the time data source
 			if (Util.stringToBoolean(dataSourceParams.getString("timesource"), false)) {
@@ -499,10 +485,19 @@ public class ImportPoll extends Poller implements Importer {
 		for (int c = 0; c < channelArray.length; c++) {
 			
 			// define the channel and settings for this instance
-			channel		= channelMap.get(channelArray[c]);
-			channelCode	= channel.getCode();
-			device		= channelDeviceMap.get(channelCode);
-			connection	= channelConnectionMap.get(channelCode);
+			channel				= channelMap.get(channelArray[c]);
+			channelCode			= channel.getCode();
+			deviceParams		= channelDeviceParamsMap.get(channelCode);
+			connectionParams	= channelConnectionParamsMap.get(channelCode);
+			
+			// try to create a device object
+			try {
+				device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
+				device.initialize(deviceParams);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Device driver initialization failed", e);
+				System.exit(-1);
+			}
 			
 			// get the import line definition for this channel
 			importColumnArray	= device.getColumns().split(",");
@@ -517,9 +512,6 @@ public class ImportPoll extends Poller implements Importer {
 			if (lastDataTime == null) {
 				lastDataTime = new Date(0);
 			}
-			
-			// display logging information
-			logger.log(Level.INFO, "Begin Polling [" + channelCode + "] (lastDataTime: " + dateOut.format(lastDataTime) + ")");
 			
 			// initialize data objects related to this device
 			dateIn	= new SimpleDateFormat(device.getTimestamp());
@@ -536,24 +528,22 @@ public class ImportPoll extends Poller implements Importer {
 				
 				// increment the tries variable
 				tries++;
-				logger.log(Level.INFO, "Try " + tries + "/" + device.getTries());
 				
-				// force a disconnect if this is a subsequent try
-				if (tries > 1) {
-					try {
-						connection.disconnect();
-						logger.log(Level.INFO, "Disconnected");
-						Thread.sleep(1000);
-					} catch (Exception e) {
-						logger.log(Level.SEVERE, "Device Disconnection failed", e);
-						continue;
-					}
-				}
+				// display logging information
+				logger.log(Level.INFO, "Polling " + channelCode + " [Try " + tries + "/" + device.getTries() + "] [lastDataTime:" + dateOut.format(lastDataTime) + "]");
 				
 				// try to connect to the device
+				try {						
+					connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+					connection.initialize(connectionParams);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Connection driver initialization failed", e);
+					System.exit(-1);
+				}
+				
 				try {
 					connection.connect();
-					logger.log(Level.INFO, "Connected (" + postConnectDelay + "ms postConnectDelay)");
+					logger.log(Level.INFO, "Connected [" + postConnectDelay + "ms postConnectDelay]");
 					Thread.sleep(postConnectDelay);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Device Connection failed", e);
@@ -566,6 +556,7 @@ public class ImportPoll extends Poller implements Importer {
 					dataRequest	= device.requestData(lastDataTime);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Device create request failed", e);
+					connection.disconnect();
 					continue;
 				}
 					
@@ -573,9 +564,10 @@ public class ImportPoll extends Poller implements Importer {
 				if (dataRequest.length() > 0) {
 					try {
 						connection.writeString(dataRequest);
-						logger.log(Level.INFO, "dataRequest:" + dataRequest + " (" + device.getTimeout() + "ms timeout)");
+						// logger.log(Level.INFO, "dataRequest (" + device.getTimeout() + "ms timeout) :" + dataRequest);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Connection write request failed", e);
+						connection.disconnect();
 						continue;
 					}
 				}
@@ -584,28 +576,36 @@ public class ImportPoll extends Poller implements Importer {
 				String dataResponse = "";
 				try {
 					dataResponse	= connection.readString(device);
+					// logger.log(Level.INFO, "dataResponse received");
+					// logger.log(Level.INFO, dataResponse);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Device receive request failed", e);
+					connection.disconnect();
 					continue;
 				}
 				
 				// try to validate the response from the device
 				try {
 					device.validateMessage(dataResponse, true);
+					// logger.log(Level.INFO, "dataResponse validated");
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Message validation failed", e);
+					connection.disconnect();
 					continue;
 				}
 				
 				// we can now disconnect from the device
 				connection.disconnect();
-				logger.log(Level.INFO, "Disconnected");
+				// logger.log(Level.INFO, "Disconnected");
 					
 				// format the response based on the type of device
 				String dataMessage	= device.formatMessage(dataResponse);
+				// logger.log(Level.INFO, "dataResponse formatted");
+				// logger.log(Level.INFO, dataMessage);
 					
 				// parse the response by lines
 				StringTokenizer st	= new StringTokenizer(dataMessage, "\n");
+				// logger.log(Level.INFO, st.countTokens() + " lines");
 				
 				// reset the counter variables
 				lineNumber = 0;
@@ -622,13 +622,16 @@ public class ImportPoll extends Poller implements Importer {
 					// try to validate this data line
 					try {
 						device.validateLine(line);
+						// logger.log(Level.INFO, "line " + lineNumber + " validated");
 					} catch (Exception e) {
-						logger.log(Level.SEVERE, "Line " + lineNumber + " validation failed", e);
+						logger.log(Level.SEVERE, "Line " + lineNumber + " not validated", e);
 						continue;
 					}
 					
 					// format this data line
 					line = device.formatLine(line);
+					// logger.log(Level.INFO, "line " + lineNumber + " formatted");
+					logger.log(Level.INFO, line);
 						
 					// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
 					String[] valueArray					= line.split(device.getDelimiter(), -1);
@@ -697,9 +700,6 @@ public class ImportPoll extends Poller implements Importer {
 					}
 						
 					ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
-					
-					// echo the line to the log
-					logger.log(Level.INFO, line);
 						
 					// iterate through each data source that was defined and assign data from this line to it
 					for (int i = 0; i < dataSourceList.size(); i++) {
@@ -839,6 +839,8 @@ public class ImportPoll extends Poller implements Importer {
 					done = true;
 				}
 			}
+			
+			connection.disconnect();
 			
 			// output a status message based on how everything went above
 			if (done) {					

@@ -539,7 +539,7 @@ public class ImportStream implements Importer {
 					logger.log(Level.INFO, "dataRequest:" + dataRequest + " (" + device.getTimeout() + "ms timeout)");
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Connection write request failed", e);
-					connection.disconnect();
+					//connection.disconnect();
 					continue;
 				}
 			}

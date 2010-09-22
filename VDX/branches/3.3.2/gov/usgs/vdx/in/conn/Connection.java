@@ -10,7 +10,7 @@ import gov.usgs.vdx.in.hw.Device;
 public interface Connection {
 	public void initialize (ConfigFile params) throws Exception;
 	public void connect () throws Exception;
-	public void disconnect ();
+	public void disconnect();
 	public void writeString (String dataRequest) throws Exception;
 	public String readString (Device device) throws Exception;
 	public String toString();

@@ -145,9 +145,7 @@ public class LilyDevice implements Device {
 	    		return false;
 	    	} else if (message.charAt(0) != '$') {
 	    		return false;
-	    	} else if (message.charAt(length - 2) != '\r') {
-	    		return false;
-	    	} else if (message.charAt(length - 1) != '\n') {
+	    	} else if (!message.substring(length - 2).contentEquals("\r\n")) {
 	    		return false;
 	    	} else {
 	    		return true;
@@ -158,11 +156,7 @@ public class LilyDevice implements Device {
 	    		return false;
 	    	} else if (message.charAt(0) != '*') {
 	    		return false;
-	    	} else if (message.substring(length - 15, length - 2) != "$end download") {
-	    		return false;
-	    	} else if (message.charAt(length - 2) != '\r') {
-	    		return false;
-	    	} else if (message.charAt(length - 1) != '\n') {
+	    	} else if (!message.substring(length - 15).contentEquals("$end download\r\n")) {
 	    		return false;
 	    	} else {
 	    		return true;
@@ -182,10 +176,8 @@ public class LilyDevice implements Device {
 	    		throw new Exception ("Message invalid. Too short. Length = " + length);
 	    	} else if (message.charAt(0) != '$') {
 	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0));
-	    	} else if (message.charAt(length - 2) != '\r') {
-	    		throw new Exception ("Message invalid. Wrong <CR> character: " + message.charAt(length - 2));
-	    	} else if (message.charAt(length - 1) != '\n') {
-	    		throw new Exception ("Message invalid. Wrong <LF> character: " + message.charAt(length - 1));
+	    	} else if (!message.substring(length - 2).contentEquals("\r\n")) {
+	    		throw new Exception ("Message invalid. Wrong end character: " + message.charAt(length - 2));
 	    	}
     		break;
     		
@@ -194,12 +186,8 @@ public class LilyDevice implements Device {
 	    		throw new Exception ("Message invalid. Too short. Length = " + length);
 	    	} else if (message.charAt(0) != '*') {
 	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0));
-	    	} else if (message.substring(length - 15, length - 2) != "$end download") {
-	    		throw new Exception ("Message invalid. Wrong end download message: " + message.substring(length - 15, length - 2));
-	    	} else if (message.charAt(length - 2) != '\r') {
-	    		throw new Exception ("Message invalid. Wrong <CR> character: " + message.charAt(length - 2));
-	    	} else if (message.charAt(length - 1) != '\n') {
-	    		throw new Exception ("Message invalid. Wrong <LF> character: " + message.charAt(length - 1));
+	    	} else if (!message.substring(length - 15).contentEquals("$end download\r\n")) {
+	    		throw new Exception ("Message invalid. Wrong end character: " + message.substring(length - 15));
 	    	}
 	    	break;
     	}
@@ -215,9 +203,7 @@ public class LilyDevice implements Device {
     		return false;
     	} else if (line.charAt(0) != '$') {
     		return false;
-    	} else if (line.charAt(length - 2) != '\r') {
-    		return false;
-    	} else if (line.charAt(length - 1) != '\n') {
+    	} else if (!line.substring(length - 2).contentEquals("\r\n")) {
     		return false;
     	} else {
     		return true;
@@ -232,7 +218,8 @@ public class LilyDevice implements Device {
     		break;
 
     	case POLL:
-    		message = message.substring(0, message.length() - 14);
+    		// remove the first line and the trailing message
+    		message = message.substring(message.indexOf('\n') + 1, message.length() - 16);
     		break;
     	}
     	
