@@ -252,13 +252,13 @@ public class CCSAILDevice implements Device {
         String  token;
         int     len = message.length();
 
-        if (message.startsWith ("\r\n")) {
+        if (message.startsWith("\r\n")) {
         	message = message.substring (2, len);
             len -= 2;
         }
         
         // return the message
-        token = message.substring(9, len - 3);
+        token = message.substring(11, len - 3);
         
         return token;
     }
@@ -267,7 +267,11 @@ public class CCSAILDevice implements Device {
      * Formats a line.  Removes unnecessary characters
      */
     public String formatLine(String line) {
-    	return line;
+        int length = line.length();
+    	if (line.charAt(length - 1) == '\r') {
+    		line = line.substring(0, length - 1);
+    	}
+    	return line.trim();
     }
     
     /**
