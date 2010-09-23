@@ -52,6 +52,10 @@ public class IPConnection extends Thread implements Connection {
 	/** a mechanism to lock the queue.  Also used by subclasses. */
 	protected boolean lockQueue;
 	
+	public IPConnection() {
+		super("IPConnection");
+	}
+	
 	/**
 	 * Initialize IPConnection
 	 */
@@ -199,13 +203,15 @@ public class IPConnection extends Thread implements Connection {
 	/** Thread run() implementation.  Just constantly tries reading bytes from the socket.
 	 */
 	public void run() {
-		while (!stopThread) {
-			try {
-				int count = in.read(buffer);
-				receiveData(buffer, count);
-			} catch (Exception e) { }
+		while (true) {
+			while (!stopThread) {
+				try {
+					int count = in.read(buffer);
+					receiveData(buffer, count);
+				} catch (Exception e) { }
+			}
 		}
-		interrupt();
+		// interrupt();
 	}
 	
 	/** Places received bytes in a message queue.

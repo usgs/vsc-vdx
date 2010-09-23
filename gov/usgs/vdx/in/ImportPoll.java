@@ -93,7 +93,9 @@ public class ImportPoll extends Poller implements Importer {
 	public String defaultChannels;
 	public String[] dsChannelArray;	
 	public Map<String, ConfigFile> channelDeviceParamsMap;
-	public Map<String, ConfigFile> channelConnectionParamsMap;
+	public Map<String, ConfigFile> channelConnectionParamsMap;	
+	public Map<String, Device> channelDeviceMap;
+	public Map<String, Connection> channelConnectionMap;
 	
 	public String deviceCols;
 	
@@ -191,13 +193,18 @@ public class ImportPoll extends Poller implements Importer {
 		dateOut		= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateOut.setTimeZone(TimeZone.getTimeZone("UTC"));
 		
-		// get the list of ranks that are being used in this import
+		// get connection settings related to this instance
+		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
+		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
+		
+		// get the rank configuration for this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankName		= Util.stringToString(rankParams.getString("name"), "RawData");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
+		// get the columns configuration
 		columnList	= params.getList("column");
 		if (columnList != null) {
 			dbColumnMap	= new HashMap<String, Column>();
@@ -238,10 +245,6 @@ public class ImportPoll extends Poller implements Importer {
 			System.exit(-1);
 		}
 		
-		// get connection settings related to this instance
-		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
-		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
-		
 		// get the list of channels that are being used in this import
 		defaultChannels	= "";
 		channelList		= params.getList("channel");
@@ -249,6 +252,8 @@ public class ImportPoll extends Poller implements Importer {
 			channelMap					= new HashMap<String, Channel>();
 			channelDeviceParamsMap		= new HashMap<String, ConfigFile>();
 			channelConnectionParamsMap	= new HashMap<String, ConfigFile>();
+			channelDeviceMap			= new HashMap<String, Device>();
+			channelConnectionMap		= new HashMap<String, Connection>();
 			for (int i = 0; i < channelList.size(); i++) {
 				
 				// channel configuration
@@ -281,6 +286,27 @@ public class ImportPoll extends Poller implements Importer {
 				deviceParams.put("columns", deviceCols);
 				channelDeviceParamsMap.put(channelCode, deviceParams);				
 				channelConnectionParamsMap.put(channelCode, connectionParams);
+				
+				// try to create a device object
+				try {
+					device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
+					device.initialize(deviceParams);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Device driver initialization failed", e);
+					System.exit(-1);
+				}
+				
+				// try to connect to the device
+				try {						
+					connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+					connection.initialize(connectionParams);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Connection driver initialization failed", e);
+					System.exit(-1);
+				}
+				
+				channelDeviceMap.put(channelCode, device);
+				channelConnectionMap.put(channelCode, connection);
 				
 				// display configuration information related to this channel
 				logger.log(Level.INFO, channel.toString());
@@ -489,8 +515,11 @@ public class ImportPoll extends Poller implements Importer {
 			channelCode			= channel.getCode();
 			deviceParams		= channelDeviceParamsMap.get(channelCode);
 			connectionParams	= channelConnectionParamsMap.get(channelCode);
+			device				= channelDeviceMap.get(channelCode);
+			connection			= channelConnectionMap.get(channelCode);
 			
 			// try to create a device object
+			/*
 			try {
 				device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
 				device.initialize(deviceParams);
@@ -498,6 +527,18 @@ public class ImportPoll extends Poller implements Importer {
 				logger.log(Level.SEVERE, "Device driver initialization failed", e);
 				System.exit(-1);
 			}
+			*/
+			
+			// try to connect to the device
+			/*
+			try {						
+				// connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+				// connection.initialize(connectionParams);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Connection driver initialization failed", e);
+				System.exit(-1);
+			}
+			*/
 			
 			// get the import line definition for this channel
 			importColumnArray	= device.getColumns().split(",");
@@ -506,7 +547,7 @@ public class ImportPoll extends Poller implements Importer {
 				importColumnMap.put(i, importColumnArray[i].trim());
 			}
 			
-			// get the latest data time from the tilt database
+			// get the latest data time from the tilt database 5010
 			sqlDataSource		= sqlDataSourceMap.get(timeDataSource);
 			Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode);
 			if (lastDataTime == null) {
@@ -532,15 +573,6 @@ public class ImportPoll extends Poller implements Importer {
 				// display logging information
 				logger.log(Level.INFO, "Polling " + channelCode + " [Try " + tries + "/" + device.getTries() + "] [lastDataTime:" + dateOut.format(lastDataTime) + "]");
 				
-				// try to connect to the device
-				try {						
-					connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
-					connection.initialize(connectionParams);
-				} catch (Exception e) {
-					logger.log(Level.SEVERE, "Connection driver initialization failed", e);
-					System.exit(-1);
-				}
-				
 				try {
 					connection.connect();
 					logger.log(Level.INFO, "Connected [" + postConnectDelay + "ms postConnectDelay]");
@@ -564,7 +596,7 @@ public class ImportPoll extends Poller implements Importer {
 				if (dataRequest.length() > 0) {
 					try {
 						connection.writeString(dataRequest);
-						// logger.log(Level.INFO, "dataRequest (" + device.getTimeout() + "ms timeout) :" + dataRequest);
+						logger.log(Level.INFO, "dataRequest (" + device.getTimeout() + "ms timeout) :" + dataRequest);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Connection write request failed", e);
 						connection.disconnect();
