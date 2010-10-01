@@ -28,7 +28,7 @@ public class LilyDevice implements Device {
 	protected int timeout;
 	
 	/** the maximum number of tries */
-	protected int tries;
+	protected int maxtries;
 	
 	/** the maximum number of lines to request */
 	protected int maxlines;
@@ -43,7 +43,7 @@ public class LilyDevice implements Device {
 	protected String delimiter;
 	
 	/** the columns available on the device */
-	protected String columns;
+	protected String fields;
 	
 	/** the acquisition mode */
 	protected Acquisition acquisition;
@@ -72,14 +72,18 @@ public class LilyDevice implements Device {
 		timestamp	= Util.stringToString(params.getString("timestamp"), "MM/dd/yy HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
 		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
-		tries		= Util.stringToInt(params.getString("tries"), 2);
+		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		columns		= Util.stringToString(params.getString("columns"), "");
+		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
-		if (acquisition == null) {
-			throw new Exception("LilyDevice initialize failed.  invalid acquisition");
+		
+		// validation
+		if (fields.length() == 0) {
+			throw new Exception("fields not defined");
+		} else if (acquisition == null) {
+			throw new Exception("invalid acquisition type");
 		}
 	}
 	
@@ -91,11 +95,11 @@ public class LilyDevice implements Device {
 		settings	   += "timestamp:" + timestamp + "/";
 		settings	   += "timezone:" + timezone + "/";
 		settings	   += "timeout:" + timeout + "/";
-		settings	   += "tries:" + tries + "/";
+		settings	   += "maxtries:" + maxtries + "/";
 		settings	   += "maxlines:" + maxlines + "/";
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
-		settings	   += "columns:" + columns + "/";
+		settings	   += "fields:" + fields + "/";
 		settings	   += "acquisition:" + acquisition.toString() + "/";
 		return settings;
 	}
@@ -257,8 +261,8 @@ public class LilyDevice implements Device {
     /**
      * getter method for tries
      */
-    public int getTries() {
-    	return tries;
+    public int getMaxtries() {
+    	return maxtries;
     }
     
     /**
@@ -271,8 +275,8 @@ public class LilyDevice implements Device {
     /**
      * getter method for columns
      */
-    public String getColumns() {
-    	return columns;
+    public String getFields() {
+    	return fields;
     }
     
     /**

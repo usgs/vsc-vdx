@@ -21,8 +21,8 @@ public interface Device {
 	public String getTimestamp();
 	public String getTimezone();
 	public int getTimeout();
-	public int getTries();
+	public int getMaxtries();
 	public String getDelimiter();
-	public String getColumns();
+	public String getFields();
 	public String toString();
 }

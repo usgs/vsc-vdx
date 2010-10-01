@@ -743,23 +743,6 @@ public class ImportStream implements Importer {
 							
 					// insert the data to the database
 					sqlDataSource.defaultInsertData(channelCode, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rid);
-					
-					// VALVE2 HACK
-					double j2ksec, xTilt, yTilt, holeTemp, instVolt;
-					DoubleMatrix2D temp;
-					if (dataSource.equals("hvo_deformation_tilt") && sqlDataSource.getType().equals("tilt")) {
-						temp 		= gdm.getColumn("j2ksec");
-						j2ksec		= temp.getQuick(0, 0);
-						temp 		= gdm.getColumn("xTilt");
-						if (temp != null) { xTilt = temp.getQuick(0, 0); } else { xTilt = Double.NaN; }
-						temp 		= gdm.getColumn("yTilt");
-						if (temp != null) { yTilt = temp.getQuick(0, 0); } else { yTilt = Double.NaN; }
-						temp 		= gdm.getColumn("holeTemp");
-						if (temp != null) { holeTemp = temp.getQuick(0, 0); } else { holeTemp = Double.NaN; }
-						temp 		= gdm.getColumn("instVolt");
-						if (temp != null) { instVolt = temp.getQuick(0, 0); } else { instVolt = Double.NaN; }
-						sqlDataSource.insertV2TiltData(channelCode.toLowerCase(), j2ksec, xTilt, yTilt, holeTemp, Double.NaN, instVolt,  Double.NaN,  Double.NaN);
-					}
 				}					
 			}
 		}

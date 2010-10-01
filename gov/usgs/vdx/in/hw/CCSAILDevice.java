@@ -49,7 +49,7 @@ public class CCSAILDevice implements Device {
 	protected int timeout;
 	
 	/** the maximum number of tries */
-	protected int tries;
+	protected int maxtries;
 	
 	/** the maximum number of lines to request */
 	protected int maxlines;
@@ -64,7 +64,7 @@ public class CCSAILDevice implements Device {
 	protected String delimiter;
 	
 	/** the columns available on the device */
-	protected String columns;
+	protected String fields;
 	
 	/** the acquisition mode */
 	protected Acquisition acquisition;
@@ -93,12 +93,19 @@ public class CCSAILDevice implements Device {
 		timestamp	= Util.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
 		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
-		tries		= Util.stringToInt(params.getString("tries"), 2);
+		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		columns		= Util.stringToString(params.getString("columns"), "");
+		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
+		
+		// validation
+		if (fields.length() == 0) {
+			throw new Exception("columns not defined");
+		} else if (acquisition == null) {
+			throw new Exception("invalid acquisition type");
+		}
 		
 		// do some additional formatting for the device id
 		int idval;
@@ -123,11 +130,11 @@ public class CCSAILDevice implements Device {
 		settings	   += "timestamp:" + timestamp + "/";
 		settings	   += "timezone:" + timezone + "/";
 		settings	   += "timeout:" + timeout + "/";
-		settings	   += "tries:" + tries + "/";
+		settings	   += "maxtries:" + maxtries + "/";
 		settings	   += "maxlines:" + maxlines + "/";
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
-		settings	   += "columns:" + columns + "/";
+		settings	   += "fields:" + fields + "/";
 		settings	   += "acquisition:" + acquisition.toString() + "/";
 		return settings;
 	}
@@ -249,18 +256,21 @@ public class CCSAILDevice implements Device {
      * Formats a message.  Removes unnecessary characters
      */
     public String formatMessage (String message) {
-        String  token;
-        int     len = message.length();
 
+        // sometimes there is a new line at the beginning of the message
         if (message.startsWith("\r\n")) {
-        	message = message.substring (2, len);
-            len -= 2;
+        	message = message.substring (2, message.length());
         }
         
-        // return the message
-        token = message.substring(11, len - 3);
+        // remove the trailing checksum and \r
+        message	= message.substring(11, message.length() - 3);
         
-        return token;
+        // sometimes there is an EOF on the message
+        if (message.substring(message.length() - 5).contentEquals("\nEOF,")) {
+        	message = message.substring(0, message.length() - 5);
+        }
+
+        return message;
     }
     
     /**
@@ -298,8 +308,8 @@ public class CCSAILDevice implements Device {
     /**
      * getter method for tries
      */
-    public int getTries() {
-    	return tries;
+    public int getMaxtries() {
+    	return maxtries;
     }
     
     /**
@@ -312,8 +322,8 @@ public class CCSAILDevice implements Device {
     /**
      * getter method for columns
      */
-    public String getColumns() {
-    	return columns;
+    public String getFields() {
+    	return fields;
     }
 
     /**
