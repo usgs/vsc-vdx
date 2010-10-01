@@ -94,7 +94,7 @@ abstract public class SQLDataSource {
 		
 		// initialize the logger for this data source
 		logger			= Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
-		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+		// logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 	}
 
 	/**
@@ -1311,124 +1311,5 @@ abstract public class SQLDataSource {
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultInsertData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
-	}
-	
-	public void insertV2TiltData (String code, double j2ksec, double x, double y, double h, double b, double i, double g, double r) {
-		try {
-			
-			// default some variables
-			int tid = -1;
-			int oid = -1;
-			int eid = -1;
-			
-			// set the database
-			database.useV2Database("tilt");
-			
-			// get the translation and offset
-            ps = database.getPreparedStatement("SELECT curTrans, curOffset, curEnv FROM stations WHERE code=?");
-            ps.setString(1, code);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-            	tid = rs.getInt(1);
-            	oid = rs.getInt(2);
-            	eid = rs.getInt(3);
-            }
-            rs.close();
-            
-            // lower case the code because that's how the table names are in the database
-            code.toLowerCase();
-
-            // create the tilt entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "tilt VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, j2ksec);
-			ps.setString(2, Util.j2KToDateString(j2ksec));
-			if (Double.isNaN(x)) { ps.setNull(3, 8); } else { ps.setDouble(3, x); }
-			if (Double.isNaN(y)) { ps.setNull(4, 8); } else { ps.setDouble(4, y); }
-			if (Double.isNaN(g)) { ps.setNull(5, 8); } else { ps.setDouble(5, g); }
-			ps.setDouble(6, tid);
-			ps.setDouble(7, oid);
-			ps.setDouble(8, 0);
-			ps.execute();
-			
-			// create the environment entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env VALUES (?,?,?,?,?,?,?,?)");
-			ps.setDouble(1, j2ksec);
-			ps.setString(2, Util.j2KToDateString(j2ksec));
-			if (Double.isNaN(h)) { ps.setNull(3, 8); } else { ps.setDouble(3, h); }
-			if (Double.isNaN(b)) { ps.setNull(4, 8); } else { ps.setDouble(4, b); }
-			if (Double.isNaN(i)) { ps.setNull(5, 8); } else { ps.setDouble(5, i); }
-			if (Double.isNaN(r)) { ps.setNull(6, 8); } else { ps.setDouble(6, r); }
-			if (Double.isNaN(g)) { ps.setNull(7, 8); } else { ps.setDouble(7, g); }
-			ps.setDouble(8, eid);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.insertV2Data() failed.", e);
-		}
-	}
-
-	public void insertV2StrainData(String code, double j2ksec, double dt01, double dt02, double barometer) {		
-		try {
-			
-			// default some variables
-			int tid = -1;
-			int eid = -1;
-            
-            // lower case the code because that's how the table names are in the database
-            code.toLowerCase();
-			
-			// set the database
-			database.useV2Database("strain");
-			
-			// get the translation and offset
-            ps = database.getPreparedStatement(
-            		"SELECT curTrans, curEnvTrans FROM stations WHERE code=?");
-            ps.setString(1, code);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-            	tid = rs.getInt(1);
-            	eid = rs.getInt(2);
-            }
-            rs.close();
-
-            // create the strain entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "strain (j2ksec, time, dt01, dt02, trans) VALUES (?,?,?,?,?)");
-			ps.setDouble(1, j2ksec);
-			ps.setString(2, Util.j2KToDateString(j2ksec));
-			ps.setDouble(3, dt01);
-			ps.setDouble(4, dt02);
-			ps.setDouble(5, tid);
-			ps.execute();
-			
-			// create the environment entry
-            ps = database.getPreparedStatement("INSERT IGNORE INTO " + code + "env (j2ksec, time, bar ,trans) VALUES (?,?,?,?)");
-			ps.setDouble(1, j2ksec);
-			ps.setString(2, Util.j2KToDateString(j2ksec));
-			ps.setDouble(3, barometer);
-			ps.setDouble(4, eid);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.insertV2StrainData() failed.", e);
-		}		
-	}
-	
-	public void insertV2GasData(int sid, double t, double co2) {		
-		try {
-			
-			// set the database
-			database.useV2Database("gas");
-
-            // create the tilt entry
-			ps = database.getPreparedStatement("INSERT IGNORE INTO co2 VALUES (?,?,?,?)");
-			ps.setDouble(1, t);
-			ps.setInt(2, sid);
-			ps.setString(3, Util.j2KToDateString(t));
-			ps.setDouble(4, co2);
-			ps.execute();
-			
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.insertV2GasData() failed.", e);
-		}		
 	}
 }
