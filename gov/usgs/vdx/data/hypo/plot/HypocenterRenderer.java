@@ -1,7 +1,9 @@
 package gov.usgs.vdx.data.hypo.plot;
 
+import gov.usgs.plot.ArbDepthCalculator;
 import gov.usgs.plot.Jet;
 import gov.usgs.plot.Renderer;
+import gov.usgs.plot.ArbDepthFrameRenderer;
 import gov.usgs.plot.SmartTick;
 import gov.usgs.plot.Spectrum;
 import gov.usgs.plot.Transformer;
@@ -34,7 +36,7 @@ public class HypocenterRenderer implements Renderer
 	 */
 	public enum Axes
 	{
-		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW;
+		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW, ARB_DEPTH;
 		
 		public static Axes fromString(String c)
 		{
@@ -52,6 +54,8 @@ public class HypocenterRenderer implements Renderer
 					return DEPTH_TIME;
 				case '3':
 					return TRIPLE_VIEW;
+				case 'A':				
+					return ARB_DEPTH;
 				default:
 					return null;
 			}
@@ -93,6 +97,7 @@ public class HypocenterRenderer implements Renderer
 					return DEPTH;
 				case LON_DEPTH:
 				case LAT_DEPTH:
+				case ARB_DEPTH:
 					return TIME;
 				default:
 					return MONOCHROME;
@@ -129,7 +134,6 @@ public class HypocenterRenderer implements Renderer
     
     public static final int[] circleScaleOffset = new int[] {1, 8, 17, 28, 44, 64, 90, 120};
     
-    // set these externally
 	/** 
 	 * The colors for different depths
 	 */
@@ -395,6 +399,7 @@ public class HypocenterRenderer implements Renderer
 	            }
         	};
     }
+  
     
 	/** 
 	 * Renders according to the settings of this HypocenterRenderer.
@@ -414,6 +419,9 @@ public class HypocenterRenderer implements Renderer
         Color color = null;
         double dt = maxTime - minTime;
         List<Hypocenter> hcs = data.getHypocenters();
+        
+        int skippedCount = 0;
+        
         for (int i = 0; i < hcs.size(); i++)
         {
         	Hypocenter hc = hcs.get(i);
@@ -432,6 +440,50 @@ public class HypocenterRenderer implements Renderer
 	                    break;
 	            	case LAT_DEPTH:
 	            		xt = transformer.getXPixel(hc.lat);
+	                    yt = transformer.getYPixel(hc.depth);
+	            		break;
+	            	case ARB_DEPTH:
+	            		// this is where we must convert from lat/lon to distance along a line.
+	            		// for the xt point.
+	            	
+	            		// if my transformer is really of type ArbDepthFrameRenderer, then use the embedded ArbDepthCalculator
+	            		ArbDepthFrameRenderer adfr = null;
+	            		
+	            		
+	            		if (transformer instanceof ArbDepthFrameRenderer) {	            		
+	            			adfr = (ArbDepthFrameRenderer)transformer;
+	            			ArbDepthCalculator adc = adfr.getArbDepthCalc();
+
+	            			if (adc != null) {
+
+	            				double projectedDist = adc.getScaledProjectedDistance(hc.lat, hc.lon);	        						
+
+	            				if (projectedDist < 0) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+	            			
+	            				if (projectedDist > adc.getMaxDist()) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+
+	            				double projectedWidth = Math.abs(adc.getScalePojectedWidth(hc.lat, hc.lon));
+	            				if (projectedWidth > adc.getWidth()) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+
+	            				xt = transformer.getXPixel(projectedDist);
+	            			} else {
+	            				// we don't have the arbitrary depth calculator, just plot the point at zero.
+	            				xt = 0.0;
+	            			}
+	            				
+	        				
+	            		} else {		            				            			
+	            			xt = transformer.getXPixel(hc.lat);
+	            		}
 	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
 	            	case DEPTH_TIME:
@@ -470,7 +522,10 @@ public class HypocenterRenderer implements Renderer
                 g.translate(-xt, -yt);
             }
         }
+
+      
         
+       
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, aa);
         
         g.setColor(origColor);
