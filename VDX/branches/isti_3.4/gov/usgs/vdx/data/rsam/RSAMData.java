@@ -177,6 +177,12 @@ public class RSAMData extends GenericDataMatrix
 		return axis;
 	}
 
+	/**
+	 * Loops for data matrix, scans columns and fills events matrix
+	 * @param threshold event treshold
+	 * @param ratio minimum ratio between new and older value to define event
+	 * @param maxLength maximum event length (ms)
+	 */
 	public void countEvents(double threshold, double ratio, double maxLength)
 	{
 		double oldValue = 0;

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Represents data about selection option
  * @author Loren Antolik
  */
 public class SelectOption {

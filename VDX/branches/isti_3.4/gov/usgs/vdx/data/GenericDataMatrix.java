@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.nio.ByteBuffer;
@@ -7,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -18,6 +20,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class GenericDataMatrix implements BinaryDataSet
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.GenericDataMatrix"); 
 	protected DoubleMatrix2D data;
 	protected HashMap<String, Integer> columnMap;
 	
@@ -252,6 +255,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 	}
 
+	/**
+	 * Performs data detrending
+	 * @param c number of column to detrend
+	 */
 	public void detrend(int c) {
 
         double xm	= mean(0);
@@ -507,6 +514,9 @@ public class GenericDataMatrix implements BinaryDataSet
 				hiHalf.addHi( val, idx2, loHalf );
 		}
 		
+		/**
+		 * Dumps median data to stdout
+		 */
 		public void dump() {
 			System.out.print( "[" );
 			loHalf.dump();

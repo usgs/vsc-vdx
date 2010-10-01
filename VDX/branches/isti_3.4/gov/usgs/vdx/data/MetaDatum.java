@@ -1,8 +1,5 @@
 package gov.usgs.vdx.data;
 	
-import java.sql.ResultSet;
-import java.sql.SQLException;
-			
 /**
  * MetaDatum: one item of metadata (matching a line in a channelmetadata table), 
  * with ids and their translated names

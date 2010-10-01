@@ -201,7 +201,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
-			System.out.println(ps.toString());
+			logger.info(ps.toString());
 			double t=0;
 			double[] d = null;
 			while (rs.next())

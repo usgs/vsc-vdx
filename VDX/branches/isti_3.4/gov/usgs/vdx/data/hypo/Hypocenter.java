@@ -65,6 +65,9 @@ public class Hypocenter
     	this.rmk		= rmk;
     }
     
+    /**
+     * Apply projection to this hypocenter
+      */
     public void project(Projection proj)
     {
     	Point2D.Double pt = new Point2D.Double(this.lon, this.lat);
@@ -89,6 +92,9 @@ public class Hypocenter
         return this.j2ksec + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.prefmag;
     }
 	
+    /**
+     * Push data about this hypocenter in the byte buffer
+     */
     public void insertIntoByteBuffer(ByteBuffer buffer)
     {
     	buffer.putDouble(j2ksec);

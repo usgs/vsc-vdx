@@ -4,6 +4,7 @@ import gov.usgs.math.Butterworth;
 import gov.usgs.math.FFT;
 import gov.usgs.math.Filter;
 import gov.usgs.util.IntVector;
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.BinaryDataSet;
 
@@ -20,9 +21,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 /**
  * <p>
@@ -56,6 +57,8 @@ import java.util.TreeMap;
  */
 public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.wave.Wave"); 
+	
 	/**
 	 * A value that indicates that this sample is not an actual data sample.
 	 */
@@ -1156,7 +1159,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 			ca[1] = bb.getChar();
 			dataType = new String( ca );
 		} catch (Exception e) {
-			System.out.println("Extracting dt from Wave failed: " + e);
+			logger.warning("Extracting dt from Wave failed: " + e);
 			dataType = null;
 		}
 	}

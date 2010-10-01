@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Represent one sensor with it's geographic location
  * @author Dan Cervelli, Loren Antolik
  */
 public class Channel {
@@ -50,6 +51,10 @@ public class Channel {
 		this(cid, code, name, lon, lat, height, 0);
 	}
 	
+	/**
+	 * Constructor
+	 * @param ch ':'-separated string of parameters
+	 */
 	public Channel(String ch) {
 		String[] parts	= ch.split(":");
 		

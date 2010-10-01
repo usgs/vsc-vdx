@@ -1,7 +1,6 @@
 package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
 import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
