@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.hypo;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.BufferedReader;
@@ -8,6 +9,7 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -52,6 +54,7 @@ import java.util.TimeZone;
  */
 public class CUBEMessage
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.hypo.CUBEMessage"); 
     private static SimpleDateFormat dateIn = new SimpleDateFormat("yyyyMMddHHmmss");
     private static SimpleDateFormat dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     public static final int EARTHQUAKE = 1;
@@ -202,7 +205,7 @@ public class CUBEMessage
                 BufferedReader in = new BufferedReader(new FileReader(files[i]));
                 CUBEMessage msg = new CUBEMessage(in.readLine());
                 if (msg.getMessageType() == EARTHQUAKE)
-                    System.out.println(files[i].getName() + ": " + msg.getEventID() + " " + msg.getVersion() + " " + msg.getDataSource() + " " + dateOut.format(msg.getDate()) + " " + msg.getLongitude() + 
+                   logger.info(files[i].getName() + ": " + msg.getEventID() + " " + msg.getVersion() + " " + msg.getDataSource() + " " + dateOut.format(msg.getDate()) + " " + msg.getLongitude() + 
                         " " + msg.getLatitude() + " " + msg.getDepth() + " " + msg.getMagnitude());
                 in.close();
             }

@@ -28,6 +28,7 @@
 
 package gov.usgs.vdx.data.wave;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.BufferedInputStream;
@@ -45,6 +46,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * A class to read SAC files, adapted from Fissures code.
@@ -64,6 +66,7 @@ import java.util.TimeZone;
  */
 public class SAC
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.wave.SAC"); 
 	public float delta = FLOAT_UNDEF;
 	public float depmin = FLOAT_UNDEF;
 	public float depmax = FLOAT_UNDEF;

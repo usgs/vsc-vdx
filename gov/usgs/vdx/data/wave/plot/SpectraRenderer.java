@@ -4,7 +4,6 @@ import gov.usgs.math.FFT;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.MatrixRenderer;
-import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;

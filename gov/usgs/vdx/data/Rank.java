@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Represents rank
  * @author Loren Antolik
  */
 public class Rank {
@@ -29,6 +30,10 @@ public class Rank {
 		this.user_default	= user_default;
 	}
 	
+	/**
+	 * Comstructor
+	 * @param rk ':'-separated string of parameters
+	 */
 	public Rank(String rk) {
 		String[] parts	= rk.split(":");
 		rid				= Integer.parseInt(parts[0]);
@@ -37,6 +42,9 @@ public class Rank {
 		user_default	= Integer.parseInt(parts[3]);
 	}
 	
+	/**
+	 * Get best possible rank
+	 */
 	public Rank bestPossible() {
 		return new Rank(0, "Best Possible Rank", 0, 0);
 	}

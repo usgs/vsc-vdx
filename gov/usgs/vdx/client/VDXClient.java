@@ -1,7 +1,6 @@
 package gov.usgs.vdx.client;
 
 import gov.usgs.net.InternetClient;
-import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
@@ -77,7 +76,6 @@ public class VDXClient extends InternetClient
 	public VDXClient(String h, int p)
 	{
 		super(h, p);
-		logger = Log.getLogger("gov.usgs.vdx");
 		setTimeout(30000);
 	}
 	
@@ -141,7 +139,7 @@ public class VDXClient extends InternetClient
 						String r = rs.substring(rs.indexOf(':') + 1);
 						result = null;
 						if (rc.equals("ok")){
-							System.out.println(r);
+							logger.info(r);
 							Map<String, String> map = Util.stringToMap(r);
 							if (map.get("bytes") != null)
 							{	
@@ -151,7 +149,7 @@ public class VDXClient extends InternetClient
 									byte[] decompBuf = Util.decompress(buffer);
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
 								
-									System.out.println(":VDX client got type " + map.get("type"));
+									logger.info(":VDX client got type " + map.get("type"));
 									String className = dataTypeMap.get(map.get("type"));
 									BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
 									ds.fromBinary(bb);
@@ -165,7 +163,7 @@ public class VDXClient extends InternetClient
 							}
 							else 
 							{
-								System.out.println("error, expected binary");
+								logger.warning("error, expected binary");
 							}
 							return true;
 						}

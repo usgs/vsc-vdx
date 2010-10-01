@@ -31,9 +31,11 @@ package gov.usgs.vdx.data;
 	
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-			
+
+/**
+ * Supplemental data for channel		
+ */
+
 public class SuppDatum
 {
 	public int sdid;
@@ -58,6 +60,15 @@ public class SuppDatum
 	public SuppDatum() {
 	}
 
+	/**
+	 * Constructor
+	 * @param st start time
+	 * @param et end time
+	 * @param cid channel id
+	 * @param colid column id
+	 * @param rid rank id
+	 * @param tid type id
+	 */
 	public SuppDatum( Double st, Double et, int cid, int colid, int rid, int tid ) {
 		sdid = 0;
 		this.cid = cid;
@@ -74,6 +85,15 @@ public class SuppDatum
 		typeName = null;
 	}
 
+	/**
+	 * Constructor
+	 * @param st start time
+	 * @param et end time
+	 * @param chName channel name
+	 * @param colName column name
+	 * @param rkName rank name
+	 * @param typeName type name
+	 */
 	public SuppDatum( Double st, Double et, String chName, String colName, String rkName, String typeName ) {
 		sdid = 0;
 		cid = -1;
@@ -90,6 +110,11 @@ public class SuppDatum
 		this.typeName = typeName;
 	}
 
+	/**
+	 * Constructor
+	 * @param rs resultset containing 1 row to init
+	 * @throws SQLException
+	 */
 	public SuppDatum( ResultSet rs ) throws SQLException {
 		sdid    = rs.getInt(1);
 		tid     = rs.getInt(2);

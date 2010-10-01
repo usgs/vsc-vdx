@@ -5,11 +5,6 @@ import hep.aida.ref.Histogram1D;
 import gov.usgs.plot.HistogramRenderer;
 import gov.usgs.vdx.data.Exportable;
 
-import cern.colt.matrix.DoubleMatrix2D;
-
-import java.util.Map;
-
-
 /**
  * Add methods to HistogramRenderer to yield plot data for exporting
  *
@@ -39,6 +34,9 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
 		time = 0;
 	}
 	
+	/**
+	 * Get next histogram row
+	 */
 	public Double[] getNextExportRow() {
 		if ( expIndex >= bins ) {
 			return null;

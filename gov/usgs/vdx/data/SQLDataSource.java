@@ -37,7 +37,7 @@ abstract public class SQLDataSource implements DataSource {
 	
 	protected VDXDatabase database;
 	protected String dbName;
-	protected Logger logger;
+	protected static Logger logger = Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
 
 	protected Statement st;
 	protected PreparedStatement ps;
@@ -184,8 +184,6 @@ abstract public class SQLDataSource implements DataSource {
 		// dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
 		dbName			= params.getString("vdx.name") + "$" + getType();
 		maxrows			= Util.stringToInt(params.getString("maxrows"), 0); 
-		// initialize the logger for this data source
-		logger			= Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
 		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 	}
 

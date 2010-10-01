@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.heli;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.wave.Wave;
@@ -8,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -50,7 +52,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 public class HelicorderData extends GenericDataMatrix
 {
 //	private DoubleMatrix2D data;
-	
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.heli.HelicorderData"); 
 	private transient double bias = -1E300;
 	private transient double meanMax = -1E300;
 	
@@ -220,7 +222,7 @@ public class HelicorderData extends GenericDataMatrix
 			if (t > rowStartTime + timeChunk)
 			{
 				biases[row] /= samples;
-				System.out.println(row + " " + biases[row]);
+				logger.fine(row + " " + biases[row]);
 				row++;
 				samples = 0;
 				rowStartTime += timeChunk;
@@ -388,7 +390,7 @@ public class HelicorderData extends GenericDataMatrix
 		// this wave is left of other wave	
 		if (getStartTime() <= heli.getStartTime())
 		{
-			//System.out.println("rows before: " + rows());
+			//logger.fine("rows before: " + rows());
 			DoubleMatrix2D[][] ms = new DoubleMatrix2D[2][1];
 			ms[0][0] = data;
 			int i = heli.findClosestTimeIndexGreaterThan(getEndTime());
@@ -401,7 +403,7 @@ public class HelicorderData extends GenericDataMatrix
 		// this wave is right of other wave
 		if (heli.getStartTime() <= getStartTime())
 		{
-			//System.out.println("rows before: " + rows());
+			//logger.fine("rows before: " + rows());
 			DoubleMatrix2D[][] ms = new DoubleMatrix2D[2][1];
 			ms[0][0] = heli.getData();
 			int i = findClosestTimeIndexLessThan(heli.getEndTime());
@@ -409,11 +411,11 @@ public class HelicorderData extends GenericDataMatrix
 				i = 0;
 			ms[1][0] = getData().viewPart(i, 0, rows() - i, 3);
 			data = DoubleFactory2D.dense.compose(ms);
-			//System.out.println("combine r: " + data.rows() + " " + data.columns());
+			//logger.fine("combine r: " + data.rows() + " " + data.columns());
 			return this;
 		}
 		
-		//System.out.println("unknown case");
+		//logger.fine("unknown case");
 		return null;
 	}
 	

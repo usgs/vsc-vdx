@@ -80,6 +80,9 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 		expIndex = 0;
 	}
 	
+	/**
+	 * Get next data column to export
+	 */
 	public Double[] getNextExportRow() {
 		if ( expIndex >= getData().rows() )
 			return null;

@@ -1,11 +1,13 @@
 package gov.usgs.vdx.data.gps;
 
 import gov.usgs.util.CodeTimer;
+import gov.usgs.util.Log;
 import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -20,6 +22,7 @@ import cern.colt.matrix.linalg.Algebra;
  */
 public class GPSData implements BinaryDataSet
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.gps.GPSData"); 
 	private static final DoubleFactory2D DENSE	= DoubleFactory2D.dense;
 	private static final DoubleFactory2D SPARSE	= DoubleFactory2D.sparse;
 	private static final DoubleMatrix2D I3X3	= DENSE.identity(3);
@@ -319,7 +322,7 @@ public class GPSData implements BinaryDataSet
 		/*
 		DoubleMatrix2D t = GPS.createFullENUTransform(lon, lat, observations());
 		xyzData = Algebra.DEFAULT.mult(t, xyzData);
-		System.out.println(covData.rows() + " " + covData.columns() + "\n" + t.rows() + " " + t.columns());
+		logger.info(covData.rows() + " " + covData.columns() + "\n" + t.rows() + " " + t.columns());
 		CodeTimer ct = new CodeTimer("toENU just cov");
 		covData = Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(t, covData), t.viewDice());
 		ct.stop();
@@ -488,25 +491,25 @@ public class GPSData implements BinaryDataSet
 	{
 		for (int i = 0; i < observations(); i++)
 		{
-			System.out.println(tData.getQuick(i, 0));
-			System.out.println(rData.getQuick(i, 0));
-			System.out.println("\t" +
+			logger.fine(new Double(tData.getQuick(i, 0)).toString());
+			logger.fine(new Double(rData.getQuick(i, 0)).toString());
+			logger.fine("\t" +
 					xyzData.getQuick(i * 3, 0) + " " + 
 					xyzData.getQuick(i * 3 + 1, 0) + " " + 
 					xyzData.getQuick(i * 3 + 2, 0) + " " + 
 					lenData.getQuick(i, 0));
 			
-			System.out.println("\t\t" +
+			logger.fine("\t\t" +
 					covData.getQuick(i * 3 + 0, i * 3) + " " + 
 					covData.getQuick(i * 3 + 0, i * 3 + 1) + " " + 
 					covData.getQuick(i * 3 + 0, i * 3 + 2) + " ");
 			
-			System.out.println("\t\t" +
+			logger.fine("\t\t" +
 					covData.getQuick(i * 3 + 1, i * 3) + " " + 
 					covData.getQuick(i * 3 + 1, i * 3 + 1) + " " + 
 					covData.getQuick(i * 3 + 1, i * 3 + 2) + " ");
 			
-			System.out.println("\t\t" +
+			logger.fine("\t\t" +
 					covData.getQuick(i * 3 + 2, i * 3) + " " + 
 					covData.getQuick(i * 3 + 2, i * 3 + 1) + " " + 
 					covData.getQuick(i * 3 + 2, i * 3 + 2) + " ");
