@@ -25,6 +25,21 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	/** a number format for properly dialing the radio phone number */
 	private DecimalFormat radioNumberFormatter;
 	
+	/** 
+	 * default constructor
+	 */
+	public FreewaveIPConnection() {
+		super();
+	}
+	
+	/**
+	 * constructor
+	 * @param name thread name
+	 */
+	public FreewaveIPConnection(String name) {
+		super(name);
+	}
+	
 	/**
 	 * Initialize FreewaveIPConnection
 	 */
@@ -38,7 +53,7 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	/**
 	 * Get settings
 	 */
-	public String getSettings() {
+	public String toString() {
 		String settings	= super.toString();
 		settings	   += "callnumber:" + callnumber + "/";
 		settings	   += "repeater:" + repeater + "/";

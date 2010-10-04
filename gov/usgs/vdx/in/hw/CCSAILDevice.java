@@ -92,7 +92,7 @@ public class CCSAILDevice implements Device {
 		id			= Util.stringToString(params.getString("id"), "0");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
-		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
+		timeout		= Util.stringToInt(params.getString("timeout"), 50000);
 		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);

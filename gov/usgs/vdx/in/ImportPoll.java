@@ -1,5 +1,6 @@
 package gov.usgs.vdx.in;
 
+import java.lang.reflect.Constructor;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -258,8 +259,11 @@ public class ImportPoll extends Poller implements Importer {
 			}
 			
 			// try to connect to the device
-			try {						
-				connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+			try {
+				Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
+				Constructor<?> c	= connClass.getConstructor(new Class[]{String.class});
+				connection			= (Connection)c.newInstance(new Object[]{stationCode});
+				// connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
 				connection.initialize(connectionParams);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Connection driver initialization failed", e);
@@ -568,6 +572,7 @@ public class ImportPoll extends Poller implements Importer {
 				if (dataRequest.length() > 0) {
 					try {
 						connection.writeString(dataRequest);
+						// logger.log(Level.INFO, "dataRequest:" + dataRequest);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Connection write request failed", e);
 						connection.disconnect();
@@ -579,6 +584,7 @@ public class ImportPoll extends Poller implements Importer {
 				String dataResponse = "";
 				try {
 					dataResponse	= connection.readString(device);
+					// logger.log(Level.INFO, "dataResponse:" + dataResponse);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Device receive request failed", e);
 					connection.disconnect();
@@ -590,6 +596,7 @@ public class ImportPoll extends Poller implements Importer {
 					device.validateMessage(dataResponse, true);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Message validation failed", e);
+					// logger.log(Level.SEVERE, dataResponse);
 					connection.disconnect();
 					continue;
 				}
@@ -599,6 +606,7 @@ public class ImportPoll extends Poller implements Importer {
 					
 				// format the response based on the type of device
 				String dataMessage	= device.formatMessage(dataResponse);
+				// logger.log(Level.INFO, "dataMessage:" + dataMessage);
 					
 				// parse the response by lines
 				StringTokenizer st	= new StringTokenizer(dataMessage, "\n");
@@ -791,7 +799,7 @@ public class ImportPoll extends Poller implements Importer {
 				}
 			}
 			
-			connection.disconnect();
+			// connection.disconnect();
 			
 			// output a status message based on how everything went above
 			if (done) {					
