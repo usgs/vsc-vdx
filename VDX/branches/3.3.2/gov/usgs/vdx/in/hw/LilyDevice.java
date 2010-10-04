@@ -128,7 +128,12 @@ public class LilyDevice implements Device {
 			// request the smaller of the two, samples accumulated or lines
 			currentlines	= Math.min(samps, maxlines);
 			
-			cmd	+= "XY-DL-LAST," + currentlines;
+			// if no data is available then throw exception indicating we don't need to poll
+			if (currentlines == 0) {
+				throw new Exception("No data to poll");
+			} else {			
+				cmd	+= "XY-DL-LAST," + currentlines;
+			}
 			break;			
 		}
         

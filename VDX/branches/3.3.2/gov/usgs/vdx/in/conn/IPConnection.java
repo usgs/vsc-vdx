@@ -52,8 +52,19 @@ public class IPConnection extends Thread implements Connection {
 	/** a mechanism to lock the queue.  Also used by subclasses. */
 	protected boolean lockQueue;
 	
+	/** 
+	 * default constructor
+	 */
 	public IPConnection() {
 		super("IPConnection");
+	}
+	
+	/**
+	 * constructor
+	 * @param name thread name
+	 */
+	public IPConnection(String name) {
+		super(name);
 	}
 	
 	/**
