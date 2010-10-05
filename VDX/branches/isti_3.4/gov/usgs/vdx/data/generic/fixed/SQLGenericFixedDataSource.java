@@ -155,6 +155,9 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		} else if (action.equals("genericMenu")) {
 			return new TextResult(getGenericMenu());
 			
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
 		} else if (action.equals("suppdata")) {
 			return getSuppData( params, false );
 		

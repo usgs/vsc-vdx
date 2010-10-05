@@ -576,9 +576,6 @@ public class HypocenterRenderer implements Renderer
             }
         }
 
-      
-        
-       
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, aa);
         
         g.setColor(origColor);

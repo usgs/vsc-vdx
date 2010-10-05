@@ -29,6 +29,9 @@ public class HypocenterExporter implements Exportable {
     	resetExport();
     }
     
+    /**
+     * Reset export to beginning of hypocenter
+     */
 	public void resetExport() {
 		expIndex = 0;
 	}

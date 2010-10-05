@@ -184,7 +184,7 @@ public class VDXClient extends InternetClient
 	 */
 	public List<String> getTextData(final Map<String, String> params) throws UtilException
 	{
-		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTestData()", MAX_RETRIES)
+		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTextData()", MAX_RETRIES)
 		{
 			public void attemptFix()
 			{

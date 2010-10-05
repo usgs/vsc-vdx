@@ -29,6 +29,9 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
     	resetExport();
     }
     
+    /**
+     * Reset export to beginning of histogram
+     */
 	public void resetExport() {
 		expIndex = 0;
 		time = 0;

@@ -1785,27 +1785,59 @@ abstract public class SQLDataSource implements DataSource {
 			String where = "WHERE SD.et >= " + sd.st + " AND SD.st <= " + sd.et + " AND SD.sdid=SX.sdid AND SD.sdtypeid=ST.sdtypeid AND SX.cid=CH.cid AND SX.colid=COL.colid AND SX.rid=RK.rid";
 			
 			if ( sd.chName != null )
-				where = where + " AND CH.code='" + sd.chName + "'";
+				if ( sd.cid < 0 )
+					where = where + " AND CH.code='" + sd.chName + "'";
+				else
+					where = where + " AND CH.cid IN (" + sd.chName + ")";
 			else if ( sd.cid >= 0 )
-				where = where + " AND SD.cid=" + sd.cid;
-			if ( sd.colName != null )
-				where = where + " AND COL.name='" + sd.colName + "'";
-			else if ( sd.colid >= 0 )
-				where = where + " AND MD.colid=" + sd.colid;
-			if ( sd.rkName != null )
-				where = where + " AND RK.name='" + sd.rkName + "'";
-			else if ( sd.rid >= 0 )
-				where = where + " AND SD.rid=" + sd.rid;
-			if ( sd.name != null )
-				where = where + " AND SD.name=" + sd.name;
-			if ( sd.value != null )
-				where = where + " AND SD.value=" + sd.value;
-			if ( sd.typeName != null )
-				where = where + " AND ST.supp_data_type='" + sd.typeName + "'";
-			else if ( sd.tid >= 0 )
-				where = where + " AND SD.sdtypeid=" + sd.tid;
+				where = where + " AND SX.cid=" + sd.cid;
 				
-			logger.info( "SQL: " + sql + where );
+			if ( sd.colName != null )
+				if ( sd.colid < 0 )
+					where = where + " AND COL.name='" + sd.colName + "'";
+				else
+					where = where + " AND COL.colid IN (" + sd.colName + ")";
+			else if ( sd.colid >= 0 )
+				where = where + " AND SX.colid=" + sd.colid;
+				
+			if ( sd.rkName != null )
+				if ( sd.rid < 0 )
+					where = where + " AND RK.name='" + sd.rkName + "'";
+				else
+					where = where + " AND RK.rid IN (" + sd.rkName + ")";
+			else if ( sd.rid >= 0 )
+				where = where + " AND SX.rid=" + sd.rid;
+				
+			if ( sd.name != null )
+				where = where + " AND SD.sd_short=" + sd.name;	
+			if ( sd.value != null )
+				where = where + " AND SD.sd=" + sd.value;
+			
+			String type_filter = null;
+			if ( sd.typeName != null )
+				if ( sd.typeName.length() == 0 )
+					;
+				else if ( sd.tid == -1 )
+					type_filter = "ST.supp_data_type='" + sd.typeName + "'";
+				else
+					type_filter = "ST.sdtypeid IN (" + sd.typeName + ")";
+			else if ( sd.tid >= 0 )
+				type_filter = "SD.sdtypeid=" + sd.tid;
+
+			if ( sd.dl == -1 ) {
+				if ( type_filter != null )
+					where = where + " AND " + type_filter;
+			} else if ( sd.dl < 2 ) {
+				if ( type_filter != null )
+					where = where + " AND " + type_filter;
+				where =  where + " AND ST.dl='" + sd.dl;
+			} else if ( type_filter != null ) 
+				where = where + " AND (" + type_filter + " OR ST.draw_line='0')";
+			else
+				where = where + " AND ST.draw_line='0'";
+					
+				
+			//logger.info( "SQL: " + sql + where );
 			ps = database.getPreparedStatement( sql + where );
 			rs	= ps.executeQuery();
 			List<SuppDatum> result = new ArrayList<SuppDatum>();
@@ -1978,7 +2010,7 @@ abstract public class SQLDataSource implements DataSource {
 		SuppDatum sd_s;
 		
 		String tz = params.get("tz");
-		if ( tz==null || tz=="" )
+		if ( tz==null || tz.equals("") )
 			tz = "UTC";
 		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSSS");
 		df.setTimeZone(TimeZone.getTimeZone(tz));
@@ -1987,7 +2019,7 @@ abstract public class SQLDataSource implements DataSource {
 			arg = params.get("st");
 			st =  Util.dateToJ2K(df.parse(arg));
 			arg = params.get("et");
-			if ( arg==null || arg=="" )
+			if ( arg==null || arg.equals("") )
 				et = Double.MAX_VALUE;
 			else
 				et = Util.dateToJ2K(df.parse(arg));
@@ -1997,31 +2029,32 @@ abstract public class SQLDataSource implements DataSource {
 
 		arg = params.get("byID");
 		if ( arg != null && arg.equals("true") ) {
-			int cid			= Integer.parseInt(params.get("ch"));
-			arg = params.get("col");
-			int colid;
-			if ( arg==null || arg=="" )
-				colid = -1;
-			else
-				colid = Integer.parseInt(arg);
-			arg = params.get("rk");
-			int rid;
-			if ( arg==null || arg=="" )
-				rid = -1;
-			else
-				rid = Integer.parseInt(arg);
-			arg = params.get("et");
-			if ( arg==null || arg=="" )
-				et = Double.MAX_VALUE;
-			else
-				et = Double.parseDouble(arg);
-			arg = params.get("type");
-			int tid;
-			if ( arg==null || arg=="" )
-				tid = -1;
-			else
-				tid = Integer.parseInt(arg);
-			sd_s = new SuppDatum( st, et, cid, colid, rid, tid );
+			//arg = params.get("et");
+			//if ( arg==null || arg.equals("") )
+			//	et = Double.MAX_VALUE;
+			//else
+			//	et = Double.parseDouble(arg);
+			sd_s = new SuppDatum( st, et, -1, -1, -1, -1 );
+			String[] args = {"ch","col","rk","type"};
+			for ( int i = 0; i<4; i++ ) {
+				arg = params.get( args[i] );
+				if ( arg==null || arg.equals("") )
+					args[i] = null;
+				else 
+					args[i] = arg;
+			}
+			sd_s.chName = args[0];
+			if ( sd_s.chName != null )
+				sd_s.cid = 0;
+			sd_s.colName = args[1];
+			if ( sd_s.colName != null )
+				sd_s.colid = 0;
+			sd_s.rkName = args[2];
+			if ( sd_s.rkName != null )
+				sd_s.rid = 0;
+			sd_s.typeName = args[3];
+			if ( sd_s.typeName != null )
+				sd_s.tid = 0;
 		} else {
 			String chName   = params.get("ch");
 			String colName  = params.get("col");
@@ -2029,12 +2062,16 @@ abstract public class SQLDataSource implements DataSource {
 			String typeName = params.get("type");
 			sd_s = new SuppDatum( st, et, chName, colName, rkName, typeName );
 		}
+		arg = params.get("dl");
+		if ( arg != null )
+			sd_s.dl = Integer.parseInt(arg);
 		data = getMatchingSuppData( sd_s, cm );
 		if (data != null) {
 			List<String> result = new ArrayList<String>();
 			for ( SuppDatum sd: data )
-				result.add(String.format("%d,%f,%f,%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
-					sd.sdid, sd.st, sd.et, sd.cid, sd.tid, sd.colid, sd.rid, sd.name, sd.value, sd.chName, sd.typeName, sd.colName, sd.rkName ));
+				result.add(String.format("%d,%1.3f,%1.3f,%d,%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					sd.sdid, sd.st, sd.et, sd.cid, sd.tid, sd.colid, sd.rid, sd.dl, 
+					sd.name, sd.value.replace('\n',Character.MIN_VALUE), sd.chName, sd.typeName, sd.colName, sd.rkName, sd.color ));
 			return new TextResult(result);
 		}
 		return null;
@@ -2070,4 +2107,29 @@ abstract public class SQLDataSource implements DataSource {
 		return types;
 	}
 	
+	/**
+	 * Get supp data types list in format 'sdtypeid"draw_line"name"color' from database
+	 * 
+	 * @return List of Strings with " separated values
+	 */
+	public RequestResult getSuppTypes(boolean drawOnly) {
+		List<String> result = new ArrayList<String>();
+
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT * FROM supp_data_type";
+			if ( drawOnly )
+				sql = sql + " WHERE draw_line=1";
+			rs = database.getPreparedStatement(sql + " ORDER BY supp_data_type").executeQuery();
+			while (rs.next()) {
+				result.add(String.format("%d\"%d\"%s\"%s", rs.getInt(1), rs.getInt(4), rs.getString(2), rs.getString(3)));
+			}
+			rs.close();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetSuppdataTypes() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+
+		return new TextResult(result);
+	}
 }
