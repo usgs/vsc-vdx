@@ -485,7 +485,7 @@ public class GPSData implements BinaryDataSet
 	}
 	
 	/**
-	 * Print GPSData content to stdout
+	 * Write GPSData content to log
 	 */
 	public void output()
 	{

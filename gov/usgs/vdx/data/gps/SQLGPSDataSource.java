@@ -169,6 +169,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				return new BinaryResult(data);
 			}
 
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
 		} else if (action.equals("suppdata")) {
 			return getSuppData( params, true );
 		

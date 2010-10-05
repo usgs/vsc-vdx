@@ -15,6 +15,9 @@ public class SliceWaveExporter extends SliceWaveRenderer implements Exportable {
 
     private double step = 0, time = 0, bias = 0;
 
+	/**
+	 * Get data about next wave for export
+	 */
 	public Double[] getNextExportRow() {
 		if ( wave == null )
 			return null;
@@ -39,6 +42,9 @@ public class SliceWaveExporter extends SliceWaveRenderer implements Exportable {
 		return null;
 	}
 
+    /**
+     * Reset export to beginning of wave
+     */
 	public void resetExport() {
 		if ( wave != null )
 			wave.reset();

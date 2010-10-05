@@ -31,7 +31,7 @@ public class Rank {
 	}
 	
 	/**
-	 * Comstructor
+	 * Constructor
 	 * @param rk ':'-separated string of parameters
 	 */
 	public Rank(String rk) {

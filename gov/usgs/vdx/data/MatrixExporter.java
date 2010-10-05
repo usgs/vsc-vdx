@@ -76,6 +76,9 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 		resetExport();
 	}
 
+    /**
+     * Reset export to beginning of matrix
+     */
 	public void resetExport() {
 		expIndex = 0;
 	}

@@ -67,7 +67,9 @@ public class Hypocenter
     
     /**
      * Apply projection to this hypocenter
-      */
+     *
+     * @param proj projection to be applied
+     */
     public void project(Projection proj)
     {
     	Point2D.Double pt = new Point2D.Double(this.lon, this.lat);
@@ -94,6 +96,8 @@ public class Hypocenter
 	
     /**
      * Push data about this hypocenter in the byte buffer
+     *
+     * @param buffer ByteBuffer to push
      */
     public void insertIntoByteBuffer(ByteBuffer buffer)
     {

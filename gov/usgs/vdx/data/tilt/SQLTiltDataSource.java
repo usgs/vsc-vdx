@@ -172,6 +172,9 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
 			return getTiltData(cid, rid, st, et, getMaxRows(), ds, dsInt);
 			
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
 		} else if (action.equals("suppdata")) {
 			return getSuppData( params, false );
 		
