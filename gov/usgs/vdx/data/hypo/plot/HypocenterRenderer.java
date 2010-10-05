@@ -36,7 +36,7 @@ public class HypocenterRenderer implements Renderer
 	 */
 	public enum Axes
 	{
-		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW, ARB_DEPTH;
+		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW, ARB_DEPTH, ARB_TIME;
 		
 		public static Axes fromString(String c)
 		{
@@ -56,6 +56,9 @@ public class HypocenterRenderer implements Renderer
 					return TRIPLE_VIEW;
 				case 'A':				
 					return ARB_DEPTH;
+				case 'T':				
+					return ARB_TIME;
+
 				default:
 					return null;
 			}
@@ -90,17 +93,20 @@ public class HypocenterRenderer implements Renderer
 		{
 			if (ax == null)
 				return null;
-			
+
 			switch (ax)
 			{
-				case MAP_VIEW:
-					return DEPTH;
-				case LON_DEPTH:
-				case LAT_DEPTH:
-				case ARB_DEPTH:
-					return TIME;
-				default:
-					return MONOCHROME;
+			case ARB_TIME:
+			case MAP_VIEW:
+				return DEPTH;
+
+			case LON_DEPTH:
+			case LAT_DEPTH:
+			case ARB_DEPTH:
+				return TIME;
+
+			default:
+				return MONOCHROME;
 			}
 		}
 	}
@@ -419,6 +425,7 @@ public class HypocenterRenderer implements Renderer
         Color color = null;
         double dt = maxTime - minTime;
         List<Hypocenter> hcs = data.getHypocenters();
+        ArbDepthFrameRenderer adfr = null;
         
         int skippedCount = 0;
         
@@ -447,7 +454,7 @@ public class HypocenterRenderer implements Renderer
 	            		// for the xt point.
 	            	
 	            		// if my transformer is really of type ArbDepthFrameRenderer, then use the embedded ArbDepthCalculator
-	            		ArbDepthFrameRenderer adfr = null;
+	            		adfr = null;
 	            		
 	            		
 	            		if (transformer instanceof ArbDepthFrameRenderer) {	            		
@@ -490,6 +497,52 @@ public class HypocenterRenderer implements Renderer
 	            		xt = transformer.getXPixel(hc.j2ksec);
 	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
+
+	            	case ARB_TIME:
+	            		// this is where we must convert from lat/lon to distance along a line.
+	            		// for the xt point.
+
+	            		// if my transformer is really of type ArbDepthFrameRenderer, then use the embedded ArbDepthCalculator
+	            		adfr = null;
+
+
+	            		if (transformer instanceof ArbDepthFrameRenderer) {	            		
+	            			adfr = (ArbDepthFrameRenderer)transformer;
+	            			ArbDepthCalculator adc = adfr.getArbDepthCalc();
+
+	            			if (adc != null) {
+
+	            				double projectedDist = adc.getScaledProjectedDistance(hc.lat, hc.lon);	        						
+
+	            				if (projectedDist < 0) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+
+	            				if (projectedDist > adc.getMaxDist()) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+
+	            				double projectedWidth = Math.abs(adc.getScalePojectedWidth(hc.lat, hc.lon));
+	            				if (projectedWidth > adc.getWidth()) {
+	            					skippedCount++;
+	            					continue;
+	            				}
+
+	            				yt = transformer.getYPixel(projectedDist);
+	            			} else {
+	            				// we don't have the arbitrary depth calculator, just plot the point at zero.
+	            				yt = 0.0;
+	            			}
+
+
+	            		} else {		            				            			
+	            			yt = transformer.getXPixel(hc.lat);
+	            		}
+	            		xt = transformer.getXPixel(hc.j2ksec);
+	            		break;
+
             	}
                 g.translate(xt, yt);
                 
