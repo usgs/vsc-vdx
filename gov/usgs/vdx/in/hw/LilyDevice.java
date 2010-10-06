@@ -182,21 +182,21 @@ public class LilyDevice implements Device {
     	
     	case STREAM:
 	    	if (length < MIN_MESSAGE_LENGTH) {
-	    		throw new Exception ("Message invalid. Too short. Length = " + length);
+	    		throw new Exception ("Message invalid. Too short. Length = " + length + "\n" + message);
 	    	} else if (message.charAt(0) != '$') {
-	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0));
+	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0) + "\n" + message);
 	    	} else if (!message.substring(length - 2).contentEquals("\r\n")) {
-	    		throw new Exception ("Message invalid. Wrong end character: " + message.charAt(length - 2));
+	    		throw new Exception ("Message invalid. Wrong end character: " + message.charAt(length - 2) + "\n" + message);
 	    	}
     		break;
     		
     	case POLL:
 	    	if (length < MIN_MESSAGE_LENGTH) {
-	    		throw new Exception ("Message invalid. Too short. Length = " + length);
+	    		throw new Exception ("Message invalid. Too short. Length = " + length + "\n" + message);
 	    	} else if (message.charAt(0) != '*') {
-	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0));
+	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0) + "\n" + message);
 	    	} else if (!message.substring(length - 15).contentEquals("$end download\r\n")) {
-	    		throw new Exception ("Message invalid. Wrong end character: " + message.substring(length - 15));
+	    		throw new Exception ("Message invalid. Wrong end character: " + message.substring(length - 15) + "\n" + message);
 	    	}
 	    	break;
     	}

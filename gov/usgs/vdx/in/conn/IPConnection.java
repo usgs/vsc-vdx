@@ -47,7 +47,7 @@ public class IPConnection extends Thread implements Connection {
 	protected boolean open;
 	
 	/** an ordered message queue */
-	protected volatile Vector<String> msgQueue;
+	protected Vector<String> msgQueue;
 	
 	/** a mechanism to lock the queue.  Also used by subclasses. */
 	protected boolean lockQueue;
@@ -177,6 +177,14 @@ public class IPConnection extends Thread implements Connection {
 		close();
 	}
 	
+	public String getMsgQueue()	{
+		return msgQueue.toString();
+	}
+	
+	public void emptyMsgQueue() {
+		msgQueue.removeAllElements();
+	}
+	
 	/** Opens the socket for communication.
 	 * @throws UnknownHostException if the host (IP) can't be found
 	 * @throws IOException if the socket fails to open
@@ -190,6 +198,7 @@ public class IPConnection extends Thread implements Connection {
 		result			= true;
 		open			= true;
 		stopThread		= false;
+		socket.setSoLinger(true, 0);
 		if (!this.isAlive()) {
 			start();
 		}

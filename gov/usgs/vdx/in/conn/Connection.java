@@ -14,4 +14,6 @@ public interface Connection {
 	public void writeString (String dataRequest) throws Exception;
 	public String readString (Device device) throws Exception;
 	public String toString();
+	public String getMsgQueue();
+	public void emptyMsgQueue();
 }
