@@ -204,32 +204,32 @@ public class CCSAILDevice implements Device {
         }
 
         if (len < 12) {
-            throw new Exception ("Message invalid. Too short. Len = " + len);
+            throw new Exception ("Message invalid. Too short. Len = " + len + "\n" + message);
 		}
 
         if (message.charAt(0) != '#') {
-            throw new Exception ("Message invalid. Wrong ATN: " + message.charAt(0));
+            throw new Exception ("Message invalid. Wrong ATN: " + message.charAt(0) + "\n" + message);
 		}
 
         if (message.charAt(len - 1) != (char)3) {
-            throw new Exception ("Message invalid. Wrong ETX: " + message.charAt (len - 1));
+            throw new Exception ("Message invalid. Wrong ETX: " + message.charAt (len - 1) + "\n" + message);
 		}
 
         int checkSumIs   = (message.charAt(len - 3) - '0') * 10;
             checkSumIs  += (message.charAt(len - 2) - '0');
         int checkSumCalc = calculateChecksum(message, true);
         if (checkSumIs != checkSumCalc) {
-            throw new Exception ("Message invalid. Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc);
+            throw new Exception ("Message invalid. Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc + "\n" + message);
 		}
 
         token = message.substring (1, 5);
         if (!token.equals ("0000") && !ignoreWrongAddress) {
-            throw new Exception ("Message invalid. Wrong ADR: " + token);
+            throw new Exception ("Message invalid. Wrong ADR: " + token + "\n" + message);
 		}
 
         token = message.substring (5, 9);
         if (!token.equals (id) && !ignoreWrongAddress) {
-            throw new Exception ("Message invalid. Wrong RTN: " + token);
+            throw new Exception ("Message invalid. Wrong RTN: " + token + "\n" + message);
 		}
         
         return true;

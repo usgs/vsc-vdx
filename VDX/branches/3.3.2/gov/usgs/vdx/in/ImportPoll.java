@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -102,6 +101,7 @@ public class ImportPoll extends Poller implements Importer {
 	public Map<String, String> stationChannelMap;
 	public Map<String, Device> stationDeviceMap;
 	public Map<String, Connection> stationConnectionMap;
+	public Map<String, ConfigFile> stationConnectionParamsMap;
 	
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
@@ -226,11 +226,12 @@ public class ImportPoll extends Poller implements Importer {
 		}
 		
 		// define the station objects to store station configurations
-		stationList				= new ArrayList<String>();
-		channelList				= new ArrayList<String>();
-		stationChannelMap		= new HashMap<String, String>();
-		stationDeviceMap		= new HashMap<String, Device>();
-		stationConnectionMap	= new HashMap<String, Connection>();
+		stationList					= new ArrayList<String>();
+		channelList					= new ArrayList<String>();
+		stationChannelMap			= new HashMap<String, String>();
+		stationDeviceMap			= new HashMap<String, Device>();
+		stationConnectionMap		= new HashMap<String, Connection>();
+		stationConnectionParamsMap	= new HashMap<String, ConfigFile>();
 		
 		// validate that station are defined in the config file
 		stringList	= params.getList("station");
@@ -248,6 +249,18 @@ public class ImportPoll extends Poller implements Importer {
 			deviceParams		= stationParams.getSubConfig("device");
 			connectionParams	= stationParams.getSubConfig("connection");
 			channelCode			= Util.stringToString(stationParams.getString("channel"), stationCode);
+
+			// try to create a connection object
+			try {
+				Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
+				Constructor<?> cnst	= connClass.getConstructor(new Class[]{String.class});
+				connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
+				// connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+				connection.initialize(connectionParams);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Connection initialization failed", e);
+				continue;
+			}
 			
 			// try to create a device object
 			try {
@@ -258,23 +271,12 @@ public class ImportPoll extends Poller implements Importer {
 				System.exit(-1);
 			}
 			
-			// try to connect to the device
-			try {
-				Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
-				Constructor<?> c	= connClass.getConstructor(new Class[]{String.class});
-				connection			= (Connection)c.newInstance(new Object[]{stationCode});
-				// connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
-				connection.initialize(connectionParams);
-			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Connection driver initialization failed", e);
-				System.exit(-1);
-			}
-			
 			stationList.add(stationCode);
 			channelList.add(channelCode);
 			stationChannelMap.put(stationCode, channelCode);
 			stationDeviceMap.put(stationCode, device);
-			stationConnectionMap.put(stationCode, connection);	
+			stationConnectionMap.put(stationCode, connection);
+			stationConnectionParamsMap.put(stationCode, connectionParams);	
 			
 			// display configuration information related to this channel
 			logger.log(Level.INFO, "[Station] " + stationCode);
@@ -511,10 +513,11 @@ public class ImportPoll extends Poller implements Importer {
 		for (int c = 0; c < stationList.size(); c++) {
 			
 			// get the station name, and it's associated configuration
-			stationCode	= stationList.get(c);
-			device		= stationDeviceMap.get(stationCode);
-			connection	= stationConnectionMap.get(stationCode);
-			channelCode	= stationChannelMap.get(stationCode);
+			stationCode			= stationList.get(c);
+			device				= stationDeviceMap.get(stationCode);
+			connection			= stationConnectionMap.get(stationCode);
+			connectionParams	= stationConnectionParamsMap.get(stationCode);
+			channelCode			= stationChannelMap.get(stationCode);
 			
 			// get the import line definition for this channel
 			importFieldArray	= device.getFields().split(",");
@@ -548,13 +551,31 @@ public class ImportPoll extends Poller implements Importer {
 				
 				// display logging information
 				logger.log(Level.INFO, "");
-				logger.log(Level.INFO, "Polling " + channelCode + " [Try " + tries + "/" + device.getMaxtries() + "] [lastDataTime:" + dateOut.format(lastDataTime) + "]");
+				logger.log(Level.INFO, "Polling " + stationCode + " [Try " + tries + "/" + device.getMaxtries() + "] [lastDataTime:" + dateOut.format(lastDataTime) + "]");
 				
+				// if the connection object has not been instantiated
+				if (connection == null) {
+					try {
+						Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
+						Constructor<?> cnst	= connClass.getConstructor(new Class[]{String.class});
+						connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
+						// connection = (Connection)Class.forName(connectionParams.getString("driver")).newInstance();
+						connection.initialize(connectionParams);
+						stationConnectionMap.put(stationCode, connection);
+						logger.log(Level.INFO, "Connection NULL, reinitialized");
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Connection initialization failed", e);
+						continue;
+					}
+				}
+				
+				// connect to the device
 				try {
 					connection.connect();
 					Thread.sleep(postConnectDelay);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Device Connection failed", e);
+					connection.disconnect();
 					continue;
 				}
 				
@@ -572,7 +593,7 @@ public class ImportPoll extends Poller implements Importer {
 				if (dataRequest.length() > 0) {
 					try {
 						connection.writeString(dataRequest);
-						// logger.log(Level.INFO, "dataRequest:" + dataRequest);
+						logger.log(Level.INFO, "dataRequest:" + dataRequest);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Connection write request failed", e);
 						connection.disconnect();
@@ -580,9 +601,10 @@ public class ImportPoll extends Poller implements Importer {
 					}
 				}
 					
-				// try wait (eh) for the response from the device
+				// try wait (eh) for the response from the device (clear out the message queue first)
 				String dataResponse = "";
 				try {
+					connection.emptyMsgQueue();
 					dataResponse	= connection.readString(device);
 					// logger.log(Level.INFO, "dataResponse:" + dataResponse);
 				} catch (Exception e) {
@@ -596,7 +618,6 @@ public class ImportPoll extends Poller implements Importer {
 					device.validateMessage(dataResponse, true);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Message validation failed", e);
-					// logger.log(Level.SEVERE, dataResponse);
 					connection.disconnect();
 					continue;
 				}
@@ -803,9 +824,9 @@ public class ImportPoll extends Poller implements Importer {
 			
 			// output a status message based on how everything went above
 			if (done) {					
-				logger.log(Level.INFO, "End Polling [" + channelCode + "] Success");
+				logger.log(Level.INFO, "Polling [" + stationCode + "] Success");
 			} else {				
-				logger.log(Level.INFO, "End Polling [" + channelCode + "] Failure");
+				logger.log(Level.INFO, "Polling [" + stationCode + "] Failure");
 			}
 			
 			// try to sleep before accessing the next station
