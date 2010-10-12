@@ -42,10 +42,10 @@ public class CCSAILDevice implements Device {
 	/** the timestamp mask */
 	protected String timestamp;
 	
-	/** the timezone */
+	/** the time zone */
 	protected String timezone;
 	
-	/** the connection timout */
+	/** the connection timeout */
 	protected int timeout;
 	
 	/** the maximum number of tries */
@@ -62,6 +62,9 @@ public class CCSAILDevice implements Device {
 	
 	/** the delimeter of the data */
 	protected String delimiter;
+	
+	/** the column to check for null in database */
+	protected String nullfield;
 	
 	/** the columns available on the device */
 	protected String fields;
@@ -92,17 +95,18 @@ public class CCSAILDevice implements Device {
 		id			= Util.stringToString(params.getString("id"), "0");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
-		timeout		= Util.stringToInt(params.getString("timeout"), 50000);
+		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
 		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
+		nullfield	= Util.stringToString(params.getString("nullfield"), "");
 		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
 		
 		// validation
 		if (fields.length() == 0) {
-			throw new Exception("columns not defined");
+			throw new Exception("fields not defined");
 		} else if (acquisition == null) {
 			throw new Exception("invalid acquisition type");
 		}
@@ -127,6 +131,7 @@ public class CCSAILDevice implements Device {
 	 */
 	public String toString() {
 		String settings	= "id:" + id + "/";
+		settings	   += "acquisition:" + acquisition.toString() + "/";
 		settings	   += "timestamp:" + timestamp + "/";
 		settings	   += "timezone:" + timezone + "/";
 		settings	   += "timeout:" + timeout + "/";
@@ -134,8 +139,7 @@ public class CCSAILDevice implements Device {
 		settings	   += "maxlines:" + maxlines + "/";
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
-		settings	   += "fields:" + fields + "/";
-		settings	   += "acquisition:" + acquisition.toString() + "/";
+		settings	   += "nullfield:" + nullfield + "/";
 		return settings;
 	}
 
@@ -204,32 +208,28 @@ public class CCSAILDevice implements Device {
         }
 
         if (len < 12) {
-            throw new Exception ("Message invalid. Too short. Len = " + len + "\n" + message);
-		}
-
-        if (message.charAt(0) != '#') {
-            throw new Exception ("Message invalid. Wrong ATN: " + message.charAt(0) + "\n" + message);
-		}
-
-        if (message.charAt(len - 1) != (char)3) {
-            throw new Exception ("Message invalid. Wrong ETX: " + message.charAt (len - 1) + "\n" + message);
+            throw new Exception ("Too short. Len = " + len + "\n" + message);
+		} else if (message.charAt(0) != '#') {
+            throw new Exception ("Wrong ATN: " + message.charAt(0) + "\n" + message);
+		} else if (message.charAt(len - 1) != (char)3) {
+            throw new Exception ("Wrong ETX: " + message.charAt (len - 1) + "\n" + message);
 		}
 
         int checkSumIs   = (message.charAt(len - 3) - '0') * 10;
             checkSumIs  += (message.charAt(len - 2) - '0');
         int checkSumCalc = calculateChecksum(message, true);
         if (checkSumIs != checkSumCalc) {
-            throw new Exception ("Message invalid. Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc + "\n" + message);
+            throw new Exception ("Wrong checksum: " + checkSumIs + " should be: " + checkSumCalc + "\n" + message);
 		}
 
         token = message.substring (1, 5);
         if (!token.equals ("0000") && !ignoreWrongAddress) {
-            throw new Exception ("Message invalid. Wrong ADR: " + token + "\n" + message);
+            throw new Exception ("Wrong ADR: " + token + "\n" + message);
 		}
 
         token = message.substring (5, 9);
         if (!token.equals (id) && !ignoreWrongAddress) {
-            throw new Exception ("Message invalid. Wrong RTN: " + token + "\n" + message);
+            throw new Exception ("Wrong RTN: " + token + "\n" + message);
 		}
         
         return true;
@@ -240,16 +240,15 @@ public class CCSAILDevice implements Device {
      * @param line the line to validate
      * @return true if line is validated
      */
-    public boolean validateLine(String line) throws Exception {
-    	
-    	if (line.startsWith("EOF")) {
-    		throw new Exception ("Line invalid. Begins with EOF");
+    public void validateLine(String line) throws Exception {
+    	int length = line.length();
+		if (length <= 1) {
+			throw new Exception ("length is 0");
+		} else if (line.startsWith("EOF")) {
+    		throw new Exception ("begins with EOF");
     	} else if (line.startsWith("#")) {
-    		throw new Exception ("Line invalid. Begins with #");
-    	} else if (line.length() <= 1) {
-    		throw new Exception ("Line invalid. Line length is 0");
+    		throw new Exception ("begins with #");
     	}
-    	return true;
     }
     
     /**
@@ -317,6 +316,13 @@ public class CCSAILDevice implements Device {
      */
     public String getDelimiter() {
     	return delimiter;
+    }
+    
+    /**
+     * getter method for null fields
+     */
+    public String getNullfield() {
+    	return nullfield;
     }
     
     /**

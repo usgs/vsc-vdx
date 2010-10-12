@@ -42,6 +42,9 @@ public class LilyDevice implements Device {
 	/** the delimeter of the data */
 	protected String delimiter;
 	
+	/** the column to check for null in database */
+	protected String nullfield;
+	
 	/** the columns available on the device */
 	protected String fields;
 	
@@ -71,11 +74,12 @@ public class LilyDevice implements Device {
 		id			= Util.stringToString(params.getString("id"), "0");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "MM/dd/yy HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
-		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
+		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
 		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
+		nullfield	= Util.stringToString(params.getString("nullfield"), "");
 		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
 		
@@ -92,6 +96,7 @@ public class LilyDevice implements Device {
 	 */
 	public String toString() {
 		String settings	= "id:" + id + "/";
+		settings	   += "acquisition:" + acquisition.toString() + "/";
 		settings	   += "timestamp:" + timestamp + "/";
 		settings	   += "timezone:" + timezone + "/";
 		settings	   += "timeout:" + timeout + "/";
@@ -99,8 +104,7 @@ public class LilyDevice implements Device {
 		settings	   += "maxlines:" + maxlines + "/";
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
-		settings	   += "fields:" + fields + "/";
-		settings	   += "acquisition:" + acquisition.toString() + "/";
+		settings	   += "nullfield:" + nullfield + "/";
 		return settings;
 	}
 	
@@ -112,10 +116,6 @@ public class LilyDevice implements Device {
 		String cmd = "";
 		
 		switch (acquisition) {
-		
-		// stream mode doesn't require a command
-		case STREAM:
-			break;
 
 		case POLL: 
 		
@@ -130,7 +130,7 @@ public class LilyDevice implements Device {
 			
 			// if no data is available then throw exception indicating we don't need to poll
 			if (currentlines == 0) {
-				throw new Exception("No data to poll");
+				throw new Exception("no data to poll");
 			} else {			
 				cmd	+= "XY-DL-LAST," + currentlines;
 			}
@@ -182,21 +182,21 @@ public class LilyDevice implements Device {
     	
     	case STREAM:
 	    	if (length < MIN_MESSAGE_LENGTH) {
-	    		throw new Exception ("Message invalid. Too short. Length = " + length + "\n" + message);
+	    		throw new Exception ("Too short. Length = " + length + "\n" + message);
 	    	} else if (message.charAt(0) != '$') {
-	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0) + "\n" + message);
+	    		throw new Exception ("Wrong start character: " + message.charAt(0) + "\n" + message);
 	    	} else if (!message.substring(length - 2).contentEquals("\r\n")) {
-	    		throw new Exception ("Message invalid. Wrong end character: " + message.charAt(length - 2) + "\n" + message);
+	    		throw new Exception ("Wrong end character: " + message.charAt(length - 2) + "\n" + message);
 	    	}
     		break;
     		
     	case POLL:
 	    	if (length < MIN_MESSAGE_LENGTH) {
-	    		throw new Exception ("Message invalid. Too short. Length = " + length + "\n" + message);
+	    		throw new Exception ("Too short. Length = " + length + "\n" + message);
 	    	} else if (message.charAt(0) != '*') {
-	    		throw new Exception ("Message invalid. Wrong start character: " + message.charAt(0) + "\n" + message);
+	    		throw new Exception ("Wrong start character: " + message.charAt(0) + "\n" + message);
 	    	} else if (!message.substring(length - 15).contentEquals("$end download\r\n")) {
-	    		throw new Exception ("Message invalid. Wrong end character: " + message.substring(length - 15) + "\n" + message);
+	    		throw new Exception ("Wrong end character: " + message.substring(length - 15) + "\n" + message);
 	    	}
 	    	break;
     	}
@@ -204,27 +204,20 @@ public class LilyDevice implements Device {
     	return true;
     }
     
-    public boolean validateLine (String line) throws Exception {
-    	
-    	int length = line.length();
-    	
+    public void validateLine (String line) throws Exception {    	
+    	int length = line.length();   	
     	if (length < MIN_MESSAGE_LENGTH) {
-    		return false;
+    		throw new Exception("less than mininum message length");
     	} else if (line.charAt(0) != '$') {
-    		return false;
-    	} else if (!line.substring(length - 2).contentEquals("\r\n")) {
-    		return false;
-    	} else {
-    		return true;
+    		throw new Exception("does not begin begin with $");
+    	} else if (!line.substring(length - 1).contentEquals("\r")) {
+    		throw new Exception("does not end with <CR>");
     	}
     }
     
     public String formatMessage (String message) {
     	
     	switch (acquisition) {
-    	
-    	case STREAM:
-    		break;
 
     	case POLL:
     		// remove the first line and the trailing message
@@ -239,7 +232,9 @@ public class LilyDevice implements Device {
      * formats a lily data line.  removes the leading $ and the trailing \r
      */
     public String formatLine (String line) {
-    	return line.substring(1, line.length() - 1).trim();
+    	int length	= line.length();
+    	line		= line.substring(1, length - 1);
+    	return line.trim();
     }
     
     /**
@@ -275,6 +270,13 @@ public class LilyDevice implements Device {
      */
     public String getDelimiter() {
     	return delimiter;
+    }
+    
+    /**
+     * getter method for null fields
+     */
+    public String getNullfield() {
+    	return nullfield;
     }
     
     /**

@@ -16,4 +16,5 @@ public interface Connection {
 	public String toString();
 	public String getMsgQueue();
 	public void emptyMsgQueue();
+	public boolean isOpen();
 }

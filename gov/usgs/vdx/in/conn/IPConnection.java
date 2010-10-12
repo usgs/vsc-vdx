@@ -41,7 +41,7 @@ public class IPConnection extends Thread implements Connection {
 	private static final int BUFFER_SIZE = 2048;
 	
 	/** whether or not to stop the thread from executing (used when quitting) */
-	protected volatile boolean stopThread = false;
+	protected volatile boolean stopThread = true;
 	
 	/** whether or not the socket is open */
 	protected boolean open;
@@ -79,13 +79,82 @@ public class IPConnection extends Thread implements Connection {
 	}
 	
 	/**
-	 * Get settings
+	 * Connects to socket for communication
 	 */
-	public String toString() {
-		String settings	= "host:" + host + "/";
-		settings	   += "port:" + port + "/";
-		settings	   += "timeout:" + timeout + "/";
-		return settings;
+	public void connect() throws Exception {
+		try {
+			open();
+		} catch (UnknownHostException e) {
+			throw new Exception("Unknown host: " + host + ":" + port);
+		} catch (IOException e) {
+			throw new Exception("Couldn't open socket input/output streams");
+		}
+	}
+	
+	/**
+	 * Disconnects from socket
+	 */
+	public void disconnect() {
+		close();
+	}
+	
+	/** 
+	 * Opens the socket for communication.
+	 * @throws UnknownHostException if the host (IP) can't be found
+	 * @throws IOException if the socket fails to open
+	 * @return whether or not the operation was successful
+	 */
+	public boolean open() throws UnknownHostException, IOException {
+		boolean result	= false;
+		socket			= new Socket(host, port);
+		out				= new PrintWriter(socket.getOutputStream());
+		in				= new InputStreamReader(socket.getInputStream());
+		result			= true;
+		open			= true;
+		stopThread		= false;
+		socket.setSoLinger(true, 0);
+		if (!this.isAlive()) {
+			start();
+		}
+		return result;
+	}
+	
+	/** 
+	 * Closes the connection and stops waiting for bytes.  Sets stopThread to true, which silently kills the thread
+	 */
+	public void close() {
+		try {
+			open		= false;
+			stopThread	= true;
+			out.close();
+			in.close();
+			socket.close();
+			msgQueue.removeAllElements();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/** Thread run() implementation.  Just constantly tries reading bytes from the socket.
+	 */
+	public void run() {
+		while (!stopThread) {
+			try {
+				int count = in.read(buffer);
+				receiveData(buffer, count);
+			} catch (Exception e) { }
+		}
+	}
+	
+	/** Places received bytes in a message queue.
+	 * @param data the received bytes
+	 * @param count the number of bytes (note count != data.length)
+	 */
+	private synchronized void receiveData(char[] buffer, int count) {
+		lockQueue	= true;
+		String msg	= new String(buffer, 0, count);
+		msgQueue.add(msg);
+		lockQueue	= false;
 	}
 
 	/** 
@@ -163,18 +232,21 @@ public class IPConnection extends Thread implements Connection {
 		return readString(device, device.getTimeout());
 	}
 	
-	public void connect() throws Exception {
-		try {
-			open();
-		} catch (UnknownHostException e) {
-			throw new Exception("Unknown host: " + host + ":" + port);
-		} catch (IOException e) {
-			throw new Exception("Couldn't open socket input/output streams");
-		}
+	/**
+	 * returns status of open variable
+	 */
+	public boolean isOpen() {
+		return open;
 	}
 	
-	public void disconnect() {
-		close();
+	/**
+	 * Get settings
+	 */
+	public String toString() {
+		String settings	= "host:" + host + "/";
+		settings	   += "port:" + port + "/";
+		settings	   += "timeout:" + timeout + "/";
+		return settings;
 	}
 	
 	public String getMsgQueue()	{
@@ -183,65 +255,5 @@ public class IPConnection extends Thread implements Connection {
 	
 	public void emptyMsgQueue() {
 		msgQueue.removeAllElements();
-	}
-	
-	/** Opens the socket for communication.
-	 * @throws UnknownHostException if the host (IP) can't be found
-	 * @throws IOException if the socket fails to open
-	 * @return whether or not the operation was successful
-	 */
-	public boolean open() throws UnknownHostException, IOException {
-		boolean result	= false;
-		socket			= new Socket(host, port);
-		out				= new PrintWriter(socket.getOutputStream());
-		in				= new InputStreamReader(socket.getInputStream());
-		result			= true;
-		open			= true;
-		stopThread		= false;
-		socket.setSoLinger(true, 0);
-		if (!this.isAlive()) {
-			start();
-		}
-		return result;
-	}
-	
-	/** Closes the connection and stops waiting for bytes.
-	 */
-	public void close() {
-		try {
-			open		= false;
-			stopThread	= true;
-			out.close();
-			in.close();
-			socket.close();
-			msgQueue.removeAllElements();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/** Thread run() implementation.  Just constantly tries reading bytes from the socket.
-	 */
-	public void run() {
-		while (true) {
-			while (!stopThread) {
-				try {
-					int count = in.read(buffer);
-					receiveData(buffer, count);
-				} catch (Exception e) { }
-			}
-		}
-		// interrupt();
-	}
-	
-	/** Places received bytes in a message queue.
-	 * @param data the received bytes
-	 * @param count the number of bytes (note count != data.length)
-	 */
-	private synchronized void receiveData(char[] buffer, int count) {
-		lockQueue	= true;
-		String msg	= new String(buffer, 0, count);
-		msgQueue.add(msg);
-		lockQueue	= false;
 	}
 }
