@@ -117,7 +117,7 @@ if ( ref($parsed_xml->{'list-item'}) eq "ARRAY" ) {
 }
 
 # Format & write the lines to output file
-my $fn = ">supp_$querymap{'src'}_$querymap{'st'}.cvs";
+my $fn = ">supp_$querymap{'src'}_$querymap{'st'}.csv";
 open (MYFILE, $fn);
 foreach $e (@lines) {
 	#print $e . "\n";
