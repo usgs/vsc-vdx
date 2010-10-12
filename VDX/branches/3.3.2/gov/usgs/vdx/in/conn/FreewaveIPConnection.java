@@ -13,9 +13,6 @@ import java.text.*;
  */
 public class FreewaveIPConnection extends IPConnection implements Connection {
 	
-	/** number of milliseconds before a timeout waiting for an OK */
-	private static final int WAIT4OK_TIMEOUT = 2000;
-	
 	/** the call number of the freewave */
 	protected int callnumber;
 	
@@ -83,7 +80,7 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 		writeString(cmd);
 		
 		// throws FreewaveConnectionException if no 'OK' answer
-		wait4OK();
+		wait4OK(timeout);
 		
 		// throws FreewaveConnectionException if no 'CONNECT' answer
 		wait4Connect(timeout);
@@ -96,17 +93,17 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	private void setRepeater(int repeater) throws Exception {
 		String cmd = "ATXC" + (char)('0' + repeater);
 		writeString(cmd);
-		wait4OK();
+		wait4OK(timeout);
 	}
 	
 	/** 
 	 * Waits for an OK from the FreeWave.
 	 * @throws Exception if there was a problem
 	 */
-	private void wait4OK() throws Exception {
+	private void wait4OK(int timeout) throws Exception {
 		
 		// throws SerialConnectionException if timeout
-		String msg = readString(WAIT4OK_TIMEOUT);
+		String msg = readString(timeout);
 
 		if (0 != msg.indexOf ("OK"))
 			throw new Exception("'OK' expected but '" + msg + "' received");
@@ -115,7 +112,6 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 		int idx = msg.indexOf("CONNECT");
 		if (-1 != idx) {
 			msgQueue.add(msg.substring(idx));
-			// writeString(msg.substring(idx));
 		}
 	}
 	
@@ -127,109 +123,10 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	private void wait4Connect (int timeout) throws Exception {
 		
 		// throws SerialConnectionException if timeout
-		String msg = readString((-1 == timeout) ? -1 : (timeout));
+		String msg = readString(timeout);
 
 		if (0 != msg.indexOf ("CONNECT")) {
 			throw new Exception ("'CONNECT' expected but '" + msg + "' received");
 		}
 	}
-	
-	/**
-	 * Waits <code>timeout</code>sec for a message.
-	 * Gets a message from the internal message queue
-	 * <p>
-	 * In case <code>CCSAILMode</code> is high, this method behaves different:
-	 * It waits for a complete CCSAIL-String.
-	 * The CCSAIL string is complete, when the last char of a string is 0x03.
-	 * The CCSAIL string might arrive in one or more single messages.
-	 * Additionally the CD line is watched to see if the connection broke
-	 *
-	 * @param timeout the time (in milliseconds) to wait till a message is put into the queue
-	 *		if timeout == -1, then no timeout, but wait for user interaction
-	 * @exception Exception in case of timeout or broken connection.
-	 *
-	 * @return the oldest message from the queue
-	 */
-	/*
-	public String readString (Device device, long timeout) throws Exception {
-		if (!open)
-			throw new Exception("Connection not open.");
-			
-		long start = System.currentTimeMillis();
-		long end   = start + timeout;
-		long now   = start;
-		long delay = 10; //receiveTimeout;
-
-		if ((timeout > 0) && (timeout < delay)) 
-			delay = timeout;
-
-		StringBuffer sb = new StringBuffer();
-		while ( (now < end) || (-1L == timeout) ) {
-			if (!lockQueue) {
-				if (!msgQueue.isEmpty()) {
-					sb.append(msgQueue.firstElement());
-					msgQueue.removeElementAt (0);
-					
-					// if we are talking to the device attached to the radio
-					if (device != null) {
-						if (device.messageCompleted(sb)) {
-							return sb.toString();
-						}
-					} else {
-						return sb.toString();
-					}
-
-					// In CCSAIL mode the last char of a message must be (char)3
-					// if (!CCSAILMode || ((char)3 == sb.charAt (sb.length() - 1)) )
-						// return sb.toString();
-				}
-			}
-
-			try {
-				Thread.sleep (delay);
-			} catch (InterruptedException e) {
-
-			}
-
-			now = System.currentTimeMillis();
-
-		}
-
-		String txt = "Timeout while waiting for data.";
-		if (sb.length() > 0) {
-			txt += " Already received: ";
-			txt += sb.toString();
-		}
-		throw new Exception(txt);
-	}
-	*/
-
-	/** 
-	 * Puts a message into the message queue.
-	 * @param msg the message
-	 * @return success state
-	 */	
-	/*
-	public boolean writeString (String msg) {
-		if (!open) return false;
-
-		 // is a new message arriving?
-		if (lockQueue) {
-			// wait till the end of the receive timeout
-			try {
-				Thread.sleep(receiveTimeout);
-			} catch (InterruptedException e) {}
-
-			// if the queue is still locked, something is going wrong...
-			if (lockQueue) return false;
-		}
-
-		// place the message in the queue
-		lockQueue = true;
-		msgQueue.insertElementAt(new String (msg), 0);
-		lockQueue = false;
-
-		return true;
-	}
-	*/
 }

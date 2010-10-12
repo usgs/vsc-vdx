@@ -1101,13 +1101,15 @@ abstract public class SQLDataSource {
 	 * @param channelCode
 	 * @return most recent timestamp
 	 */
-	public synchronized Date defaultGetLastDataTime(String channelCode) {
+	public synchronized Date defaultGetLastDataTime(String channelCode, String nullField) {
 		Date lastDataTime = null;
 
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("SELECT max(j2ksec) FROM " + channelCode);
-			rs = ps.executeQuery();
+			sql	= "SELECT max(j2ksec) FROM " + channelCode;
+			if (nullField.length() > 0) sql += " WHERE " + nullField + " IS NOT NULL";
+			ps	= database.getPreparedStatement(sql);
+			rs	= ps.executeQuery();
 			if (rs.next()) {
 				double result	= rs.getDouble(1);
 				lastDataTime	= Util.j2KToDate(result);
@@ -1252,6 +1254,7 @@ abstract public class SQLDataSource {
 		DoubleMatrix2D data			= gdm.getData();
 		StringBuffer columnBuffer	= new StringBuffer();
 		StringBuffer valuesBuffer	= new StringBuffer();
+		StringBuffer dupsBuffer		= new StringBuffer();
 		String output, base;
 
 		try {
@@ -1265,6 +1268,13 @@ abstract public class SQLDataSource {
 				} else {
 					columnBuffer.append("," + columnNames[i]);
 					valuesBuffer.append(",?");
+				}
+			}
+			
+			// build the ON UPDATE clause
+			for (int i = 0; i < columnNames.length; i++) {
+				if (!columnNames[i].equals("j2ksec")) {
+					dupsBuffer.append(columnNames[i] + "=VALUES(" + columnNames[i] + "),");
 				}
 			}
 
@@ -1281,7 +1291,9 @@ abstract public class SQLDataSource {
 				valuesBuffer.append("," + rid);
 			}
 
-			sql		= "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
+			// sql		= "REPLACE INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ")";
+			sql	= "INSERT INTO " + channelCode + " (" + columnBuffer.toString() + ") VALUES (" + valuesBuffer.toString() + ") ";
+			sql+= "ON DUPLICATE KEY UPDATE " + dupsBuffer.toString().substring(0, dupsBuffer.toString().length() - 1);
 			base	= channelCode + "(";			
 			
 			ps = database.getPreparedStatement(sql);
