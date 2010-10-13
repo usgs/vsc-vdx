@@ -39,6 +39,9 @@ import java.util.*;
  */
 public class CCSAILDevice implements Device {
 	
+	/** the minimum length of a message */
+	protected final int MIN_MESSAGE_LENGTH = 20;
+	
 	/** the timestamp mask */
 	protected String timestamp;
 	
@@ -207,7 +210,7 @@ public class CCSAILDevice implements Device {
             len -= 2;
         }
 
-        if (len < 12) {
+        if (len < MIN_MESSAGE_LENGTH) {
             throw new Exception ("Too short. Len = " + len + "\n" + message);
 		} else if (message.charAt(0) != '#') {
             throw new Exception ("Wrong ATN: " + message.charAt(0) + "\n" + message);
@@ -261,7 +264,7 @@ public class CCSAILDevice implements Device {
         	message = message.substring (2, message.length());
         }
         
-        // remove the trailing checksum and \r
+        // remove the ATN, trailing checksum and \r
         message	= message.substring(11, message.length() - 3);
         
         // sometimes there is an EOF on the message
