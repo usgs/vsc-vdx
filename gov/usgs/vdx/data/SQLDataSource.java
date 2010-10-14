@@ -269,7 +269,7 @@ abstract public class SQLDataSource implements DataSource {
 					+ "sd_short VARCHAR(90) NOT NULL, sd TEXT NOT NULL, PRIMARY KEY (sdid))" );
 			
 			ps.execute( "CREATE TABLE supp_data_type (sdtypeid INT NOT NULL AUTO_INCREMENT, supp_data_type VARCHAR(20), "
-					+ "PRIMARY KEY (sdtypeid), UNIQUE KEY (supp_data_type) )" );
+					+ "supp_color VARCHAR(6) NOT NULL, draw_line TINYINT, PRIMARY KEY (sdtypeid), UNIQUE KEY (supp_data_type) )" );
 			
 			sql = "CREATE TABLE supp_data_xref ( sdid INT NOT NULL, cid INT NOT NULL, colid INT NOT NULL, ";
 			String key = "UNIQUE KEY (sdid,cid,colid";
