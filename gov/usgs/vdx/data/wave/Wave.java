@@ -206,6 +206,16 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 		return false;
 	}
+	
+	public void handleBadData()
+	{
+		for (int i = 0; i < buffer.length; i++) {
+			if (buffer[i] == 999999) {
+				buffer[i] = NO_DATA;
+			}
+		}
+	}
+
 
 	/**
 	 * Calculates the spectrogram of this <code>Wave</code>. This
