@@ -27,11 +27,20 @@ public class VDXClient extends InternetClient
 		
 		public String code;
 		
+		/**
+		 * Constructor
+		 * @param string rep of downsampling type
+		 */
 		private DownsamplingType(String c)
 		{
 			code = c;
 		}
 		
+		/**
+		 * Yield downsampling type from String
+		 * @param s string representation of downsampling type
+		 * @return downsampling type
+		 */
 		public static DownsamplingType fromString(String s)
 		{
 			if (s == null)
@@ -47,6 +56,10 @@ public class VDXClient extends InternetClient
 				return null;
 		}
 		
+		/**
+		 * Yield string representation of a downsampling type
+		 * @return string rep of downsampling type
+		 */
 		public String toString(){
 			return code;
 		}
@@ -92,6 +105,7 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server as string
 	 */
 	protected String submitCommand(Map<String, String> params) throws IOException
@@ -111,6 +125,7 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server and get binary data response. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server and parsed in BinaryDataSet
 	 */
 	public BinaryDataSet getBinaryData(final Map<String, String> params) throws UtilException
@@ -180,6 +195,7 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server and get text data response. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server and parsed List<String>
 	 */
 	public List<String> getTextData(final Map<String, String> params) throws UtilException
@@ -242,6 +258,10 @@ public class VDXClient extends InternetClient
 		return rt.go();
 	}
 	
+	/**
+	 * Main method
+	 * @param args command line arguments
+	 */
 	public static void main(String[] args)
 	{
 //		VDXClient client = new VDXClient(args[0], Integer.parseInt(args[1]));

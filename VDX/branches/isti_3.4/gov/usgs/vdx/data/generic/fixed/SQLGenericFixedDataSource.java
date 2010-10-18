@@ -33,18 +33,43 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -118,6 +143,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param command to execute. 
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -168,6 +194,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		return null;
 	}
 	
+	/**
+	 * Yield empty list of strings
+	 * @return empty List of strings
+	 */
 	private List<String> getGenericMenu() {
 		List<String> genericMenuString = new ArrayList<String>();
 		return genericMenuString;
@@ -188,6 +218,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 
 	/**
 	 * Getter for metadata
+	 * @return Map of metadata (name -> value)
 	 */
 	public Map<String, String> getMetadata() {
 
@@ -213,6 +244,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	
 	/**
 	 * Getter for selector string
+	 * @param metadata Mapping from names to values
+	 * @return value for "channelString", "Channels" if missing
 	 */
 	public String getChannelString(Map<String, String> metadata) {
 		String ss = metadata.get("channelString");
@@ -224,6 +257,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	
 	/**
 	 * Getter for data source description
+	 * @param metadata Mapping from names to values
+	 * @return value for "description", "no description" if missing
 	 */
 	public String getDescription(Map<String, String> metadata) {
 		String d = metadata.get("description");
@@ -235,6 +270,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	
 	/**
 	 * Getter for data source title
+	 * @param metadata Mapping from names to values
+	 * @return value for "title", "Generic Data" if missing
 	 */
 	public String getTitle(Map<String, String> metadata) {
 		String t = metadata.get("title");
@@ -246,6 +283,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	
 	/**
 	 * Getter for data source time shortcuts
+	 * @param metadata Mapping from names to values
+	 * @return value for "timeShortcuts", "-6h,-24h,-3d,-1w,-1m,-1y" if missing
 	 */
 	public String getTimeShortcuts(Map<String, String> metadata) {
 		String ts = metadata.get("timeShortcuts");

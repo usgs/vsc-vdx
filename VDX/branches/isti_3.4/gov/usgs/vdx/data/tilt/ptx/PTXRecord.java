@@ -35,6 +35,11 @@ public class PTXRecord
 	
 	/**
 	 * Construct long value from four bytes
+	 * @param b0 1st byte
+	 * @param b1 2nd byte
+	 * @param b2 3rd byte
+	 * @param b3 4th byte
+	 * @return long value
 	 */
 	private long createInt(byte b0, byte b1, byte b2, byte b3)
 	{
@@ -119,6 +124,10 @@ public class PTXRecord
 		return buffer[18];
 	}
 	
+	/**
+	 * 
+	 * @return the rezero info
+	 */
 	public int getRezeroInfo()
 	{
 		return buffer[19];
@@ -194,6 +203,7 @@ public class PTXRecord
 	
 	/**
 	 * Dump record metainformation into string
+	 * @return string of metainformation
 	 */
 	public String toString()
 	{

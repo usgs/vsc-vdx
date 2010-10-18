@@ -73,6 +73,7 @@ public class TiltData extends GenericDataMatrix
     
     /**
      * Convert the rainfall values to plottable time series values
+     * @return matrix of time series values
      */
     public DoubleMatrix2D getRainDataWithoutTime() {
 

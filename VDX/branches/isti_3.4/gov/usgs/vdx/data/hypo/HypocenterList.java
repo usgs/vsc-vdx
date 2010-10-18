@@ -132,6 +132,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Constructor
+	 * @param hs List of Hypocenters
 	 */
 	public HypocenterList(List<Hypocenter> hs)
 	{
@@ -140,6 +141,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get list of hypocenters
+	 * @return list of hypocenters
 	 */
 	public List<Hypocenter> getHypocenters()
 	{
@@ -148,6 +150,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get list size
+	 * @return number of hypocenters
 	 */
 	public int size()
 	{
@@ -156,6 +159,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get time of first event in the list
+	 * @return time of first event
 	 */
 	public double getStartTime()
 	{
@@ -167,6 +171,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get time of last event in the list
+	 * @return time of last event
 	 */
 	public double getEndTime()
 	{
@@ -178,6 +183,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Dump object content into ByteBuffer
+	 * @return ByteBuffer of content
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -205,6 +211,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get string representation of hypocenters list
+	 * @return string representation
 	 */
 	public String toString()
 	{
@@ -214,6 +221,7 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Get initialized axis to use with histogram graph
 	 * @param bin histogram section period
+	 * @return initialized iaxis
 	 */
 	private IAxis getHistogramAxis(BinSize bin)
 	{
@@ -323,6 +331,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Compute 2-column matrix: time - cumulative event count
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{
@@ -338,6 +347,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Compute 2-column matrix: time - cumulative moment
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeMoment()
 	{
@@ -357,6 +367,7 @@ public class HypocenterList implements BinaryDataSet
 
 	/**
 	 * Compute 2-column matrix: time - cumulative magnitude
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeMagnitude()
 	{
@@ -372,6 +383,7 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Get initialized histogram of event count by time
 	 * @param bin time interval
+	 * @return histogram
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
@@ -386,6 +398,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Project of all hypocenters in the list
+	 * @param proj Projection
 	 */
 	public void project(Projection proj)
 	{
@@ -395,6 +408,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Dump list as CSV string
+	 * @return string representation in CSV
 	 */
 	public String toCSV()
 	{

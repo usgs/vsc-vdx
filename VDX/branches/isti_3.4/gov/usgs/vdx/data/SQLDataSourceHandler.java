@@ -66,6 +66,7 @@ public class SQLDataSourceHandler
 
 	/**
 	 * Get parsed config file
+	 * @return config file
 	 */
 	public ConfigFile getConfig()
 	{
@@ -74,6 +75,8 @@ public class SQLDataSourceHandler
 	
 	/**
 	 * Get data source descriptor by name
+	 * @param name
+	 * @return source descriptor
 	 */
 	public SQLDataSourceDescriptor getDataSourceDescriptor(String key)
 	{
@@ -82,6 +85,7 @@ public class SQLDataSourceHandler
 	
 	/**
 	 * Get the whole list of data sources
+	 * @return list of source descriptors
 	 */
 	public List<SQLDataSourceDescriptor> getDataSources()
 	{

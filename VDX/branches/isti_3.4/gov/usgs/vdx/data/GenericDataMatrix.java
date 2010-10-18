@@ -36,7 +36,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Construct GenericDataMatrix from given 2d matrix
-	 * @param d
+	 * @param d 2d matrix
 	 */
 	public GenericDataMatrix(DoubleMatrix2D d)
 	{
@@ -46,7 +46,6 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Create a GenericDataMatrix from a byte buffer.  
-	 * 
 	 * @param bb the byte buffer
 	 */
 	public GenericDataMatrix(ByteBuffer bb)
@@ -57,7 +56,7 @@ public class GenericDataMatrix implements BinaryDataSet
 
 	/**
 	 * Create a GenericDataMatrix from a List<double[]>.  
-	 * 
+	 * @param list of double arrays
 	 */
 	public GenericDataMatrix(List<double[]> list)
 	{
@@ -78,7 +77,8 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 	
 	/**
-	 * Dumps content as ByteBuffer
+	 * Returns content as ByteBuffer
+	 * @return content as ByteBuffer
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -96,6 +96,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Init content from ByteBuffer
+	 * @param bb content
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{
@@ -111,6 +112,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Dumps content as CSV
+	 * @return string w/ content in CSV format
 	 */
 	public String toCSV()
 	{
@@ -137,7 +139,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 
 	/**
-	 * Sets names of matrix conumns
+	 * Sets names of matrix columns
 	 */
 	public void setColumnNames()
 	{}
@@ -167,7 +169,8 @@ public class GenericDataMatrix implements BinaryDataSet
 		return c;
 	}
 	
-	/** Gets the number of rows in the data.
+	/** 
+	 * Gets the number of rows in the data.
 	 * @return the row count
 	 */
 	public int rows()
@@ -178,7 +181,8 @@ public class GenericDataMatrix implements BinaryDataSet
 			return 0;
 	}
 
-	/** Gets the number of columns in the data.
+	/** 
+	 * Gets the number of columns in the data.
 	 * @return the column count
 	 */
 	public int columns()
@@ -243,7 +247,7 @@ public class GenericDataMatrix implements BinaryDataSet
 
 	/**
 	 * Sums column, value in resulting column is sum of all previous raws.
-	 * @param c
+	 * @param c column to sum
 	 */
 	public void sum(int c)
 	{
@@ -575,6 +579,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/**
 	 * Get maximum value in column
 	 * @param c column number
+	 * @return maximum of column
 	 */
 	public double max(int c)
 	{
@@ -590,6 +595,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/**
 	 * Get minimum value in column
 	 * @param c column number
+	 * @return minimum of column
 	 */
 	public double min(int c)
 	{
@@ -605,6 +611,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/**
 	 * Get mean value in column
 	 * @param c column number
+	 * @return mean of column
 	 */
 	public double mean(int c)
 	{
@@ -669,7 +676,8 @@ public class GenericDataMatrix implements BinaryDataSet
 			return data.get(rows()-1,0);
 	}
 	
-	/** Adds a value to the time column (for time zone management).
+	/**
+	 * Adds a value to the time column (for time zone management).
 	 * @param adj the time adjustment
 	 */
 	public void adjustTime(double adj)
@@ -677,7 +685,8 @@ public class GenericDataMatrix implements BinaryDataSet
 		add(0, adj);
 	}
 
-	/** Gets the time column (column 1) of the data.
+	/** 
+	 * Gets the time column (column 1) of the data.
 	 * @return the time column
 	 */
 	public DoubleMatrix2D getTimes()
@@ -728,7 +737,6 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 	
 	/**
-	 * 
 	 * @return size of memory occuped by data matrix, in bytes
 	 */
 	public int getMemorySize()

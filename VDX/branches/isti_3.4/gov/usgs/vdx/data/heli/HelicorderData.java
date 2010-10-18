@@ -120,6 +120,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get bias for all data
+	 * @return the bias
 	 */
 	public double getBias()
 	{
@@ -151,6 +152,7 @@ public class HelicorderData extends GenericDataMatrix
 	 * @param t time to search index
 	 * @param left start index value
 	 * @param right end index value
+	 * @return the index
 	 */
 	private int findIndex(double t, int left, int right)
 	{
@@ -173,7 +175,9 @@ public class HelicorderData extends GenericDataMatrix
 	/**
 	 * 
 	 * Get bias for data between t1 and t2 time values
-	 *
+	 * @param t1 start time for range to get bias for
+	 * @param t2 end time for range to get bias for
+	 * @return the bias for t2..t2
 	 */
 	public double getBiasBetween(double t1, double t2)
 	{
@@ -202,6 +206,8 @@ public class HelicorderData extends GenericDataMatrix
 	/**
 	 * Split whole time range on raw set with duration timeChunk.
 	 * Get array of biases for each row.
+	 * @param timeChunk duration
+	 * @return array of biases
 	 */
 	public double[] getBiasByRow(double timeChunk)
 	{
@@ -259,6 +265,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get mean for value section max values on whole data
+	 * @return mean of maxes
 	 */
 	public double getMeanMax()
 	{
@@ -285,6 +292,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get mean of value section center position on whole data range
+	 * @return mean of range
 	 */
 	public double getMeanRange()
 	{
@@ -301,6 +309,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get start time
+	 * @return start time
 	 */
 	public double getStartTime()
 	{
@@ -309,6 +318,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get end time
+	 * @return end time
 	 */
 	public double getEndTime()
 	{
@@ -317,6 +327,8 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Get flag if this helicorder data have time intersection with another
+	 * @param heli HelicorderData to compare to this
+	 * @return true if heli overlaps time range of this
 	 */
 	public boolean overlaps(HelicorderData heli)
 	{
@@ -332,6 +344,11 @@ public class HelicorderData extends GenericDataMatrix
 		return true;
 	}
 	
+	/**
+	 * Yield index of datum w/ smallest time >= time
+	 * @param time lower bound of times to consider
+	 * @return index of time found; -1 if none found
+	 */
 	public int findClosestTimeIndexGreaterThan(double time)
 	{
 		for (int i = 0; i < rows(); i++)
@@ -342,6 +359,11 @@ public class HelicorderData extends GenericDataMatrix
 		return -1;
 	}
 	
+	/**
+	 * Yield index of datum w/ largest time <= time
+	 * @param time upper bound of times to consider
+	 * @return index of time found; -1 if none found
+	 */
 	public int findClosestTimeIndexLessThan(double time)
 	{
 		for (int i = rows() - 1; i >= 0; i--)
@@ -356,6 +378,7 @@ public class HelicorderData extends GenericDataMatrix
 	 * Get subset of data
 	 * @param t1 start time 
 	 * @param t2 end time
+	 * @return HelicorderData within time range
 	 */
 	public HelicorderData subset(double t1, double t2)
 	{
@@ -373,6 +396,8 @@ public class HelicorderData extends GenericDataMatrix
 	// can trash either helicorder
 	/**
 	 * Merge helicorders
+	 * @param heli HelicorderData to merge into this
+	 * @return this is successful, null otherwise
 	 */
 	public HelicorderData combine(HelicorderData heli)
 	{
@@ -439,6 +464,7 @@ public class HelicorderData extends GenericDataMatrix
 
 	/**
 	 * Get string representation, dump helicorder data matrix separating values by ' '
+	 * @return string representation of this
 	 */
 	public String toString()
 	{
@@ -457,6 +483,7 @@ public class HelicorderData extends GenericDataMatrix
 	
 	/**
 	 * Dump helicorder data matrix as CSV
+	 * @return string representation of this in CSV
 	 */
 	public String toCSV()
 	{

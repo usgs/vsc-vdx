@@ -34,7 +34,7 @@ public class SQLDataSourceDescriptor
 	
 	/**
 	 * Getter for data source name
-	 * @return
+	 * @return name
 	 */
 	public String getName()
 	{
@@ -43,6 +43,7 @@ public class SQLDataSourceDescriptor
 	
 	/**
 	 * Getter for data source class name
+	 * return class name
 	 */
 	public String getClassName()
 	{
@@ -51,6 +52,7 @@ public class SQLDataSourceDescriptor
 	
 	/**
 	 * Getter for data source description
+	 * @return description
 	 */
 	public String getDescription()
 	{
@@ -59,12 +61,16 @@ public class SQLDataSourceDescriptor
 	
 	/**
 	 * Getter for data source configuration
+	 * @return params
 	 */
 	public ConfigFile getParams()
 	{
 		return params;
 	}
 
+	/**
+	 * Instantiate data source
+	 */
 	private void instantiateDataSource()
 	{
 		try

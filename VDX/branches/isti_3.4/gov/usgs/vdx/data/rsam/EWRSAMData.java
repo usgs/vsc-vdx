@@ -60,6 +60,7 @@ public class EWRSAMData extends RSAMData
 	 * Dump RSAMData to byte buffer. This first 4 bytes specify an
 	 * integer number of rows followed by rows*16 bytes, 2 doubles: j2ksec and 
 	 * RSAM.
+	 * @return RSAMData as ByteBuffer
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -158,6 +159,7 @@ public class EWRSAMData extends RSAMData
 	
 	/**
 	 * Get cumulative event data by time interval
+	 * @return maxtrix of event data
 	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
@@ -167,6 +169,7 @@ public class EWRSAMData extends RSAMData
 	/**
 	 * Get initialized histogram of event count by time
 	 * @param bin time interval
+	 * @return histogram of interval
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{

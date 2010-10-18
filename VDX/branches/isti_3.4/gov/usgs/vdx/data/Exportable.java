@@ -13,7 +13,7 @@ public interface Exportable
 	
 	/**
 	 * Yield next row of data (array of Doubles)
-	 * @returns Double[] next row of data
+	 * @return Double[] next row of data
 	 */
 	public Double[] getNextExportRow();
 

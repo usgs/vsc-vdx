@@ -49,6 +49,7 @@ public class GPSData implements BinaryDataSet
 	
 	/**
 	 * Initialize internal matrices from list of DataPoints
+	 * @param pts list of DataPoints
 	 */
 	public void setToList(List pts)
 	{
@@ -102,6 +103,7 @@ public class GPSData implements BinaryDataSet
 	
 	/**
 	 * Get binary GPSData representation
+	 * @return ByteBuffer of binary GPSData
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -133,6 +135,7 @@ public class GPSData implements BinaryDataSet
 
 	/**
 	 * Initialize GPSData from binary representation
+	 * @param bb ByteBuffer of GPSData
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{
@@ -459,6 +462,7 @@ public class GPSData implements BinaryDataSet
 
 	/**
 	 * Get first observation from internal matrices
+	 * @return DataPoint of first observation
 	 */
 	public DataPoint getFirstObservation()
 	{

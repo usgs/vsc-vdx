@@ -31,14 +31,38 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	public static final String REMARK	= "remark";
@@ -67,6 +91,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -84,6 +109,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 
 	/**
 	 * Get flag if database exists
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -91,6 +117,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	
 	/**
 	 * Create hypocenters database
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createDatabase() {
 		
@@ -157,6 +184,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param command to execute, map of parameter-value pairs.
+	 * @return request result
 	 */	
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -228,6 +256,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minVerr		minimum vertical error
 	 * @param maxVerr		maximum vertical error
 	 * @param rmk			remarks filter
+	 * @return list of hypocenter data
 	 */
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,

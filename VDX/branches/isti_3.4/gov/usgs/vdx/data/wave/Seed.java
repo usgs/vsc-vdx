@@ -95,6 +95,8 @@ public class Seed
 	 
 	/**
 	 * Convert binary time to Date
+	 * @param bt binary time
+	 * @return bt as a Date
 	 */
 	public static Date btimeToDate(Btime bt)
 	{
@@ -112,6 +114,7 @@ public class Seed
 	 * Get sample rate
 	 * @param factor seed factor parameter
 	 * @param multiplier seed multiplier parameter
+	 * @return sample rate
 	 */
 	public static float getSampleRate (double factor, double multiplier) {
         float sampleRate = (float) 10000.0;  // default (impossible) value;

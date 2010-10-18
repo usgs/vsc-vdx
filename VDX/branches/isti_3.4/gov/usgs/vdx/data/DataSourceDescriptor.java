@@ -34,7 +34,7 @@ public class DataSourceDescriptor
 	
 	/**
 	 * Getter for data source name
-	 * @return
+	 * @return data source name
 	 */
 	public String getName()
 	{
@@ -43,6 +43,7 @@ public class DataSourceDescriptor
 	
 	/**
 	 * Getter for data source class name
+	 * @return data source class name
 	 */
 	public String getClassName()
 	{
@@ -51,6 +52,7 @@ public class DataSourceDescriptor
 	
 	/**
 	 * Getter for data source description
+	 * @return data source description
 	 */
 	public String getDescription()
 	{
@@ -59,12 +61,16 @@ public class DataSourceDescriptor
 	
 	/**
 	 * Getter for data source configuration
+	 * @return data source configuration
 	 */
 	public ConfigFile getParams()
 	{
 		return params;
 	}
 
+	/**
+	 * Create and initialize a new dataSource
+	 */
 	private void instantiateDataSource()
 	{
 		try
@@ -78,6 +84,9 @@ public class DataSourceDescriptor
 		}
 	}
 	
+	/**
+	 * Disconnect a dataSource
+	 */
 	private void uninstantiateDataSource()
 	{
 		try

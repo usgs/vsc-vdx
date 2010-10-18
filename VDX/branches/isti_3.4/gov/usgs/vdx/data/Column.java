@@ -93,6 +93,7 @@ public class Column
 	
 	/**
 	 * Get string representation of class
+	 * @param string rep of this Column
 	 */
 	public String toString() {
 		return(String.format("%d:%s:%s:%s:%s:%s:%s", idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F"), (bypassmanipulations ? "T" : "F")));
@@ -100,8 +101,8 @@ public class Column
 	
 	/**
 	 * Conversion utility
-	 * @param ss
-	 * @return
+	 * @param ss List of strings, each representing a column
+	 * @return List of Columns
 	 */
 	public static List<Column> fromStringsToList(List<String> ss) {
 		List<Column> columns = new ArrayList<Column>();

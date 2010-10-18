@@ -73,6 +73,7 @@ public class DataSourceHandler
 
 	/**
 	 * Get parsed config file
+	 * @return config file
 	 */
 	public ConfigFile getConfig()
 	{
@@ -81,6 +82,8 @@ public class DataSourceHandler
 	
 	/**
 	 * Get data source descriptor by name
+	 * @param key name of data source
+	 * @return data source descriptor 
 	 */
 	public DataSourceDescriptor getDataSourceDescriptor(String key)
 	{
@@ -89,6 +92,7 @@ public class DataSourceHandler
 	
 	/**
 	 * Get the whole list of data sources
+	 * @return List of data sources
 	 */
 	public List<DataSourceDescriptor> getDataSources()
 	{
@@ -99,6 +103,8 @@ public class DataSourceHandler
 
 	/**
 	 * Getter for export config
+	 * @param source name of data source
+	 * @return export config fo named source
 	 */
 	public ExportConfig getExportConfig( String source ) 
 	{
@@ -107,6 +113,8 @@ public class DataSourceHandler
 
 	/**
 	 * Setter for export config
+	 * @param source name of data source
+	 * @param ec export config
 	 */
 	public void putExportConfig( String source, ExportConfig ec ) 
 	{
