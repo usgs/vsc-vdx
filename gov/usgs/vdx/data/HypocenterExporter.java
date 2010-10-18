@@ -38,6 +38,7 @@ public class HypocenterExporter implements Exportable {
 	
 	/**
 	 * Get data about next hypocenter for export
+	 * @return next hypocenter
 	 */
 	public Double[] getNextExportRow() {
 		if ( expIndex >= count ) {

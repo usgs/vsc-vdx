@@ -17,6 +17,7 @@ public class SliceWaveExporter extends SliceWaveRenderer implements Exportable {
 
 	/**
 	 * Get data about next wave for export
+	 * @return next wave
 	 */
 	public Double[] getNextExportRow() {
 		if ( wave == null )

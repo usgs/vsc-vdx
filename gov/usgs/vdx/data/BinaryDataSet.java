@@ -16,6 +16,7 @@ public interface BinaryDataSet
 	
 	/**
 	 * Init internal data from ByteBuffer
+	 * @param bb ByteBuffer of internal data
 	 */
 	public void fromBinary(ByteBuffer bb);
 }

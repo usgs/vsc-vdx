@@ -29,7 +29,7 @@ public class ExportData implements Comparable
 	
 	/**
 	 * Yield the next row of data
-	 * @returns Double[] next row of data
+	 * @return Double[] next row of data
 	 */
 	public Double[] nextExportDatum()
 	{
@@ -39,7 +39,7 @@ public class ExportData implements Comparable
 	
 	/**
 	 * Yield the last row of data returned by nextExportDatum
-	 * @returns Double[] last row of data returned by nextExportDatum
+	 * @return Double[] last row of data returned by nextExportDatum
 	 */
 	public Double[] currExportDatum()
 	{
@@ -48,7 +48,7 @@ public class ExportData implements Comparable
 	
 	/**
 	 * Yield ID
-	 * @returns int ID
+	 * @return int ID
 	 */
 	public int exportDataID() 
 	{
@@ -57,7 +57,7 @@ public class ExportData implements Comparable
 	
 	/**
 	 * Yield dummy datum (Double[] of proper length but all nulls)
-	 * @returns Double[] array of nulls of proper length
+	 * @return Double[] array of nulls of proper length
 	 */
 	public Double[] dummyExportDatum() {
 		return dummy;
@@ -66,7 +66,7 @@ public class ExportData implements Comparable
 	/**
 	 * Compare this is obj
 	 * @param obj ExportObject to be compared to
-	 * @returns int result of comparison
+	 * @return int result of comparison
 	 * @see Comparable
 	 */
 	public int compareTo( Object obj )

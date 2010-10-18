@@ -6,8 +6,8 @@ import java.sql.SQLException;
 
 /**
  * Supplemental data for channel		
+ * @author Scott Hunter
  */
-
 public class SuppDatum
 {
 	public int sdid;
@@ -34,6 +34,8 @@ public class SuppDatum
 
 	/**
 	 * Yield null if s is an empty string, otherwise just s
+	 * @param s string to "convert"
+	 * @return "converted" string
 	 */
 	private String empty2null( String s ) {
 		if ( s.length() == 0 )
@@ -44,6 +46,8 @@ public class SuppDatum
 
 	/**
 	 * Yield -1 if s is null or an empty string, otherwise the integer s parses to
+	 * @param s string to try and parse as an int
+	 * @return -1 if unparsable, else its parsed value
 	 */
 	private int str2int( String s ) {
 		if ( s==null || s.length() == 0 )
@@ -54,6 +58,8 @@ public class SuppDatum
 
 	/**
 	 * Yield -1 if s is null or an empty string, otherwise the double s parses to
+	 * @param s string to try and parse as a double
+	 * @return -1 if unparsable, else its parsed value
 	 */
 	private double str2dbl( String s ) {
 		if ( s==null || s.length() == 0 )
@@ -72,9 +78,6 @@ public class SuppDatum
 	 * @param str CSV rep of a SuppDatum
 	 */
 	public SuppDatum( String str ) {
-//		sd.sdid, sd.st, sd.et, sd.cid, sd.tid, sd.colid, sd.rid, sd.dl, 
-//		sd.name, sd.value, sd.chName, sd.typeName, sd.colName, sd.rkName ));
-//		"%d,%f,%f,%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\""
 		String[] qp = str.replace(Character.MIN_VALUE ,'\n').split( "\"" );
 		this.name 		= empty2null( qp[1] );
 		this.value 		= empty2null( qp[3] );

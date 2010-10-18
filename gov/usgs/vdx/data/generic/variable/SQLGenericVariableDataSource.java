@@ -34,18 +34,43 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -63,6 +88,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Get flag if database exist
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -70,6 +96,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Create generic variable database
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createDatabase() {
 		
@@ -123,6 +150,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param command to execute.
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 
@@ -279,6 +307,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	
 	/**
 	 * Get list of registered data types for this database
+	 * @return List of DataTypes
 	 */
 	public List<DataType> getDataTypes() {
 		List<DataType> result = new ArrayList<DataType>();
@@ -302,6 +331,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Get station id (the same as getStationID(String code))
 	 * @param code station code
+	 * @return station id
 	 */
 	public int getStationName(String code) {
 		try {
@@ -320,8 +350,9 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	}
 
 	/**
-	 * Get station id 
+	 * Get station id (the same as getStationName(String code))
 	 * @param code station code
+	 * @return station id
 	 */
 	public int getStationID(String code) {
 		try {
@@ -341,6 +372,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Create new data type in the database
+	 * @param dt DataType to add
 	 */
 	public void insertDataType(DataType dt) {
 		try {
@@ -409,7 +441,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Create table for station data
 	 * @param stationTable table name
-	 * @return false
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createStationTable(String stationTable) {
 		boolean success = false;

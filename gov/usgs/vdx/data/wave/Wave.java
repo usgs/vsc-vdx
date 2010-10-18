@@ -135,12 +135,21 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 * @param b the samples buffer
 	 * @param st the start time
 	 * @param sr the sampling rate
+	 * @param dt the data type
 	 */
 	public Wave(int[] b, double st, double sr, String dt)
 	{
 		makeWave( b, st, sr, dt );
 	}
 	
+	/**
+	 * Set this <code>Wave</code> from variables.
+	 * 
+	 * @param b the samples buffer
+	 * @param st the start time
+	 * @param sr the sampling rate
+	 * @param dt the data type
+	 */
 	public void makeWave(int[] b, double st, double sr, String dt)
 	{
 		buffer = b;
@@ -207,6 +216,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		return false;
 	}
 	
+	/**
+	 * Normalize bad data values.
+	 */
 	public void handleBadData()
 	{
 		for (int i = 0; i < buffer.length; i++) {
@@ -304,6 +316,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 	/**
 	 * Set sample rate
+	 * @param sr sampling rate
 	 */
 	public void setSamplingRate(double sr)
 	{
@@ -312,6 +325,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 	/**
 	 * Set datatype
+	 * @param dt data type
 	 */
 	public void setDataType(String dt)
 	{
@@ -320,6 +334,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 	/**
 	 * Set start time
+	 * @param st start time
 	 */
 	public void setStartTime(double st)
 	{
@@ -714,8 +729,8 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	/**
 	 * Expiremental.  For use with Winston static importers.
 	 * TODO: handle erase a chunk inside the existing wave
-	 * @param t1
-	 * @param t2
+	 * @param t1 start time
+	 * @param t2 end time
 	 */
 	public void erase(double t1, double t2)
 	{
@@ -919,6 +934,8 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 * wave from arguments so sort order does not matter.
 	 * 
 	 * @param waves the list of <code>Wave</code> s
+	 * @param t1 start time
+	 * @param t2 end time
 	 * @return the new joined wave
 	 */
 	public static Wave join(List<Wave> waves, double t1, double t2)
@@ -1077,6 +1094,11 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		return d;
 	}
 
+	/**
+	 * Debiases the wave. This functions subtracts the mean from every sample.
+	 * 
+	 * @return an array of the sum at each sample
+	 */
 	public double[] removeMean()
 	{
 		double[] d = new double[this.buffer.length];
@@ -1089,6 +1111,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	/**
 	 * Filter data
 	 * @param bw Butterworth filter to apply
+	 * @param zeroPhaseShift flag for no phase shift
 	 */
 	public void filter(Butterworth bw, boolean zeroPhaseShift)
 	{
@@ -1152,6 +1175,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	
 	/**
 	 * Restore Wave content from ByteBuffer
+	 * @param bb ByteBuffer
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{
@@ -1228,18 +1252,26 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 	/**
 	 * Compare waves by start time
+	 * @return this-o's start times
 	 */
 	public int compareTo(Wave o) 
 	{
 		return (int)Math.round(getStartTime() - o.getStartTime());
 	}
 	
+	/**
+	 * Yield a clone of this
+	 * @return clone
+	 */
 	public Wave clone() {
 		Wave w = new Wave(this);
 		
 		return w;
 	}
 	
+	/**
+	 * Detrend this Wave
+	 */
 	public void detrend() {
 
         double xm	= this.buffer.length/2;
@@ -1260,7 +1292,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	}
 	
 	/**
-	 * Despike data from column c using period p
+	 * Despike data using period p
 	 * @param p period used for despiking
 	 */
 	public void despike( double p ) {
@@ -1268,8 +1300,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	}		
 
 	/**
-	 * Replace data in column c with rolling mean of period p
-	 * @param c column to change
+	 * Replace data with rolling mean of period p
 	 * @param p period used for rolling mean
 	 */
 	public void set2mean( double p ) {
@@ -1293,8 +1324,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	}
 
 	/**
-	 * Replace data in column c with rolling median of period p
-	 * @param c column to change
+	 * Replace data with rolling median of period p
 	 * @param p period used for rolling median
 	 */
 	public void set2median( double p ) {

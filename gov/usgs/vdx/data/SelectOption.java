@@ -52,6 +52,7 @@ public class SelectOption {
 
 	/**
 	 * Getter for select option id
+	 * @return id
 	 */
 	public int getId() {
 		return soid;
@@ -59,6 +60,7 @@ public class SelectOption {
 
 	/**
 	 * Getter for select option idx
+	 * @return index
 	 */
 	public int getIndex() {
 		return idx;
@@ -66,6 +68,7 @@ public class SelectOption {
 
 	/**
 	 * Getter for select option code
+	 * @return code
 	 */
 	public String getCode() {
 		return code;
@@ -73,6 +76,7 @@ public class SelectOption {
 
 	/**
 	 * Getter for select option name
+	 * @return name
 	 */
 	public String getName() {
 		return name;
@@ -94,6 +98,7 @@ public class SelectOption {
 	
 	/**
 	 * Conversion of objects to string
+	 * @return string representation
 	 */
 	public String toString() {
 		return String.format("%d:%d:%s:%s", getId(), getIndex(), getCode(), getName());

@@ -46,7 +46,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Station description in the text form: 'sid:org:siteNo:name:lon:lat:active'
-	 * @param s
+	 * @param s station description
 	 */
 	public Station(String s)
 	{
@@ -98,8 +98,8 @@ public class Station implements Comparable<Object>
 
 	/**
 	 * Construct station map (id - station) from strings list 
-	 * @param ss
-	 * @return
+	 * @param ss List of Station definitions
+	 * @return station map
 	 */
 	public static Map<String, Station> fromStringsToMap(List<String> ss)
 	{
@@ -114,6 +114,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Setter for id
+	 * @param i id
 	 */
 	public void setId(int i)
 	{
@@ -122,17 +123,26 @@ public class Station implements Comparable<Object>
 
 	/**
 	 * Getter for id
+	 * @return id
 	 */
 	public int getId()
 	{
 		return sid;
 	}
 	
+	/**
+	 * Setter for org
+	 * @param o org
+	 */
 	public void setOrg(String o)
 	{
 		org = o;
 	}
 	
+	/**
+	 * Getter for org
+	 * @return org
+	 */
 	public String getOrg()
 	{
 		return org;
@@ -140,6 +150,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Setter for site number
+	 * @param s site number
 	 */
 	public void setSiteNo(String s)
 	{
@@ -148,6 +159,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Getter for site number
+	 * @return site number
 	 */
 	public String getSiteNo()
 	{
@@ -156,6 +168,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Setter for station name
+	 * @param n station name
 	 */
 	public void setName(String n)
 	{
@@ -164,6 +177,7 @@ public class Station implements Comparable<Object>
 
 	/**
 	 * Getter for station name
+	 * @return station name
 	 */
 	public String getName()
 	{
@@ -172,6 +186,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Getter for longitude
+	 * return longitude
 	 */
 	public double getLon()
 	{
@@ -180,6 +195,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Getter for latitude
+	 * @return latitude
 	 */
 	public double getLat()
 	{
@@ -188,6 +204,7 @@ public class Station implements Comparable<Object>
 
 	/**
 	 * Getter for time zone
+	 * @return time zone
 	 */
 	public String getTz()
 	{
@@ -196,6 +213,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Get flag if station active
+	 * @return true if station active, false otherwise
 	 */
 	public boolean getActive()
 	{
@@ -204,6 +222,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Get station coordinates as Point2D
+	 * @return station coordinates
 	 */
 	public Point2D.Double getLonLat()
 	{
@@ -212,6 +231,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Get short string representation of station
+	 * @return string representation of this Station
 	 */
 	public String toString()
 	{
@@ -220,6 +240,7 @@ public class Station implements Comparable<Object>
 
 	/**
 	 * 'sid:org:siteNo:name:lon:lat:active'
+	 * @return full string representation of this Station
 	 */
 	public String toFullString()
 	{
@@ -228,6 +249,8 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Compares station by site numbers
+	 * @param s Station to compare to; either a site number or a Station Object
+	 * @return comparison of site numbers
 	 */
 	public int compareTo(Object s)
 	{

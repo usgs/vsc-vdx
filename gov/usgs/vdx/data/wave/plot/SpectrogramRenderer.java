@@ -109,6 +109,10 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		wave = w;
 	}
 
+	/**
+	 * Set frame decorator
+	 * @param fd frame decorator
+	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
 		decorator = fd;
@@ -124,6 +128,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set graph title
+	 * @param t title
 	 */
 	public void setTitle(String t)
 	{
@@ -159,6 +164,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	/**
 	 * Compute spectrogram.
 	 * Reinitialize frame decorator with this renderer data.
+	 * @param oldMaxPower 
 	 * @return maximum magnitude
 	 */
 	public double update(double oldMaxPower)
@@ -263,12 +269,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 
 	/**
 	 * Set autoscale flag
+	 * @param autoscale autoscale flag
 	 */
 	public void setAutoScale(boolean autoScale)
 	{
 		this.autoScale = autoScale;
 	}
 	/**
+	 * Set size of fft
 	 * @param fftSize The fftSize to set.
 	 */
 	public void setFftSize(String fftSize)
@@ -278,6 +286,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set flag if we have logarithm frequency axis
+	 * @param logFreq logarithm frequency axis flag
 	 */
 	public void setLogFreq(boolean logFreq)
 	{
@@ -286,6 +295,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set flag if we have logarithm power axis
+	 * @param logPower logarithm power axis flag
 	 */
 	public void setLogPower(boolean logPower)
 	{
@@ -294,6 +304,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set maximum frequency
+	 * @param maxFreq maximum frequency
 	 */
 	public void setMaxFreq(double maxFreq)
 	{
@@ -302,6 +313,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Get maximum power value
+	 * @return maximum power
 	 */
 	public void setMaxPower(double maxPower)
 	{
@@ -310,6 +322,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set minimum frequency
+	 * @param minFreq minimum frequency
 	 */
 	public void setMinFreq(double minFreq)
 	{
@@ -317,6 +330,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	/**
 	 * Set spectrogram overlapping flag
+	 * @param overlap spectrogram overlapping flag
 	 */
 	public void setOverlap(double overlap)
 	{
@@ -324,6 +338,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	/**
 	 * Set viewEndTime.
+	 * @param viewEndTime view end time
 	 */
 	public void setViewEndTime(double viewEndTime)
 	{
@@ -332,6 +347,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set viewStartTime.
+	 * @param viewStartTime view start time
 	 */
 	public void setViewStartTime(double viewStartTime)
 	{
@@ -340,6 +356,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set Time Zone name.
+	 * @param timeZone time zone name
 	 */
 	public void setTimeZone(String timeZone)
 	{
@@ -348,6 +365,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set Y axis label
+	 * @param s Y axis label
 	 */
 	public void setYLabelText(String s)
 	{
@@ -356,6 +374,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set Y axis unit
+	 * @param s Y axis unit
 	 */
 	public void setYUnitText(String s)
 	{
@@ -364,6 +383,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set slice to process
+	 * @param wave slice to process
 	 */
 	public void setWave(SliceWave wave)
 	{
@@ -372,6 +392,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set h ticks count
+	 * @param ticks h ticks count
 	 */
 	public void setHTicks(int ticks)
 	{
@@ -380,6 +401,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set v ticks count
+	 * @param ticks v ticks count
 	 */
 	public void setVTicks(int ticks)
 	{

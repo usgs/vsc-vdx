@@ -39,6 +39,7 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
 	
 	/**
 	 * Get next histogram row
+	 * @return next row
 	 */
 	public Double[] getNextExportRow() {
 		if ( expIndex >= bins ) {

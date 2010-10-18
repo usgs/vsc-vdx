@@ -111,6 +111,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Setter for raw duration
+	 * @param xs duration
 	 */
 	public void setTimeChunk(double xs)
 	{
@@ -119,6 +120,7 @@ public class HelicorderRenderer extends FrameRenderer
 
 	/**
 	 * Getter for raw duration
+	 * @return raw duration
 	 */
 	public double getTimeChunk()
 	{
@@ -127,6 +129,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Sets large channel flag
+	 * @param b large channel display flag
 	 */
 	public void setLargeChannelDisplay(boolean b)
 	{
@@ -136,7 +139,7 @@ public class HelicorderRenderer extends FrameRenderer
 	/**
 	 * Compute double array with description of graph axis information
 	 * @param adjTime flag if we take into account time zone offset while time boundaries computing 
-	 * @return
+	 * @return double array with description of graph axis information
 	 */
 	public double[] getTranslationInfo(boolean adjTime)
 	{
@@ -165,6 +168,7 @@ public class HelicorderRenderer extends FrameRenderer
 	/**
 	 * Get pixel X coordinate, taking into account raw structure of helicorder 
 	 * @param x time value
+	 * @return pixel x coordinate
 	 */
 	public double helicorderGetXPixel(double x)
 	{
@@ -176,6 +180,7 @@ public class HelicorderRenderer extends FrameRenderer
 	 * Get pixel Y coordinate, taking into account raw structure of helicorder
 	 * @param x time value
 	 * @param y data value 
+	 * @return pixel y coordinate
 	 */
 	public double helicorderGetYPixel(double x, double y)
 	{
@@ -185,6 +190,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Get max X (time) value of helicorder
+	 * @return max time 
 	 */
 	public double getHelicorderMaxX()
 	{
@@ -193,6 +199,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Get min X (time) value of helicorder
+	 * @return min time
 	 */
 	public double getHelicorderMinX()
 	{
@@ -201,6 +208,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Get end time of helicorder view extent
+	 * @return end time
 	 */
 	public double getViewEndTime()
 	{
@@ -227,6 +235,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Get raw number for time value
+	 * @return raw number for time value
 	 */
 	public int getRow(double x)
 	{
@@ -237,6 +246,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Setter for channel
+	 * @param ch channel
 	 */
 	public void setChannel(String ch)
 	{
@@ -244,6 +254,7 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/**
+	 * Setter for clipBars
 	 * @param clipBars The clipBars to set.
 	 */
 	public void setClipBars(int clipBars)
@@ -251,6 +262,7 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/**
+	 * Setter for clipWav
 	 * @param cw The .wav to play when clipping is detected
 	 */
 	public void setClipWav(String cw)
@@ -260,6 +272,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set timeout to detect clipping
+	 * @param to timeout
 	 */
 	public void setClipAlertTimeout(int to)
 	{
@@ -267,6 +280,7 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	/**
 	 * Set flag if we force center view
+	 * @param forceCenter new value for force center flag
 	 */
 	public void setForceCenter(boolean forceCenter)
 	{
@@ -275,6 +289,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Get number of raws in the helicorder
+	 * @return number of rows
 	 */
 	public int getNumRows()
 	{
@@ -283,6 +298,7 @@ public class HelicorderRenderer extends FrameRenderer
 
 	/**
 	 * Setter for time zone
+	 * @param tz timezone
 	 */
 	public void setTimeZone(TimeZone tz)
 	{
@@ -291,7 +307,8 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/**
-	 * Not realized yet
+	 * Setter for time zone abbreviation -- UNIMPLEMENTED
+	 * @param s abbreviation
 	 */
 	public void setTimeZoneAbbr(String s)
 	{
@@ -299,7 +316,8 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 
 	/**
-	 * Not realized yet
+	 * Setter for time zone offset -- UNIMPLEMENTED
+	 * @param h offset
 	 */
 	public void setTimeZoneOffset(double h)
 	{
@@ -308,6 +326,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set flag if we show clipping
+	 * @param b new flag
 	 */
 	public void setShowClip(boolean b)
 	{
@@ -316,12 +335,17 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set flag if we play alert while clipping detected
+	 * @param b new flag
 	 */
 	public void setAlertClip(boolean b)
 	{
 		alertClip = b;
 	}
 	
+	/**
+	* Set clip value
+	* @param i new clip value
+	*/
 	public void setClipValue(int i)
 	{
 		clipValue = i;
@@ -329,6 +353,7 @@ public class HelicorderRenderer extends FrameRenderer
 
 	/**
 	 * Get raw height
+	 * @return raw height
 	 */
 	public double getRowHeight()
 	{
@@ -337,6 +362,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set decorator to render frame
+	 * @param d new decorator
 	 */
 	public void setFrameDecorator(FrameDecorator d)
 	{
@@ -345,6 +371,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set default colors to render
+	 * @param cs color array
 	 */
 	public void setDefaultColors(Color[] cs)
 	{
@@ -353,6 +380,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Set color to render
+	 * @param color new color
 	 */
 	public void setColor(Color color)
 	{
@@ -383,6 +411,7 @@ public class HelicorderRenderer extends FrameRenderer
 	
 	/**
 	 * Render graph
+	 * @param g where to draw to
 	 */
 	public void render(Graphics2D g) {
 		
@@ -536,6 +565,9 @@ public class HelicorderRenderer extends FrameRenderer
 		decorator = new MinimumDecorator();
 	}
 	
+	/**
+	 * Minimum decorator
+	 */
 	class MinimumDecorator extends FrameDecorator
 	{
 		public void decorate(FrameRenderer fr)
@@ -604,6 +636,9 @@ public class HelicorderRenderer extends FrameRenderer
 		}
 	}
 	
+	/**
+	 * Stadard decorator
+	 */
 	class StandardDecorator extends FrameDecorator
 	{
 		public void decorate(FrameRenderer fr)
@@ -735,6 +770,9 @@ public class HelicorderRenderer extends FrameRenderer
 		decorator = new StandardDecorator();
 	}
 	
+	/**
+	 * Play clip alert
+	 */
 	private void playClipAlert()
 	{
 		Runnable r = new Runnable()

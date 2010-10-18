@@ -76,6 +76,7 @@ public class CUBEMessage
     
     /**
      * Get message type
+     * @return message type
      */
     public int getMessageType()
     {
@@ -96,7 +97,8 @@ public class CUBEMessage
     
     /**
      * Get event ID
-      */
+     * @return event id
+     */
     public String getEventID()
     {
         return message.substring(2, 10);
@@ -104,6 +106,7 @@ public class CUBEMessage
     
     /**
      * Get data source
+     * @return data source
      */
     public String getDataSource()
     {
@@ -112,7 +115,8 @@ public class CUBEMessage
     
     /**
      * Get message version
-      */
+     * @return version
+     */
     public char getVersion()
     {
         return message.charAt(12);
@@ -120,6 +124,7 @@ public class CUBEMessage
     
     /**
      * Get message date
+     * @return date as Date
      */
     public Date getDate()
     {
@@ -140,6 +145,7 @@ public class CUBEMessage
   
     /**
      * Get message date as j2k
+     * @return date as j2k
      */
     public double getJ2KSec()
     {
@@ -148,6 +154,7 @@ public class CUBEMessage
     
     /**
      * Get message event latitude
+     * @return latitude
      */
     public double getLatitude()
     {
@@ -159,6 +166,7 @@ public class CUBEMessage
  
     /**
      * Get message event longitude
+     * @return longitude
      */
     public double getLongitude()
     {
@@ -170,6 +178,7 @@ public class CUBEMessage
     
     /**
      * Get message event depth
+     * @return depth
      */
     public double getDepth()
     {
@@ -181,6 +190,7 @@ public class CUBEMessage
    
     /**
      * Get message event magnitude
+     * @return magnitude
      */
     public double getMagnitude()
     {
@@ -194,6 +204,7 @@ public class CUBEMessage
      * Main method
      * Reads all files in the current directory, assume each of them contains one message.
      * Print all found earthquakes event on stdout.
+     * @param args command line arguments
      */
     public static void main(String[] args)
     {

@@ -108,6 +108,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set frame decorator to draw graph's frame
+	 * @param fd frame decorator
 	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
@@ -127,6 +128,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Get maximum Y value
+	 * @return maximum y value
 	 */
 	public double getMaxY() 
 	{
@@ -135,6 +137,7 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Set maximum Y value
+	 * @param maxY maximum Y value
 	 */
 	public void setMaxY(double maxY) 
 	{
@@ -143,6 +146,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Get minimum Y value
+	 * @return minimum Y value
 	 */
 	public double getMinY() 
 	{
@@ -151,6 +155,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set minimum Y value
+	 * @param minY minimum Y value
 	 */
 	public void setMinY(double minY) 
 	{
@@ -159,6 +164,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Get autoscale flag
+	 * @return autoscale flag
 	 */
 	public boolean isAutoScale() 
 	{
@@ -167,6 +173,7 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Get demean flag
+	 * @return demean flag
 	 */
 	public boolean isRemoveBias() 
 	{
@@ -175,6 +182,7 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Set autoscale flag
+	 * @param autoscale flag
 	 */
 	public void setAutoScale(boolean b)
 	{
@@ -183,6 +191,8 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Set limits on Y axis
+	 * @param min new Y minimum
+	 * @param max new Y maximum
 	 */
 	public void setYLimits(double min, double max)
 	{
@@ -192,6 +202,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set demean flag
+	 * @param b new demean flag
 	 */
 	public void setRemoveBias(boolean b)
 	{
@@ -200,6 +211,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set draw samples flag
+	 * @param b draw samples flag
 	 */
 	public void setDrawSamples(boolean b)
 	{
@@ -208,6 +220,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set slice to render
+	 * @param w slice to render
 	 */
 	public void setWave(SliceWave w)
 	{
@@ -228,6 +241,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set color
+	 * @param c color
 	 */
 	public void setColor(Color c)
 	{
@@ -236,6 +250,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set Y axis label
+	 * @param s Y axis label
 	 */
 	public void setYLabelText(String s)
 	{
@@ -244,6 +259,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Set Y axis unit
+	 * @param s Y axis unit
 	 */
 	public void setYUnitText(String s)
 	{
@@ -252,6 +268,7 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Set graph title
+	 * @param s graph title
 	 */
 	public void setTitle(String s)
 	{
@@ -330,6 +347,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	
 	/**
 	 * Render slice graph
+	 * @param g where to render to
 	 */
 	public void render(Graphics2D g)
 	{

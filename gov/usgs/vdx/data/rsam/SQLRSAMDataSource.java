@@ -36,18 +36,43 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -65,6 +90,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	
 	/**
 	 * Get flag if database exist
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -72,6 +98,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	
 	/**
 	 * Create generic fixed database
+	 * @return true
 	 */
 	public boolean createDatabase() {
 		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
@@ -101,6 +128,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param command to execute. 
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -162,7 +190,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param rid	rank id
 	 * @param st	start time
 	 * @param et	end time
-	 * @return 
+	 * @return RSAM data
 	 */
 	public RSAMData getRSAMData(int cid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
@@ -228,7 +256,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param channel
 	 * @param st
 	 * @param et
-	 * @return
+	 * @return RatSAM data
 	 */
 	public RSAMData getRatSAMData(String ch, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		RSAMData result1	= null;

@@ -100,6 +100,7 @@ public class HelicorderSettings {
 	/**
 	 * Create plot 
 	 * @param hd data to render
+	 * @return plot created
 	 */
 	public Plot createPlot(HelicorderData hd) {
 		Plot plot = new Plot();

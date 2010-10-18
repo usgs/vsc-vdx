@@ -99,6 +99,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel id
+	 * @return channel id
 	 */
 	public int getCID() {
 		return cid;
@@ -106,6 +107,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel code
+	 * @return channel code
 	 */
 	public String getCode() {
 		return code;
@@ -113,6 +115,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel name
+	 * @return channel name
 	 */
 	public String getName() {
 		return name;
@@ -120,6 +123,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel Latitude
+	 * @return channel Latitude
 	 */
 	public double getLat() {
 		return lat;
@@ -127,6 +131,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel Longitude
+	 * @return channel Longitude
 	 */
 	public double getLon() {
 		return lon;
@@ -142,6 +147,7 @@ public class Channel {
 
 	/**
 	 * Getter for channel height
+	 * @return channel height
 	 */
 	public double getHeight() {
 		return height;
@@ -149,6 +155,7 @@ public class Channel {
 	
 	/**
 	 * Getter for channel type id
+	 * @return type id
 	 */
 	public int getCtid() {
 		return ctid;
@@ -170,6 +177,7 @@ public class Channel {
 	
 	/**
 	 * Conversion of objects to string
+	 * @return string representation of this channel
 	 */
 	public String toString() {
 		String lon, lat, height;

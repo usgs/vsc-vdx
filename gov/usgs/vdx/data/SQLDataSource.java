@@ -47,6 +47,7 @@ abstract public class SQLDataSource implements DataSource {
 	
 	/**
 	 * Initialize the data source.  Concrete realization see in the inherited classes
+	 * @param params config file
 	 */
 	abstract public void initialize(ConfigFile params);
 	
@@ -80,15 +81,23 @@ abstract public class SQLDataSource implements DataSource {
 	 */
 	abstract public void disconnect();
 	
+	/**
+	 * Getter for maxrows
+	 * @return maxrows
+	 */
 	public int getMaxRows(){
 		return maxrows;
 	}
 	
+	/**
+	 * Setter for maxrows
+	 * @param maxrows limit on number of rows to retrieve
 	protected void setMaxRows(int maxrows){
 		this.maxrows = maxrows;
 	}
 	
 	/**
+	 * Get size of result set
 	 * @param rs ResultSet to query 
 	 * @return Count of records in given ResultSet
 	 * @throws SQLException
@@ -110,6 +119,7 @@ abstract public class SQLDataSource implements DataSource {
 	}
 	
 	/**
+	 * Get error result
 	 * @param errMessage message to pack
 	 * @return TextResult which contains error message
 	 */
@@ -122,6 +132,7 @@ abstract public class SQLDataSource implements DataSource {
 	}
 	
 	/**
+	 * Get SQL for downsampling
 	 * @param sql Query to compress
 	 * @param ds Type of compressing: currently decimate/mean by time interval/none
 	 * @param dsInt time interval to average values, in seconds
@@ -170,8 +181,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Initialize Data Source
 	 * 
-	 * @param db		VDXDatabase object
-	 * @param dbName	name of the database, minus the prefix
+	 * @param params config file
 	 */
 	public void defaultInitialize(ConfigFile params) {
 		
@@ -211,6 +221,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param channelTypes	if we need to create channel_types table
 	 * @param ranks			if we need to create ranks table
 	 * @param columns		if we need to create columns table
+	 * @param menuColumns   flag to retrieve database columns or plottable columns
 	 * @return true if success
 	 */
 	public boolean defaultCreateDatabase(boolean channels, boolean translations, boolean channelTypes, boolean ranks, boolean columns, boolean menuColumns) {
@@ -301,6 +312,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Get channel name
 	 * 
 	 * @param plural	if we need channel name in the plural form
+	 * @return channel name
 	 */
 	public String getChannelName(boolean plural) {
 		return plural ? "Channels" : "Channel";
@@ -435,7 +447,6 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param translations
 	 * @param ranks
 	 * @param columns
-	 * @params channelTypes
 	 * @return true if successful
 	 */	
 	public boolean defaultCreateTiltChannel(Channel channel, int tid, double azimuth,
@@ -539,7 +550,8 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Insert column
 	 * 
-	 * @param column	Column return true if successful
+	 * @param column	Column 
+	 * @return true if successful
 	 */
 	public boolean defaultInsertColumn(Column column) {
 		try {
@@ -1046,6 +1058,7 @@ abstract public class SQLDataSource implements DataSource {
 	
 	/**
 	 * Get List of columns from the database
+	 * param menuColumns flag to retrieve database columns or plottable columns
 	 * @return String List of columns
 	 */
 	public List<String> defaultGetMenuColumns(boolean menuColumns) {
@@ -1197,6 +1210,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Get options list in format "idx:code:name" from database
 	 * 
+	 * @param type suffix of table name
 	 * @return List of Strings with : separated values
 	 */
 	public List<String> defaultGetOptions(String type) {
@@ -1255,7 +1269,11 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param et			end time
 	 * @param translations	if the database has translations
 	 * @param ranks			if the database has ranks
+	 * @param maxrows       limit on number of rows returned
+	 * @param ds            Downsampling type
+	 * @param dsInt         argument for downsampling
 	 * @return GenericDataMatrix containing the data
+	 * @throws UtilException
 	 */
 	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
@@ -1477,6 +1495,19 @@ abstract public class SQLDataSource implements DataSource {
 		}
 	}
 	
+	/**
+	 * Insert Tilt data into V2 database
+	 *
+	 * @param code
+	 * @param j2ksec time
+	 * @param x
+	 * @param y
+	 * @param h
+	 * @param b
+	 * @param i
+	 * @param g
+	 * @param r
+	 */
 	public void insertV2TiltData (String code, double j2ksec, double x, double y, double h, double b, double i, double g, double r) {
 		try {
 			
@@ -1531,6 +1562,15 @@ abstract public class SQLDataSource implements DataSource {
 		}
 	}
 
+	/**
+	 * Insert Strain data into V2 database
+	 *
+	 * @param code
+	 * @param j2ksec time
+	 * @param dt01
+	 * @param dt02
+	 * @param trans
+	 */
 	public void insertV2StrainData(String code, double j2ksec, double dt01, double dt02, double barometer) {		
 		try {
 			
@@ -1577,6 +1617,13 @@ abstract public class SQLDataSource implements DataSource {
 		}		
 	}
 	
+	/**
+	 * Insert Gas data into V2 database
+	 *
+	 * @param sid station ID
+	 * @param t time
+	 * @param co2 co2 value
+	 */
 	public void insertV2GasData(int sid, double t, double co2) {		
 		try {
 			
@@ -1642,7 +1689,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Retrieve a piece of metadata
 	 * 
 	 * @param cmid the ID of the metadata to retrieve
-	 * @returns MetaDatum the desired metadata (null if not found)
+	 * @return MetaDatum the desired metadata (null if not found)
 	 */
 	public MetaDatum getMetaDatum( int cmid ) {
 		try {
@@ -1676,7 +1723,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * 
 	 * @param md the pattern to match (integers < 0 & null strings are ignored)
 	 * @param cm = "is the name of the columns table coulmns_menu?"
-	 * @returns List<MetaDatum> the desired metadata (null if an error occurred)
+	 * @return List<MetaDatum> the desired metadata (null if an error occurred)
 	 */
 	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
 		try {
@@ -1732,7 +1779,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * 
 	 * @param params parameters for this request
 	 * @param cm = "is the name of the columns table coulmns_menu?"
-	 * @returns RequestResult the desired meta data (null if an error occurred)
+	 * @return RequestResult the desired meta data (null if an error occurred)
 	 */
 	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
 		String arg = params.get("byID");
@@ -1775,7 +1822,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * 
 	 * @param sd the pattern to match (integers < 0 & null strings are ignored)
 	 * @param cm = "is the name of the columns table coulmns_menu?"
-	 * @returns List<SuppDatum> the desired supplementary data (null if an error occurred)
+	 * @return List<SuppDatum> the desired supplementary data (null if an error occurred)
 	 */
 	public List<SuppDatum> getMatchingSuppData( SuppDatum sd, boolean cm ) {
 		try {
@@ -1857,7 +1904,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Insert a piece of supplemental data
 	 * 
 	 * @param sd the SuppDatum to be added
-	 * @returns ID of the record, -ID if already present, 0 if failed
+	 * @return ID of the record, -ID if already present, 0 if failed
 	 */
 	public int insertSuppDatum( SuppDatum sd ) {
 		try {
@@ -1906,7 +1953,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Update a piece of supplemental data
 	 * 
 	 * @param sd the SuppDatum to be added
-	 * @returns ID of the record, 0 if failed
+	 * @return ID of the record, 0 if failed
 	 */
 	public int updateSuppDatum( SuppDatum sd ) {
 		try {
@@ -1931,6 +1978,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Insert a supplemental data xref
 	 * 
 	 * @param sdx the SuppDatum xref to be added
+	 * @return true if successful, false otherwise
 	 */
 	public boolean insertSuppDatumXref( SuppDatum sd ) {
 		try {
@@ -1957,7 +2005,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * Insert a supplemental datatype
 	 * 
 	 * @param sd the datatype to be added
-	 * @returns ID of the datatype, -ID if already present, 0 if failed
+	 * @return ID of the datatype, -ID if already present, 0 if failed
 	 */
 	public int insertSuppDataType( SuppDatum sd ) {
 		try {
@@ -2001,7 +2049,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * 
 	 * @param params parameters for this request
 	 * @param cm = "is the name of the columns table coulmns_menu?"
-	 * @returns RequestResult the desired supplementary data (null if an error occurred)
+	 * @return RequestResult the desired supplementary data (null if an error occurred)
 	 */
 	protected RequestResult getSuppData(Map<String, String> params, boolean cm) {
 		double st, et;
@@ -2080,7 +2128,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Retrieve the collection of supplementary data types
 	 * 
-	 * @returns List<SuppDatum> the desired supplementary data types (null if an error occurred)
+	 * @return List<SuppDatum> the desired supplementary data types (null if an error occurred)
 	 */
 	public List<SuppDatum> getSuppDataTypes() {
 
@@ -2110,6 +2158,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Get supp data types list in format 'sdtypeid"draw_line"name"color' from database
 	 * 
+	 * @param drawOnly yield only the drawable types
 	 * @return List of Strings with " separated values
 	 */
 	public RequestResult getSuppTypes(boolean drawOnly) {
