@@ -210,6 +210,10 @@ public class ExportConfig {
 		return fw;
 	}
 	
+	/**
+	 * Yield list of string representations of this
+	 * @return list of strings
+	 */
 	public List<String> toStringList() {
 		ArrayList<String> rep = new ArrayList<String>(numCommentLines+3);
 		rep.add(""+exportable);
@@ -228,6 +232,10 @@ public class ExportConfig {
 		return rep;
 	}
 
+	/**
+	 * Add components of this to params
+	 * @param params mapping to add toStringList
+	 */
 	public void parameterize( Map<String, String> params ) {
 		params.put( "exportable", ""+exportable );
 		if ( width==null ) {
@@ -248,10 +256,17 @@ public class ExportConfig {
 		}
 	}
 	
+	/**
+	 * Test for closure
+	 * @return true if closed, false otherwise
+	 */
 	public boolean isClosed() {
 		return closed;
 	}
 	
+	/**
+	 * Close this
+	 */
 	public void setClosed() {
 		closed = true;
 	}

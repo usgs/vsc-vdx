@@ -74,6 +74,7 @@ public class FreewaveIPConnection extends IPConnection
 	/** Calls the FreeWave.
 	 * @param radioNumber the radio phone number
 	 * @param establishConnectionTimeout the timeout (ms)
+	 * @throws Exception
 	 */
 	private void call(int radioNumber, int establishConnectionTimeout) throws Exception
 	{
@@ -86,6 +87,7 @@ public class FreewaveIPConnection extends IPConnection
 	
 	/** Sets the repeater path.
 	 * @param repeaterEntry the repeater entry in the FreeWave phone book
+	 * @throws Exception
 	 */
 	private void setRepeater(int repeaterEntry) throws Exception
 	{

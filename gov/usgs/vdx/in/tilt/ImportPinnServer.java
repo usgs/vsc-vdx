@@ -145,6 +145,7 @@ public class ImportPinnServer extends Client
 	 * java gov.usgs.vdx.data.tilt.ImportPinnServer [-c <configFile>] [files...]
 	 * 
 	 * If file names are given than import files, else connect and listen for pinnacle server
+	 * @param as command line args
 	 */
 	public static void main(String[] as)
 	{

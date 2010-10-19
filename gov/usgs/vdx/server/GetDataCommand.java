@@ -30,6 +30,8 @@ public class GetDataCommand extends BaseCommand
 {
 	/**
 	 * Constructor
+	 * @param sh server handler
+	 * @param nt net tools
 	 */
 	public GetDataCommand(ServerHandler sh, NetTools nt)
 	{
@@ -38,6 +40,8 @@ public class GetDataCommand extends BaseCommand
 	
 	/**
 	 * Perform command actions, write result to channel
+	 * @param info params
+	 * @param channel where to write to
 	 */
 	public void doCommand(Object info, SocketChannel channel)
 	{

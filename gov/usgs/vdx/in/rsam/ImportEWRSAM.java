@@ -141,6 +141,8 @@ public class ImportEWRSAM
 	
 	/**
 	 * Check if directory exist and readable.
+	 * @param aDirectory directory to validate
+	 * @throws FileNotFoundException if not found
 	 */
 	static private void validateDirectory (File aDirectory) throws FileNotFoundException 
 	{
@@ -163,6 +165,7 @@ public class ImportEWRSAM
 	 * -Y import data for this year
 	 * -y <year> import data for given year
 	 * -a import all data
+	 * @param as command line args
 	 */
 	public static void main(String[] as)
 	{

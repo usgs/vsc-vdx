@@ -74,6 +74,7 @@ public class ImportSum
 	
 	/**
 	 * Main method
+	 * @param args command line args
 	 */
 	public static void main(String[] args) {
 		ImportSum is = new ImportSum(args[0], args[1]);

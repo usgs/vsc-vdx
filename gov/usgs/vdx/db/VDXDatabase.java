@@ -109,6 +109,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for logger
+	 * @return logger
 	 */
 	public Logger getLogger() {
 		return logger;
@@ -116,6 +117,7 @@ public class VDXDatabase {
 
 	/**
 	 * Setter for logger
+	 * @param log logger
 	 */
 	public void setLogger(Logger log) {
 		logger = log;
@@ -196,6 +198,7 @@ public class VDXDatabase {
 
 	/**
 	 * Check if connection active
+	 * @return true if connected
 	 */
 	public boolean connected() {
 		return connected;
@@ -203,6 +206,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for database connection
+	 * @return connection
 	 */
 	public Connection getConnection() {
 		return connection;
@@ -210,6 +214,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for statement
+	 * @return statement
 	 */
 	public Statement getStatement() {
 		return statement;
@@ -218,6 +223,7 @@ public class VDXDatabase {
 	/**
 	 * Execute given sql
 	 * 
+	 * @param sql the sql to execute
 	 * @return true if success
 	 */
 	public boolean execute(final String sql) {
@@ -250,6 +256,7 @@ public class VDXDatabase {
 	/**
 	 * Execute given sql
 	 * 
+	 * @param sql  query to execute
 	 * @return result set given from database
 	 */
 	public ResultSet executeQuery(final String sql) {
@@ -279,6 +286,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for VDX database prefix
+	 * @return database prefix
 	 */
 	public String getDatabasePrefix() {
 		return dbPrefix;
@@ -396,6 +404,7 @@ public class VDXDatabase {
 	/**
 	 * Prepare statement for sql
 	 * 
+	 * @param sql statement to prepare
 	 * @return prepared statement
 	 */
 	public PreparedStatement getPreparedStatement(String sql) {
@@ -440,7 +449,7 @@ public class VDXDatabase {
 	 *            database name
 	 * @param table
 	 *            table name
-	 * @return
+	 * @return    true if table exists
 	 */
 	public boolean tableExists(String db, String table) {
 		try {
@@ -455,6 +464,7 @@ public class VDXDatabase {
 
 	/**
 	 * Main method, provide command-line interface
+	 * @param as commend line args
 	 */
 	public static void main(String[] as) {
 

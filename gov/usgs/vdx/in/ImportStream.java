@@ -136,7 +136,8 @@ public class ImportStream implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param importerClass name of importer class
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
@@ -720,14 +721,27 @@ public class ImportStream implements Importer {
 		}
 	}
 	
+	/**
+	 * Yield connection info
+	 * @return bar-separated string of connection info
+	 */
 	public String outputConnectionInfo() {
 		return deviceIP + "|" + devicePort + "|" + postConnectDelay + "|" + betweenPollDelay;
 	}
 	
+	/**
+	 * Yield header matching result of outputConnectionInfo
+	 * @return bar-separated string of connection info headers
+	 */
 	public String outputConnectionHeader() {
 		return "deviceIP|devicePort|postConnectDelay|betweenPollDelay";
 	}
 	
+	/**
+	 * Print usage.  Prints out usage instructions for the given importer
+	 * @param importerClass name of importer class
+	 * @param message instructions
+	 */
 	public void outputInstructions(String importerClass, String message) {
 		if (message == null) {
 			System.err.println(message);
@@ -742,6 +756,7 @@ public class ImportStream implements Importer {
 	 *  -c config file name
 	 *  -v verbose mode
 	 *  files ...
+	 * @param as command line args
 	 */
 	public static void main(String as[]) {
 		
