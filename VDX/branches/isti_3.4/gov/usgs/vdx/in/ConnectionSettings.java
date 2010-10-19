@@ -1,5 +1,8 @@
 package gov.usgs.vdx.in;
 
+/**
+ * Representation of a connection's settings
+ */
 public class ConnectionSettings {
 	
 	public int callNumber;
@@ -13,6 +16,19 @@ public class ConnectionSettings {
 	public String delimiter;
 	public int tiltid;
 	
+	/**
+	 * Constructor
+	 * @param callNumber
+	 * @param repeater
+	 * @param dataLines
+	 * @param connTimeout
+	 * @param dataTimeout
+	 * @param maxRetries
+	 * @param timeSource
+	 * @param instrument
+	 * @param delimiter
+	 * @param tiltid
+	 */
 	public ConnectionSettings (int callNumber, int repeater, int dataLines, int connTimeout, int dataTimeout,
 			int maxRetries, String timeSource, String instrument, String delimiter, int tiltid) {
 		this.callNumber		= callNumber;
@@ -27,11 +43,19 @@ public class ConnectionSettings {
 		this.tiltid			= tiltid;
 	}
 	
+	/**
+	 * Yield a string representation of this
+	 * @return string representation of this
+	 */
 	public String toString() {
 		return callNumber + "|" + repeater + "|" + dataLines + "|" + connTimeout + "|" + dataTimeout + "|" + 
 		       maxRetries + "|" + timeSource + "|" + instrument + "|" + delimiter + "|" + tiltid;
 	}
 	
+	/**
+	 * Yield "header" matching result of toString
+	 * @return header
+	 */
 	public String headerString() {
 		return "callNumber|repeater|dataLines|connTimeout|dataTimeout|maxRetries|timeSource|instrument|delimiter|tiltid";
 	}

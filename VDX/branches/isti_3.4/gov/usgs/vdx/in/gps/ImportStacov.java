@@ -118,6 +118,7 @@ public class ImportStacov implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
+	 * @param importerClass name of importer class to use
 	 * @param cf configuration file
 	 * @param verbose true for info, false for severe
 	 */
@@ -367,6 +368,7 @@ public class ImportStacov implements Importer {
 	 *  -c config file name
 	 *  -v verbose mode
 	 *  files ...
+	 * @param as command line args
 	 */
 	public static void main(String as[]) {
 		

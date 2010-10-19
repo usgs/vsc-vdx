@@ -42,6 +42,10 @@ public class ImportNWISArchive
 	private SQLGenericVariableDataSource dataSource;
 	private ConfigFile params;
 
+	/**
+	 * Constructor
+	 * @param cf path of config file
+	 */
 	public ImportNWISArchive(String cf)
 	{
 		dataSource = new SQLGenericVariableDataSource();
@@ -53,6 +57,10 @@ public class ImportNWISArchive
 		//stations = dataSource.getStations();
 	}
 	
+	/**
+	 * Import from file
+	 * @param fn path fo file
+	 */
 	public void importFile(String fn)
 	{
 		List<DataType> dataTypes = new ArrayList<DataType>();
@@ -138,7 +146,10 @@ public class ImportNWISArchive
 		}
 	}
 	
-
+	/**
+	 * Main method
+	 * @param as command line args
+	 */
 	public static void main(String[] as)
 	{
 		String cf = CONFIG_FILE;

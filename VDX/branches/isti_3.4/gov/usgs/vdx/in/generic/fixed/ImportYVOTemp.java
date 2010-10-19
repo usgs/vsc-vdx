@@ -164,6 +164,11 @@ public class ImportYVOTemp
 		System.exit(-1);
 	}
 	
+	/**
+	 * Process command specified by arguments for data source
+	 * @param args arguments
+	 * @param ds datasource
+	 */
 	protected static void process(Arguments args, SQLGenericFixedDataSource ds)
 	{
 		if (args.size() == 0)
@@ -184,7 +189,8 @@ public class ImportYVOTemp
 	
 	/**
 	 * Import file of special format: date/lat/lon/depth/magnitude
-	 * @param resource
+	 * @param resource resource identifier
+	 * @return List of columns imported
 	 */
 	public List<Column> importResource(String resource)
 	{
@@ -267,6 +273,7 @@ public class ImportYVOTemp
 	 *  -h, --help print help message
 	 *  -g, --generate if we need to create database
 	 *  -v verbose mode
+	 * @param as command line args
 	 */
 	public static void main(String as[])
 	{

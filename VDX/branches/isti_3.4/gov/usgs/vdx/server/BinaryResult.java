@@ -18,17 +18,28 @@ public class BinaryResult extends RequestResult
 	
 	private transient ByteBuffer compressedBytes;
 	
+	/**
+	 * Constructor
+	 * @param d binary data set
+	 */
 	public BinaryResult(BinaryDataSet d)
 	{
 		super();
 		data = d;
 	}
 	
+	/**
+	 * Yield the data
+	 * @return data
+	 */
 	public BinaryDataSet getData()
 	{
 		return data;
 	}
 	
+	/**
+	 * Get result ready for writing
+	 */
 	public void prepare()
 	{
 		ByteBuffer buffer = data.toBinary();
@@ -37,6 +48,11 @@ public class BinaryResult extends RequestResult
 		set("bytes", Integer.toString(compressedBytes.limit()));
 	}
 	
+	/**
+	 * Write data
+	 * @param netTools tools to use for writing
+	 * @param channel channel to write to
+	 */
 	protected void writeBody(NetTools netTools, SocketChannel channel)
 	{
 		netTools.writeByteBuffer(compressedBytes, channel);

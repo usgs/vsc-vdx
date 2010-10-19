@@ -127,7 +127,8 @@ public class ImportFile implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param importerClass name of importer class
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
@@ -441,7 +442,7 @@ public class ImportFile implements Importer {
 	
 	/**
 	 * Parse file from url (resource locator or file name)
-	 * @param filename
+	 * @param filename identifier of file to import
 	 */
 	public void process(String filename) {
 		
@@ -714,6 +715,11 @@ public class ImportFile implements Importer {
 		}
 	}
 	
+	/**
+	 * Print usage.  Prints out usage instructions for the given importer
+	 * @param importerClass name of importer class
+	 * @param message instructions
+	 */
 	public void outputInstructions(String importerClass, String message) {
 		if (message == null) {
 			System.err.println(message);
@@ -728,6 +734,7 @@ public class ImportFile implements Importer {
 	 *  -c config file name
 	 *  -v verbose mode
 	 *  files ...
+	 * @param as command line args
 	 */
 	public static void main(String as[]) {
 		

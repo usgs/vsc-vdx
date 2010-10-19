@@ -42,6 +42,7 @@ abstract public class Importer
 	/**
 	 * Fabric method for data source
 	 * @param args command line arguments
+	 * @return data source
 	 */
 	public static SQLHypocenterDataSource getDataSource(Arguments args)
 	{
@@ -61,12 +62,14 @@ abstract public class Importer
 	
 	/**
 	 * Abstract method to parse data from url (resource locator or file name)
+	 * @param resource resource identifier
 	 * @return Hypocenters list
 	 */
 	abstract public List<Hypocenter> importResource(String resource);
 
 	/**
 	 * Insert hypocenters list into database
+	 * @param hypos list of hypocenters
 	 */
 	protected void insert(List<Hypocenter> hypos)
 	{

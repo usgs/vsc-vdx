@@ -99,6 +99,7 @@ public class ImportUW extends Importer
 	 * Initialize data source using command line arguments and make import.
 	 * Syntax is:
 	 * "<importer> -c [vdx config] -n [database name] files..."
+	 * @param as command line args
 	 */
 	public static void main(String as[])
 	{
