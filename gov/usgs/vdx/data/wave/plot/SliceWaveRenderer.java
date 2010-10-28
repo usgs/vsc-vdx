@@ -311,7 +311,7 @@ public class SliceWaveRenderer extends FrameRenderer
 				this.yUnit = yUnitText;
 			}
 			if(xUnits){
-				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy-MM-dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy-MM-dd")+ ")";
 			}
 			if(yLabelText != null){
 				this.yAxisLabel = yLabelText;
