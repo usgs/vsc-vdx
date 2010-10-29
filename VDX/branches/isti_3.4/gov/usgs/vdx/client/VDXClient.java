@@ -78,6 +78,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("rsam", "gov.usgs.vdx.data.rsam.RSAMData");
 		dataTypeMap.put("ewrsam", "gov.usgs.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
+		dataTypeMap.put("tensorstrain", "gov.usgs.vdx.data.tensorstrain.TensorstrainData");
 		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 	}
 	

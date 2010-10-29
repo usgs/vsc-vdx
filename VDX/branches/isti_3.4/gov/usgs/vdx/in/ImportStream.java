@@ -85,7 +85,7 @@ public class ImportStream implements Importer {
 	public Map<String, Channel> channelMap;	
 	public Channel channel;
 	public String channelCode, channelName;
-	public double channelLon, channelLat, channelHeight;
+	public double channelLon, channelLat, channelHeight, channelAzimuth;
 	public List<String> channelList;
 	public Iterator<String> chIterator;
 	public String defaultChannels;
@@ -218,7 +218,8 @@ public class ImportStream implements Importer {
 				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
 				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
+				channelAzimuth	= Util.stringToDouble(channelParams.getString("azimuth"), Double.NaN);
+				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelAzimuth);
 				channelMap.put(channelCode, channel);
 				defaultChannels	= defaultChannels + channelCode + ",";
 				
@@ -630,7 +631,7 @@ public class ImportStream implements Importer {
 							// channel for this data source.  create it if it doesn't exist
 							if (sqlDataSource.getChannelsFlag()) {
 								if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-									sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
+									sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN, Double.NaN), 1,
 											sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 											sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
 								}

@@ -449,9 +449,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param columns
 	 * @return true if successful
 	 */	
-	public boolean defaultCreateTiltChannel(Channel channel, int tid, double azimuth,
-			boolean channels, boolean translations, boolean ranks, boolean columns) {
-		
+	public boolean defaultCreateTiltChannel(Channel channel, int tid, double azimuth, boolean channels, boolean translations, boolean ranks, boolean columns) {
 		try {
 			defaultCreateChannel(channel, tid, channels, translations, ranks, columns);
 			
@@ -459,18 +457,21 @@ abstract public class SQLDataSource implements DataSource {
 			Channel ch = defaultGetChannel(channel.getCode(), false);
 			
 			// update the channels table with the azimuth value
+			String azimuth_column_name = null;
+			if(dbName.toLowerCase().contains("tensorstrain")){
+				azimuth_column_name = "natural_azimuth";
+			} else {
+				azimuth_column_name = "azimuth";				
+			}
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("UPDATE channels SET azimuth = ? WHERE cid = ?");
+			ps = database.getPreparedStatement("UPDATE channels SET " + azimuth_column_name + "  = ? WHERE cid = ?");
 			ps.setDouble(1, azimuth);
 			ps.setInt(2, ch.getCID());
 			ps.execute();
-			
 			return true;
-			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTiltChannel() failed.", e);
 		}
-		
 		return false;
 	}
 	
@@ -824,12 +825,19 @@ abstract public class SQLDataSource implements DataSource {
 		Channel ch;
 		int cid, ctid;
 		String code, name;
-		double lon, lat, height;
+		double lon, lat, height, azimuth;
 
 		try {
 			database.useDatabase(dbName);
 			
 			sql	= "SELECT cid, code, name, lon, lat, height ";
+			if(dbName.toLowerCase().contains("tensorstrain")){
+				sql = sql + ", natural_azimuth ";
+			} else if(dbName.toLowerCase().contains("tilt")){
+				sql = sql + ", azimuth ";
+			} else {
+				sql = sql + ", 0 ";
+			}
 			if (channelTypes) {
 				sql = sql + ",ctid ";
 			}
@@ -848,12 +856,14 @@ abstract public class SQLDataSource implements DataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(6);
 				if (rs.wasNull()) { height	= Double.NaN; }
+				azimuth	= rs.getDouble(7);
+				if (rs.wasNull()) { azimuth	= Double.NaN; }
 				if (channelTypes) {
-					ctid	= rs.getInt(7);
+					ctid	= rs.getInt(8);
 				} else {
 					ctid	= 0;
 				}				
-				ch	= new Channel(cid, code, name, lon, lat, height, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, azimuth, ctid);
 				result.add(ch);
 			}
 			rs.close();

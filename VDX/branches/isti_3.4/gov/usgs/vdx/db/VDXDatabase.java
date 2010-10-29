@@ -13,6 +13,7 @@ import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
+import gov.usgs.vdx.data.tensorstrain.SQLTensorstrainDataSource;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 
 import java.sql.Connection;
@@ -498,6 +499,7 @@ public class VDXDatabase {
 			System.out.println("createhypocenters");
 			System.out.println("createewrsam");
 			System.out.println("createtilt");
+			System.out.println("createtensorstrain");
 		} else {
 			action = action.toLowerCase();
 			if (action.equals("createvdx")) {
@@ -511,6 +513,7 @@ public class VDXDatabase {
 				sources.put("creatersam", new SQLRSAMDataSource());
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				sources.put("createtilt", new SQLTiltDataSource());
+				sources.put("createtensorstrain", new SQLTensorstrainDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null) {
 					createDatabase(params, args, sds);
