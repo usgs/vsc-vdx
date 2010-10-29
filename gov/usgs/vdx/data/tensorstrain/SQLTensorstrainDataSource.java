@@ -1,4 +1,4 @@
-package gov.usgs.vdx.data.tilt;
+package gov.usgs.vdx.data.tensorstrain;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
@@ -7,7 +7,6 @@ import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
@@ -17,13 +16,13 @@ import java.util.Map;
 import java.util.logging.Level;
 
 /**
- * SQL Data Source for Tilt Data
+ * SQL Data Source for Tensorstrain Data
  *
- * @author Dan Cervelli, Loren Antolik
+ * @author Max Kokoulin
  */
-public class SQLTiltDataSource extends SQLDataSource implements DataSource {
+public class SQLTensorstrainDataSource extends SQLDataSource implements DataSource {
 	
-	public static final String DATABASE_NAME	= "tilt";
+	public static final String DATABASE_NAME	= "tensorstrain";
 	public static final boolean channels		= true;
 	public static final boolean translations	= true;
 	public static final boolean channelTypes	= false;
@@ -32,60 +31,42 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= true;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "xTilt",		"East",					"tilt (microradians)",	false, true, false),
-		new Column(2, "yTilt",		"North",				"tilt (microradians)",	false, true, false), 
-		new Column(3, "holeTemp",	"Hole Temperature",		"temperature (C)",		false, true, true), 
-		new Column(4, "boxTemp",	"Box Temperature",		"temperature (C)",		false, true, true),
-		new Column(5, "instVolt",	"Instrument Voltage",	"voltage (V)",			false, true, true),
-		new Column(6, "gndVolt",	"Ground Voltage",		"voltage (V)",			false, true, false),
-		new Column(7, "rainfall",	"Rainfall",				"rainfall (cm)",		false, true, true)};
+		new Column(1, "CH0",		"CH0",					"nanostrain",			false, true, false),
+		new Column(2, "CH1",		"CH1",					"nanostrain",			false, true, false), 
+		new Column(3, "CH2",		"CH2",					"nanostrain",			false, true, false),
+		new Column(4, "CH3",		"CH3",					"nanostrain",			false, true, false), 
+		new Column(5, "eEEpeNN",	"areal_strain (eEE+eNN)","nanostrain",			false, true, false), 
+		new Column(6, "eEEmeNN",	"extension (eEE-eNN)",	"nanostrain",			false, true, false),
+		new Column(7, "2eEN",		"shear (2eEN)",			"nanostrain",			false, true, false), 
+		new Column(8, "barometer",	"barometer",			"hPa",					false, true, false), 
+		new Column(9, "rainfall",	"Rainfall",				"mm",					false, true, false),
+		new Column(10,"pore",		"pore_pressure",		"hPa",					false, true, false)};
+		
 	
 	public static final Column[] MENU_COLUMNS	= new Column[] {
-		new Column(1, "radial",		"Radial",				"tilt (microradians)",	true,	true,  false),
-		new Column(2, "tangential",	"Tangential",			"tilt (microradians)",	true,	true,  false), 
-		new Column(3, "xTilt",		"East",					"tilt (microradians)",	false,	true,  false),
-		new Column(4, "yTilt",		"North",				"tilt (microradians)",	false,	true,  false), 
-		new Column(5, "magnitude",	"Magnitude",			"tilt (microradians)",	false,	false, false),
-		new Column(6, "azimuth",	"Azimuth",				"tilt (microradians)",	false,	false, false), 
-		new Column(7, "holeTemp",	"Hole Temperature",		"temperature (C)",		false,	false, false), 
-		new Column(8, "boxTemp",	"Box Temperature",		"temperature (C)",		false,	false, true),
-		new Column(9, "instVolt",	"Instrument Voltage",	"voltage (V)",			false,	false, true),
-		new Column(10, "rainfall",	"Rainfall",				"rainfall (cm)",		false,	false, true)};
+		new Column(1, "CH0",		"CH0",					"nanostrain",			false, true, false),
+		new Column(2, "CH1",		"CH1",					"nanostrain",			false, true, false), 
+		new Column(3, "CH2",		"CH2",					"nanostrain",			false, true, false),
+		new Column(4, "CH3",		"CH3",					"nanostrain",			false, true, false), 
+		new Column(5, "eEEpeNN",	"areal_strain (eEE+eNN)","nanostrain",			false, true, false), 
+		new Column(6, "eEEmeNN",	"extension (eEE-eNN)",	"nanostrain",			false, true, false),
+		new Column(7, "eEN2",		"shear (2eEN)",			"nanostrain",			false, true, false), 
+		new Column(8, "eXXmeYY",	"rotated extension (eXX-eYY)","nanostrain",		false, true, false),
+		new Column(9, "eXY2",		"rotated shear (2eXY)",	"nanostrain",			false, true, false), 
+		new Column(10,"barometer",	"barometer",			"hPa",					false, true, false), 
+		new Column(11,"rainfall",	"Rainfall",				"mm",					false, true, false),
+		new Column(12,"pore",		"pore_pressure",		"hPa",					false, true, false)};
 
 	/**
 	 * Get database type, generic in this case
-	 * @return type
+	 * return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
-	/**
-	 * Get channels flag
-	 * @return channels flag
-	 */
 	public boolean getChannelsFlag()		{ return channels; }
-	/**
-	 * Get translations flag
-	 * @return translations flag
-	 */
 	public boolean getTranslationsFlag()	{ return translations; }
-	/**
-	 * Get channel types flag
-	 * @return channel types flag
-	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
-	/**
-	 * Get ranks flag
-	 * @return ranks flag
-	 */
 	public boolean getRanksFlag()			{ return ranks; }
-	/**
-	 * Get columns flag
-	 * @return columns flag
-	 */
 	public boolean getColumnsFlag()			{ return columns; }
-	/**
-	 * Get menu columns flag
-	 * @return menu columns flag
-	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
@@ -107,15 +88,13 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get flag if database exists
-	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
 	}
 	
 	/**
-	 * Create tilt database
-	 * @return true if successful, false otherwise
+	 * Create tensorstrain database
 	 */
 	public boolean createDatabase() {
 		
@@ -135,18 +114,14 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			// translations table
 			defaultCreateTranslation();
 			
-			// alter the channels table to add an azimuth column.  alter the translations table to add an azimuth column
+			// alter the channels table to add an azimuth column. 
 			database.useDatabase(dbName);
 			st = database.getStatement();
-			st.execute("ALTER TABLE channels	 ADD azimuth DOUBLE DEFAULT 0");
-			st.execute("ALTER TABLE translations ADD azimuth DOUBLE DEFAULT 0");
-			
+			st.execute("ALTER TABLE channels ADD natural_azimuth DOUBLE DEFAULT 0");
 			return true;
-			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.createDatabase() failed.", e);
+			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.createDatabase() failed.", e);
 		}
-		
 		return false;
 	}
 
@@ -160,16 +135,15 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
-		Channel channel = new Channel(0, channelCode, channelName, lon, lat, azimuth, height);
-		return defaultCreateTiltChannel(channel, tid, azimuth, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double natural_azimuth) {
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, natural_azimuth, height);
+		return defaultCreateTiltChannel(channel, tid, natural_azimuth, channels, translations, ranks, columns);
 	}
 
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param command to execute, map of parameter-value pairs.
-	 * @return request result
 	 */	
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -197,7 +171,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			double et		= Double.parseDouble(params.get("et"));
 			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
 			int dsInt		= Integer.parseInt(params.get("dsInt")); 
-			return getTiltData(cid, rid, st, et, getMaxRows(), ds, dsInt);
+			return getTensorstrainData(cid, rid, st, et, getMaxRows(), ds, dsInt);
 			
 		} else if (action.equals("supptypes")) {
 			return getSuppTypes( true );
@@ -213,17 +187,14 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	}
 
 	/**
-	 * Get Tilt Station data
-	 * @param cid	  channel id
-	 * @param rid	  rank id
-	 * @param st	  start time
-	 * @param et	  end time
-	 * @param maxrows maximum number of rows returned
-	 * @param ds      downsampling type
-	 * @param dsInt   downsampling argument
-	 * @return request result
+	 * Get Tensorstrain Station data
+	 * @param cid	channel id
+	 * @param rid	rank id
+	 * @param st	start time
+	 * @param et	end time
+	 * @return
 	 */	
-	public RequestResult getTiltData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) {
+	public RequestResult getTensorstrainData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -235,16 +206,20 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			
 			// look up the channel code from the channels table, which is the name of the table to query
 			Channel channel	= defaultGetChannel(cid, channelTypes);
-			columnsReturned	= 8;
+			columnsReturned	= 12;
 
 			// build the sql
 			sql  = "SELECT j2ksec, c.rid, ";
-			sql += "       COS(RADIANS(b.azimuth))  * (xTilt * cxTilt + dxTilt) + SIN(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
-			sql += "       -SIN(RADIANS(b.azimuth)) * (xTilt * cxTilt + dxTilt) + COS(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
-			sql += "       holeTemp * choleTemp + dholeTemp, ";
-			sql += "       boxTemp  * cboxTemp  + dboxTemp,  ";
-			sql += "       instVolt * cinstVolt + dinstVolt, ";
-			sql += "       rainfall * crainfall + drainfall  ";
+			sql += "       CH0 * cCH0 + dCH0, ";
+			sql += "       CH1 * cCH1 + dCH1, ";
+			sql += "       CH2 * cCH2 + dCH2, ";
+			sql += "       CH3 * cCH3 + dCH3, ";
+			sql += "       eEEpeNN * ceEEpeNN + deEEpeNN, ";
+			sql += "       eEEmeNN  * ceEEmeNN  + deEEmeNN,  ";
+			sql += "       2eEN * c2eEN + d2eEN, ";
+			sql += "       barometer * cbarometer + dbarometer,  ";
+			sql += "       rainfall * crainfall + drainfall,  ";
+			sql += "       pore * cpore + dpore  ";
 			sql += "FROM " + channel.getCode() + " a ";
 			sql += "       INNER JOIN translations  b ON a.tid = b.tid ";
 			sql += "       INNER JOIN ranks         c ON a.rid = c.rid ";
@@ -302,10 +277,10 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			rs.close();
 			
 			if (pts.size() > 0) {
-				return new BinaryResult(new TiltData(pts));
+				return new BinaryResult(new TensorstrainData(pts));
 			}
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getTensorstrainData()", e);
 			return null;
 		}
 		return null;
@@ -321,14 +296,14 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 
 		try {
 			database.useDatabase(dbName);
-			rs = database.getPreparedStatement("SELECT cid, azimuth FROM channels ORDER BY cid").executeQuery();
+			rs = database.getPreparedStatement("SELECT cid, natural_azimuth FROM channels ORDER BY cid").executeQuery();
 			while (rs.next()) {
 				result.add(String.format("%d:%f", rs.getInt(1), rs.getDouble(2)));
 			}
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getAzimuths() failed.", e);
+			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getAzimuths() failed.", e);
 		}
 
 		return result;
@@ -339,20 +314,22 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param channelCode	channel code
 	 * @return azimuth of station, 0 for not found
 	 */
+	/*
 	public double getNominalAzimuth (String channelCode) {
 		double result = 0.0;
 		
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("SELECT azimuth FROM channels WHERE code = ?");
+			ps = database.getPreparedStatement("SELECT natural_azimuth FROM channels WHERE code = ?");
 			ps.setString(1, channelCode);
 			rs = ps.executeQuery();
 			rs.next();
 			result = rs.getDouble(1);
 			rs.close();
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getNominalAzimuth() failed.", e);
+			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getNominalAzimuth() failed.", e);
 		}
 		return result;
 	}
+	*/
 }
