@@ -54,4 +54,12 @@ public class HypocenterExporter implements Exportable {
 		expIndex++;
 		return row;
 	}
+
+	/**
+	 * Return # of hypos
+	 * @return # of hypos
+	 */
+	public int length() {
+		return count;
+	}
 }

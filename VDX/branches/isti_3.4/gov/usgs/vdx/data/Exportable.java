@@ -17,4 +17,10 @@ public interface Exportable
 	 */
 	public Double[] getNextExportRow();
 
+	/**
+	 * Yield # of rows, -1 if not known
+	 * @return int # of rows, -1 if not known
+	 */
+	public int length();
+
 }

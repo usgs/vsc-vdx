@@ -94,4 +94,14 @@ public class ExportData implements Comparable
 			else
 				return rowGenID - eo.exportDataID();
 		}
-	}}
+	}
+	
+	/**
+	 * Yield # of rows, -1 if not known
+	 * @return int # of rows, -1 if not known
+	 */
+	public int count() 
+	{
+		return src.length();
+	}
+}
