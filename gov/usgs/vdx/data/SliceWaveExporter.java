@@ -30,15 +30,17 @@ public class SliceWaveExporter extends SliceWaveRenderer implements Exportable {
 			if ( removeBias )
 				bias = wave.mean();
 		}
-		while ( wave.hasNext() ) {
+		if ( wave.hasNext() ) {
 			value = wave.next();
 			time += step;
-			if ( value != Wave.NO_DATA ) {
-				Double[] retval = new Double[2];
-				retval[0] = time - step;
+			Double[] retval = new Double[2];
+			retval[0] = time - step;
+			if ( value == Wave.NO_DATA ) {
+				retval[1] = value;
+			} else {
 				retval[1] = value - bias;
-				return retval;
 			}
+			return retval;
 		}
 		return null;
 	}
@@ -51,4 +53,12 @@ public class SliceWaveExporter extends SliceWaveRenderer implements Exportable {
 			wave.reset();
 	}
 	
+	/**
+	 * Return the number of samples
+	 * @return number of samples
+	 */
+	public int length() {
+		return wave.samples();
+	}
+		
 }

@@ -52,4 +52,13 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
 		expIndex++;
 		return row;
 	}
+
+	/**
+	 * Return -1 (number of rows unknown)
+	 * @return -1
+	 */
+	public int length() {
+		return -1;
+	}
+
 }

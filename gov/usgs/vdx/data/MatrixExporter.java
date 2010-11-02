@@ -102,4 +102,11 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 		return row;
 	}
 
+	/**
+	 * Return -1 (number of rows unknown)
+	 * @return -1
+	 */
+	public int length() {
+		return -1;
+	}
 }
