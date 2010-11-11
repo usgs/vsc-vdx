@@ -4,11 +4,8 @@ import gov.usgs.vdx.data.GenericDataMatrix;
 
 import java.util.List;
 
-import cern.colt.function.DoubleDoubleFunction;
 import cern.colt.matrix.DoubleFactory2D;
-import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
 
 /**
  * GenericDataMatrix with 3 columns: time/east/north to store tilt data
@@ -45,7 +42,7 @@ public class TensorstrainData extends GenericDataMatrix {
 		columnMap.put("ch3", 5);
 		columnMap.put("eEEpeNN", 6);
 		columnMap.put("eEEmeNN", 7);
-		columnMap.put("2eEN", 8);
+		columnMap.put("e2EN", 8);
 		columnMap.put("barometer", 9);
 		columnMap.put("rainfall", 10);
 		columnMap.put("pore", 11);

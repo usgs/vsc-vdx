@@ -35,12 +35,12 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 		new Column(2, "CH1",		"CH1",					"nanostrain",			false, true, false), 
 		new Column(3, "CH2",		"CH2",					"nanostrain",			false, true, false),
 		new Column(4, "CH3",		"CH3",					"nanostrain",			false, true, false), 
-		new Column(5, "eEEpeNN",	"areal_strain (eEE+eNN)","nanostrain",			false, true, false), 
-		new Column(6, "eEEmeNN",	"extension (eEE-eNN)",	"nanostrain",			false, true, false),
-		new Column(7, "2eEN",		"shear (2eEN)",			"nanostrain",			false, true, false), 
-		new Column(8, "barometer",	"barometer",			"hPa",					false, true, false), 
-		new Column(9, "rainfall",	"Rainfall",				"mm",					false, true, false),
-		new Column(10,"pore",		"pore_pressure",		"hPa",					false, true, false)};
+		new Column(5, "eEEpeNN",	"eEE+eNN",				"nanostrain",			false, true, false), 
+		new Column(6, "eEEmeNN",	"eEE-eNN",				"nanostrain",			false, true, false),
+		new Column(7, "e2EN",		"e2EN)",				"nanostrain",			false, true, false), 
+		new Column(8, "baro",		"barometer",			"hPa",					false, true, false), 
+		new Column(9, "rain",		"rainfall",				"mm",					false, true, false),
+		new Column(10,"pore",		"pore pressure",		"hPa",					false, true, false)};
 		
 	
 	public static final Column[] MENU_COLUMNS	= new Column[] {
@@ -48,14 +48,14 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 		new Column(2, "CH1",		"CH1",					"nanostrain",			false, true, false), 
 		new Column(3, "CH2",		"CH2",					"nanostrain",			false, true, false),
 		new Column(4, "CH3",		"CH3",					"nanostrain",			false, true, false), 
-		new Column(5, "eEEpeNN",	"areal_strain (eEE+eNN)","nanostrain",			false, true, false), 
-		new Column(6, "eEEmeNN",	"extension (eEE-eNN)",	"nanostrain",			false, true, false),
-		new Column(7, "eEN2",		"shear (2eEN)",			"nanostrain",			false, true, false), 
-		new Column(8, "eXXmeYY",	"rotated extension (eXX-eYY)","nanostrain",		false, true, false),
-		new Column(9, "eXY2",		"rotated shear (2eXY)",	"nanostrain",			false, true, false), 
-		new Column(10,"barometer",	"barometer",			"hPa",					false, true, false), 
-		new Column(11,"rainfall",	"Rainfall",				"mm",					false, true, false),
-		new Column(12,"pore",		"pore_pressure",		"hPa",					false, true, false)};
+		new Column(5, "eEEpeNN",	"eEE+eNN",				"nanostrain",			false, true, false), 
+		new Column(6, "eEEmeNN",	"eEE-eNN",				"nanostrain",			false, true, false),
+		new Column(7, "e2EN",		"e2EN",					"nanostrain",			false, true, false), 
+		new Column(8, "eXXmeYY",	"eXX-eYY",				"nanostrain",			false, true, false),
+		new Column(9, "e2XY",		"e2XY",					"nanostrain",			false, true, false), 
+		new Column(10,"baro",		"barometer",			"hPa",					false, true, false), 
+		new Column(11,"rain",		"rainfall",				"mm",					false, true, false),
+		new Column(12,"pore",		"pore pressure",		"hPa",					false, true, false)};
 
 	/**
 	 * Get database type, generic in this case
@@ -216,9 +216,9 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			sql += "       CH3 * cCH3 + dCH3, ";
 			sql += "       eEEpeNN * ceEEpeNN + deEEpeNN, ";
 			sql += "       eEEmeNN  * ceEEmeNN  + deEEmeNN,  ";
-			sql += "       2eEN * c2eEN + d2eEN, ";
-			sql += "       barometer * cbarometer + dbarometer,  ";
-			sql += "       rainfall * crainfall + drainfall,  ";
+			sql += "       e2EN * ce2EN + de2EN, ";
+			sql += "       baro * cbaro + dbaro,  ";
+			sql += "       rain * crain + drain,  ";
 			sql += "       pore * cpore + dpore  ";
 			sql += "FROM " + channel.getCode() + " a ";
 			sql += "       INNER JOIN translations  b ON a.tid = b.tid ";
