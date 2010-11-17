@@ -75,9 +75,9 @@ while (($key,$spec) = each ( %arg_def )) {
 if ( exists $querymap{ "o" } ) {
 	my $o = $querymap{ "o" };
 	if ( $o eq "csv" ) {
-		$querymap{ "o" } = "xml";
+		#$querymap{ "o" } = "xml";
 	} elsif ( $o eq "binary" ) {
-		$querymap{ "o" } = "bin";
+		$querymap{ "o" } = "seed";
 	} else {
 		$abortmsg = $abortmsg . "-output must be csv or binary\n";
 	}
