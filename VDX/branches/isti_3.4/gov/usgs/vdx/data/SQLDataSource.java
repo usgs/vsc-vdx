@@ -290,7 +290,7 @@ abstract public class SQLDataSource implements DataSource {
 			}
 			ps.execute( sql + key + "))" ); 
 
-			sql = "CREATE TABLE channelmetadata ( cmid INT NOT NULL, cid INT NOT NULL, colid INT NOT NULL, ";
+			sql = "CREATE TABLE channelmetadata ( cmid INT NOT NULL AUTO_INCREMENT, cid INT NOT NULL, colid INT NOT NULL, ";
 			if ( ranks )
 				sql = sql + "rid INT NOT NULL, ";
 			sql = sql + "name VARCHAR(20) NOT NULL, value TEXT NOT NULL, UNIQUE KEY (cmid,cid,colid";
