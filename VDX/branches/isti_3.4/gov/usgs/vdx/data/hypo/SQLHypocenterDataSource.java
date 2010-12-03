@@ -9,6 +9,7 @@ import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -346,7 +347,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			rs = ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+				throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 			}
 			
 			double j2ksec, lat, lon, depth, mag;
@@ -366,7 +367,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				return new HypocenterList(pts);
 			}
 			
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
 		}
 		return result;

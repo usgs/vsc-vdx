@@ -230,7 +230,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			rs	= ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+				throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			// iterate through all results and create a double array to store the data, index 1 is the j2ksec
 			while (rs.next()) {

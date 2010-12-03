@@ -36,6 +36,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 abstract public class SQLDataSource implements DataSource {
 	
 	protected VDXDatabase database;
+	protected String vdxName;
 	protected String dbName;
 	protected static Logger logger = Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
 
@@ -190,9 +191,9 @@ abstract public class SQLDataSource implements DataSource {
 		String url		= params.getString("vdx.url");
 		String prefix	= params.getString("vdx.prefix");
 		database		= new VDXDatabase(driver, url, prefix);
-		
+		vdxName			= params.getString("vdx.name");
 		// dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
-		dbName			= params.getString("vdx.name") + "$" + getType();
+		dbName			= vdxName + "$" + getType();
 		maxrows			= Util.stringToInt(params.getString("maxrows"), 0); 
 		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 	}
