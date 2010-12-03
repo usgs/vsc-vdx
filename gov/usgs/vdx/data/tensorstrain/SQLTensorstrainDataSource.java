@@ -265,7 +265,7 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			rs = ps.executeQuery();
 		
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				return getErrorResult("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+				return getErrorResult("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			while (rs.next()) {
 				dataRow = new double[columnsReturned];
