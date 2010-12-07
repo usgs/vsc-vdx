@@ -6,16 +6,11 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Pinnacle"/>
 	<classpathentry exported="true" kind="lib" path="/USGS/contrib/seed-pdcc.jar"/>
-	<classpathentry kind="lib" path="/USGS/contrib/colt.jar" sourcepath="C:/Program Files/portable/Java/colt-1.0.3/src.zip">
-		<attributes>
-			<attribute name="javadoc_location" value="http://acs.lbl.gov/software/colt/api"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="/USGS/contrib/colt.jar"/>
 	<classpathentry kind="lib" path="/USGS/contrib/mysql.jar"/>
 	<classpathentry kind="lib" path="/USGS/contrib/commons-collections-3.2.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Plot"/>
-	<classpathentry kind="lib" path="/USGS/lib/winston.jar"/>
-	<classpathentry kind="lib" path="/USGS/lib/earthworm.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
+
