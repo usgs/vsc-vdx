@@ -157,6 +157,8 @@ abstract public class SQLDataSource implements DataSource {
 				String[] column_parts = column.trim().split("\\sas\\s");
 				if(column_parts[0].equals(time_column)){
 					groupFunction = "MIN";
+				} else if(column_parts[0].equals("rid") || column_parts[0].endsWith(".rid")){
+					groupFunction = "MIN";
 				}
 				if(column_parts.length>1){
 					avg_sql += groupFunction + "("+column_parts[0]+") as " + column_parts[1] + ", ";
