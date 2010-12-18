@@ -37,7 +37,7 @@ import java.util.*;
  * @author Ralf Krug, Loren Antolik
  *
  */
-public class CCSAILDevice implements Device {
+public class CCSAIL implements Device {
 	
 	/** the minimum length of a message */
 	protected final int MIN_MESSAGE_LENGTH = 20;

@@ -13,7 +13,7 @@ import java.util.TimeZone;
  * 
  * @author lantolik
  */
-public class LilyDevice implements Device {
+public class AGLILY implements Device {
 	
 	/** the minimum length of a message */
 	protected final int MIN_MESSAGE_LENGTH = 40;

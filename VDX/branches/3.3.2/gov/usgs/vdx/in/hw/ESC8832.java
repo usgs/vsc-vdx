@@ -297,10 +297,9 @@ public class ESC8832 implements Device {
     public String make (String msg) {
     	String completeStr	= "";
     	if (msg.length() > 0) {
-	    	completeStr += "*9900";
+	    	completeStr += "@";
 	    	completeStr += msg;
-	    	completeStr += (char)'\r';
-	    	completeStr += (char)'\n';
+	    	completeStr += "$";
     	}
     	return completeStr;
     }

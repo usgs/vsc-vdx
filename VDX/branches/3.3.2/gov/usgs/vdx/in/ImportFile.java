@@ -2,6 +2,7 @@ package gov.usgs.vdx.in;
 
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
@@ -45,8 +47,8 @@ public class ImportFile implements Importer {
 	public ConfigFile params;
 	public ConfigFile vdxParams;
 	public ConfigFile rankParams;
-	public ConfigFile columnParams;
 	public ConfigFile channelParams;
+	public ConfigFile columnParams;
 	public ConfigFile dataSourceParams;
 	public ConfigFile translationParams;
 	
@@ -57,15 +59,15 @@ public class ImportFile implements Importer {
 	public Date date;
 	public Double j2ksec;
 
-	public String filenameMask;
-	public int headerLines;
 	public String timestampMask;
 	public String timeZone;
+	public String filenameMask;
+	public int headerLines;
+	public String delimiter;
 	
-	public String importColumns;
-	public String[] importColumnArray;
-	public Map<Integer, String> importColumnMap;
-	public Map<Integer, String> defaultImportColumnMap;
+	public String importFields;
+	public String[] importFieldArray;
+	public Map<Integer, String> importFieldMap;
 	
 	public String dataSource;
 	public SQLDataSource sqlDataSource;
@@ -76,7 +78,7 @@ public class ImportFile implements Importer {
 	public Map<String, SQLDataSource> sqlDataSourceMap;
 	public Map<String, String> dataSourceColumnMap;
 	public Map<String, String> dataSourceChannelMap;
-	public Map<String, Integer>	dataSourceRankMap;
+	public Map<String, Integer>	dataSourceRIDMap;
 	
 	public Rank rank;
 	public String rankName;
@@ -85,36 +87,29 @@ public class ImportFile implements Importer {
 
 	public Channel channel;	
 	public String channelCode, channelName;
-	public double channelLon, channelLat, channelHeight, channelAzimuth;
-	public List<String> channelList;
+	public double channelLon, channelLat, channelHeight;
 	public Map<String, Channel> channelMap;
+	public List<String> channelList;
 	public String channels;
+	public String defaultChannels;
 	public String[] channelArray;
 	public String[] dsChannelArray;
-	public String defaultChannels;
-	
-	public String channelCols;
-	public Map<String, String> channelColumnMap;
 	
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
 	public int columnIdx;
 	public boolean columnActive, columnChecked;
-	public List<String> columnList;
-	public HashMap<String, Column> columnMap;
-	public Map<String, Column> dbColumnMap;
+	public List<Column> columnList;
 	public String columns;
 	public String[] columnArray;	
 	public String defaultColumns;
+	
+	public List<String> stringList;
+
+	public Logger logger;
 
 	public double azimuthNom;
-	public double azimuthInst;
-	
-	public String importerType;	
-	public Logger logger;
-	
-	// timing output
-	public CurrentTime currentTime = CurrentTime.getInstance();
+	public double azimuthInst; CurrentTime currentTime = CurrentTime.getInstance();
 	
 	static {
 		flags	= new HashSet<String>();
@@ -133,7 +128,6 @@ public class ImportFile implements Importer {
 		
 		// initialize the logger for this importer
 		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportFile.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -153,6 +147,7 @@ public class ImportFile implements Importer {
 	public void processConfigFile(String configFile) {
 		
 		logger.log(Level.INFO, "Reading config file " + configFile);
+		logger.log(Level.INFO, "");
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
@@ -177,6 +172,19 @@ public class ImportFile implements Importer {
 		// ImportFile specific directives
 		filenameMask	= Util.stringToString(params.getString("filenameMask"), "");
 		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
+		delimiter		= Util.stringToString(params.getString("delimiter"), ",");
+		
+		// Import Fields
+		importFields	= Util.stringToString(params.getString("importFields"), "");
+		if (importFields.length() == 0) {
+			logger.log(Level.SEVERE, "importFields parameter missing from config file");
+			System.exit(-1);
+		}
+		importFieldArray	= importFields.split(",");
+		importFieldMap		= new HashMap<Integer, String>();
+		for (int i = 0; i < importFieldArray.length; i++) {
+			importFieldMap.put(i, importFieldArray[i].trim());
+		}
 		
 		// information related to the timestamps
 		timestampMask	= Util.stringToString(params.getString("timestampMask"), "yyyy-MM-dd HH:mm:ss");
@@ -188,95 +196,43 @@ public class ImportFile implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
+		logger.log(Level.INFO, "[Rank] " + rankName);
+		logger.log(Level.INFO, "");
 		
-		// get the list of columns that are being used in this import
-		columnList	= params.getList("column");
-		if (columnList != null) {
-			dbColumnMap	= new HashMap<String, Column>();
-			for (int i = 0; i < columnList.size(); i++) {
-				columnName			= columnList.get(i);
-				columnParams		= params.getSubConfig(columnName);
-				columnIdx			= Util.stringToInt(columnParams.getString("idx"), i);
-				columnDescription	= Util.stringToString(columnParams.getString("description"), columnName);
-				columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
-				columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
-				columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-				column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
-				dbColumnMap.put(columnName, column);
-			}
+		// get the channel configurations for this import.  there can be multiple channels per import
+		channelMap		= new HashMap<String, Channel>();
+		channelList		= new ArrayList<String>();
+		stringList		= params.getList("channel");
+		for (int i = 0; i < stringList.size(); i++) {
+			channelCode		= stringList.get(i);
+			channelParams	= params.getSubConfig(channelCode);
+			channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
+			channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+			channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
+			channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
+			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
+			channelMap.put(channelCode, channel);
+			channelList.add(channelCode);
 		}
 		
-		// information related to a row of data in this import.  be sure to keep these in order!
-		importColumns		= params.getString("importColumns");
-		if (importColumns == null) {
-			logger.log(Level.SEVERE, "importColumns parameter missing from config file");
-			System.exit(-1);
+		// define a comma separated list of channels affected in this import
+		channelList	= new ArrayList<String>(new HashSet<String>(channelList));
+		defaultChannels	= "";
+		for (int i = 0; i < channelList.size(); i++) {
+			defaultChannels += channelList.get(i) + ",";
 		}
-		
-		// define the default import columns to use for this instance
-		defaultColumns			= "";
-		importColumnArray		= importColumns.split(",");
-		defaultImportColumnMap	= new HashMap<Integer, String>();
-		for (int i = 0; i < importColumnArray.length; i++) {
-			columnName		= importColumnArray[i].trim();
-			if (!columnName.equals("IGNORE") && !columnName.equals("CHANNEL") && !columnName.equals("TIMESTAMP")) {
-				defaultColumns += columnName + ",";
-			}
-			defaultImportColumnMap.put(i, columnName);
-		}
-		defaultColumns	= defaultColumns.substring(0, defaultColumns.length() - 1);
-		
-		// double check to make sure the user entered in data column name, and not pre-defined keywords only
-		if (defaultColumns.length() == 0) {
-			logger.log(Level.SEVERE, "importColumns parameter does not contain any data columns");
-			System.exit(-1);
-		}
-		
-		// get the list of channels that are being used in this import
-		defaultChannels		= "";
-		channelList			= params.getList("channel");
-		channelMap			= new HashMap<String, Channel>();
-		channelColumnMap	= new HashMap<String, String>();
-		if (channelList != null) {
-			for (int i = 0; i < channelList.size(); i++) {
-				
-				// channel configuration
-				channelCode		= channelList.get(i);
-				
-				// default channels
-				defaultChannels+= channelCode + ",";
-				
-				// channel params
-				channelParams	= params.getSubConfig(channelCode);
-				
-				// settings related to this channel
-				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
-				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
-				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
-				channelMap.put(channelCode, channel);
-				
-				// channel columns
-				channelCols		= channelParams.getString("columns");
-				if (channelCols == null) {
-					channelCols	= importColumns;
-				}
-				channelColumnMap.put(channelCode, channelCols);
-			}
-			defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
-		}
+		defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
+		logger.log(Level.INFO, "[defaultChannels] " + defaultChannels);
 		
 		// get the list of data sources that are being used in this import
 		dataSourceList	= params.getList("dataSource");
 		if (dataSourceList == null) {
 			logger.log(Level.SEVERE, "dataSource parameter(s) missing from config file");
-			System.exit(-1);
-			
+			System.exit(-1);			
 		}
 		
 		// define the data source handler that acts as a wrapper for data sources
@@ -284,38 +240,23 @@ public class ImportFile implements Importer {
 		sqlDataSourceMap		= new HashMap<String, SQLDataSource>();
 		dataSourceChannelMap	= new HashMap<String, String>();
 		dataSourceColumnMap		= new HashMap<String, String>();
-		dataSourceRankMap		= new HashMap<String, Integer>();
+		dataSourceRIDMap		= new HashMap<String, Integer>();
 		
 		// iterate through each of the data sources and setup the db for it
 		for (int i = 0; i < dataSourceList.size(); i++) {
 			
-			// get the data source name and define the columns that it contains
+			// get the data source name
 			dataSource			= dataSourceList.get(i);
-			dataSourceParams	= params.getSubConfig(dataSource);
-			
-			// get the columns for this data source
-			columns				= dataSourceParams.getString("columns");
-			if (columns == null) {
-				logger.log(Level.WARNING, dataSource + " columns not defined. all available columns will be imported");
-				columns			= defaultColumns;
-			}
-			dataSourceColumnMap.put(dataSource, columns);
-			
-			// get the channels for this data source
-			channels			= dataSourceParams.getString("channels");
-			if (channels == null) {
-				logger.log(Level.WARNING, dataSource + " channels not defined.  all available channels will be imported");
-				channels		= "";
-				// channels		= defaultChannels;
-			}
-			dataSourceChannelMap.put(dataSource, channels);
 			
 			// lookup the data source from the list that is in vdxSources.config
 			sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 			if (sqlDataSourceDescriptor == null) {
-				logger.log(Level.SEVERE, dataSource + " sql data source does not exist in vdxSources.config");
+				logger.log(Level.SEVERE, dataSource + " not in vdxSources.config - Skipping");
 				continue;
 			}
+			
+			logger.log(Level.INFO, "");
+			logger.log(Level.INFO, "[DataSource] " + dataSource);
 			
 			// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 			sqlDataSource	= sqlDataSourceDescriptor.getSQLDataSource();
@@ -323,47 +264,86 @@ public class ImportFile implements Importer {
 			// store the reference to the initialized data source in the map of initialized data sources
 			sqlDataSourceMap.put(dataSource, sqlDataSource);
 			
-			// create rank entry
+			// get the config for this data source
+			dataSourceParams	= params.getSubConfig(dataSource);
+			
+			// if this is a ranked data source, then create the rank in the database
 			if (sqlDataSource.getRanksFlag()) {
 				Rank tempRank	= sqlDataSource.defaultGetRank(rank);
 				if (tempRank == null) {
 					tempRank = sqlDataSource.defaultInsertRank(rank);
 				}
 				if (tempRank == null) {
-					logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
+					logger.log(Level.SEVERE, dataSource + " " + rank.getName() + " rank creation failed");
 					System.exit(-1);
 				}
-				dataSourceRankMap.put(dataSource, tempRank.getId());
+				dataSourceRIDMap.put(dataSource, tempRank.getId());
 			}
-				
-			// create columns entries
+			
+			// columns based configuration
 			if (sqlDataSource.getColumnsFlag()) {
-				columnArray	= columns.split(",");
-				for (int j = 0; j < columnArray.length; j++) {
-					columnName	= columnArray[j];
-					if (sqlDataSource.defaultGetColumn(columnName) == null) {
-						column	= dbColumnMap.get(columnName);
-						if (column == null) {
-							column	= new Column(1, columnName, columnName, columnName, false);
+
+				// look up columns from the config file and try to insert them into the database
+				stringList	= dataSourceParams.getList("column");
+				if (stringList != null) {
+					for (int j = 0; j < stringList.size(); j++) {
+						columnName			= stringList.get(j);
+						columnParams		= dataSourceParams.getSubConfig(columnName);
+						columnIdx			= Util.stringToInt(columnParams.getString("idx"), i);
+						columnDescription	= Util.stringToString(columnParams.getString("description"), columnName);
+						columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
+						columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
+						columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
+						column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
+						if (sqlDataSource.defaultGetColumn(columnName) == null) {
+							sqlDataSource.defaultInsertColumn(column);
 						}
-						sqlDataSource.defaultInsertColumn(column);
 					}
 				}
+			
+				// generate a list of all the columns in the database for this data source
+				columns		= "";
+				columnList	= sqlDataSource.defaultGetColumns(true, false);
+				for (int j = 0; j < columnList.size(); j++) {
+					columns	   += columnList.get(j).name + ",";
+				}
+				columns		= columns.substring(0, columns.length() - 1);
+			
+				// get the columns for this data source
+				if (dataSourceParams.getString("columns") != null) {
+					columns	= dataSourceParams.getString("columns");
+				}
+				
+				// save this list of columns to update for this data source in the map
+				logger.log(Level.INFO, "[Columns] " + columns);
+				dataSourceColumnMap.put(dataSource, columns);
 			}
 			
 			// create translations table which is based on column entries
 			if (sqlDataSource.getTranslationsFlag()) {
 				sqlDataSource.defaultCreateTranslation();
 			}
+			
+			// get the channels for this data source
+			if (dataSourceParams.getString("channels") != null) {
+				channels	= dataSourceParams.getString("channels");
+			} else {
+				channels	= defaultChannels;
+			}
+			logger.log(Level.INFO, "[Channels]" + channels);
+			dataSourceChannelMap.put(dataSource, channels);
 
-			// create channels tables
-			if (sqlDataSource.getChannelsFlag() && channels.length() > 0) {
-				channelArray = channels.split(",");
-				
+			// create channels tables for this data source
+			if (sqlDataSource.getChannelsFlag()) {				
+				channelArray = channels.split(",");				
 				for (int j = 0; j < channelArray.length; j++) {
 					channelCode		= channelArray[j];
 					channel 		= channelMap.get(channelCode);
 					channelParams	= params.getSubConfig(channelCode);
+					
+					if (channel == null) {
+						continue;
+					}
 					
 					// if the channel doesn't exist then create it with the default tid of 1
 					if (sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag()) == null) {
@@ -380,7 +360,7 @@ public class ImportFile implements Importer {
 						
 						// retrieve the new channel and store it off
 						channel	= sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag());
-						channelMap.put(channelArray[i], channel);
+						channelMap.put(channelCode, channel);
 					}
 					
 					// create a new translation if any non-default values were specified, and use the new tid for the create channel statement
@@ -390,8 +370,7 @@ public class ImportFile implements Importer {
 						double multiplier, offset;
 					
 						// get the translations sub config for this channel
-						translationParams		= channelParams.getSubConfig("translation"); 
-						List<Column> columnList	= sqlDataSource.defaultGetColumns(true, false);
+						translationParams	= channelParams.getSubConfig("translation"); 
 						
 						// apply an offset if this is a tilt data source to include the installation azimuth
 						if (sqlDataSource.getType().equals("tilt")) {
@@ -457,7 +436,7 @@ public class ImportFile implements Importer {
 			
 			// move to the first line in the file
 			String line		= rr.nextLine();
-			int lineNumber	= 1;
+			int lineNumber	= 0;
 			
 			// check that the file has data
 			if (line == null) {
@@ -499,20 +478,20 @@ public class ImportFile implements Importer {
 			// we are now at the first row of data.  time to import!
 			while (line != null) {
 				
+				// increment the line number variable
+				lineNumber++;
+				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-				String[] valueArray					= line.split(",", -1);
+				Pattern p	= Pattern.compile(delimiter, Pattern.LITERAL);
+				String[] valueArray	= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
 					valueMap.put(i, valueArray[i].trim());
 				}
 				
-				// set the import column map to the default import column map
-				importColumnMap	= defaultImportColumnMap;
-				
 				// make sure the data row matches the defined data columns
-				if (importColumnMap.size() > valueMap.size()) {
-					logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (too few values)");
-					lineNumber++;
+				if (importFieldMap.size() > valueMap.size()) {
+					logger.log(Level.SEVERE, "Line " + lineNumber + " has too few values");
 					continue;
 				}
 				
@@ -523,30 +502,8 @@ public class ImportFile implements Importer {
 				double value;
 				int count		= 0;
 				String tsValue	= "";
-				
-				// look at the contents of the line quickly and see if the channel is defined
-				for (int i = 0; i < importColumnMap.size(); i++) {
-					name	= importColumnMap.get(i);
-					if (name.equals("CHANNEL")) {
-						channelCode	= valueMap.get(i);
-						break;
-					}
-				}
-				
-				// lookup the columns from the channel column map for this channel
-				channelCols	= channelColumnMap.get(channelCode);
-				if (channelCols != null) {
-					importColumnArray	= channelCols.split(",");
-					importColumnMap		= new HashMap<Integer, String>();
-					for (int i = 0; i < importColumnArray.length; i++) {
-						importColumnMap.put(i, importColumnArray[i].trim());
-					}
-				}
-				
-				// do you the actual parsing of the data using the custom column map for this channel if it existed
-				for (int i = 0; i < importColumnMap.size(); i++) {
-					
-					name		= importColumnMap.get(i);
+				for (int i = 0; i < importFieldMap.size(); i++) {					
+					name		= importFieldMap.get(i);
 					
 					// skip IGNORE columns
 					if (name.equals("IGNORE")) {
@@ -577,9 +534,8 @@ public class ImportFile implements Importer {
 				
 				// make sure that the channel code has something in it
 				if (channelCode.length() == 0) {
-					logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (channel code not found)");
+					logger.log(Level.SEVERE, "Line " + lineNumber + " channel code not found");
 					line	= rr.nextLine();
-					lineNumber++;
 					continue;
 					
 				// convert bad sql characters to dollar signs
@@ -589,7 +545,7 @@ public class ImportFile implements Importer {
 				
 				// make sure that the timestamp has something in it
 				if (tsValue.length() == 0) {
-					logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (timestamp not found)");
+					logger.log(Level.SEVERE, "Line " + lineNumber + " timestamp not found");
 					line	= rr.nextLine();
 					lineNumber++;
 					continue;
@@ -601,43 +557,38 @@ public class ImportFile implements Importer {
 					date				= dateIn.parse(timestamp);				
 					j2ksec				= Util.dateToJ2K(date);
 				} catch (ParseException e) {
-					logger.log(Level.SEVERE, "Skipping line " + lineNumber + " (timestamp parse error)");
+					logger.log(Level.SEVERE, "Line " + lineNumber + " timestamp parse error");
 					line	= rr.nextLine();
-					lineNumber++;
 					continue;
 				}
 				
 				ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
 				
 				// iterate through each data source that was defined and assign data from this line to it
-				dsIterator			= dataSourceList.iterator();		
-				while (dsIterator.hasNext()) {
+				for (int i = 0; i < dataSourceList.size(); i++) {
 					
 					// get the data source name and it's associated sql data source
-					dataSource		= dsIterator.next();
-					sqlDataSource	= sqlDataSourceMap.get(dataSource);
+					dataSource		= dataSourceList.get(i);
+					channels		= dataSourceChannelMap.get(dataSource);
+					dsChannelArray	= channels.split(",");				
 					
-					// check that the sql data source was initialized properly above
-					if (sqlDataSource == null) {
-						logger.log(Level.SEVERE, "Skipping dataSource " + dataSource + " for line " + lineNumber);
+					// lookup in the channels map to see if we are filtering on stations
+					boolean channelMemberOfDataSource = false;
+					for (int j = 0; j < dsChannelArray.length; j++) {
+						if (dsChannelArray[j].equals(channelCode)) {
+							channelMemberOfDataSource = true;
+							continue;
+						}
+					}						
+					if (!channelMemberOfDataSource) {
 						continue;
 					}
 					
-					// lookup in the channels map to see if we are filtering on stations
-					boolean	channelMemberOfDataSource = false;
-					channels	= dataSourceChannelMap.get(dataSource);
-					if (channels.length() > 0) {
-						channelArray	= channels.split(",");
-						for (int j = 0; j < channelArray.length; j++) {
-							if (channelCode.equals(channelArray[j])) {
-								channelMemberOfDataSource = true;
-								continue;
-							}
-						}
-						if (!channelMemberOfDataSource) {
-							logger.log(Level.SEVERE, "Skipping line " + lineNumber + " dataSource " + dataSource + " (" + channelCode + " not a member of dataSource)");
-							continue;
-						}
+					// check that the sql data source was initialized properly above
+					sqlDataSource	= sqlDataSourceMap.get(dataSource);
+					if (sqlDataSource == null) {
+						logger.log(Level.SEVERE, "Line " + lineNumber + " data source " + dataSource + " not initialized");
+						continue;
 					}
 					
 					// channel for this data source.  create it if it doesn't exist
@@ -659,7 +610,7 @@ public class ImportFile implements Importer {
 					
 					// rank for this data source.  this should already exist in the database
 					if (sqlDataSource.getRanksFlag()) {
-						rid	= dataSourceRankMap.get(dataSource);
+						rid	= dataSourceRIDMap.get(dataSource);
 					} else {
 						rid	= 1;
 					}
