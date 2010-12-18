@@ -192,7 +192,7 @@ public class ImportHypoInverse implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);

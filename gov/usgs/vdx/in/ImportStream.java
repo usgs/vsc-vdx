@@ -14,6 +14,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
@@ -51,11 +52,11 @@ public class ImportStream implements Importer {
 	public ConfigFile rankParams;
 	public ConfigFile channelParams;
 	public ConfigFile columnParams;
+	public ConfigFile dataSourceParams;
+	public ConfigFile translationParams;
 	public ConfigFile stationParams;
 	public ConfigFile deviceParams;
 	public ConfigFile connectionParams;
-	public ConfigFile dataSourceParams;
-	public ConfigFile translationParams;
 	
 	public String driver, prefix, url;
 	
@@ -93,8 +94,8 @@ public class ImportStream implements Importer {
 	public Map<String, Channel> channelMap;
 	public ArrayList<String> channelList;
 	public String channels;
-	public String[] channelArray;
 	public String defaultChannels;
+	public String[] channelArray;
 	public String[] dsChannelArray;
 	
 	public String stationCode;
@@ -109,7 +110,6 @@ public class ImportStream implements Importer {
 	public int columnIdx;
 	public boolean columnActive, columnChecked;
 	public List<Column> columnList;
-	public Map<String, Column> dbColumnMap;
 	public String columns;
 	public String[] columnArray;	
 	public String defaultColumns;
@@ -125,8 +125,7 @@ public class ImportStream implements Importer {
 
 	public double azimuthNom;
 	public double azimuthInst;
-	
-	// timing output
+
 	public CurrentTime currentTime = CurrentTime.getInstance();
 	
 	static {
@@ -197,7 +196,7 @@ public class ImportStream implements Importer {
 		
 		// get the rank configuration for this import.  there can only be a single rank per import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "RawData");
+		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
@@ -364,7 +363,7 @@ public class ImportStream implements Importer {
 						columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
 						column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
 						if (sqlDataSource.defaultGetColumn(columnName) == null) {
-							sqlDataSource.defaultInsertColumn(dbColumnMap.get(columnName));
+							sqlDataSource.defaultInsertColumn(column);
 						}
 					}
 				}
@@ -639,7 +638,8 @@ public class ImportStream implements Importer {
 				logger.log(Level.INFO, line);
 				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-				String[] valueArray					= line.split(device.getDelimiter(), -1);
+				Pattern p	= Pattern.compile(device.getDelimiter(), Pattern.LITERAL);
+				String[] valueArray		= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
 					valueMap.put(i, valueArray[i].trim());
