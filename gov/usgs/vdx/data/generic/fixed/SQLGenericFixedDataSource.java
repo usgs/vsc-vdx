@@ -219,7 +219,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for metadata
 	 * @return Map of metadata (name -> value)
-	 */
+	 *
 	public Map<String, String> getMetadata() {
 
 		Map<String, String> metadata = new HashMap<String, String>();
@@ -240,7 +240,7 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		}
 		
 		return metadata;
-	}
+	}*/
 	
 	/**
 	 * Getter for selector string
