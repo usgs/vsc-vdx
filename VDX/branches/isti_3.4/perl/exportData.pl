@@ -112,7 +112,7 @@ use LWP;
 my $browser = LWP::UserAgent->new;
 
 my $response = $browser->get( $csv_request_url );
-die "Can't get $url -- ", $response->status_line
+die "Can't get $csv_request_url -- ", $response->status_line
 	unless $response->is_success;
 die "Was expecting XML; got ", $response->content_type
 	unless $response->content_type eq 'text/xml';
@@ -123,11 +123,13 @@ my $xml_with_csv_url = $response->content;
 use XML::Simple;
 $xml = new XML::Simple;
 $parsed_xml = $xml->XMLin( $xml_with_csv_url );
+$reply = $parsed_xml->{'type'};
+die "Valve responded with an error\n" if ($reply =~ "error");
 $csv_url = $parsed_xml->{'rawData'}->{'url'};
 
 # Now ask server for the csv file itself
 $response = $browser->get( $csv_url );
-die "Can't get $url -- ", $response->status_line
+die "Can't get $csv_url -- ", $response->status_line
 	unless $response->is_success;
 
 my $type_expected = 'application/octet-stream';
