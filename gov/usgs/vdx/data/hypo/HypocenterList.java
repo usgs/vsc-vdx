@@ -407,6 +407,16 @@ public class HypocenterList implements BinaryDataSet
 	}
 	
 	/**
+	 * Adds a value to the time (for time zone management).
+	 * @param adj the time adjustment
+	 */
+	public void adjustTime(double adj)
+	{
+		for (Hypocenter hc : hypocenters)
+			hc.j2ksec+=adj;
+	}
+	
+	/**
 	 * Dump list as CSV string
 	 * @return string representation in CSV
 	 */
