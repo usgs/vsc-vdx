@@ -95,7 +95,7 @@ public class MatrixExporter extends MatrixRenderer implements Exportable {
 		int jr = 0;
 		for (int j = 0; j < visible.length; j++)
 			if ( visible[j] ) {
-				row[jr+1] = getData().getQuick(expIndex, jr + getOffset());
+				row[jr+1] = getData().getQuick(expIndex, j + getOffset());
 				jr++;
 			}
 		expIndex++;
