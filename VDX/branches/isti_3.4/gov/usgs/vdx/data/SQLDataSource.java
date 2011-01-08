@@ -1741,7 +1741,8 @@ abstract public class SQLDataSource implements DataSource {
 	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
 		try {
 			database.useDatabase(dbName);
-			sql = "SELECT MD.*, CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
+			sql = "SELECT MD.cmid, MD.cid, MD.colid, MD.rid, MD.name, MD.value, " +
+				"CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
 			String where = "WHERE MD.cid=CH.cid AND MD.colid=COL.colid AND MD.rid=RK.rid";
 			
 			if ( md.chName != null )
@@ -1840,7 +1841,8 @@ abstract public class SQLDataSource implements DataSource {
 	public List<SuppDatum> getMatchingSuppData( SuppDatum sd, boolean cm ) {
 		try {
 			database.useDatabase(dbName);
-			sql = "SELECT SD.*, CH.code, COL.name, RK.name, ST.supp_data_type, ST.supp_color, SX.cid, SX.colid, SX.rid, ST.draw_line " +
+			sql = "SELECT SD.sdid, SD.sdtypeid, SD.st, SD.et, SD.sd_short, SD.sd, " +
+				"CH.code, COL.name, RK.name, ST.supp_data_type, ST.supp_color, SX.cid, SX.colid, SX.rid, ST.draw_line " +
 				"FROM supp_data as SD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK, supp_data_type as ST, supp_data_xref as SX "; // channelmetadata";
 			String where = "WHERE SD.et >= " + sd.st + " AND SD.st <= " + sd.et + " AND SD.sdid=SX.sdid AND SD.sdtypeid=ST.sdtypeid AND SX.cid=CH.cid AND SX.colid=COL.colid AND SX.rid=RK.rid";
 			
@@ -2148,7 +2150,7 @@ abstract public class SQLDataSource implements DataSource {
 		List<SuppDatum> types = new ArrayList<SuppDatum>();
 		try {
 			database.useDatabase(dbName);
-			sql  = "SELECT * FROM supp_data_type";
+			sql  = "SELECT sdtypeid, supp_data_type, supp_color, draw_line FROM supp_data_type";
 			ps = database.getPreparedStatement(sql);
 			rs = ps.executeQuery();
 			while (rs.next()) {
@@ -2179,7 +2181,7 @@ abstract public class SQLDataSource implements DataSource {
 
 		try {
 			database.useDatabase(dbName);
-			sql = "SELECT * FROM supp_data_type";
+			sql = "SELECT sdtypeid, supp_data_type, supp_color, draw_line FROM supp_data_type";
 			if ( drawOnly )
 				sql = sql + " WHERE draw_line=1";
 			rs = database.getPreparedStatement(sql + " ORDER BY supp_data_type").executeQuery();
