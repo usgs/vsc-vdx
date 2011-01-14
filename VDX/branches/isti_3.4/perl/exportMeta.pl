@@ -120,11 +120,11 @@ foreach $e (@lines) {
 	#print $e . "\n";
 	my @qp = split(/"/, $e );
 	my @cp = split(/,/, $qp[0]);
-	print MYFILE "$cp[0], \"$qp[5]\". \"$qp[1]\", \"$qp[3]\"";
+	print MYFILE "$cp[0], \"$qp[5]\", \"$qp[1]\", \"$qp[3]\"";
 	if ( $#cp < 10 ) {
 		print MYFILE "\n";
 	} else {
-		print MYFILE "\"$qp[7]\", \"$qp[9]\"\n";
+		print MYFILE ", \"$qp[7]\", \"$qp[9]\"\n";
 	}
 close(MYFILE);
 }
