@@ -126,6 +126,6 @@ foreach $e (@lines) {
 	} else {
 		print MYFILE ", \"$qp[7]\", \"$qp[9]\"\n";
 	}
-close(MYFILE);
 }
+close(MYFILE);
 exit;
