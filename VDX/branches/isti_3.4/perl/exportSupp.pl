@@ -130,7 +130,7 @@ foreach $e (@lines) {
 	if ( $#cp < 6 ) {
 		print MYFILE "\n";
 	} else {
-		print MYFILE ",$qp[9], $qp[11]\n";
+		print MYFILE ", $qp[9], $qp[11]\n";
 	}
 }
 close(MYFILE);
