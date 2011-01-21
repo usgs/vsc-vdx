@@ -58,8 +58,6 @@ public class ImportHypoInverse implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
-	public String timeZone;
 	
 	public String importColumns;
 	public String[] importColumnArray;
@@ -185,10 +183,8 @@ public class ImportHypoInverse implements Importer {
 		}
 		
 		// information related to the timestamps
-		timestampMask	= "yyyyMMddHHmmssSS";
-		timeZone		= "GMT";
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		dateIn			= new SimpleDateFormat("yyyyMMddHHmmssSS");
+		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");

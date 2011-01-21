@@ -60,10 +60,9 @@ public class ImportStream implements Importer {
 	
 	public String driver, prefix, url;
 	
-	public SimpleDateFormat dateIn;
-	public SimpleDateFormat dateOut;
-	public Date date;
+	public SimpleDateFormat dateIn, dateOut;
 	public Double j2ksec;
+	public Date date;
 
 	public String filenameMask;
 	public int headerLines;
@@ -186,9 +185,9 @@ public class ImportStream implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to the output timestamps
-		dateOut		= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateOut.setTimeZone(TimeZone.getTimeZone("UTC"));
+		// information related to the timestamps
+		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get connection settings related to this instance
 		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
@@ -523,10 +522,6 @@ public class ImportStream implements Importer {
 		if (lastDataTime == null) {
 			lastDataTime = new Date(0);
 		}
-		
-		// initialize data objects related to this device
-		dateIn	= new SimpleDateFormat(device.getTimestamp());
-		dateIn.setTimeZone(TimeZone.getTimeZone(device.getTimezone()));
 		
 		// display logging information
 		logger.log(Level.INFO, "");

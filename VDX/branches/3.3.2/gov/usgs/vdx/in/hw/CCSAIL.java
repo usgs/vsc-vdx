@@ -97,7 +97,7 @@ public class CCSAIL implements Device {
 	public void initialize(ConfigFile params) throws Exception {
 		id			= Util.stringToString(params.getString("id"), "0");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
-		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
+		timezone	= Util.stringToString(params.getString("timezone"), "GMT");
 		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
 		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
@@ -165,7 +165,7 @@ public class CCSAIL implements Device {
             throw new Exception ("DA: number of lines (" + currentlines + ") not in range 1,...,9999");
 
         SimpleDateFormat formatter = new SimpleDateFormat ("yyMMddHHmmss");
-        formatter.setTimeZone (TimeZone.getTimeZone ("UTC"));
+        formatter.setTimeZone (TimeZone.getTimeZone ("GMT"));
         // Date startDate = new Date (startDateL);
         String cmd = "DA";
 
@@ -392,7 +392,7 @@ public class CCSAIL implements Device {
      */
     public String requestData (Date startDate, Date stopDate) throws Exception {
         SimpleDateFormat formater = new SimpleDateFormat ("yyMMddHHmmss");
-        formater.setTimeZone (TimeZone.getTimeZone ("UTC"));
+        formater.setTimeZone (TimeZone.getTimeZone ("GMT"));
 
         String cmd = "DB";
         cmd += formater.format (startDate);
@@ -408,9 +408,9 @@ public class CCSAIL implements Device {
      * @return the complete CCSAIL command string
      */
     public String setTime () {
-        Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("UTC"));
+        Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("GMT"));
         SimpleDateFormat formater = new SimpleDateFormat ("yyMMddHHmmss");
-        formater.setTimeZone (TimeZone.getTimeZone ("UTC"));
+        formater.setTimeZone (TimeZone.getTimeZone ("GMT"));
 
         String cmd = "TM";
         cmd += formater.format (rightNow.getTime());

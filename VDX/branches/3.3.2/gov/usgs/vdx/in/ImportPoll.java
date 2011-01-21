@@ -60,10 +60,9 @@ public class ImportPoll implements Importer {
 	
 	public String driver, prefix, url;
 	
-	public SimpleDateFormat dateIn;
-	public SimpleDateFormat dateOut;
-	public Date date;
+	public SimpleDateFormat dateIn, dateOut;
 	public Double j2ksec;
+	public Date date;
 
 	public String filenameMask;
 	public int headerLines;
@@ -185,9 +184,9 @@ public class ImportPoll implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to the output timestamps
-		dateOut		= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateOut.setTimeZone(TimeZone.getTimeZone("UTC"));
+		// information related to the timestamps
+		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get connection settings related to this instance
 		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
@@ -582,7 +581,7 @@ public class ImportPoll implements Importer {
 					if (dataRequest.length() > 0) {
 						try {
 							connection.writeString(dataRequest);
-							// logger.log(Level.INFO, "dataRequest:" + dataRequest);
+							logger.log(Level.INFO, "dataRequest:" + dataRequest);
 						} catch (Exception e) {
 							logger.log(Level.SEVERE, "Connection send data request failed", e);
 							connection.disconnect();
@@ -595,7 +594,7 @@ public class ImportPoll implements Importer {
 					try {
 						connection.emptyMsgQueue();
 						dataResponse	= connection.readString(device);
-						// logger.log(Level.INFO, "dataResponse:" + dataResponse);
+						logger.log(Level.INFO, "dataResponse:" + dataResponse);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Device receive data response failed", e);
 						connection.disconnect();
@@ -616,7 +615,7 @@ public class ImportPoll implements Importer {
 						
 					// format the response based on the type of device
 					String dataMessage	= device.formatMessage(dataResponse);
-					// logger.log(Level.INFO, "dataMessage:" + dataMessage);
+					logger.log(Level.INFO, "dataMessage:" + dataMessage);
 						
 					// parse the response by lines
 					StringTokenizer st	= new StringTokenizer(dataMessage, "\n");

@@ -54,13 +54,10 @@ public class ImportFile implements Importer {
 	
 	public String driver, prefix, url;
 	
-	public SimpleDateFormat dateIn;
-	public SimpleDateFormat dateOut;
-	public Date date;
+	public SimpleDateFormat dateIn, dateOut;
 	public Double j2ksec;
-
-	public String timestampMask;
-	public String timeZone;
+	public Date date;
+	
 	public String filenameMask;
 	public int headerLines;
 	public String delimiter;
@@ -187,11 +184,9 @@ public class ImportFile implements Importer {
 		}
 		
 		// information related to the timestamps
-		timestampMask	= Util.stringToString(params.getString("timestampMask"), "yyyy-MM-dd HH:mm:ss");
-		timeZone		= Util.stringToString(params.getString("timezone"), "GMT");
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss"));
+		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
+		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get the list of ranks that are being used in this import

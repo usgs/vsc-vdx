@@ -80,8 +80,8 @@ public class ImportBob implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
-	public String timeZone;
+	public String timestamp;
+	public String timezone;
 	
 	public Rank rank;
 	public String rankName;
@@ -198,11 +198,11 @@ public class ImportBob implements Importer {
 		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
 		
 		// information related to the timestamps
-		timestampMask	= Util.stringToString(params.getString("timestampMask"), "yyyy-MM-dd HH:mm:ss");
-		timeZone		= Util.stringToString(params.getString("timezone"), "GMT");
-		dateIn			= new SimpleDateFormat(timestampMask);
+		timestamp		= Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss");
+		timezone		= Util.stringToString(params.getString("timezone"), "GMT");
+		dateIn			= new SimpleDateFormat(timestamp);
 		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		dateIn.setTimeZone(TimeZone.getTimeZone(timezone));
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get the list of ranks that are being used in this import
