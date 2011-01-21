@@ -341,7 +341,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		
 		try {
 			database.useDatabase(dbName);
-			sql = "INSERT IGNORE INTO hypocenters ";
+			sql = "REPLACE INTO hypocenters ";
 			sql+= "       (j2ksec, eid, rid, lat, lon, depth, prefmag, ampmag, codamag, ";
 			sql+= "        nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk) ";
 			sql+= "VALUES (?,?,?,round(?, 4),round(?, 4),round(?, 2),round(?, 2),round(?, 2),round(?, 2),?,?,?,?,?,?,?,?,?)";
