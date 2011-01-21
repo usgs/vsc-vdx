@@ -73,7 +73,7 @@ public class AGLILY implements Device {
 	public void initialize(ConfigFile params) throws Exception {
 		id			= Util.stringToString(params.getString("id"), "0");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "MM/dd/yy HH:mm:ss");
-		timezone	= Util.stringToString(params.getString("timezone"), "UTC");
+		timezone	= Util.stringToString(params.getString("timezone"), "GMT");
 		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
 		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
 		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
@@ -306,12 +306,12 @@ public class AGLILY implements Device {
     }
 	
 	public String setTime () {
-        Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("UTC"));
-        SimpleDateFormat formater = new SimpleDateFormat ("ss,mm,HH,dd,MM,yy");
-        formater.setTimeZone (TimeZone.getTimeZone ("UTC"));
+        Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("GMT"));
+        SimpleDateFormat formatter = new SimpleDateFormat ("ss,mm,HH,dd,MM,yy");
+        formatter.setTimeZone (TimeZone.getTimeZone ("GMT"));
 
         String cmd = "SET-TIME,";
-        cmd += formater.format (rightNow.getTime());
+        cmd += formatter.format (rightNow.getTime());
 		return make(cmd);
 	}
 }

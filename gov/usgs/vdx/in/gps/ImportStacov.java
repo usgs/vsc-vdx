@@ -60,7 +60,6 @@ public class ImportStacov implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
 	public String timeZone;
 	
 	public String importColumns;
@@ -187,10 +186,8 @@ public class ImportStacov implements Importer {
 		}
 		
 		// information related to the timestamps
-		timestampMask	= "yyMMMdd";
-		timeZone		= "GMT";
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		dateIn	= new SimpleDateFormat("yyMMMdd");
+		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
