@@ -119,7 +119,7 @@ public class EWRSAMData extends RSAMData
 	
 	/**
 	 * Initialize an RSAMData from a byte buffer.  
-	 * @see toBinary()
+	 * @see #toBinary()
 	 * @param bb the byte buffer
 	 */
 	public void fromBinary(ByteBuffer bb)

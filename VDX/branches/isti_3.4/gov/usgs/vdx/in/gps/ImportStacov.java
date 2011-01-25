@@ -119,7 +119,7 @@ public class ImportStacov implements Importer {
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
 	 * @param importerClass name of importer class to use
-	 * @param cf configuration file
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {

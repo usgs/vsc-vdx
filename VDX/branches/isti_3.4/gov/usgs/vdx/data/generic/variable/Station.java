@@ -85,7 +85,7 @@ public class Station implements Comparable<Object>
 	
 	/**
 	 * Construct station list from strings list 
-	 * @see Station(String s)
+	 * @see #Station(String s)
 	 */
 	public static List<Station> fromStringsToList(List<String> ss)
 	{

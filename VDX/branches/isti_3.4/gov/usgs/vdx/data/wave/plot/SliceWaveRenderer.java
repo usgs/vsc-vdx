@@ -182,7 +182,7 @@ public class SliceWaveRenderer extends FrameRenderer
 
 	/**
 	 * Set autoscale flag
-	 * @param autoscale flag
+	 * @param b autoscale flag
 	 */
 	public void setAutoScale(boolean b)
 	{

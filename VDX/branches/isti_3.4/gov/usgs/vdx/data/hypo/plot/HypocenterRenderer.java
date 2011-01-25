@@ -311,7 +311,7 @@ public class HypocenterRenderer implements Renderer
 	 * color spectrum in some cases.
 	 * @param xStart the x-pixel location for the scale
 	 * @param yStart the y-pixel location for the scale
-	 * @param kmPerPixel the value for the spatial scale
+	 * @param triple triple view?
 	 * @return a Renderer that draws the corrent scale/key/legend
 	 */
     public Renderer getScaleRenderer(final double xStart, final double yStart, final boolean triple)

@@ -149,7 +149,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
 	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
@@ -403,7 +403,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param station station
 	 * @param dt data type
 	 * @param dd data value
-	 * @param is replace record?
+	 * @param r is replace record?
 	 */
 	public void insertRecord(Date d, Station station, DataType dt, double dd, boolean r) {
 		

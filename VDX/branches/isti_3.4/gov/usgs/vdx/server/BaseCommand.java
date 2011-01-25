@@ -39,7 +39,7 @@ abstract public class BaseCommand implements Command
 	 * Throw and log error
 	 * @param msg error message
 	 * @param cmd command
-	 * @param cmd socket channel
+	 * @param channel socket channel
 	 */
 	public void sendError(String msg, String cmd, SocketChannel channel)
 	{

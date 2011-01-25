@@ -168,7 +168,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute, map of parameter-value pairs.
+	 * @param params command to execute, map of parameter-value pairs.
 	 * @return request result
 	 */	
 	public RequestResult getData(Map<String, String> params) {

@@ -30,7 +30,6 @@ public class SelectOption {
 	
 	/**
 	 * Constructor
-	 * @param soid		select option id
 	 * @param idx		select option index
 	 * @param code		select option code
 	 * @param name		select option name

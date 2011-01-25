@@ -79,7 +79,7 @@ public class SliceWave
 	
 	/**
 	 * Get samples count in represented slice
-	 * @returns samples count
+	 * @return samples count
 	 */
 	public int samples()
 	{
@@ -429,7 +429,7 @@ public class SliceWave
 	
 	/**
 	 * Dump slice content to CSV string
-	 * @return
+	 * @return CSV string
 	 */
 	public String toCSV()
 	{

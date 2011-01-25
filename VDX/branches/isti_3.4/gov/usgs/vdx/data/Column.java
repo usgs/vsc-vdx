@@ -93,7 +93,7 @@ public class Column
 	
 	/**
 	 * Get string representation of class
-	 * @param string rep of this Column
+	 * @return string rep of this Column
 	 */
 	public String toString() {
 		return(String.format("%d:%s:%s:%s:%s:%s:%s", idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F"), (bypassmanipulations ? "T" : "F")));

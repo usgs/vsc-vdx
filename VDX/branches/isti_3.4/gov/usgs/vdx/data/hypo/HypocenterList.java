@@ -123,7 +123,7 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Constructor.
 	 * @param bb ByteBuffer to parse
-	 * @see fromBinary(ByteBuffer bb)
+	 * @see #fromBinary(ByteBuffer bb)
 	 */
 	public HypocenterList(ByteBuffer bb)
 	{
@@ -197,7 +197,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Parse ByteBuffer and fill list
-	 * @see toBinary()
+	 * @see #toBinary()
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{

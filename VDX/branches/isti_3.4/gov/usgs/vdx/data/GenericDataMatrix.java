@@ -631,7 +631,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/** Returns the least squares fit line from a column.  Data are returned
 	 * as a double array, first element slope, second element y-intercept.
 	 * NEEDS SUPPORT FOR NO_DATA!
-	 * @param column the column index
+	 * @param c the column index
 	 * @return the slope and y-intercept of the line
 	 */
     public double[] leastSquares(int c)

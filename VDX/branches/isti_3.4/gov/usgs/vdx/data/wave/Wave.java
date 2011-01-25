@@ -780,7 +780,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 * <code>overlap()</code> function.
 	 * 
 	 * @param wave
-	 * @return
+	 * @return combined wave
 	 */
 	public Wave combine(Wave wave)
 	{

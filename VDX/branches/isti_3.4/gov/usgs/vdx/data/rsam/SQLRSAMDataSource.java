@@ -127,7 +127,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute. 
+	 * @param params command to execute. 
 	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
@@ -186,11 +186,14 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get RSAM data
-	 * @param cid	channel id
-	 * @param rid	rank id
-	 * @param st	start time
-	 * @param et	end time
+	 * @param cid	   channel id
+	 * @param st	   start time
+	 * @param et	   end time
+	 * @param maxrows  maximum nbr of rows returned
+	 * @param ds       type of downsampling
+	 * @param dsInt    downsampling argument
 	 * @return RSAM data
+	 * @throws UtilException
 	 */
 	public RSAMData getRSAMData(int cid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
@@ -253,10 +256,14 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get RatSAM data
-	 * @param channel
+	 * @param ch
 	 * @param st
 	 * @param et
+	 * @param maxrows  maximum nbr of rows returned
+	 * @param ds       type of downsampling
+	 * @param dsInt    downsampling argument
 	 * @return RatSAM data
+	 * @throws UtilException
 	 */
 	public RSAMData getRatSAMData(String ch, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		RSAMData result1	= null;

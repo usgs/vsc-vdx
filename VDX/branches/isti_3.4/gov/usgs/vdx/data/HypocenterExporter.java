@@ -21,7 +21,7 @@ public class HypocenterExporter implements Exportable {
     
     /**
      * Constructor
-     * @see HistogramRenderer
+     * @see gov.usgs.Plot.HistogramRenderer
      */
     public HypocenterExporter(HypocenterList hypos) {
     	this.hypos = hypos.getHypocenters();

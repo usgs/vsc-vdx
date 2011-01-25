@@ -158,7 +158,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
 	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {

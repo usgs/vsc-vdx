@@ -132,7 +132,8 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
-	 * @param azimuth		azimuth of the deformation source
+	 * @param tid           translation id
+	 * @param natural_azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double natural_azimuth) {
@@ -143,7 +144,8 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute, map of parameter-value pairs.
+	 * @param params command to execute, map of parameter-value pairs.
+	 * @return requested result
 	 */	
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -188,11 +190,14 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 
 	/**
 	 * Get Tensorstrain Station data
-	 * @param cid	channel id
-	 * @param rid	rank id
-	 * @param st	start time
-	 * @param et	end time
-	 * @return
+	 * @param cid	   channel id
+	 * @param rid	   rank id
+	 * @param st	   start time
+	 * @param et	   end time
+	 * @param maxrows  maximum nbr of rows returned
+	 * @param ds       type of downsampling
+	 * @param dsInt    downsampling argument
+	 * @return requested result
 	 */	
 	public RequestResult getTensorstrainData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) {
 		
