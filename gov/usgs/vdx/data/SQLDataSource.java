@@ -93,6 +93,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Setter for maxrows
 	 * @param maxrows limit on number of rows to retrieve
+	 */
 	protected void setMaxRows(int maxrows){
 		this.maxrows = maxrows;
 	}
@@ -439,11 +440,7 @@ abstract public class SQLDataSource implements DataSource {
 
 	/**
 	 * Create entry in the channels table and creates a table for that channel
-	 * @param channelCode	channel code
-	 * @param channelName	channel name
-	 * @param lon			longitude
-	 * @param lat			latitude
-	 * @param height		height
+	 * @param channel    	Channel
 	 * @param tid			translation id
 	 * @param azimuth		azimuth of the deformation source
 	 * @param channels		
@@ -1582,7 +1579,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param j2ksec time
 	 * @param dt01
 	 * @param dt02
-	 * @param trans
+	 * @param barometer
 	 */
 	public void insertV2StrainData(String code, double j2ksec, double dt01, double dt02, double barometer) {		
 		try {
@@ -1992,7 +1989,7 @@ abstract public class SQLDataSource implements DataSource {
 	/**
 	 * Insert a supplemental data xref
 	 * 
-	 * @param sdx the SuppDatum xref to be added
+	 * @param sd the SuppDatum xref to be added
 	 * @return true if successful, false otherwise
 	 */
 	public boolean insertSuppDatumXref( SuppDatum sd ) {

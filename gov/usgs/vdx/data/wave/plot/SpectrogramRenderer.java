@@ -269,7 +269,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 
 	/**
 	 * Set autoscale flag
-	 * @param autoscale autoscale flag
+	 * @param autoScale autoscale flag
 	 */
 	public void setAutoScale(boolean autoScale)
 	{
@@ -312,8 +312,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
-	 * Get maximum power value
-	 * @return maximum power
+	 * Set maximum power value
+	 * @param maxPower new maximum power
 	 */
 	public void setMaxPower(double maxPower)
 	{

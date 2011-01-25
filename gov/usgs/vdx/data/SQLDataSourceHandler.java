@@ -75,7 +75,7 @@ public class SQLDataSourceHandler
 	
 	/**
 	 * Get data source descriptor by name
-	 * @param name
+	 * @param key
 	 * @return source descriptor
 	 */
 	public SQLDataSourceDescriptor getDataSourceDescriptor(String key)

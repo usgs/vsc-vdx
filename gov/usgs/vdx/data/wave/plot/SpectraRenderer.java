@@ -293,6 +293,7 @@ public class SpectraRenderer extends MatrixRenderer
 	/**
 	* Get minimum frequency
 	* @return minimum frequency
+	*/
 	public double getMinFreq()
 	{
 		return minFreq;
@@ -300,7 +301,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set minimum frequency
-	 * @param minimum frequency
+	 * @param minFreq minimum frequency
 	 */
 	public void setMinFreq(double minFreq)
 	{

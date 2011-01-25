@@ -760,10 +760,6 @@ public class HelicorderRenderer extends FrameRenderer
 	}
 	
 	/** Creates the default axis using SmartTick.
-	 * @param hTicks suggested number of horizontal ticks
-	 * @param vTicks suggested number of vertical ticks
-	 * @param hExpand should horizontal be expanded for better ticks
-	 * @param vExpand should vertical be expanded for better ticks
 	 */
 	public void createDefaultAxis()
 	{

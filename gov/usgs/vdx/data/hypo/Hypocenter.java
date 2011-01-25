@@ -36,7 +36,12 @@ public class Hypocenter
     public String rmk;
 
 	/** Constructor that sets data.
-	 * @param d the data
+	 * @param  j2ksec  time 
+	 * @param  rid     rank
+	 * @param  lat     latitude
+	 * @param  lon     longitude
+	 * @param  depth   depth
+	 * @param  prefmag 
 	 */
     public Hypocenter(double j2ksec, Integer rid, double lat, double lon, double depth, double prefmag) {
         this(j2ksec, (String)null, rid, lat, lon, depth, prefmag, Double.NaN, Double.NaN,

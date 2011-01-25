@@ -835,7 +835,7 @@ public class SAC
 	}
 
 	/** writes this object out as a sac file.
-	 * @param dis DataInputStream to read sac from
+	 * @param filename name of file to read sac from
 	 * @throws FileNotFoundException if the file cannot be found
 	 * @throws IOException if it isn't a sac file or if it happens :)
  	 */
@@ -846,7 +846,7 @@ public class SAC
 	}
 
 	/** writes this object out as a sac file.
-	 * @param File file to write to
+	 * @param file file to write to
 	 * @throws FileNotFoundException if the file cannot be found
 	 * @throws IOException if it isn't a sac file or if it happens :)
 	 */

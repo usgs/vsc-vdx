@@ -160,7 +160,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameters and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
 	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
@@ -207,7 +207,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	}
 
 	/**
-	 * Get 
+	 * Get types
 	 * @return String List containing VALUES and/or EVENTS
 	 */
 	public List<String> getTypes() {
@@ -241,10 +241,13 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get RSAM data
-	 * @param cid	channel id
-	 * @param st	start time
-	 * @param et	end time
-	 * @param type	data type (EVENTS/VALUES)
+	 * @param cid	   channel id
+	 * @param st	   start time
+	 * @param et	   end time
+	 * @param plotType type of plot (EVENTS or VALUES)
+	 * @param maxrows  maximum nbr of rows returned
+	 * @param ds       type of downsampling
+	 * @param dsInt    downsampling argument
 	 * @return the RSAM data
 	 */
 	public RSAMData getEWRSAMData(int cid, double st, double et, String plotType, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {

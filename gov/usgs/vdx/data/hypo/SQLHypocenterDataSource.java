@@ -184,7 +184,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute, map of parameter-value pairs.
+	 * @param params command to execute, map of parameter-value pairs.
 	 * @return request result
 	 */	
 	public RequestResult getData(Map<String, String> params) {
@@ -247,7 +247,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minDepth		minimum depth
 	 * @param maxDepth		maximum depth
 	 * @param minMag		minimum magnitude
-	 * @param maxMax		maximum magnitude
+	 * @param maxMag		maximum magnitude
 	 * @param minNPhases	minimum number of phases
 	 * @param maxNPhases	maximum number of phases
 	 * @param minRMS		minimum RMS
@@ -257,7 +257,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minVerr		minimum vertical error
 	 * @param maxVerr		maximum vertical error
 	 * @param rmk			remarks filter
+	 * @param maxrows       maximum nbr of rows returned
 	 * @return list of hypocenter data
+	 * @throws UtilException
 	 */
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,

@@ -66,7 +66,7 @@ public class VDXDatabase {
 	 *            class name for database driver
 	 * @param url
 	 *            database url
-	 * @param db
+	 * @param prefix
 	 *            database prefix
 	 */
 	public VDXDatabase(String driver, String url, String prefix) {
