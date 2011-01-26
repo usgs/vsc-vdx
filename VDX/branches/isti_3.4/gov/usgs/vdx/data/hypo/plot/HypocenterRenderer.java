@@ -476,9 +476,12 @@ public class HypocenterRenderer implements Renderer
 	            				}
 
 	            				double projectedWidth = Math.abs(adc.getScalePojectedWidth(hc.lat, hc.lon));
-	            				if (projectedWidth > adc.getWidth()) {
-	            					skippedCount++;
-	            					continue;
+	            				double tmpWidth = adc.getWidth();
+	            				if (tmpWidth > 0.0) {
+	            					if (projectedWidth > tmpWidth) {
+	            						skippedCount++;
+	            						continue;
+	            					}
 	            				}
 
 	            				xt = transformer.getXPixel(projectedDist);
@@ -525,11 +528,14 @@ public class HypocenterRenderer implements Renderer
 	            				}
 
 	            				double projectedWidth = Math.abs(adc.getScalePojectedWidth(hc.lat, hc.lon));
-	            				if (projectedWidth > adc.getWidth()) {
-	            					skippedCount++;
-	            					continue;
+	            				double tmpWidth = adc.getWidth();
+	            				if (tmpWidth > 0.0) {
+	            					if (projectedWidth > tmpWidth) {
+	            						skippedCount++;
+	            						continue;
+	            					}
 	            				}
-
+	            				
 	            				yt = transformer.getYPixel(projectedDist);
 	            			} else {
 	            				// we don't have the arbitrary depth calculator, just plot the point at zero.
