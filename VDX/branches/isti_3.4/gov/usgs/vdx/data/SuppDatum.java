@@ -25,6 +25,8 @@ public class SuppDatum
 	public String typeName;
 	public String color;
 	public int dl;
+	public int frame_y;
+	public int frame_h;
 	
 	/**
 	 * SuppDatum default constructor
@@ -179,6 +181,14 @@ public class SuppDatum
 	 */
 	public String toXML()
 	{
+		return toXML( false );
+	}
+
+	/**
+	 * @return SuppDatum's xml representation, w/ extra args 
+	 */
+	public String toXML( boolean addFrameInfo )
+	{
 		StringBuffer sb = new StringBuffer();
 		sb.append("<suppdatum>\n");
 		sb.append("<![CDATA[" + sdid + "\"" + tid + "\"" + st + "\"" + et + "\"" + 
@@ -186,7 +196,9 @@ public class SuppDatum
 		String[] names = { name, value, chName, colName, rkName, typeName, color };
 		for ( String s : names )
 			sb.append( "\"" + (s==null ? "" : s) );
-		sb.append("]]>\n</suppdatum>\n");
+		if ( addFrameInfo )
+			sb.append( "\"" + frame_y + "\"" + frame_h );
+		sb.append( "]]>\n</suppdatum>\n");
 		return sb.toString();
 	}
 }	
