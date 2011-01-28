@@ -71,7 +71,7 @@ public class VDXDatabase {
 	 */
 	public VDXDatabase(String driver, String url, String prefix) {
 		logger = Log.getLogger("gov.usgs.vdx");
-		logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + prefix);
+		// logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + prefix);
 		dbDriver = driver;
 		dbURL = url;
 		if (prefix != null)
@@ -128,7 +128,6 @@ public class VDXDatabase {
 	 * Performs database connection
 	 */
 	public void connect() {
-		logger.fine("Connecting to " + dbURL);
 		connected = false;
 		try {
 			Class.forName(dbDriver).newInstance();
