@@ -155,7 +155,7 @@ public class VDXClient extends InternetClient
 						String r = rs.substring(rs.indexOf(':') + 1);
 						result = null;
 						if (rc.equals("ok")){
-							logger.info(r);
+							logger.info("rc is ok: " + r);
 							Map<String, String> map = Util.stringToMap(r);
 							if (map.get("bytes") != null)
 							{	
@@ -164,8 +164,7 @@ public class VDXClient extends InternetClient
 									byte[] buffer = readBinary(bytes);
 									byte[] decompBuf = Util.decompress(buffer);
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
-								
-									logger.info(":VDX client got type " + map.get("type"));
+
 									String className = dataTypeMap.get(map.get("type"));
 									BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
 									ds.fromBinary(bb);
@@ -225,7 +224,7 @@ public class VDXClient extends InternetClient
 				String rc = rs.substring(0, rs.indexOf(':'));
 				String r = rs.substring(rs.indexOf(':') + 1);
 				result = null;
-				logger.info("VDXClient.getData(): rc = " + rc);
+				// logger.info("VDXClient.getData(): rc = " + rc);
 				logger.info("VDXClient.getData(): r = " + r);
 				
 				if (rc.equals("ok")){
