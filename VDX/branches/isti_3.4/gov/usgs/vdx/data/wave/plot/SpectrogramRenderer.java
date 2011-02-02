@@ -65,6 +65,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public boolean yTickMarks = true;
 	public boolean yTickValues = true;
     protected String timeZone;
+	protected String dateFormatString = "yyyy-MM-dd HH:mm:ss";
+	
 	private String yLabelText = null;
 	private String yUnitText = null;
 	protected byte[] imgBuffer;
@@ -146,7 +148,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 				this.yAxisLabel = yLabelText;
 			}
 			if(xUnits){
-				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy MM dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy MM dd")+ ")";
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, dateFormatString) + " to " + Util.j2KToDateString(viewEndTime, dateFormatString)+ ")";
 			}
 			this.xAxisLabels = xTickValues;
 			this.yAxisLabels = yTickValues;
