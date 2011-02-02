@@ -89,6 +89,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected double viewStartTime;
 	protected double viewEndTime; 
 	protected String timeZone;
+	protected String dateFormatString = "yyyy-MM-dd HH:mm:ss";
 	
 	protected Color color = Color.BLUE;
 	
@@ -311,7 +312,7 @@ public class SliceWaveRenderer extends FrameRenderer
 				this.yUnit = yUnitText;
 			}
 			if(xUnits){
-				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, "yyyy-MM-dd") + " to " + Util.j2KToDateString(viewEndTime, "yyyy-MM-dd")+ ")";
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, dateFormatString) + " to " + Util.j2KToDateString(viewEndTime, dateFormatString)+ ")";
 			}
 			if(yLabelText != null){
 				this.yAxisLabel = yLabelText;
@@ -328,7 +329,6 @@ public class SliceWaveRenderer extends FrameRenderer
 			}
 			title = SliceWaveRenderer.this.title;
 			titleBackground = Color.WHITE;
-			// TODO: should probably have x-axis label be "time"
 		}
 	}
 	
