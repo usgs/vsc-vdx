@@ -198,7 +198,7 @@ abstract public class SQLDataSource implements DataSource {
 		// dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
 		dbName			= vdxName + "$" + getType();
 		maxrows			= Util.stringToInt(params.getString("maxrows"), 0); 
-		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+		// logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 	}
 
 	/**
