@@ -123,6 +123,14 @@ public class Channel {
 	}
 
 	/**
+	 * Setter for channel code
+	 * @return channel code
+	 */
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	/**
 	 * Getter for channel name
 	 * @return channel name
 	 */
