@@ -246,7 +246,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	 */
 	public void setColor(Color c)
 	{
-		color = c;
+		if (c != null) color = c;
 	}
 	
 	/**
@@ -365,8 +365,8 @@ public class SliceWaveRenderer extends FrameRenderer
 		wave.reset();
 		
 		double bias = 0;
-		if (removeBias)
-		    bias = wave.mean();
+		// if (removeBias)
+		   //  bias = wave.mean();
 		
 		g.setColor(color);
         
