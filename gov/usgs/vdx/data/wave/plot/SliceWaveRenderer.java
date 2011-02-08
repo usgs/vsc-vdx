@@ -250,6 +250,14 @@ public class SliceWaveRenderer extends FrameRenderer
 	}
 	
 	/**
+	 * Get color
+	 */
+	public Color getColor()
+	{
+		return color;
+	}
+	
+	/**
 	 * Set Y axis label
 	 * @param s Y axis label
 	 */
@@ -365,8 +373,8 @@ public class SliceWaveRenderer extends FrameRenderer
 		wave.reset();
 		
 		double bias = 0;
-		// if (removeBias)
-		   //  bias = wave.mean();
+		if (removeBias)
+			bias = wave.mean();
 		
 		g.setColor(color);
         
