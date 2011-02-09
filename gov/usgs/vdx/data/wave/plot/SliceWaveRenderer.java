@@ -81,7 +81,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	protected SliceWave wave;
 	
 	protected boolean autoScale = true;
-	protected boolean removeBias = true;
+	protected boolean removeBias = false;
 	protected boolean drawSamples = false;
 	
 	protected double highlightX1;

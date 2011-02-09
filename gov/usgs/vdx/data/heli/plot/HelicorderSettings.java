@@ -23,8 +23,6 @@ public class HelicorderSettings {
 	public int height					= 1000;
 	public int left						= 70;
 	public int top						= 20;
-	
-	public int plotCount				= 1;
 
 	public int clipValue				= -1;
 	public int barRange					= -1;
@@ -39,6 +37,7 @@ public class HelicorderSettings {
 	public boolean minimumAxis			= false;
 	public boolean largeChannelDisplay	= false;
 	public boolean showDecorator		= true;
+	public boolean showLegend			= false;
 	
 	/**
 	 * Apply settings stored in this class to HelicorderRenderer
@@ -50,7 +49,7 @@ public class HelicorderSettings {
 		hr.setChannel(channel);
 		hr.setData(hd);
 		hr.setTimeChunk(timeChunk);
-		hr.setLocation(left, (top * (plotCount + 1)) + (height * plotCount), width, height);
+		hr.setLocation(left, top, width, height);
 		hr.setForceCenter(forceCenter);
 		
 		double mean	= hd.getMeanMax();
@@ -70,13 +69,13 @@ public class HelicorderSettings {
 		hr.setShowClip(showClip);
 		hr.setTimeZone(timeZone);
 		hr.setShowDecorator(showDecorator);
-		// hr.setTimeZoneAbbr(timeZoneAbbr);
-		// hr.setTimeZoneOffset(timeZoneOffset);
 		hr.setLargeChannelDisplay(largeChannelDisplay);
 		if (minimumAxis)
 			hr.createMinimumAxis();
 		else
 			hr.createDefaultAxis();
+		if (showLegend)
+			hr.createDefaultLegendRenderer(new String[] {channelCode});
 	}
 	
 	/**
