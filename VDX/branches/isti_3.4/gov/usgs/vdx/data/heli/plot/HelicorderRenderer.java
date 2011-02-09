@@ -4,6 +4,7 @@ import gov.usgs.plot.AxisRenderer;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.FrameRenderer;
 import gov.usgs.plot.LegendRenderer;
+import gov.usgs.plot.ShapeRenderer;
 import gov.usgs.plot.SmartTick;
 import gov.usgs.plot.TextRenderer;
 import gov.usgs.util.Time;
@@ -17,6 +18,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -53,9 +55,6 @@ public class HelicorderRenderer extends FrameRenderer
 	private Color color = null;
 		
 	private TimeZone timeZone = TimeZone.getTimeZone("UTC");
-	
-//	private double timeZoneOffset;
-//	private String timeZoneAbbr;
 	
 	private int clipValue = 3000;
 	private boolean showClip = false;
@@ -400,12 +399,14 @@ public class HelicorderRenderer extends FrameRenderer
 	 * the specified names.
 	 * @param s the legend names
 	 */
-    public void createDefaultLegendRenderer(String[] s) {    	
+    public void createDefaultLegendRenderer(String[] s) { 
         setLegendRenderer(new LegendRenderer());
         getLegendRenderer().x	= graphX + 6;
         getLegendRenderer().y	= graphY + 6;
+    	ShapeRenderer sr		= new ShapeRenderer(new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000));
+    	sr.color				= new Color(0, 0, 255);
         for (int i = 0; i < s.length; i++) {
-            getLegendRenderer().addLine(null, null, s[i]);
+            getLegendRenderer().addLine(sr, null, s[i]);
         }
     }
 	
@@ -666,20 +667,24 @@ public class HelicorderRenderer extends FrameRenderer
 			else if (minutes > 180)
 				minorTicks = minutes / 5;
 			double[] mnt = SmartTick.intervalTick(minX, maxX, minorTicks);
+			
+			// x axis decorations
+			if (showDecorator) {				
+				if (xUnits) {
+					axis.setBottomLabelAsText("+ Minutes");
+				}
+				if (xTickValues) {
+					String[] btl = new String[mjt.length];
+					for (int i = 0; i < mjt.length; i++) {
+						btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
+					}
+					axis.createBottomTickLabels(mjt, btl);
+				}
+			}			
 			if(xTickMarks){
 				axis.createBottomTicks(mjt, mnt);
 				axis.createTopTicks(mjt, mnt);
 				axis.createVerticalGridLines(mjt);
-			}
-			String[] btl = new String[mjt.length];
-			for (int i = 0; i < mjt.length; i++)
-				btl[i] = Long.toString(Math.round(mjt[i] / 60.0));
-			if(xTickValues){	
-				axis.createBottomTickLabels(mjt, btl);
-			}
-			
-			if (showDecorator && xUnits) {
-				axis.setBottomLabelAsText("+ Minutes");
 			}
 			
 	 		double[] labelPosLR = new double[numRows];
