@@ -36,7 +36,7 @@ public class HypocenterRenderer implements Renderer
 	 */
 	public enum Axes
 	{
-		MAP_VIEW, LON_DEPTH, LAT_DEPTH, DEPTH_TIME, TRIPLE_VIEW, ARB_DEPTH, ARB_TIME;
+		MAP_VIEW, LON_DEPTH, LAT_DEPTH, TIME_DEPTH, TRIPLE_VIEW, ARB_DEPTH, ARB_TIME;
 		
 		public static Axes fromString(String c)
 		{
@@ -51,13 +51,13 @@ public class HypocenterRenderer implements Renderer
 				case 'N':
 					return LAT_DEPTH;
 				case 'D':
-					return DEPTH_TIME;
-				case '3':
-					return TRIPLE_VIEW;
+					return TIME_DEPTH;
 				case 'A':				
 					return ARB_DEPTH;
 				case 'T':				
 					return ARB_TIME;
+				case '3':
+					return TRIPLE_VIEW;
 
 				default:
 					return null;
@@ -496,7 +496,7 @@ public class HypocenterRenderer implements Renderer
 	            		}
 	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
-	            	case DEPTH_TIME:
+	            	case TIME_DEPTH:
 	            		xt = transformer.getXPixel(hc.j2ksec);
 	                    yt = transformer.getYPixel(hc.depth);
 	            		break;
