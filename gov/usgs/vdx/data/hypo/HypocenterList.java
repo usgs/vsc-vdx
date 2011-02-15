@@ -163,8 +163,10 @@ public class HypocenterList implements BinaryDataSet
 	 */
 	public double getStartTime()
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return Double.NaN;
+		else if (hypocenters.size() == 0)
+			return 0;
 		else
 			return hypocenters.get(0).j2ksec;
 	}
@@ -175,8 +177,10 @@ public class HypocenterList implements BinaryDataSet
 	 */
 	public double getEndTime()
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return Double.NaN;
+		else if (hypocenters.size() == 0)
+			return 0;
 		else
 			return hypocenters.get(hypocenters.size() - 1).j2ksec;
 	}
@@ -387,7 +391,8 @@ public class HypocenterList implements BinaryDataSet
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		//if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return null;
 		
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
