@@ -279,39 +279,13 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
 			sql += "AND    a.lon     >= ? AND a.lon     <= ? ";
 			sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
-			
-			// depth filtering options
-			if (!(minDepth == -Double.MAX_VALUE && maxDepth == Double.MAX_VALUE)) {
-				sql += "AND    a.depth   >= " + minDepth + " AND a.depth   <= " + maxDepth + " ";
-			}
-			
-			// mag filtering options
-			if (!(minMag == -Double.MAX_VALUE && maxMag == Double.MAX_VALUE)) {
-				sql += "AND    a.prefmag >= " + minMag + " AND a.prefmag <= " + maxMag + " ";
-			}
-			
-			// dont' return values without a magnitude
+			sql += "AND    a.depth   <= ? AND a.depth   >= ? ";
+			sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
+			sql += "AND    a.nphases >= ? AND a.nphases <= ? ";
+			sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
+			sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
+			sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
 			sql += "AND    a.prefmag IS NOT NULL ";
-			
-			// number of phases filtering options
-			if (!(minNPhases == Integer.MIN_VALUE && maxNPhases == Integer.MAX_VALUE)) {
-				sql += "AND    a.nphases >= " + minNPhases + " AND a.nphases <= " + maxNPhases + " ";
-			}
-			
-			// rms filtering options
-			if (!(minRMS == -Double.MAX_VALUE && maxRMS == Double.MAX_VALUE)) {
-				sql += "AND    a.rms >= " + minRMS + " AND a.rms <= " + maxRMS + " ";
-			}
-			
-			// herr filtering options
-			if (!(minHerr == -Double.MAX_VALUE && maxHerr == Double.MAX_VALUE)) {
-				sql += "AND    a.herr >= " + minHerr + " AND a.herr <= " + maxHerr + " ";
-			}
-			
-			// verr filtering options
-			if (!(minVerr == -Double.MAX_VALUE && maxVerr == Double.MAX_VALUE)) {
-				sql += "AND    a.verr >= " + minVerr + " AND a.verr <= " + maxVerr + " ";
-			}
 			
 			// remarks filtering options
 			if (!rmk.equals("")) {
@@ -341,11 +315,23 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(4, east);
 			ps.setDouble(5, south);
 			ps.setDouble(6, north);
+			ps.setDouble(7, minDepth);
+			ps.setDouble(8, maxDepth);
+			ps.setDouble(9, minMag);
+			ps.setDouble(10, maxMag);
+			ps.setInt(11, minNPhases);
+			ps.setInt(12, maxNPhases);
+			ps.setDouble(13, minRMS);
+			ps.setDouble(14, maxRMS);
+			ps.setDouble(15, minHerr);
+			ps.setDouble(16, maxHerr);
+			ps.setDouble(17, minVerr);
+			ps.setDouble(18, maxVerr);
 			if (ranks && rid != 0) {
-				ps.setInt(7, rid);
+				ps.setInt(19, rid);
 			} else {
-				ps.setDouble(7, st);
-				ps.setDouble(8, et);
+				ps.setDouble(19, st);
+				ps.setDouble(20, et);
 			}
 			rs = ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
