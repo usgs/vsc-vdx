@@ -186,6 +186,36 @@ public class HypocenterList implements BinaryDataSet
 	}
 	
 	/**
+	 * Get min depth in the list
+	 * @return min depth in list
+	 */
+	public double getMinDepth(double md)
+	{
+		double minDepth = 0.0;
+		if (md != Double.MAX_VALUE)
+			minDepth = md;
+		for (Hypocenter hc: hypocenters) {
+			minDepth = Math.max(minDepth, hc.depth);
+		}
+		return minDepth;
+	}
+	
+	/**
+	 * Get min depth in the list
+	 * @return min depth in list
+	 */
+	public double getMaxDepth(double md)
+	{
+		double maxDepth = -1.0;
+		if (md != -Double.MAX_VALUE)
+			maxDepth = md;
+		for (Hypocenter hc: hypocenters) {
+			maxDepth = Math.min(maxDepth, hc.depth);
+		}
+		return maxDepth;
+	}
+	
+	/**
 	 * Dump object content into ByteBuffer
 	 * @return ByteBuffer of content
 	 */
