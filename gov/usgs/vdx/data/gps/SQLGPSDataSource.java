@@ -299,7 +299,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			while (rs.next()) {
 				dp		= new DataPoint();

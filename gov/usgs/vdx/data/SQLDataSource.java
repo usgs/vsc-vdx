@@ -1293,7 +1293,6 @@ abstract public class SQLDataSource implements DataSource {
 		List<Column> columns		= new ArrayList<Column>();
 		Column column;
 		int columnsReturned = 0;
-		double value;
 
 		try {
 			database.useDatabase(dbName);
@@ -1385,7 +1384,7 @@ abstract public class SQLDataSource implements DataSource {
 			rs = ps.executeQuery();
 			
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+				throw new UtilException("Max rows (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
 			}
 			// loop through each result and add to the list
 			while (rs.next()) {

@@ -228,7 +228,6 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
 		int columnsReturned	= 0;
-		double value;
 		
 		try {
 			database.useDatabase(dbName);
@@ -290,7 +289,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			rs = ps.executeQuery();
 		
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				return getErrorResult("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+				return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			while (rs.next()) {
 				dataRow = new double[columnsReturned];

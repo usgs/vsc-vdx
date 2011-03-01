@@ -335,7 +335,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			rs = ps.executeQuery();
 			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-				throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 			}
 			
 			double j2ksec, lat, lon, depth, mag;
