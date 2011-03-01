@@ -292,7 +292,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				}
 				rs		= ps.executeQuery();
 				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-					throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 				}
 				pts 	= new ArrayList<double[]>();
 				
@@ -320,7 +320,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(3, et);
 				rs		= ps.executeQuery();
 				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
-					throw new UtilException("Configured row count (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 				}
 				// setup the initial value
 				count 		= 0;
