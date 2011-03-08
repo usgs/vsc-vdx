@@ -1310,14 +1310,14 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		window.add( (double)buffer[0] );
 		int r = this.buffer.length;
 		for ( int i=1; i<r; i++ ) {
-			double itime = i*samplingRate;
+			double itime = i/samplingRate;
 			double ival = (double)buffer[i];
 			window.add(ival);
 			// While oldest value is outside period, remove it
 			while ( itime - jtime > p ) {
 				window.removeOldest();
 				j++;
-				jtime = i*samplingRate;
+				jtime = j/samplingRate;
 			}
 			buffer[i] = (int)Math.round(window.avg());
 		}
@@ -1334,14 +1334,14 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 		window.add( (double)buffer[0] );
 		int r = this.buffer.length;
 		for ( int i=1; i<r; i++ ) {
-			double itime = i*samplingRate;
+			double itime = i/samplingRate;
 			double ival = (double)buffer[i];
 			window.add(ival);
 			// While oldest value is outside period, remove it
 			while ( itime - jtime > p ) {
 				window.removeOldest();
 				j++;
-				jtime = i*samplingRate;
+				jtime = j/samplingRate;
 			}
 			buffer[i] = (int)Math.round(window.avg());
 		}
