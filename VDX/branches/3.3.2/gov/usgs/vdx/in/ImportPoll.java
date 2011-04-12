@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.CurrentTime;
 import gov.usgs.util.Util;
 
 import gov.usgs.vdx.data.Channel;
@@ -26,7 +24,6 @@ import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
 
 import gov.usgs.vdx.in.conn.Connection;
@@ -39,63 +36,13 @@ import cern.colt.matrix.*;
  * 
  * @author Loren Antolik
  */
-// public class ImportPoll extends Poller implements Importer {
-public class ImportPoll implements Importer {
+public class ImportPoll extends Import implements Importer {
 	
-	public static Set<String> flags;
-	public static Set<String> keys;
-	
-	public String vdxConfig;
-	
-	public ConfigFile params;
-	public ConfigFile vdxParams;
-	public ConfigFile rankParams;
-	public ConfigFile channelParams;
-	public ConfigFile columnParams;
-	public ConfigFile dataSourceParams;
-	public ConfigFile translationParams;
 	public ConfigFile stationParams;
 	public ConfigFile deviceParams;
 	public ConfigFile connectionParams;
-	
-	public String driver, prefix, url;
-	
-	public SimpleDateFormat dateIn, dateOut;
-	public Double j2ksec;
-	public Date date;
 
-	public String filenameMask;
-	public int headerLines;
-	
-	public String importFields;
-	public String[] importFieldArray;
-	public Map<Integer, String> importFieldMap;
-	
-	public String dataSource;
-	public SQLDataSource sqlDataSource;
-	public SQLDataSourceHandler sqlDataSourceHandler;
-	public SQLDataSourceDescriptor sqlDataSourceDescriptor;	
-	public List<String> dataSourceList;
-	public Map<String, SQLDataSource> sqlDataSourceMap;
-	public Map<String, String> dataSourceColumnMap;
-	public Map<String, String> dataSourceChannelMap;
-	public Map<String, Integer>	dataSourceRIDMap;	
 	public String timeDataSource = null;
-	
-	public Rank rank;
-	public String rankName;
-	public int rankValue, rankDefault;
-	public int rid;
-	
-	public Channel channel;
-	public String channelCode, channelName;
-	public double channelLon, channelLat, channelHeight;
-	public Map<String, Channel> channelMap;
-	public ArrayList<String> channelList;
-	public String channels;
-	public String defaultChannels;
-	public String[] channelArray;
-	public String[] dsChannelArray;
 	
 	public String stationCode;
 	public List<String> stationList;
@@ -103,36 +50,11 @@ public class ImportPoll implements Importer {
 	public Map<String, Device> stationDeviceMap;
 	public Map<String, ConfigFile> stationConnectionParamsMap;
 	
-	public Column column;
-	public String columnName, columnDescription, columnUnit;
-	public int columnIdx;
-	public boolean columnActive, columnChecked;
-	public List<Column> columnList;
-	public String columns;
-	public String[] columnArray;	
-	public String defaultColumns;
-	
-	public List<String> stringList;
-	
 	public int postConnectDelay;
 	public int betweenPollDelay;
 	
 	public Connection connection;	
 	public Device device;
-	public Logger logger;
-
-	public double azimuthNom;
-	public double azimuthInst;
-
-	public CurrentTime currentTime = CurrentTime.getInstance();
-	
-	static {
-		flags	= new HashSet<String>();
-		keys	= new HashSet<String>();
-		keys.add("-c");
-		flags.add("-h");
-		flags.add("-v");
-	}
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -184,7 +106,7 @@ public class ImportPoll implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to the timestamps
+		// define a format for log message dates
 		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
@@ -246,7 +168,7 @@ public class ImportPoll implements Importer {
 				connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
 				connection.initialize(connectionParams);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Connection initialization failed", e);
+				logger.log(Level.SEVERE, "Connection initialization failed");
 				continue;
 			}
 			
@@ -255,7 +177,7 @@ public class ImportPoll implements Importer {
 				device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
 				device.initialize(deviceParams);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Device driver initialization failed", e);
+				logger.log(Level.SEVERE, "Device driver initialization failed");
 				System.exit(-1);
 			}
 			
@@ -513,10 +435,10 @@ public class ImportPoll implements Importer {
 				connectionParams	= stationConnectionParamsMap.get(stationCode);
 				
 				// get the import line definition for this channel
-				importFieldArray	= device.getFields().split(",");
-				importFieldMap		= new HashMap<Integer, String>();
-				for (int i = 0; i < importFieldArray.length; i++) {
-					importFieldMap.put(i, importFieldArray[i].trim());
+				fieldsArray	= device.getFields().split(",");
+				fieldMap	= new HashMap<Integer, String>();
+				for (int i = 0; i < fieldsArray.length; i++) {
+					fieldMap.put(i, fieldsArray[i].trim());
 				}
 				
 				// get the latest data time from data source that keeps track of time
@@ -655,7 +577,7 @@ public class ImportPoll implements Importer {
 						}
 						
 						// make sure the data row matches the defined data columns
-						if (importFieldMap.size() > valueMap.size()) {
+						if (fieldMap.size() > valueMap.size()) {
 							logger.log(Level.SEVERE, "Line " + lineNumber + " has too few values");
 							continue;
 						}
@@ -667,34 +589,44 @@ public class ImportPoll implements Importer {
 						double value;
 						int count		= 0;
 						String tsValue	= "";
-						for (int i = 0; i < importFieldMap.size(); i++) {								
-							name		= importFieldMap.get(i);
-							
-							// skip IGNORE columns
-							if (name.equals("IGNORE")) {
-								continue;
-	
-							// parse out the CHANNEL
-							} else if (name.equals("CHANNEL")) {
-								channelCode	= valueMap.get(i);
-								continue;
+						
+						// try to parse the values from this data line
+						try {
+							for (int i = 0; i < fieldMap.size(); i++) {								
+								name		= fieldMap.get(i);
 								
-							// parse out the TIMESTAMP
-							} else if (name.equals("TIMESTAMP")) {
-								tsValue	+= valueMap.get(i) + " ";
-								continue;
-								
-							// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
-							} else {					
-								if (valueMap.get(i).length() == 0) {
-									value	= Double.NaN;
-								} else {
-									value	= Double.parseDouble(valueMap.get(i));
+								// skip IGNORE columns
+								if (name.equals("IGNORE")) {
+									continue;
+		
+								// parse out the CHANNEL
+								} else if (name.equals("CHANNEL")) {
+									channelCode	= valueMap.get(i);
+									continue;
+									
+								// parse out the TIMESTAMP
+								} else if (name.equals("TIMESTAMP")) {
+									tsValue	+= valueMap.get(i) + " ";
+									continue;
+									
+								// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
+								} else {					
+									if (valueMap.get(i).length() == 0) {
+										value	= Double.NaN;
+									} else {
+										value	= Double.parseDouble(valueMap.get(i));
+									}
+									columnValue	= new ColumnValue(name, value);
+									columnValueMap.put(count, columnValue);
+									count++;
 								}
-								columnValue	= new ColumnValue(name, value);
-								columnValueMap.put(count, columnValue);
-								count++;
 							}
+							
+						// any problems with parsing the values for this line should be caught here
+						} catch (Exception e) {
+							logger.log(Level.SEVERE, "Line " + lineNumber + " parse error");
+							logger.log(Level.SEVERE, e.getMessage());
+							continue;
 						}
 						
 						// make sure that the timestamp has something in it
@@ -703,7 +635,7 @@ public class ImportPoll implements Importer {
 							continue;
 						}
 						
-						// convert the timezone of the input date and convert to j2ksec
+						// convert the time zone of the input date and convert to j2ksec
 						try {
 							String timestamp	= tsValue.trim();
 							date				= dateIn.parse(timestamp);				
@@ -831,7 +763,7 @@ public class ImportPoll implements Importer {
 	}
 	
 	public void outputInstructions(String importerClass, String message) {
-		if (message == null) {
+		if (message != null) {
 			System.err.println(message);
 		}
 		System.err.println(importerClass + " -c configfile");
