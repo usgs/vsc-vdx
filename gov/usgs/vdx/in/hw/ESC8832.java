@@ -59,7 +59,7 @@ public class ESC8832 implements Device {
 	/** the id of the station */
 	protected String id;
 	
-	protected SimpleDateFormat dateIn	= new SimpleDateFormat("jjjHHmmss");
+	protected SimpleDateFormat dateIn	= new SimpleDateFormat("DDDHHmmss");
 	protected SimpleDateFormat dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private enum Acquisition {
@@ -79,7 +79,7 @@ public class ESC8832 implements Device {
 	 * Initialize Lily Device
 	 */
 	public void initialize(ConfigFile params) throws Exception {
-		id			= Util.stringToString(params.getString("id"), "0");
+		id			= Util.stringToString(params.getString("id"), "");
 		timestamp	= Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss");
 		timezone	= Util.stringToString(params.getString("timezone"), "GMT");
 		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
@@ -96,6 +96,8 @@ public class ESC8832 implements Device {
 			throw new Exception("fields not defined");
 		} else if (acquisition == null) {
 			throw new Exception("invalid acquisition type");
+		} else if (id.length() != 2) {
+			throw new Exception("id must be 2 characters");
 		}
 	}
 	
@@ -407,7 +409,8 @@ public class ESC8832 implements Device {
     public String make (String msg) {
     	String completeStr	= "";
     	if (msg.length() > 0) {
-	    	completeStr += "@HV";
+	    	completeStr += "@";
+	    	completeStr += id;
 	    	completeStr += msg;
 	    	completeStr += "$";
     	}

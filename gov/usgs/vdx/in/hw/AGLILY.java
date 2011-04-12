@@ -129,7 +129,7 @@ public class AGLILY implements Device {
 			currentlines	= Math.min(samps, maxlines);
 			
 			// if no data is available then throw exception indicating we don't need to poll
-			if (currentlines == 0) {
+			if (currentlines <= 0) {
 				throw new Exception("no data to poll");
 			} else {			
 				cmd	+= "XY-DL-LAST," + currentlines;

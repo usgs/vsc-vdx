@@ -3,13 +3,9 @@ package gov.usgs.vdx.in;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,7 +13,6 @@ import java.util.regex.Pattern;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.CurrentTime;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
@@ -25,7 +20,6 @@ import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
 
 import cern.colt.matrix.*;
@@ -35,86 +29,9 @@ import cern.colt.matrix.*;
  *  
  * @author Loren Antolik
  */
-public class ImportFile implements Importer {
+public class ImportFile extends Import implements Importer {
 	
 	public ResourceReader rr;
-	
-	public static Set<String> flags;
-	public static Set<String> keys;
-	
-	public String vdxConfig;
-	
-	public ConfigFile params;
-	public ConfigFile vdxParams;
-	public ConfigFile rankParams;
-	public ConfigFile channelParams;
-	public ConfigFile columnParams;
-	public ConfigFile dataSourceParams;
-	public ConfigFile translationParams;
-	
-	public String driver, prefix, url;
-	
-	public SimpleDateFormat dateIn, dateOut;
-	public Double j2ksec;
-	public Date date;
-	
-	public String filenameMask;
-	public int headerLines;
-	public String delimiter;
-	
-	public String importFields;
-	public String[] importFieldArray;
-	public Map<Integer, String> importFieldMap;
-	
-	public String dataSource;
-	public SQLDataSource sqlDataSource;
-	public SQLDataSourceHandler sqlDataSourceHandler;
-	public SQLDataSourceDescriptor sqlDataSourceDescriptor;	
-	public List<String> dataSourceList;
-	public Iterator<String> dsIterator;
-	public Map<String, SQLDataSource> sqlDataSourceMap;
-	public Map<String, String> dataSourceColumnMap;
-	public Map<String, String> dataSourceChannelMap;
-	public Map<String, Integer>	dataSourceRIDMap;
-	
-	public Rank rank;
-	public String rankName;
-	public int rankValue, rankDefault;
-	public int rid;
-
-	public Channel channel;	
-	public String channelCode, channelName;
-	public double channelLon, channelLat, channelHeight;
-	public Map<String, Channel> channelMap;
-	public List<String> channelList;
-	public String channels;
-	public String defaultChannels;
-	public String[] channelArray;
-	public String[] dsChannelArray;
-	
-	public Column column;
-	public String columnName, columnDescription, columnUnit;
-	public int columnIdx;
-	public boolean columnActive, columnChecked;
-	public List<Column> columnList;
-	public String columns;
-	public String[] columnArray;	
-	public String defaultColumns;
-	
-	public List<String> stringList;
-
-	public Logger logger;
-
-	public double azimuthNom;
-	public double azimuthInst; CurrentTime currentTime = CurrentTime.getInstance();
-	
-	static {
-		flags	= new HashSet<String>();
-		keys	= new HashSet<String>();
-		keys.add("-c");
-		flags.add("-h");
-		flags.add("-v");
-	}
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -166,28 +83,26 @@ public class ImportFile implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// ImportFile specific directives
-		filenameMask	= Util.stringToString(params.getString("filenameMask"), "");
-		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
-		delimiter		= Util.stringToString(params.getString("delimiter"), ",");
-		
-		// Import Fields
-		importFields	= Util.stringToString(params.getString("importFields"), "");
-		if (importFields.length() == 0) {
-			logger.log(Level.SEVERE, "importFields parameter missing from config file");
-			System.exit(-1);
-		}
-		importFieldArray	= importFields.split(",");
-		importFieldMap		= new HashMap<Integer, String>();
-		for (int i = 0; i < importFieldArray.length; i++) {
-			importFieldMap.put(i, importFieldArray[i].trim());
-		}
-		
-		// information related to the timestamps
+		// information related to the time stamps
 		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss"));
 		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
-		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
+		// ImportFile specific directives
+		filemask	= Util.stringToString(params.getString("filemask"), "");
+		headerlines	= Util.stringToInt(params.getString("headerlines"), 0);
+		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
+		
+		// Import Fields
+		fields	= Util.stringToString(params.getString("fields"), "");
+		if (fields.length() == 0) {
+			logger.log(Level.SEVERE, "fields parameter missing from config file");
+			System.exit(-1);
+		}
+		fieldsArray	= fields.split(",");
+		fieldMap		= new HashMap<Integer, String>();
+		for (int i = 0; i < fieldsArray.length; i++) {
+			fieldMap.put(i, fieldsArray[i].trim());
+		}
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
@@ -442,29 +357,29 @@ public class ImportFile implements Importer {
 			logger.info("importing: " + filename);
 			
 			// if a filename mask is defined, then get the channel code from it
-			if (filenameMask.length() > 0) {
+			if (filemask.length() > 0) {
 				
 				// reset the channel code, as it will be derived from the filename, and not the config file, or the contents of the file
 				channelCode				= "";
 				
 				// filename mask can be shorter than the filename, but not longer
-				if (filenameMask.length() > shortFilename.length()) {
+				if (filemask.length() > shortFilename.length()) {
 					logger.log(Level.SEVERE, "skipping: " + filename + " (bad filename mask)");
 					return;
 				}
 				
 				// build up the channel code from the mask
-				for (int i = 0; i < filenameMask.length(); i++) {
-					if (String.valueOf(filenameMask.charAt(i)).equals("C")) {
+				for (int i = 0; i < filemask.length(); i++) {
+					if (String.valueOf(filemask.charAt(i)).equals("C")) {
 						channelCode	= channelCode + String.valueOf(shortFilename.charAt(i));
 					}
 				}
 			}
 			
 			// if any header lines are defined then skip them
-			if (headerLines > 0) {
-				logger.log(Level.INFO, "skipping " + headerLines + " header lines");
-				for (int i = 0; i < headerLines; i++) {
+			if (headerlines > 0) {
+				logger.log(Level.INFO, "skipping " + headerlines + " header lines");
+				for (int i = 0; i < headerlines; i++) {
 					line	= rr.nextLine();
 					lineNumber++;
 				}
@@ -485,7 +400,7 @@ public class ImportFile implements Importer {
 				}
 				
 				// make sure the data row matches the defined data columns
-				if (importFieldMap.size() > valueMap.size()) {
+				if (fieldMap.size() > valueMap.size()) {
 					logger.log(Level.SEVERE, "Line " + lineNumber + " has too few values");
 					continue;
 				}
@@ -497,34 +412,45 @@ public class ImportFile implements Importer {
 				double value;
 				int count		= 0;
 				String tsValue	= "";
-				for (int i = 0; i < importFieldMap.size(); i++) {					
-					name		= importFieldMap.get(i);
-					
-					// skip IGNORE columns
-					if (name.equals("IGNORE")) {
-						continue;
-
-					// parse out the CHANNEL
-					} else if (name.equals("CHANNEL")) {
-						channelCode	= valueMap.get(i);
-						continue;
+				
+				// try to parse the values from this data line
+				try {
+					for (int i = 0; i < fieldMap.size(); i++) {					
+						name		= fieldMap.get(i);
 						
-					// parse out the TIMESTAMP
-					} else if (name.equals("TIMESTAMP")) {
-						tsValue	= tsValue + valueMap.get(i) + " ";
-						continue;
-						
-					// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
-					} else {					
-						if (valueMap.get(i).length() == 0) {
-							value	= Double.NaN;
-						} else {
-							value	= Double.parseDouble(valueMap.get(i));
+						// skip IGNORE columns
+						if (name.equals("IGNORE")) {
+							continue;
+	
+						// parse out the CHANNEL
+						} else if (name.equals("CHANNEL")) {
+							channelCode	= valueMap.get(i);
+							continue;
+							
+						// parse out the TIMESTAMP
+						} else if (name.equals("TIMESTAMP")) {
+							tsValue	= tsValue + valueMap.get(i) + " ";
+							continue;
+							
+						// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
+						} else {					
+							if (valueMap.get(i).length() == 0) {
+								value	= Double.NaN;
+							} else {
+								value	= Double.parseDouble(valueMap.get(i));
+							}
+							columnValue	= new ColumnValue(name, value);
+							columnValueMap.put(count, columnValue);
+							count++;
 						}
-						columnValue	= new ColumnValue(name, value);
-						columnValueMap.put(count, columnValue);
-						count++;
 					}
+					
+				// any problems with parsing the values for this line should be caught here
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Line " + lineNumber + " parse error");
+					logger.log(Level.SEVERE, e.getMessage());
+					line	= rr.nextLine();
+					continue;
 				}
 				
 				// make sure that the channel code has something in it
@@ -546,7 +472,7 @@ public class ImportFile implements Importer {
 					continue;
 				}
 				
-				// convert the timezone of the input date and convert to j2ksec
+				// convert the time zone of the input date and convert to j2ksec
 				try {
 					String timestamp	= tsValue.trim();
 					date				= dateIn.parse(timestamp);				
@@ -659,7 +585,7 @@ public class ImportFile implements Importer {
 	}
 	
 	public void outputInstructions(String importerClass, String message) {
-		if (message == null) {
+		if (message != null) {
 			System.err.println(message);
 		}
 		System.err.println(importerClass + " -c configfile filelist");
