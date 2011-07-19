@@ -165,7 +165,7 @@ public class CCSAIL implements Device {
             throw new Exception ("DA: number of lines (" + currentlines + ") not in range 1,...,9999");
 
         SimpleDateFormat formatter = new SimpleDateFormat ("yyMMddHHmmss");
-        formatter.setTimeZone (TimeZone.getTimeZone ("GMT"));
+        formatter.setTimeZone (TimeZone.getTimeZone (timezone));
         // Date startDate = new Date (startDateL);
         String cmd = "DA";
 
@@ -392,7 +392,7 @@ public class CCSAIL implements Device {
      */
     public String requestData (Date startDate, Date stopDate) throws Exception {
         SimpleDateFormat formater = new SimpleDateFormat ("yyMMddHHmmss");
-        formater.setTimeZone (TimeZone.getTimeZone ("GMT"));
+        formater.setTimeZone (TimeZone.getTimeZone (timezone));
 
         String cmd = "DB";
         cmd += formater.format (startDate);
@@ -410,7 +410,7 @@ public class CCSAIL implements Device {
     public String setTime () {
         Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("GMT"));
         SimpleDateFormat formater = new SimpleDateFormat ("yyMMddHHmmss");
-        formater.setTimeZone (TimeZone.getTimeZone ("GMT"));
+        formater.setTimeZone (TimeZone.getTimeZone (timezone));
 
         String cmd = "TM";
         cmd += formater.format (rightNow.getTime());

@@ -91,6 +91,7 @@ public class ImportFile extends Import implements Importer {
 		filemask	= Util.stringToString(params.getString("filemask"), "");
 		headerlines	= Util.stringToInt(params.getString("headerlines"), 0);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
+		logger.log(Level.INFO, "delimiter:" + delimiter);
 		
 		// Import Fields
 		fields	= Util.stringToString(params.getString("fields"), "");
@@ -392,7 +393,8 @@ public class ImportFile extends Import implements Importer {
 				lineNumber++;
 				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-				Pattern p	= Pattern.compile(delimiter, Pattern.LITERAL);
+				// Pattern p	= Pattern.compile(delimiter, Pattern.LITERAL);
+				Pattern p	= Pattern.compile(delimiter);
 				String[] valueArray	= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
@@ -401,7 +403,9 @@ public class ImportFile extends Import implements Importer {
 				
 				// make sure the data row matches the defined data columns
 				if (fieldMap.size() > valueMap.size()) {
+					logger.log(Level.INFO, "Line " + lineNumber + ":" + line);
 					logger.log(Level.SEVERE, "Line " + lineNumber + " has too few values");
+					line	= rr.nextLine();
 					continue;
 				}
 				
