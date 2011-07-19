@@ -516,7 +516,7 @@ public class ImportPoll extends Import implements Importer {
 					try {
 						connection.emptyMsgQueue();
 						dataResponse	= connection.readString(device);
-						logger.log(Level.INFO, "dataResponse:" + dataResponse);
+						// logger.log(Level.INFO, "dataResponse:" + dataResponse);
 					} catch (Exception e) {
 						logger.log(Level.SEVERE, "Device receive data response failed", e);
 						connection.disconnect();
@@ -537,7 +537,7 @@ public class ImportPoll extends Import implements Importer {
 						
 					// format the response based on the type of device
 					String dataMessage	= device.formatMessage(dataResponse);
-					logger.log(Level.INFO, "dataMessage:" + dataMessage);
+					// logger.log(Level.INFO, "dataMessage:" + dataMessage);
 						
 					// parse the response by lines
 					StringTokenizer st	= new StringTokenizer(dataMessage, "\n");

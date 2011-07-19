@@ -308,7 +308,7 @@ public class AGLILY implements Device {
 	public String setTime () {
         Calendar rightNow = Calendar.getInstance (TimeZone.getTimeZone ("GMT"));
         SimpleDateFormat formatter = new SimpleDateFormat ("ss,mm,HH,dd,MM,yy");
-        formatter.setTimeZone (TimeZone.getTimeZone ("GMT"));
+        formatter.setTimeZone (TimeZone.getTimeZone (timezone));
 
         String cmd = "SET-TIME,";
         cmd += formatter.format (rightNow.getTime());
