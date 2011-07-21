@@ -1,6 +1,8 @@
 package gov.usgs.vdx.data.gps;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -10,6 +12,7 @@ import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,25 +34,50 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= true;
 	
 	public static final Column[] MENU_COLUMNS	= new Column[] {
-		new Column(1, "east",	"East",		"Meters",	true, false),
-		new Column(2, "north",	"North",	"Meters",	true, false), 
-		new Column(3, "up",		"Up",		"Meters",	true, false),
-		new Column(4, "length",	"Length",	"Meters",	false, false)};
+		new Column(1, "east",	"East",		"Meters",	true,  false, false),
+		new Column(2, "north",	"North",	"Meters",	true,  false, false), 
+		new Column(3, "up",		"Up",		"Meters",	true,  false, false),
+		new Column(4, "length",	"Length",	"Meters",	false, false, false)};
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -67,6 +95,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get flag if database exist
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -74,6 +103,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	
 	/**
 	 * Create 'gps' database
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createDatabase() {
 		
@@ -128,7 +158,8 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -154,10 +185,27 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			int rid			= Integer.parseInt(params.get("rk"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			GPSData data	= getGPSData(cid, rid, st, et);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			GPSData data = null;
+			try{
+				data = getGPSData(cid, rid, st, et, getMaxRows(), ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}	
 			if (data != null) {
 				return new BinaryResult(data);
 			}
+
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, true );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, true );
+
 		}
 		return null;
 	}
@@ -165,6 +213,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Get channel from database
 	 * @param channelCode	channel code
+	 * @return channel
 	 */
 	public Channel getChannel(String channelCode) {
 		return defaultGetChannel(channelCode, channelTypes);
@@ -172,6 +221,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get List of channels list from database
+	 * @return List of channels
 	 */
 	public List<Channel> getChannelsList() {
 		return defaultGetChannelsList(channelTypes);
@@ -183,8 +233,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @param rid	rank id
 	 * @param st	start time
 	 * @param et	end time
+	 * @return GPSData
 	 */
-	public GPSData getGPSData(int cid, int rid, double st, double et) {
+	public GPSData getGPSData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		
 		DataPoint dp;
 		GPSData result = null;
@@ -214,30 +265,55 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			sql	= sql +	"ORDER BY 1 ASC";
 			
+			try{
+				sql = getDownsamplingSQL(sql, "(j2ksec0 + j2ksec1) / 2", ds, dsInt);
+			} catch (UtilException e){
+				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			}
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 			ps = database.getPreparedStatement(sql);
-			ps.setInt(1, cid);
-			ps.setDouble(2, st);
-			ps.setDouble(3, et);
-			if (rid != 0) {
-				ps.setInt(4, rid);
-			} else {
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
+				ps.setInt(3, cid);
 				ps.setDouble(4, st);
 				ps.setDouble(5, et);
+				if (rid != 0) {
+					ps.setInt(6, rid);
+				} else {
+					ps.setDouble(6, st);
+					ps.setDouble(7, et);
+				}
+			} else {
+				ps.setInt(1, cid);
+				ps.setDouble(2, st);
+				ps.setDouble(3, et);
+				if (rid != 0) {
+					ps.setInt(4, rid);
+				} else {
+					ps.setDouble(4, st);
+					ps.setDouble(5, et);
+				}
 			}
 			rs = ps.executeQuery();
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+			}
 			while (rs.next()) {
 				dp		= new DataPoint();
-				dp.t	= rs.getDouble(1);
-				dp.r	= rs.getDouble(2);
-				dp.x	= rs.getDouble(3);
-				dp.y	= rs.getDouble(4);
-				dp.z	= rs.getDouble(5);
-				dp.sxx	= rs.getDouble(6);
-				dp.syy	= rs.getDouble(7);
-				dp.szz	= rs.getDouble(8);
-				dp.sxy	= rs.getDouble(9);
-				dp.sxz	= rs.getDouble(10);
-				dp.syz	= rs.getDouble(11);
+				dp.t	= getDoubleNullCheck(rs, 1);
+				dp.r	= getDoubleNullCheck(rs, 2);
+				dp.x	= getDoubleNullCheck(rs, 3);
+				dp.y	= getDoubleNullCheck(rs, 4);
+				dp.z	= getDoubleNullCheck(rs, 5);
+				dp.sxx	= getDoubleNullCheck(rs, 6);
+				dp.syy	= getDoubleNullCheck(rs, 7);
+				dp.szz	= getDoubleNullCheck(rs, 8);
+				dp.sxy	= getDoubleNullCheck(rs, 9);
+				dp.sxz	= getDoubleNullCheck(rs, 10);
+				dp.syz	= getDoubleNullCheck(rs, 11);
 				dataPoints.add(dp);
 			}
 			rs.close();
@@ -246,12 +322,13 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				return new GPSData(dataPoints);
 			}
 			
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLGPSDataSource.getGPSData(" + cid + "," + rid + "," + st + "," + et + ") failed.", e);
 		}
 		
 		return result;
 	}
+	
 	
 	/**
 	 * Insert a source file entry to the database.
@@ -261,7 +338,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @param t0	start time
 	 * @param t1	end time
 	 * @param rid	rank id
-	 * @return
+	 * @return source id on success, -1 on failure
 	 */
 	public int insertSource(String name, String hash, double t0, double t1, int rid) {
 		int sid = -1;

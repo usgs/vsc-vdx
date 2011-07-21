@@ -5,6 +5,7 @@ import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 import gov.usgs.vdx.data.generic.variable.SQLGenericVariableDataSource;
@@ -12,6 +13,7 @@ import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
+import gov.usgs.vdx.data.tensorstrain.SQLTensorstrainDataSource;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 
 import java.sql.Connection;
@@ -64,12 +66,12 @@ public class VDXDatabase {
 	 *            class name for database driver
 	 * @param url
 	 *            database url
-	 * @param db
+	 * @param prefix
 	 *            database prefix
 	 */
 	public VDXDatabase(String driver, String url, String prefix) {
 		logger = Log.getLogger("gov.usgs.vdx");
-		logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + prefix);
+		// logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + prefix);
 		dbDriver = driver;
 		dbURL = url;
 		if (prefix != null)
@@ -108,6 +110,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for logger
+	 * @return logger
 	 */
 	public Logger getLogger() {
 		return logger;
@@ -115,6 +118,7 @@ public class VDXDatabase {
 
 	/**
 	 * Setter for logger
+	 * @param log logger
 	 */
 	public void setLogger(Logger log) {
 		logger = log;
@@ -124,7 +128,6 @@ public class VDXDatabase {
 	 * Performs database connection
 	 */
 	public void connect() {
-		logger.fine("Connecting to " + dbURL);
 		connected = false;
 		try {
 			Class.forName(dbDriver).newInstance();
@@ -178,18 +181,24 @@ public class VDXDatabase {
 		if (connected)
 			return true;
 		else {
-			new Retriable<Object>() {
-				public boolean attempt() {
-					connect();
-					return connected;
-				}
-			}.go();
+			try{
+				new Retriable<Object>() {
+					public boolean attempt() throws UtilException {
+						connect();
+						return connected;
+					}
+				}.go();
+			}
+			catch(UtilException e){
+				//Do nothing 
+			}
 			return connected;
 		}
 	}
 
 	/**
 	 * Check if connection active
+	 * @return true if connected
 	 */
 	public boolean connected() {
 		return connected;
@@ -197,6 +206,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for database connection
+	 * @return connection
 	 */
 	public Connection getConnection() {
 		return connection;
@@ -204,6 +214,7 @@ public class VDXDatabase {
 
 	/**
 	 * Getter for statement
+	 * @return statement
 	 */
 	public Statement getStatement() {
 		return statement;
@@ -212,59 +223,70 @@ public class VDXDatabase {
 	/**
 	 * Execute given sql
 	 * 
+	 * @param sql the sql to execute
 	 * @return true if success
 	 */
 	public boolean execute(final String sql) {
-		Boolean b = new Retriable<Boolean>() {
-			public void attemptFix() {
-				close();
-				connect();
-			}
-
-			public boolean attempt() {
-				try {
-					statement.execute(sql);
-					result = new Boolean(true);
-					return true;
-				} catch (SQLException e) {
-					logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+		Boolean b = null;
+		try{
+			b = new Retriable<Boolean>() {
+				public void attemptFix() {
+					close();
+					connect();
 				}
-				result = new Boolean(false);
-				return false;
-			}
-		}.go();
-
+				public boolean attempt() throws UtilException {
+					try {
+						statement.execute(sql);
+						result = new Boolean(true);
+						return true;
+					} catch (SQLException e) {
+						logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+					}
+					result = new Boolean(false);
+					return false;
+				}
+			}.go();
+		}
+		catch(UtilException e){
+			//Do nothing 
+		}
 		return b != null && b.booleanValue();
 	}
 
 	/**
 	 * Execute given sql
 	 * 
+	 * @param sql  query to execute
 	 * @return result set given from database
 	 */
 	public ResultSet executeQuery(final String sql) {
-		ResultSet rs = new Retriable<ResultSet>() {
-			public void attemptFix() {
-				close();
-				connect();
-			}
-
-			public boolean attempt() {
-				try {
-					result = statement.executeQuery(sql);
-					return true;
-				} catch (SQLException e) {
-					logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+		ResultSet rs = null;
+		try{
+			rs = new Retriable<ResultSet>() {
+				public void attemptFix() {
+					close();
+					connect();
 				}
-				return false;
-			}
-		}.go();
-
+				public boolean attempt() {
+					try {
+						result = statement.executeQuery(sql);
+						return true;
+					} catch (SQLException e) {
+						logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+					}
+					return false;
+				}
+			}.go();
+		}
+		catch(UtilException e){
+			//Do nothing 
+		}
 		return rs;
 	}
 
 	/**
 	 * Getter for VDX database prefix
+	 * @return database prefix
 	 */
 	public String getDatabasePrefix() {
 		return dbPrefix;
@@ -382,6 +404,7 @@ public class VDXDatabase {
 	/**
 	 * Prepare statement for sql
 	 * 
+	 * @param sql statement to prepare
 	 * @return prepared statement
 	 */
 	public PreparedStatement getPreparedStatement(String sql) {
@@ -426,7 +449,7 @@ public class VDXDatabase {
 	 *            database name
 	 * @param table
 	 *            table name
-	 * @return
+	 * @return    true if table exists
 	 */
 	public boolean tableExists(String db, String table) {
 		try {
@@ -441,6 +464,7 @@ public class VDXDatabase {
 
 	/**
 	 * Main method, provide command-line interface
+	 * @param as commend line args
 	 */
 	public static void main(String[] as) {
 
@@ -474,6 +498,7 @@ public class VDXDatabase {
 			System.out.println("createhypocenters");
 			System.out.println("createewrsam");
 			System.out.println("createtilt");
+			System.out.println("createtensorstrain");
 		} else {
 			action = action.toLowerCase();
 			if (action.equals("createvdx")) {
@@ -487,6 +512,7 @@ public class VDXDatabase {
 				sources.put("creatersam", new SQLRSAMDataSource());
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				sources.put("createtilt", new SQLTiltDataSource());
+				sources.put("createtensorstrain", new SQLTensorstrainDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null) {
 					createDatabase(params, args, sds);

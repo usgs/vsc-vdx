@@ -40,6 +40,7 @@ public class ImportEarthworm extends Importer
 	
 	/**
 	 * Parse earthworm data from url (resource locator or file name)
+	 * @param resource resource identifier
 	 * @return Hypocenters list
 	 */
 	public List<Hypocenter> importResource(String resource)
@@ -98,6 +99,7 @@ public class ImportEarthworm extends Importer
 	 * Initialize data source using command line arguments and make import.
 	 * Syntax is:
 	 * "<importer> -c [vdx config] -n [database name] files..."
+	 * @param as command line args
 	 */
 	public static void main(String as[])
 	{

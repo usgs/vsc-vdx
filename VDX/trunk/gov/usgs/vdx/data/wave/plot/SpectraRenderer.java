@@ -39,6 +39,17 @@ public class SpectraRenderer extends MatrixRenderer
 	private boolean autoScale;
 	private String channelTitle;
 	
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+	private String yLabelText = null;
+	private String yUnitText = null;
+	private Color color = null;
+	protected String timeZone;
+	
 	protected FrameDecorator decorator;
 	
 	/**
@@ -49,6 +60,7 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	/**
 	 * Set frame decorator to draw graph's frame
+	 * @param  fd frame decorator
 	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
@@ -57,6 +69,7 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	/**
 	 * Set slice to render
+	 * @param sw slice to render
 	 */
 	public void setWave(SliceWave sw)
 	{
@@ -65,6 +78,7 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	/**
 	 * Set graph title
+	 * @param t title
 	 */
 	public void setTitle(String t)
 	{
@@ -75,6 +89,25 @@ public class SpectraRenderer extends MatrixRenderer
 	{
 		public DefaultSpectraFrameDecorator()
 		{
+			if(yUnitText != null){
+				this.yUnit = yUnitText;
+			}
+			if(yLabelText != null){
+				this.yAxisLabel = yLabelText;
+			}
+			if(xUnits){
+				this.xUnit = "Frequency (Hz)";
+			}
+			this.xAxisLabels = xTickValues;
+			this.yAxisLabels = yTickValues;
+			if(!xTickMarks){
+				hTicks=0;
+				xAxisGrid = Grid.NONE;
+			}
+			if(!yTickMarks){
+				vTicks=0;
+				yAxisGrid = Grid.NONE;
+			}
 			this.title = channelTitle;
 			this.titleBackground = Color.WHITE;
 		}
@@ -90,14 +123,13 @@ public class SpectraRenderer extends MatrixRenderer
 				yAxis = DefaultFrameDecorator.YAxis.LOG;
 			else
 				yAxis = DefaultFrameDecorator.YAxis.LINEAR;
-			
-			yAxisLabel = "Power";
 		}
 	}
 	
 	/**
 	 * Compute spectra for slice.
 	 * Reinitialize frame decorator with this renderer data.
+	 * @param oldMaxPower 
 	 * @return maximum spectra power value
 	 */
 	public double update(double oldMaxPower)
@@ -162,7 +194,7 @@ public class SpectraRenderer extends MatrixRenderer
 //		getAxis().setLeftLabelAsText("Power", -52);
 //		getAxis().setBottomLeftLabelAsText("Freq.");
 
-		createDefaultLineRenderers();
+		createDefaultLineRenderers(color);
 		decorator.decorate(this);
 		
 		return maxp;
@@ -170,6 +202,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Get autoscale flag
+	 * @return autoscale flag
 	 */
 	public boolean isAutoScale()
 	{
@@ -178,6 +211,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set autoscale flag
+	 * @param autoScale flag
 	 */
 	public void setAutoScale(boolean autoScale)
 	{
@@ -186,6 +220,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Get flag if we have logarithm frequency axis
+	 * @return log freq flag
 	 */
 	public boolean isLogFreq()
 	{
@@ -194,6 +229,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set flag if we have logarithm frequency axis
+	 * @param logFreq true if freq axis is logarithmic
 	 */
 	public void setLogFreq(boolean logFreq)
 	{
@@ -202,6 +238,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Get flag if we have logarithm power axis
+	 * @return log power flag
 	 */
 	public boolean isLogPower()
 	{
@@ -210,6 +247,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set flag if we have logarithm power axis
+	 * @param logPower true if power axis is logarithmic
 	 */
 	public void setLogPower(boolean logPower)
 	{
@@ -218,6 +256,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Get maximum frequency
+	 * @return maximum frequency
 	 */
 	public double getMaxFreq()
 	{
@@ -226,6 +265,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set maximum frequency
+	 * @param maxFreq maximum frequency
 	 */
 	public void setMaxFreq(double maxFreq)
 	{
@@ -234,6 +274,7 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Get maximum power
+	 * @return maximum power
 	 */
 	public double getMaxPower()
 	{
@@ -242,12 +283,17 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set maximum power
+	 * @param maxPower maximum power
 	 */
 	public void setMaxPower(double maxPower)
 	{
 		this.maxPower = maxPower;
 	}
 
+	/**
+	* Get minimum frequency
+	* @return minimum frequency
+	*/
 	public double getMinFreq()
 	{
 		return minFreq;
@@ -255,9 +301,36 @@ public class SpectraRenderer extends MatrixRenderer
 
 	/**
 	 * Set minimum frequency
+	 * @param minFreq minimum frequency
 	 */
 	public void setMinFreq(double minFreq)
 	{
 		this.minFreq = minFreq;
+	}
+	
+	/**
+	 * Set Y axis label
+	 * @param s Y axis label
+	 */
+	public void setYLabelText(String s)
+	{
+		yLabelText = s;
+	}
+	/**
+	 * Set Y axis unit
+	 * @param s Y axis unit
+	 */
+	public void setYUnitText(String s)
+	{
+		yUnitText = s;
+	}
+	
+	/**
+	 * Set color
+	 * @param color color
+	 */
+	public void setColor(Color color)
+	{
+		this.color = color;
 	}
 }

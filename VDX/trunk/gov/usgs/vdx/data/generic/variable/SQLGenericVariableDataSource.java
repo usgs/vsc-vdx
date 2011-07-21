@@ -2,6 +2,8 @@ package gov.usgs.vdx.data.generic.variable;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
@@ -32,18 +34,43 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -61,6 +88,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Get flag if database exist
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -68,6 +96,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Create generic variable database
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createDatabase() {
 		
@@ -120,7 +149,8 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 
@@ -137,10 +167,26 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			double st				= Double.parseDouble(params.get("st"));
 			double et				= Double.parseDouble(params.get("et"));
 			String selectedTypes	= params.get("selectedTypes");
-			GenericDataMatrix data = getGenericVariableData(cid, st, et, selectedTypes);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			GenericDataMatrix data = null;
+			try{
+				data = getGenericVariableData(cid, st, et, selectedTypes, getMaxRows(), ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+
 		}
 		return null;
 	}
@@ -153,8 +199,8 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param selectedTypes	???
 	 * @return GenericDataMatrix
 	 */
-	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes) {		
-		return defaultGetData(cid, 0, st, et, translations, ranks);
+	public GenericDataMatrix getGenericVariableData(int cid, double st, double et, String selectedTypes, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {		
+		return defaultGetData(cid, 0, st, et, translations, ranks, maxrows, ds, dsInt);
 		
 		/*
 		GenericDataMatrix result = null;
@@ -186,7 +232,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
 			rs = ps.executeQuery();
-			System.out.println(ps.toString());
+			logger.info(ps.toString());
 			double t=0;
 			double[] d = null;
 			while (rs.next())
@@ -261,6 +307,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	
 	/**
 	 * Get list of registered data types for this database
+	 * @return List of DataTypes
 	 */
 	public List<DataType> getDataTypes() {
 		List<DataType> result = new ArrayList<DataType>();
@@ -284,6 +331,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Get station id (the same as getStationID(String code))
 	 * @param code station code
+	 * @return station id
 	 */
 	public int getStationName(String code) {
 		try {
@@ -302,8 +350,9 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	}
 
 	/**
-	 * Get station id 
+	 * Get station id (the same as getStationName(String code))
 	 * @param code station code
+	 * @return station id
 	 */
 	public int getStationID(String code) {
 		try {
@@ -323,6 +372,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 
 	/**
 	 * Create new data type in the database
+	 * @param dt DataType to add
 	 */
 	public void insertDataType(DataType dt) {
 		try {
@@ -353,7 +403,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	 * @param station station
 	 * @param dt data type
 	 * @param dd data value
-	 * @param is replace record?
+	 * @param r is replace record?
 	 */
 	public void insertRecord(Date d, Station station, DataType dt, double dd, boolean r) {
 		
@@ -391,7 +441,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 	/**
 	 * Create table for station data
 	 * @param stationTable table name
-	 * @return false
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createStationTable(String stationTable) {
 		boolean success = false;

@@ -1,9 +1,9 @@
 package gov.usgs.vdx.client;
 
 import gov.usgs.net.InternetClient;
-import gov.usgs.util.Log;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.io.IOException;
@@ -20,7 +20,50 @@ import java.util.Map;
  * @author Dan Cervelli
  */
 public class VDXClient extends InternetClient
-{
+{	
+	public enum DownsamplingType
+	{
+		NONE("N"), DECIMATE("D"), MEAN("M");
+		
+		public String code;
+		
+		/**
+		 * Constructor
+		 * @param string rep of downsampling type
+		 */
+		private DownsamplingType(String c)
+		{
+			code = c;
+		}
+		
+		/**
+		 * Yield downsampling type from String
+		 * @param s string representation of downsampling type
+		 * @return downsampling type
+		 */
+		public static DownsamplingType fromString(String s)
+		{
+			if (s == null)
+				return null;
+			
+			if (s.equals("N") || s.equals("None"))
+				return NONE;
+			else if (s.equals("D") || s.equals("Decimation"))
+				return DECIMATE;
+			else if (s.equals("M") || s.equals("Mean filter"))
+				return MEAN;
+			else 
+				return null;
+		}
+		
+		/**
+		 * Yield string representation of a downsampling type
+		 * @return string rep of downsampling type
+		 */
+		public String toString(){
+			return code;
+		}
+	}
 	private static final int MAX_RETRIES = 3;
 	protected static Map<String, String> dataTypeMap; 
 	
@@ -35,6 +78,7 @@ public class VDXClient extends InternetClient
 		dataTypeMap.put("rsam", "gov.usgs.vdx.data.rsam.RSAMData");
 		dataTypeMap.put("ewrsam", "gov.usgs.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
+		dataTypeMap.put("tensorstrain", "gov.usgs.vdx.data.tensorstrain.TensorstrainData");
 		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 	}
 	
@@ -46,7 +90,6 @@ public class VDXClient extends InternetClient
 	public VDXClient(String h, int p)
 	{
 		super(h, p);
-		logger = Log.getLogger("gov.usgs.vdx");
 		setTimeout(30000);
 	}
 	
@@ -63,6 +106,7 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server as string
 	 */
 	protected String submitCommand(Map<String, String> params) throws IOException
@@ -82,9 +126,10 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server and get binary data response. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server and parsed in BinaryDataSet
 	 */
-	public BinaryDataSet getBinaryData(final Map<String, String> params)
+	public BinaryDataSet getBinaryData(final Map<String, String> params) throws UtilException
 	{
 		Retriable<BinaryDataSet> rt = new Retriable<BinaryDataSet>("VDXClient.getBinaryData()", MAX_RETRIES)
 				{
@@ -94,56 +139,54 @@ public class VDXClient extends InternetClient
 						connect();
 					}
 					
-					public boolean attempt()
+					public boolean attempt() throws UtilException
 					{
+						String rs = null;
 						try
 						{
-							String rs = submitCommand(params);
-							
-							String rc = rs.substring(0, rs.indexOf(':'));
-							String r = rs.substring(rs.indexOf(':') + 1);
-							result = null;
-							if (rc.equals("ok"))
-							{
-								System.out.println(r);
-								Map<String, String> map = Util.stringToMap(r);
-								if (map.get("bytes") != null)
-								{
+							rs = submitCommand(params);
+						}
+						catch (Exception e)
+						{
+							logger.warning("VDXClient.submitCommand() exception: " + e.getMessage());
+							return false;
+						}	
+						String rc = rs.substring(0, rs.indexOf(':'));
+						String r = rs.substring(rs.indexOf(':') + 1);
+						result = null;
+						if (rc.equals("ok")){
+							logger.info("rc is ok: " + r);
+							Map<String, String> map = Util.stringToMap(r);
+							if (map.get("bytes") != null)
+							{	
+								try {
 									int bytes = Integer.parseInt(map.get("bytes"));
 									byte[] buffer = readBinary(bytes);
 									byte[] decompBuf = Util.decompress(buffer);
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
-									try
-									{
-										System.out.println(":VDX client got type " + map.get("type"));
-										String className = dataTypeMap.get(map.get("type"));
-										BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
-										ds.fromBinary(bb);
-										result = ds;
-									}
-									catch (Exception e)
-									{
-										// TODO: eliminate
-										e.printStackTrace();
-									}
+
+									String className = dataTypeMap.get(map.get("type"));
+									BinaryDataSet ds = (BinaryDataSet)Class.forName(className).newInstance();
+									ds.fromBinary(bb);
+									result = ds;
 								}
-								else 
-								{
-									System.out.println("error, expected binary");
+								catch (Exception e)
+								{	
+									logger.warning("VDXClient: binary dataset unpacking exception: " + e.getMessage());
+									return false;
 								}
 							}
-							else if (rc.equals("error"))
+							else 
 							{
-								// TODO: eliminate
-								System.out.println(r);
+								logger.warning("error, expected binary");
 							}
+							return true;
 						}
-						catch (Exception e)
+						else if (rc.equals("error"))
 						{
-							logger.warning("VDXClient.getData() exception: " + e.getMessage());
-							return false;
+							throw new UtilException(r);
 						}
-						return true;
+						return false;
 					}
 				};
 		return rt.go();
@@ -152,11 +195,12 @@ public class VDXClient extends InternetClient
 	/**
 	 * Issue command to server and get text data response. 
 	 * Command is map of parameters - param_name - param_value pairs.
+	 * @param params Command
 	 * @return Command result got from server and parsed List<String>
 	 */
-	public List<String> getTextData(final Map<String, String> params)
+	public List<String> getTextData(final Map<String, String> params) throws UtilException
 	{
-		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTestData()", MAX_RETRIES)
+		Retriable<List<String>> rt = new Retriable<List<String>>("VDXClient.getTextData()", MAX_RETRIES)
 		{
 			public void attemptFix()
 			{
@@ -164,47 +208,60 @@ public class VDXClient extends InternetClient
 				connect();
 			}
 			
-			public boolean attempt()
+			public boolean attempt() throws UtilException
 			{
-				try
-				{
-					logger.info("VDXClient.getData(): params = " + params);
-					String rs = submitCommand(params);
-					
-					String rc = rs.substring(0, rs.indexOf(':'));
-					String r = rs.substring(rs.indexOf(':') + 1);
-					result = null;
-					logger.info("VDXClient.getData(): rc = " + rc);
-					logger.info("VDXClient.getData(): r = " + r);
-				
-					if (rc.equals("ok"))
-					{
-						Map<String, String> map = Util.stringToMap(r);
-						if (map.get("lines") != null)
-						{
-							int lines = Integer.parseInt(map.get("lines"));
-							List<String> list = new ArrayList<String>();
-							for (int i = 0; i < lines; i++)
-								list.add(readString());
-							result = list;
-						}
-						else 
-						{
-							logger.warning("VDXClient.getData(): error, expected text");
-						}
-					}
+			
+				logger.info("VDXClient.getData(): params = " + params);
+				String rs =null;
+				try	{
+					rs= submitCommand(params);
 				}
 				catch (Exception e)
 				{
 					logger.warning("VDXClient.getData() exception: " + e.getMessage());
 					return false;
 				}
-				return true;
+				String rc = rs.substring(0, rs.indexOf(':'));
+				String r = rs.substring(rs.indexOf(':') + 1);
+				result = null;
+				// logger.info("VDXClient.getData(): rc = " + rc);
+				logger.info("VDXClient.getData(): r = " + r);
+				
+				if (rc.equals("ok")){
+					Map<String, String> map = Util.stringToMap(r);
+					if (map.get("lines") != null){
+						try{
+							int lines = Integer.parseInt(map.get("lines"));
+							List<String> list = new ArrayList<String>();
+							for (int i = 0; i < lines; i++)
+								list.add(readString());
+							result = list;
+						}
+						catch (Exception e)	{	
+							logger.warning("VDXClient: text dataset unpacking exception: " + e.getMessage());
+							return false;
+						}
+					}
+					else {
+						logger.warning("VDXClient.getData(): error, expected text");
+					}
+					return true;
+				} 
+				else if (rc.equals("error"))
+				{
+					throw new UtilException(r);
+				}
+				
+				return false;
 			}
 		};
 		return rt.go();
 	}
 	
+	/**
+	 * Main method
+	 * @param args command line arguments
+	 */
 	public static void main(String[] args)
 	{
 //		VDXClient client = new VDXClient(args[0], Integer.parseInt(args[1]));

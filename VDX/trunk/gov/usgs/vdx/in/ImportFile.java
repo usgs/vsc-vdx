@@ -99,7 +99,8 @@ public class ImportFile implements Importer {
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
 	public int columnIdx;
-	public boolean columnActive, columnChecked;
+	public boolean columnActive, columnChecked, columnBypassmanipulations;
+	
 	public List<String> columnList;
 	public HashMap<String, Column> columnMap;
 	public Map<String, Column> dbColumnMap;
@@ -126,7 +127,8 @@ public class ImportFile implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param importerClass name of importer class
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
@@ -205,7 +207,8 @@ public class ImportFile implements Importer {
 				columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
 				columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
 				columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-				column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
+				columnBypassmanipulations = Util.stringToBoolean(columnParams.getString("bypassmanipulations"), true);
+				column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive, columnBypassmanipulations);
 				dbColumnMap.put(columnName, column);
 			}
 		}
@@ -258,7 +261,8 @@ public class ImportFile implements Importer {
 				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
 				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
+				channelAzimuth	= Util.stringToDouble(channelParams.getString("azimuth"), Double.NaN);
+				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelAzimuth);
 				channelMap.put(channelCode, channel);
 				
 				// channel columns
@@ -439,7 +443,7 @@ public class ImportFile implements Importer {
 	
 	/**
 	 * Parse file from url (resource locator or file name)
-	 * @param filename
+	 * @param filename identifier of file to import
 	 */
 	public void process(String filename) {
 		
@@ -643,7 +647,7 @@ public class ImportFile implements Importer {
 					// channel for this data source.  create it if it doesn't exist
 					if (sqlDataSource.getChannelsFlag()) {
 						if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
+							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN, Double.NaN), 1,
 									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
 						}
@@ -712,6 +716,11 @@ public class ImportFile implements Importer {
 		}
 	}
 	
+	/**
+	 * Print usage.  Prints out usage instructions for the given importer
+	 * @param importerClass name of importer class
+	 * @param message instructions
+	 */
 	public void outputInstructions(String importerClass, String message) {
 		if (message == null) {
 			System.err.println(message);
@@ -726,6 +735,7 @@ public class ImportFile implements Importer {
 	 *  -c config file name
 	 *  -v verbose mode
 	 *  files ...
+	 * @param as command line args
 	 */
 	public static void main(String as[]) {
 		

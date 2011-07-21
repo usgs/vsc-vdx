@@ -26,6 +26,8 @@ abstract public class BaseCommand implements Command
 	
 	/**
 	 * Constructor
+	 * @param sh server handler
+	 * @param nt net tools
 	 */
 	public BaseCommand(ServerHandler sh, NetTools nt)
 	{
@@ -37,7 +39,7 @@ abstract public class BaseCommand implements Command
 	 * Throw and log error
 	 * @param msg error message
 	 * @param cmd command
-	 * @param cmd socket channel
+	 * @param channel socket channel
 	 */
 	public void sendError(String msg, String cmd, SocketChannel channel)
 	{
@@ -47,6 +49,7 @@ abstract public class BaseCommand implements Command
 	
 	/**
 	 * Parse command and comstruct parameters map
+	 * @param cmd command to parse
 	 */
 	// TODO: allow \s for semicolons?
 	public void parseParams(String cmd)

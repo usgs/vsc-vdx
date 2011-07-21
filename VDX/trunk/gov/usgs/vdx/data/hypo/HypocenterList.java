@@ -123,7 +123,7 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Constructor.
 	 * @param bb ByteBuffer to parse
-	 * @see fromBinary(ByteBuffer bb)
+	 * @see #fromBinary(ByteBuffer bb)
 	 */
 	public HypocenterList(ByteBuffer bb)
 	{
@@ -132,6 +132,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Constructor
+	 * @param hs List of Hypocenters
 	 */
 	public HypocenterList(List<Hypocenter> hs)
 	{
@@ -140,6 +141,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get list of hypocenters
+	 * @return list of hypocenters
 	 */
 	public List<Hypocenter> getHypocenters()
 	{
@@ -148,6 +150,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get list size
+	 * @return number of hypocenters
 	 */
 	public int size()
 	{
@@ -156,28 +159,65 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get time of first event in the list
+	 * @return time of first event
 	 */
 	public double getStartTime()
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return Double.NaN;
+		else if (hypocenters.size() == 0)
+			return 0;
 		else
 			return hypocenters.get(0).j2ksec;
 	}
 	
 	/**
 	 * Get time of last event in the list
+	 * @return time of last event
 	 */
 	public double getEndTime()
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return Double.NaN;
+		else if (hypocenters.size() == 0)
+			return 0;
 		else
 			return hypocenters.get(hypocenters.size() - 1).j2ksec;
 	}
 	
 	/**
+	 * Get min depth in the list
+	 * @return min depth in list
+	 */
+	public double getMinDepth(double md)
+	{
+		double minDepth = 0.0;
+		if (md != Double.MAX_VALUE)
+			minDepth = md;
+		for (Hypocenter hc: hypocenters) {
+			minDepth = Math.max(minDepth, hc.depth);
+		}
+		return minDepth;
+	}
+	
+	/**
+	 * Get min depth in the list
+	 * @return min depth in list
+	 */
+	public double getMaxDepth(double md)
+	{
+		double maxDepth = -1.0;
+		if (md != -Double.MAX_VALUE)
+			maxDepth = md;
+		for (Hypocenter hc: hypocenters) {
+			maxDepth = Math.min(maxDepth, hc.depth);
+		}
+		return maxDepth;
+	}
+	
+	/**
 	 * Dump object content into ByteBuffer
+	 * @return ByteBuffer of content
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -191,7 +231,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Parse ByteBuffer and fill list
-	 * @see toBinary()
+	 * @see #toBinary()
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{
@@ -205,6 +245,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Get string representation of hypocenters list
+	 * @return string representation
 	 */
 	public String toString()
 	{
@@ -214,6 +255,7 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Get initialized axis to use with histogram graph
 	 * @param bin histogram section period
+	 * @return initialized iaxis
 	 */
 	private IAxis getHistogramAxis(BinSize bin)
 	{
@@ -323,6 +365,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Compute 2-column matrix: time - cumulative event count
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{
@@ -338,6 +381,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Compute 2-column matrix: time - cumulative moment
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeMoment()
 	{
@@ -357,6 +401,7 @@ public class HypocenterList implements BinaryDataSet
 
 	/**
 	 * Compute 2-column matrix: time - cumulative magnitude
+	 * @return matrix
 	 */
 	public DoubleMatrix2D getCumulativeMagnitude()
 	{
@@ -372,10 +417,12 @@ public class HypocenterList implements BinaryDataSet
 	/**
 	 * Get initialized histogram of event count by time
 	 * @param bin time interval
+	 * @return histogram
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
-		if (hypocenters == null || hypocenters.size() == 0)
+		//if (hypocenters == null || hypocenters.size() == 0)
+		if (hypocenters == null)
 			return null;
 		
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
@@ -386,6 +433,7 @@ public class HypocenterList implements BinaryDataSet
 	
 	/**
 	 * Project of all hypocenters in the list
+	 * @param proj Projection
 	 */
 	public void project(Projection proj)
 	{
@@ -394,7 +442,18 @@ public class HypocenterList implements BinaryDataSet
 	}
 	
 	/**
+	 * Adds a value to the time (for time zone management).
+	 * @param adj the time adjustment
+	 */
+	public void adjustTime(double adj)
+	{
+		for (Hypocenter hc : hypocenters)
+			hc.j2ksec+=adj;
+	}
+	
+	/**
 	 * Dump list as CSV string
+	 * @return string representation in CSV
 	 */
 	public String toCSV()
 	{

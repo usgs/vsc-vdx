@@ -1,9 +1,11 @@
 package gov.usgs.vdx.data.tilt.ptx;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * Presents one record in Pinnacle series 5000 tiltmeter PTX file
@@ -16,6 +18,7 @@ import java.util.TimeZone;
  */
 public class PTXRecord
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.tilt.ptx.PTXRecord"); 
 	public static final double VOLTS_PER_COUNT = 2.980232e-7;
 	public static final int MAX_BIT = 16777215;
 	
@@ -32,6 +35,11 @@ public class PTXRecord
 	
 	/**
 	 * Construct long value from four bytes
+	 * @param b0 1st byte
+	 * @param b1 2nd byte
+	 * @param b2 3rd byte
+	 * @param b3 4th byte
+	 * @return long value
 	 */
 	private long createInt(byte b0, byte b1, byte b2, byte b3)
 	{
@@ -116,6 +124,10 @@ public class PTXRecord
 		return buffer[18];
 	}
 	
+	/**
+	 * 
+	 * @return the rezero info
+	 */
 	public int getRezeroInfo()
 	{
 		return buffer[19];
@@ -183,7 +195,7 @@ public class PTXRecord
 			result[i][2] = (double)data[i][1] * 5000 / MAX_BIT - 2500;
 			result[i][3] = getVoltage() * 3.2782552e-6;
 			result[i][4] = getTemperature() * 2.980232e-5;
-//			System.out.printf("%s %.2f %.2f %f %f\n", df.format(Util.j2KToDate(result[i][0])), result[i][1], result[i][2], result[i][3], result[i][4]);
+//			logger.fine("%s %.2f %.2f %f %f\n", df.format(Util.j2KToDate(result[i][0])), result[i][1], result[i][2], result[i][3], result[i][4]);
 		}
 		
 		return result;
@@ -191,6 +203,7 @@ public class PTXRecord
 	
 	/**
 	 * Dump record metainformation into string
+	 * @return string of metainformation
 	 */
 	public String toString()
 	{

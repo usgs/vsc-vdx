@@ -1,10 +1,12 @@
 package gov.usgs.vdx.data.rsam;
 
+import gov.usgs.util.Log;
 import gov.usgs.vdx.data.hypo.HypocenterList.BinSize;
 import hep.aida.ref.Histogram1D;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -17,7 +19,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class EWRSAMData extends RSAMData
 {
-	
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.rsam.EWRSAMData"); 
 	protected static final int MAX_BINS = 1000000;
 	public DoubleMatrix2D events;
 
@@ -50,7 +52,7 @@ public class EWRSAMData extends RSAMData
 				for (int j = 0; j < cols; j++)
 					events.setQuick(i, j, d[j]);
 			}
-			System.out.println("Events is " + events.size());
+			logger.info("Events is " + events.size());
 		}
 	}
 
@@ -58,6 +60,7 @@ public class EWRSAMData extends RSAMData
 	 * Dump RSAMData to byte buffer. This first 4 bytes specify an
 	 * integer number of rows followed by rows*16 bytes, 2 doubles: j2ksec and 
 	 * RSAM.
+	 * @return RSAMData as ByteBuffer
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -116,7 +119,7 @@ public class EWRSAMData extends RSAMData
 	
 	/**
 	 * Initialize an RSAMData from a byte buffer.  
-	 * @see toBinary()
+	 * @see #toBinary()
 	 * @param bb the byte buffer
 	 */
 	public void fromBinary(ByteBuffer bb)
@@ -134,7 +137,7 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			System.out.println(":: FOUND NO VALUES IN " + bb.capacity());
+			logger.info(":: FOUND NO VALUES IN " + bb.capacity());
 		}
 		
 		rows = bb.getInt();
@@ -150,12 +153,13 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			System.out.println(":: FOUND NO EVENTS");
+			logger.info(":: FOUND NO EVENTS");
 		}
 	}
 	
 	/**
 	 * Get cumulative event data by time interval
+	 * @return maxtrix of event data
 	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
@@ -165,17 +169,18 @@ public class EWRSAMData extends RSAMData
 	/**
 	 * Get initialized histogram of event count by time
 	 * @param bin time interval
+	 * @return histogram of interval
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{
 		System.err.println("Entering ew hist");
 		if (events == null || events.size() == 0)
 		{
-			System.out.println("No events");
+			logger.info("No events");
 			return null;
 		}
 
-		System.out.println("Filling histogram with " + events.size() + " points");
+		logger.info("Filling histogram with " + events.size() + " points");
 
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
 		

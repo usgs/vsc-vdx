@@ -164,6 +164,7 @@ public class ImportBob {
 	 * -y year
 	 * -n name
 	 * -t type
+	 * @param as command line args
 	 */
 	public static void main(String[] as) {
 

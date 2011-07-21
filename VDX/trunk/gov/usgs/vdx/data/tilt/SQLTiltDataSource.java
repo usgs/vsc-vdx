@@ -1,6 +1,8 @@
 package gov.usgs.vdx.data.tilt;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -9,7 +11,6 @@ import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,36 +32,60 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= true;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "xTilt",		"East",					"tilt (microradians)",	false, true),
-		new Column(2, "yTilt",		"North",				"tilt (microradians)",	false, true), 
-		new Column(3, "holeTemp",	"Hole Temperature",		"temperature (C)",		false, true), 
-		new Column(4, "boxTemp",	"Box Temperature",		"temperature (C)",		false, true),
-		new Column(5, "instVolt",	"Instrument Voltage",	"voltage (V)",			false, true),
-		new Column(6, "gndVolt",	"Ground Voltage",		"voltage (V)",			false, true),
-		new Column(7, "rainfall",	"Rainfall",				"rainfall (cm)",		false, true)};
-	
+		new Column(1, "xTilt",		"East",			"microrad",	false, true, false),
+		new Column(2, "yTilt",		"North",		"microrad",	false, true, false), 
+		new Column(3, "holeTemp",	"Hole Temp",	"degrees C",false, true, true), 
+		new Column(4, "boxTemp",	"Box Temp",		"degrees C",false, true, true),
+		new Column(5, "instVolt",	"Inst Voltage",	"volts",	false, true, true),
+		new Column(6, "gndVolt",	"Grnd Voltage",	"volts",	false, true, false),
+		new Column(7, "rainfall",	"Rainfall",		"cm",		false, true, true)};
+
 	public static final Column[] MENU_COLUMNS	= new Column[] {
-		new Column(1, "radial",		"Radial",				"tilt (microradians)",	true,	true),
-		new Column(2, "tangential",	"Tangential",			"tilt (microradians)",	true,	true), 
-		new Column(3, "xTilt",		"East",					"tilt (microradians)",	false,	true),
-		new Column(4, "yTilt",		"North",				"tilt (microradians)",	false,	true), 
-		new Column(5, "magnitude",	"Magnitude",			"tilt (microradians)",	false,	false),
-		new Column(6, "azimuth",	"Azimuth",				"tilt (microradians)",	false,	false), 
-		new Column(7, "holeTemp",	"Hole Temperature",		"temperature (C)",		false,	false), 
-		new Column(8, "boxTemp",	"Box Temperature",		"temperature (C)",		false,	false),
-		new Column(9, "instVolt",	"Instrument Voltage",	"voltage (V)",			false,	false),
-		new Column(10, "rainfall",	"Rainfall",				"rainfall (cm)",		false,	false)};
+		new Column(1, "radial",		"Radial",		"microrad",	true,	true,  false),
+		new Column(2, "tangential",	"Tangential",	"microrad",	true,	true,  false), 
+		new Column(3, "xTilt",		"East",			"microrad",	false,	true,  false),
+		new Column(4, "yTilt",		"North",		"microrad",	false,	true,  false), 
+		new Column(5, "magnitude",	"Magnitude",	"microrad",	false,	false, false),
+		new Column(6, "azimuth",	"Azimuth",		"microrad",	false,	false, false), 
+		new Column(7, "holeTemp",	"Hole Temp",	"degrees C",false,	false, false), 
+		new Column(8, "boxTemp",	"Box Temp",		"degrees C",false,	false, true),
+		new Column(9, "instVolt",	"Inst Voltage",	"volts",	false,	false, true),
+		new Column(10, "rainfall",	"Rainfall",		"cm",		false,	false, true)};
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
@@ -82,6 +107,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get flag if database exists
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -89,6 +115,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	
 	/**
 	 * Create tilt database
+	 * @return true if successful, false otherwise
 	 */
 	public boolean createDatabase() {
 		
@@ -134,14 +161,15 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @return true if successful
 	 */	
 	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
-		Channel channel = new Channel(0, channelCode, channelName, lon, lat, height);
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, azimuth, height);
 		return defaultCreateTiltChannel(channel, tid, azimuth, channels, translations, ranks, columns);
 	}
 
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
-	 * @param command to execute, map of parameter-value pairs.
+	 * @param params command to execute, map of parameter-value pairs.
+	 * @return request result
 	 */	
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -167,28 +195,39 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			int rid			= Integer.parseInt(params.get("rk"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			TiltData data	= getTiltData(cid, rid, st, et);
-			if (data != null)
-				return new BinaryResult(data);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			return getTiltData(cid, rid, st, et, getMaxRows(), ds, dsInt);
+			
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+
 		}
 		return null;
 	}
 
 	/**
 	 * Get Tilt Station data
-	 * @param cid	channel id
-	 * @param rid	rank id
-	 * @param st	start time
-	 * @param et	end time
-	 * @return
+	 * @param cid	  channel id
+	 * @param rid	  rank id
+	 * @param st	  start time
+	 * @param et	  end time
+	 * @param maxrows maximum number of rows returned
+	 * @param ds      downsampling type
+	 * @param dsInt   downsampling argument
+	 * @return request result
 	 */	
-	public TiltData getTiltData(int cid, int rid, double st, double et) {
+	public RequestResult getTiltData(int cid, int rid, double st, double et, int maxrows, DownsamplingType ds, int dsInt) {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
-		TiltData result		= null;
 		int columnsReturned	= 0;
-		double value;
 		
 		try {
 			database.useDatabase(dbName);
@@ -198,7 +237,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			columnsReturned	= 8;
 
 			// build the sql
-			sql  = "SELECT a.j2ksec, c.rid, ";
+			sql  = "SELECT j2ksec, c.rid, ";
 			sql += "       COS(RADIANS(b.azimuth))  * (xTilt * cxTilt + dxTilt) + SIN(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
 			sql += "       -SIN(RADIANS(b.azimuth)) * (xTilt * cxTilt + dxTilt) + COS(RADIANS(b.azimuth)) * (yTilt * cyTilt + dyTilt), ";
 			sql += "       holeTemp * choleTemp + dholeTemp, ";
@@ -222,35 +261,53 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
-			
+			try{
+				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult("Can't downsample dataset: " + e.getMessage());
+			}
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
+
 			ps	= database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			if (ranks && rid != 0) {
-				ps.setInt(3, rid);
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
+				ps.setDouble(3, st);
+				ps.setDouble(4, et);
+				if (ranks && rid != 0) {
+					ps.setInt(5, rid);
+				}
+			} else {
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				if (ranks && rid != 0) {
+					ps.setInt(3, rid);
+				}
 			}
 			rs = ps.executeQuery();
-
+		
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+			}
 			while (rs.next()) {
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
-					value	= rs.getDouble(i + 1);
-					if (rs.wasNull()) { value	= Double.NaN; }
-					dataRow[i] = value;
+					dataRow[i] = getDoubleNullCheck(rs, i+1);
 				}
 				pts.add(dataRow);
 			}
 			rs.close();
 			
 			if (pts.size() > 0) {
-				return new TiltData(pts);
+				return new BinaryResult(new TiltData(pts));
 			}
-
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			return null;
 		}
-		
-		return result;
+		return null;
 	}
 
 	/**
