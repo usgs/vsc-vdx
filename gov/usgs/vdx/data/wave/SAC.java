@@ -28,6 +28,7 @@
 
 package gov.usgs.vdx.data.wave;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.BufferedInputStream;
@@ -45,6 +46,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * A class to read SAC files, adapted from Fissures code.
@@ -64,6 +66,7 @@ import java.util.TimeZone;
  */
 public class SAC
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.wave.SAC"); 
 	public float delta = FLOAT_UNDEF;
 	public float depmin = FLOAT_UNDEF;
 	public float depmax = FLOAT_UNDEF;
@@ -287,6 +290,7 @@ public class SAC
 	/** reads the sac file specified by the filename. Only a very simple
 	 * check is made
 	 * to be sure the file really is a sac file.
+	 * @param filename file's name
 	 * @throws FileNotFoundException if the file cannot be found
 	 * @throws IOException if it isn't a sac file or if it happens :)
 	 */
@@ -316,6 +320,7 @@ public class SAC
 
 	/**
 	 * Swap bytes in short value
+	 * @param val short whose bytes are to be swapped
 	 */
 	public final static short swapBytes(short val)
 	{
@@ -324,6 +329,7 @@ public class SAC
 
 	/**
 	 * Swap bytes in float value
+	 * @param val float whose bytes are to be swapped
 	 */
 	public final static float swapBytes(float val)
 	{
@@ -332,6 +338,7 @@ public class SAC
 
 	/**
 	 * Swap bytes in int value
+	 * @param val int whose bytes are to be swapped
 	 */
 	public final static int swapBytes(int val)
 	{
@@ -340,6 +347,7 @@ public class SAC
 
 	/**
 	 * Swap bytes in double value
+	 * @param val double whose bytes are to be swapped
 	 */
 	public final static double swapBytes(double val)
 	{
@@ -348,6 +356,7 @@ public class SAC
 
 	/**
 	 * Swap bytes in long value
+	 * @param val long whose bytes are to be swapped
 	 */
 	public final static long swapBytes(long val)
 	{
@@ -356,6 +365,7 @@ public class SAC
 
 	/**
 	 * reads the sac from DataInputStream, without correctness checks.
+	 * @param dis DataInputStream to read sac from
 	 * @throws IOException if can't read from input stream
 	 */
 	public void read(DataInputStream dis) throws IOException
@@ -366,6 +376,9 @@ public class SAC
 
 	/** reads just the sac header specified by the filename. No checks are
 	 * made to be sure the file really is a sac file.
+	 * @param filename file's name
+	 * @throws FileNotFoundException if the file cannot be found
+	 * @throws IOException if it isn't a sac file or if it happens :)
 	 */
 	public void readHeader(String filename) throws FileNotFoundException, IOException
 	{
@@ -510,7 +523,11 @@ public class SAC
 		unused27 = swapBytes(unused27);
 	}
 
-	/** reads the header from the given stream. */
+	/** reads the header from the given stream.	 
+	 * @param dis DataInputStream to read sac from
+	 * @throws FileNotFoundException if the file cannot be found
+	 * @throws IOException if it isn't a sac file or if it happens :)
+	 */
 	public void readHeader(DataInputStream dis) throws FileNotFoundException, IOException
 	{
 		delta = dis.readFloat();
@@ -703,7 +720,10 @@ public class SAC
 		kinst = new String(eightBytes);
 	}
 
-	/** read the data portion of SAC format from the given stream */
+	/** read the data portion of SAC format from the given stream
+	 * @param fis DataInputStream to read sac from
+	 * @throws IOException if it isn't a sac file or if it happens :)
+	 */
 	public void readData(DataInputStream fis) throws IOException
 	{
 		InputStream in = fis;
@@ -780,7 +800,11 @@ public class SAC
 
 	/** reads the data portion from the given stream.
 	 *  Uses readFloat repeatedly resulting in MUCH slower read
-	 *  times than the slightly more confusing method above. */
+	 *  times than the slightly more confusing method above.
+	 * @param dis DataInputStream to read sac from
+	 * @throws FileNotFoundException if the file cannot be found
+	 * @throws IOException if it isn't a sac file or if it happens :)
+	 */
 	protected void readDataOld(DataInputStream dis) throws FileNotFoundException, IOException
 	{
 
@@ -810,14 +834,22 @@ public class SAC
 		}
 	}
 
-	/** writes this object out as a sac file. */
+	/** writes this object out as a sac file.
+	 * @param filename name of file to read sac from
+	 * @throws FileNotFoundException if the file cannot be found
+	 * @throws IOException if it isn't a sac file or if it happens :)
+ 	 */
 	public void write(String filename) throws FileNotFoundException, IOException
 	{
 		File f = new File(filename);
 		write(f);
 	}
 
-	/** writes this object out as a sac file. */
+	/** writes this object out as a sac file.
+	 * @param file file to write to
+	 * @throws FileNotFoundException if the file cannot be found
+	 * @throws IOException if it isn't a sac file or if it happens :)
+	 */
 	public void write(File file) throws FileNotFoundException, IOException
 	{
 		DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
@@ -826,7 +858,11 @@ public class SAC
 		dos.close();
 	}
 
-	/** write the float to the stream, swapping bytes if needed. */
+	/** write the float to the stream, swapping bytes if needed.
+	 * @param dos DataOutputStream to write toWave
+	 * @param val value to be written
+	 * @throws IOException if it isn't a sac file or if it happens :)
+ 	 */
 	private final void writeFloat(DataOutputStream dos, float val) throws IOException
 	{
 		if (byteOrder == IntelByteOrder)
@@ -839,7 +875,11 @@ public class SAC
 		} // end of else
 	}
 
-	/** write the float to the stream, swapping bytes if needed. */
+	/** write the float to the stream, swapping bytes if needed.
+	 * @param dos DataOutputStream to write toWave
+	 * @param val value to be written
+	 * @throws IOException if it isn't a sac file or if it happens :)
+ 	 */
 	private final void writeInt(DataOutputStream dos, int val) throws IOException
 	{
 		if (byteOrder == IntelByteOrder)
@@ -854,6 +894,7 @@ public class SAC
 
 	/**
 	 * Write SAC header to output stream
+	 * @param dos DataOutputStream to write toWave
 	 * @throws IOException if writing fails
 	 */
 	public void writeHeader(DataOutputStream dos) throws IOException
@@ -1209,6 +1250,7 @@ public class SAC
 
 	/**
 	 * Write data portion of SAC format in the given output stream
+	 * @param dos DataOutputStream to write toWave
 	 * @throws IOException if writing fails
 	 */
 	public void writeData(DataOutputStream dos) throws IOException
@@ -1265,6 +1307,7 @@ public class SAC
 
 	/**
 	 * Create Wave object from SAC data
+	 * @return wave created
 	 */
 	public Wave toWave()
 	{
@@ -1282,6 +1325,7 @@ public class SAC
 
 	/**
 	 * Get string with station description
+	 * @return station info
 	 */
 	public String getStationInfo()
 	{
@@ -1290,6 +1334,7 @@ public class SAC
 
 	/**
 	 * Get string with channel description
+	 * @return channel description
 	 */
 	public String getWinstonChannel()
 	{
@@ -1301,6 +1346,7 @@ public class SAC
 	
 	/**
 	 * Get start time of data
+	 * @return start time of data
 	 */
 	public Date getStartTime()
 	{
@@ -1321,6 +1367,7 @@ public class SAC
 
 	/**
 	 * Get sample rate
+	 * @return sample rate
 	 */
 	public double getSamplingRate()
 	{
@@ -1330,6 +1377,7 @@ public class SAC
 	/** just for testing. Reads the filename given as the argument,
 	 *  writes out some header variables and then
 	 *  writes it back out as "outsacfile".
+	 * @param args command line args
 	 */
 	public static void main(String[] args)
 	{

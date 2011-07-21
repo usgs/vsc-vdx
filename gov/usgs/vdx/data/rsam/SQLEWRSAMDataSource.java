@@ -1,6 +1,8 @@
 package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -10,6 +12,7 @@ import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= false;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "rsam",	"rsam",	"",	false, true)};
+		new Column(1, "rsam",	"rsam",	"",	false, true, false)};
 	private String tableSuffix;
 	
 	/**
@@ -58,18 +61,43 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get database type, generic in this case
-	 * return type
+	 * @return type
 	 */
 	public String getType() 				{ return DATABASE_NAME; }	
+	/**
+	 * Get channels flag
+	 * @return channels flag
+	 */
 	public boolean getChannelsFlag()		{ return channels; }
+	/**
+	 * Get translations flag
+	 * @return translations flag
+	 */
 	public boolean getTranslationsFlag()	{ return translations; }
+	/**
+	 * Get channel types flag
+	 * @return channel types flag
+	 */
 	public boolean getChannelTypesFlag()	{ return channelTypes; }
+	/**
+	 * Get ranks flag
+	 * @return ranks flag
+	 */
 	public boolean getRanksFlag()			{ return ranks; }
+	/**
+	 * Get columns flag
+	 * @return columns flag
+	 */
 	public boolean getColumnsFlag()			{ return columns; }
+	/**
+	 * Get menu columns flag
+	 * @return menu columns flag
+	 */
 	public boolean getMenuColumnsFlag()		{ return menuColumns; }
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -87,6 +115,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get flag if database exist
+	 * @return true if database exists, false otherwise
 	 */
 	public boolean databaseExists() {
 		return defaultDatabaseExists();
@@ -94,6 +123,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	
 	/**
 	 * Create 'ewrsam' database
+	 * @return true
 	 */
 	public boolean createDatabase() {
 		defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);
@@ -130,7 +160,8 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameters and retrieve corresponding data.
-	 * @param command to execute.
+	 * @param params command to execute.
+	 * @return request result
 	 */
 	public RequestResult getData(Map<String, String> params) {
 		
@@ -146,21 +177,37 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			int cid			= Integer.parseInt(params.get("channel"));
 			double st		= Double.parseDouble(params.get("st"));
 			double et		= Double.parseDouble(params.get("et"));
-			int p			= Integer.parseInt(params.get("period"));
 			String plotType	= params.get("plotType");
-			RSAMData data	= getEWRSAMData(cid, st, et, p, plotType);
+			DownsamplingType ds = DownsamplingType.fromString(params.get("ds"));
+			int dsInt		= Integer.parseInt(params.get("dsInt")); 
+			RSAMData data = null;
+			try{
+				data = getEWRSAMData(cid, st, et, plotType, getMaxRows(), ds, dsInt);
+			} catch (UtilException e){
+				return getErrorResult(e.getMessage());
+			}
 			if (data != null) {
 				return new BinaryResult(data);
 			}
 			
 		} else if (action.equals("ewRsamMenu")) {
 			return new TextResult(getTypes());
+			
+		} else if (action.equals("supptypes")) {
+			return getSuppTypes( true );
+		
+		} else if (action.equals("suppdata")) {
+			return getSuppData( params, false );
+		
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
+			
 		}
 		return null;
 	}
 
 	/**
-	 * Get 
+	 * Get types
 	 * @return String List containing VALUES and/or EVENTS
 	 */
 	public List<String> getTypes() {
@@ -194,13 +241,16 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 	/**
 	 * Get RSAM data
-	 * @param cid	channel id
-	 * @param st	start time
-	 * @param et	end time
-	 * @param p		period
-	 * @param type	data type (EVENTS/VALUES)
+	 * @param cid	   channel id
+	 * @param st	   start time
+	 * @param et	   end time
+	 * @param plotType type of plot (EVENTS or VALUES)
+	 * @param maxrows  maximum nbr of rows returned
+	 * @param ds       type of downsampling
+	 * @param dsInt    downsampling argument
+	 * @return the RSAM data
 	 */
-	public RSAMData getEWRSAMData(int cid, double st, double et, int p, String plotType) {
+	public RSAMData getEWRSAMData(int cid, double st, double et, String plotType, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 		
 		double[] dataRow;
 		List<double[]> pts	= new ArrayList<double[]>();
@@ -215,24 +265,42 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 
 			if (plotType.equals("VALUES")) {
 				
-				sql		= "SELECT j2ksec + ? / 2, avg(rsam) ";
+				sql		= "SELECT j2ksec, rsam ";
 				sql	   += "FROM   ?_values ";
 				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? ";
-				sql	   += "GROUP BY FLOOR(j2ksec / ?) ";
+				sql	   += "ORDER BY j2ksec";
+				
+				try{
+					sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
+				} catch (UtilException e){
+					throw new UtilException("Can't downsample dataset: " + e.getMessage());
+				}
+				if(maxrows !=0){
+					sql += " LIMIT " + (maxrows+1);
+				}
 				ps		= database.getPreparedStatement(sql);
-				ps.setDouble(1, p);
-				ps.setString(2, ch.getCode());
-				ps.setDouble(3, st);
-				ps.setDouble(4, et);
-				ps.setDouble(5, p);
+				if(ds.equals(DownsamplingType.MEAN)){
+					ps.setDouble(1, st);
+					ps.setInt(2, dsInt);
+					ps.setString(3, ch.getCode());
+					ps.setDouble(4, st);
+					ps.setDouble(5, et);
+				} else {
+					ps.setString(1, ch.getCode());
+					ps.setDouble(2, st);
+					ps.setDouble(3, et);
+				}
 				rs		= ps.executeQuery();
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+				}
 				pts 	= new ArrayList<double[]>();
 				
 				// iterate through all results and create a double array to store the data
 				while (rs.next()) {
 					dataRow		= new double[2];
-					dataRow[0]	= rs.getDouble(1);
-					dataRow[1]	= rs.getDouble(2);
+					dataRow[0]	= getDoubleNullCheck(rs, 1);
+					dataRow[1]	= getDoubleNullCheck(rs, 2);
 					pts.add(dataRow);
 				}
 				rs.close();
@@ -242,12 +310,18 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				sql		= "SELECT j2ksec, rsam ";
 				sql    += "FROM   ?_events ";
 				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? and rsam != 0";
+				if(maxrows !=0){
+					sql += " LIMIT " + (maxrows+1);
+				}
+				
 				ps		= database.getPreparedStatement(sql);
 				ps.setString(1, ch.getCode());
 				ps.setDouble(2, st);
 				ps.setDouble(3, et);
 				rs		= ps.executeQuery();
-				
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+				}
 				// setup the initial value
 				count 		= 0;
 				dataRow		= new double[2];				
@@ -276,11 +350,10 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			if (pts.size() > 0) {
-				// result = new EWRSAMData(pts, events);
 				result	= new RSAMData(pts);
 			}
 			
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLEWRSAMDataSource.getEWRSAMData()", e);
 		}
 		return result;

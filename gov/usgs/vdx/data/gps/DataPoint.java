@@ -26,6 +26,7 @@ public class DataPoint implements BinaryDataSet
 	
 	/**
 	 * Get string data point representation
+	 * @return string data point representation
 	 */
 	public String toString()
 	{
@@ -35,6 +36,7 @@ public class DataPoint implements BinaryDataSet
 
 	/**
 	 * Get binary data point representation
+	 * @return ByteBuffer of this DataPoint
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -56,6 +58,7 @@ public class DataPoint implements BinaryDataSet
 
 	/**
 	 * Initialize data point from binary representation
+	 * @param bb ByteBuffer of initial data
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{

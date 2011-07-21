@@ -69,8 +69,11 @@ public class Scheduler {
 	}
 	
 	/**
-	*Initialization method.  Initializes all values and runs the program
-	*/
+	 * Initialization method.  Initializes all values and runs the program
+	 * @param importerClass name of importer class
+	 * @param schedulerConfigFile configuration file
+	 * @param schedulerName name of scheduler
+	 */
 	public void initialize(String importerClass, String schedulerConfigFile, String schedulerName) {
 		
 		// initialize the logger for this importer
@@ -113,6 +116,8 @@ public class Scheduler {
 	
 	/**
 	 * Parse configuration file and initialize internal variables
+	 * @param schedulerConfigFile configuration file
+	 * @param schedulerName name of scheduler
 	 */
 	public void processConfigFile(String schedulerConfigFile, String schedulerName) {
 		
@@ -237,6 +242,11 @@ public class Scheduler {
 		}
 	}
 	
+	/**
+	 * Print usage.  Prints out usage instructions for the scheduler
+	 * @param className name of class
+	 * @param message instructions
+	 */
 	public void outputInstructions(String className, String message) {
 		if (message == null) {
 			System.err.println(message);
@@ -251,6 +261,7 @@ public class Scheduler {
 	 *  -c config file name
 	 *  -v verbose mode
 	 *  files ...
+	 * @param as command line args
 	 */
 	public static void main(String as[]) {
 		
@@ -280,11 +291,14 @@ public class Scheduler {
 	 */
 	class ImportFileFilter implements FileFilter {
 		
-		// constructor
+		/** constructor */
 		public ImportFileFilter () {
 		}
 		
-		// inherited method
+		/** Check acceptance of file
+		 * @param file file to test
+		 * @return true if accepted, false otherwise
+		 */
 		public boolean accept(File file) {
 			boolean prefixMatches = file.getName().startsWith(filePrefix);
 			boolean suffixMatches = file.getName().endsWith(fileSuffix);
@@ -306,12 +320,12 @@ public class Scheduler {
 		private File					archiveFile;
 		private Importer				importer;
 		
-		// constructor
+		/** constructor */
 		public SchedulerTimerTask () {
 			importFileFilter			= new ImportFileFilter();
 		}
 		
-		// inherited method
+		/** run */
 		public void run(){
 			
 			// check for new files
@@ -391,6 +405,11 @@ public class Scheduler {
 		
 		private Collator c = Collator.getInstance();
 		
+		/** Yield "difference" between o1 & o2
+		 * @param o1 first object to compare
+		 * @param o2 second object to compare
+		 * @return difference, where directories are < files
+		 */
 		public int compare(Object o1, Object o2) {
 			if(o1 == o2)
 				return 0;

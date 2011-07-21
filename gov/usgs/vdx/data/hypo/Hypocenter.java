@@ -36,7 +36,12 @@ public class Hypocenter
     public String rmk;
 
 	/** Constructor that sets data.
-	 * @param d the data
+	 * @param  j2ksec  time 
+	 * @param  rid     rank
+	 * @param  lat     latitude
+	 * @param  lon     longitude
+	 * @param  depth   depth
+	 * @param  prefmag 
 	 */
     public Hypocenter(double j2ksec, Integer rid, double lat, double lon, double depth, double prefmag) {
         this(j2ksec, (String)null, rid, lat, lon, depth, prefmag, Double.NaN, Double.NaN,
@@ -65,6 +70,11 @@ public class Hypocenter
     	this.rmk		= rmk;
     }
     
+    /**
+     * Apply projection to this hypocenter
+     *
+     * @param proj projection to be applied
+     */
     public void project(Projection proj)
     {
     	Point2D.Double pt = new Point2D.Double(this.lon, this.lat);
@@ -89,6 +99,11 @@ public class Hypocenter
         return this.j2ksec + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.prefmag;
     }
 	
+    /**
+     * Push data about this hypocenter in the byte buffer
+     *
+     * @param buffer ByteBuffer to push
+     */
     public void insertIntoByteBuffer(ByteBuffer buffer)
     {
     	buffer.putDouble(j2ksec);

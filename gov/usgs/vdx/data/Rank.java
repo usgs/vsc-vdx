@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Represents rank
  * @author Loren Antolik
  */
 public class Rank {
@@ -29,6 +30,10 @@ public class Rank {
 		this.user_default	= user_default;
 	}
 	
+	/**
+	 * Constructor
+	 * @param rk ':'-separated string of parameters
+	 */
 	public Rank(String rk) {
 		String[] parts	= rk.split(":");
 		rid				= Integer.parseInt(parts[0]);
@@ -37,12 +42,17 @@ public class Rank {
 		user_default	= Integer.parseInt(parts[3]);
 	}
 	
+	/**
+	 * Get best possible rank
+	 * @return rank
+	 */
 	public Rank bestPossible() {
 		return new Rank(0, "Best Possible Rank", 0, 0);
 	}
 
 	/**
 	 * Getter for rank id
+	 * @return rank id
 	 */
 	public int getId() {
 		return rid;
@@ -50,6 +60,7 @@ public class Rank {
 
 	/**
 	 * Getter for rank name
+	 * @return rank name
 	 */
 	public String getName() {
 		return name;
@@ -57,6 +68,7 @@ public class Rank {
 	
 	/**
 	 * Getter for rank
+	 * @return rank
 	 */
 	public int getRank() {
 		return rank;
@@ -64,6 +76,7 @@ public class Rank {
 	
 	/**
 	 * Getter for user default
+	 * @return user default
 	 */
 	public int getUserDefault() {
 		return user_default;
@@ -72,7 +85,7 @@ public class Rank {
 	/**
 	 * Conversion utility
 	 * @param ss
-	 * @return
+	 * @return mapping from ids to ranks
 	 */
 	public static Map<Integer, Rank> fromStringsToMap(List<String> ss) {
 		Map<Integer, Rank> map = new HashMap<Integer, Rank>();
@@ -85,6 +98,7 @@ public class Rank {
 	
 	/**
 	 * Conversion of objects to string
+	 * @return string representation of this
 	 */
 	public String toString() {
 		return String.format("%d:%s:%d:%d", getId(), getName(), getRank(), getUserDefault());

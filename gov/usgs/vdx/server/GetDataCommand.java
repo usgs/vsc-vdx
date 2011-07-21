@@ -2,12 +2,14 @@ package gov.usgs.vdx.server;
 
 import gov.usgs.net.NetTools;
 import gov.usgs.util.CodeTimer;
+import gov.usgs.vdx.ExportConfig;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.DataSourceDescriptor;
 import gov.usgs.vdx.data.DataSourceHandler;
 
 import java.nio.channels.SocketChannel;
 import java.util.logging.Level;
+import java.util.ArrayList;
 
 /**
  * Comand to retrieve data. 
@@ -28,6 +30,8 @@ public class GetDataCommand extends BaseCommand
 {
 	/**
 	 * Constructor
+	 * @param sh server handler
+	 * @param nt net tools
 	 */
 	public GetDataCommand(ServerHandler sh, NetTools nt)
 	{
@@ -36,6 +40,8 @@ public class GetDataCommand extends BaseCommand
 	
 	/**
 	 * Perform command actions, write result to channel
+	 * @param info params
+	 * @param channel where to write to
 	 */
 	public void doCommand(Object info, SocketChannel channel)
 	{
@@ -48,14 +54,40 @@ public class GetDataCommand extends BaseCommand
 			return;
 		}
 		DataSourceHandler dsh = handler.getDataSourceHandler();
-		DataSourceDescriptor dsd = dsh.getDataSourceDescriptor(inParams.get("source"));
-		DataSource ds = dsd.getDataSource();
-		RequestResult result = ds.getData(inParams);
-		dsd.putDataSource();
-		
+		String resultType;
+		RequestResult result;
+		String action = inParams.get("action");
+		if ( action!=null && action.equals("exportinfo") ) {
+			ExportConfig ec = dsh.getExportConfig( source );
+			resultType = action;
+			if ( ec == null || !ec.isClosed() ) {
+				int ncl = Integer.parseInt( inParams.get("numCommentLines") );
+				ArrayList<String> args = new ArrayList<String>(ncl+4);
+				args.add( inParams.get("exportable") );
+				args.add( inParams.get("width.0") );
+				args.add( inParams.get("width.1") );
+				//args.add( ""+ncl );
+				for ( int i = 1; i <= ncl; i++ )
+					args.add( inParams.get("cmt."+i) );
+				ExportConfig new_ec = new ExportConfig( args );
+				if ( ec == null ) {
+					ec = new_ec;
+					dsh.putExportConfig( source, ec );
+				} else
+					ec.underride( new_ec );
+				ec.setClosed();
+			}
+			result = new TextResult( ec.toStringList() );
+		} else {
+			DataSourceDescriptor dsd = dsh.getDataSourceDescriptor(inParams.get("source"));
+			DataSource ds = dsd.getDataSource();
+			result = ds.getData(inParams);
+			dsd.putDataSource();
+			resultType = ds.getType();
+		}
 		if (result != null)
 		{
-			result.set("type", ds.getType());
+			result.set("type", resultType);
 			result.prepare();
 			result.writeHeader(netTools, channel);
 			result.writeBody(netTools, channel);

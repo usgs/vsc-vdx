@@ -2,16 +2,26 @@ package gov.usgs.vdx.data;
 
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
+import gov.usgs.vdx.data.MetaDatum;
+import gov.usgs.vdx.data.SuppDatum;
 import gov.usgs.vdx.db.VDXDatabase;
+import gov.usgs.vdx.server.RequestResult;
+import gov.usgs.vdx.server.TextResult;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.TimeZone;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -23,19 +33,22 @@ import cern.colt.matrix.DoubleMatrix2D;
  * 
  * @author Dan Cervelli, Loren Antolik
  */
-abstract public class SQLDataSource {
+abstract public class SQLDataSource implements DataSource {
 	
 	protected VDXDatabase database;
+	protected String vdxName;
 	protected String dbName;
-	protected Logger logger;
+	protected static Logger logger = Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
 
 	protected Statement st;
 	protected PreparedStatement ps;
 	protected ResultSet rs;
 	protected String sql;
+	private int maxrows = 0;
 	
 	/**
 	 * Initialize the data source.  Concrete realization see in the inherited classes
+	 * @param params config file
 	 */
 	abstract public void initialize(ConfigFile params);
 	
@@ -70,6 +83,100 @@ abstract public class SQLDataSource {
 	abstract public void disconnect();
 	
 	/**
+	 * Getter for maxrows
+	 * @return maxrows
+	 */
+	public int getMaxRows(){
+		return maxrows;
+	}
+	
+	/**
+	 * Setter for maxrows
+	 * @param maxrows limit on number of rows to retrieve
+	 */
+	protected void setMaxRows(int maxrows){
+		this.maxrows = maxrows;
+	}
+	
+	/**
+	 * Get size of result set
+	 * @param rs ResultSet to query 
+	 * @return Count of records in given ResultSet
+	 * @throws SQLException
+	 */
+	public static int getResultSetSize(ResultSet rs) throws SQLException {
+		int size =0;
+		int currentRow = rs.getRow();
+		if (rs != null){  
+		   rs.beforeFirst();  
+		   rs.last();  
+		   size = rs.getRow();
+		   if(currentRow==0){
+			   rs.beforeFirst();   
+		   } else {
+			   rs.absolute(currentRow);
+		   }
+		}
+		return size;   
+	}
+	
+	/**
+	 * Get error result
+	 * @param errMessage message to pack
+	 * @return TextResult which contains error message
+	 */
+	public static RequestResult getErrorResult(String errMessage){
+		List<String> text = new ArrayList<String>();
+		text.add(errMessage);
+		TextResult result = new TextResult(text);
+		result.setError(true);
+		return result;
+	}
+	
+	/**
+	 * Get SQL for downsampling
+	 * @param sql Query to compress
+	 * @param ds Type of compressing: currently decimate/mean by time interval/none
+	 * @param dsInt time interval to average values, in seconds
+	 * @return sql that get only subset of records from original sql
+	 * @throws UtilException in case of unknown downsampling type
+	 */
+	public static String getDownsamplingSQL(String sql, String time_column, DownsamplingType ds, int dsInt) throws UtilException{
+		if(!ds.equals(DownsamplingType.NONE) && dsInt<=1)
+			throw new UtilException("Downsampling interval should be more than 1");
+		if(ds.equals(DownsamplingType.NONE))
+			return sql;
+		else if(ds.equals(DownsamplingType.DECIMATE))
+			return "SELECT * FROM(SELECT fullQuery.*, @row := @row+1 AS rownum FROM (" + sql + ") fullQuery, (SELECT @row:=0) r) ranked WHERE rownum % " + dsInt + " = 1";
+		else if (ds.equals(DownsamplingType.MEAN)){
+			String sql_select_clause = sql.substring(6, sql.toUpperCase().indexOf("FROM")-1);
+			String sql_from_where_clause = sql.substring(sql.toUpperCase().indexOf("FROM")-1, sql.toUpperCase().lastIndexOf("ORDER BY")-1);
+			String[] columns = sql_select_clause.split(",");
+			String avg_sql = "SELECT ";
+			for(String column: columns){
+				String groupFunction = "AVG";
+				String[] column_parts = column.trim().split("\\sas\\s");
+				if(column_parts[0].equals(time_column)){
+					groupFunction = "MIN";
+				} else if(column_parts[0].equals("rid") || column_parts[0].endsWith(".rid")){
+					groupFunction = "MIN";
+				}
+				if(column_parts.length>1){
+					avg_sql += groupFunction + "("+column_parts[0]+") as " + column_parts[1] + ", ";
+				} else {
+					avg_sql += groupFunction + "("+column_parts[0]+"), ";
+				}
+			}
+			avg_sql += "(((" + time_column + ") - ?) DIV ?) intNum ";
+			avg_sql += sql_from_where_clause;
+			avg_sql += " GROUP BY intNum";
+			return avg_sql;
+		}
+		else
+			throw new UtilException("Unknown downsampling type: " + ds);
+	}
+	
+	/**
 	 * Insert data.  Concrete realization see in the inherited classes
 	 * @return true if success
 	 */
@@ -78,8 +185,7 @@ abstract public class SQLDataSource {
 	/**
 	 * Initialize Data Source
 	 * 
-	 * @param db		VDXDatabase object
-	 * @param dbName	name of the database, minus the prefix
+	 * @param params config file
 	 */
 	public void defaultInitialize(ConfigFile params) {
 		
@@ -88,13 +194,11 @@ abstract public class SQLDataSource {
 		String url		= params.getString("vdx.url");
 		String prefix	= params.getString("vdx.prefix");
 		database		= new VDXDatabase(driver, url, prefix);
-		
+		vdxName			= params.getString("vdx.name");
 		// dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
-		dbName			= params.getString("vdx.name") + "$" + getType();
-		
-		// initialize the logger for this data source
-		logger			= Logger.getLogger("gov.usgs.vdx.data.SQLDataSource");
-		logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+		dbName			= vdxName + "$" + getType();
+		maxrows			= Util.stringToInt(params.getString("maxrows"), 0); 
+		// logger.log(Level.INFO, "SQLDataSource.defaultInitialize(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
 	}
 
 	/**
@@ -121,6 +225,7 @@ abstract public class SQLDataSource {
 	 * @param channelTypes	if we need to create channel_types table
 	 * @param ranks			if we need to create ranks table
 	 * @param columns		if we need to create columns table
+	 * @param menuColumns   flag to retrieve database columns or plottable columns
 	 * @return true if success
 	 */
 	public boolean defaultCreateDatabase(boolean channels, boolean translations, boolean channelTypes, boolean ranks, boolean columns, boolean menuColumns) {
@@ -160,13 +265,13 @@ abstract public class SQLDataSource {
 			if (columns) {
 				ps.execute("CREATE TABLE columns (colid INT PRIMARY KEY AUTO_INCREMENT, "
 					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
+					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
 			}
 
 			if (menuColumns) {
 				ps.execute("CREATE TABLE columns_menu (colid INT PRIMARY KEY AUTO_INCREMENT, "
 					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT)");
+					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
 			}
 
 			// the usage of ranks does not depend on there being a channels table
@@ -175,6 +280,28 @@ abstract public class SQLDataSource {
 					+ "name VARCHAR(24) UNIQUE, rank INT(10) UNSIGNED DEFAULT 0 NOT NULL, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
 			}
 			
+			ps.execute( "CREATE TABLE supp_data (sdid INT NOT NULL AUTO_INCREMENT, st DOUBLE NOT NULL, et DOUBLE, sdtypeid INT NOT NULL, "
+					+ "sd_short VARCHAR(90) NOT NULL, sd TEXT NOT NULL, PRIMARY KEY (sdid))" );
+			
+			ps.execute( "CREATE TABLE supp_data_type (sdtypeid INT NOT NULL AUTO_INCREMENT, supp_data_type VARCHAR(20), "
+					+ "supp_color VARCHAR(6) NOT NULL, draw_line TINYINT, PRIMARY KEY (sdtypeid), UNIQUE KEY (supp_data_type) )" );
+			
+			sql = "CREATE TABLE supp_data_xref ( sdid INT NOT NULL, cid INT NOT NULL, colid INT NOT NULL, ";
+			String key = "UNIQUE KEY (sdid,cid,colid";
+			if ( ranks ) {
+				sql = sql + "rid INT NOT NULL, ";
+				key = key + ",rid";
+			}
+			ps.execute( sql + key + "))" ); 
+
+			sql = "CREATE TABLE channelmetadata ( cmid INT NOT NULL AUTO_INCREMENT, cid INT NOT NULL, colid INT NOT NULL, ";
+			if ( ranks )
+				sql = sql + "rid INT NOT NULL, ";
+			sql = sql + "name VARCHAR(20) NOT NULL, value TEXT NOT NULL, UNIQUE KEY (cmid,cid,colid";
+			if ( ranks )
+				sql = sql + ",rid";
+			ps.execute( sql + "))" );
+
 			logger.log(Level.INFO, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded. ");
 			return true;
 
@@ -189,6 +316,7 @@ abstract public class SQLDataSource {
 	 * Get channel name
 	 * 
 	 * @param plural	if we need channel name in the plural form
+	 * @return channel name
 	 */
 	public String getChannelName(boolean plural) {
 		return plural ? "Channels" : "Channel";
@@ -312,23 +440,16 @@ abstract public class SQLDataSource {
 
 	/**
 	 * Create entry in the channels table and creates a table for that channel
-	 * @param channelCode	channel code
-	 * @param channelName	channel name
-	 * @param lon			longitude
-	 * @param lat			latitude
-	 * @param height		height
+	 * @param channel    	Channel
 	 * @param tid			translation id
 	 * @param azimuth		azimuth of the deformation source
 	 * @param channels		
 	 * @param translations
 	 * @param ranks
 	 * @param columns
-	 * @params channelTypes
 	 * @return true if successful
 	 */	
-	public boolean defaultCreateTiltChannel(Channel channel, int tid, double azimuth,
-			boolean channels, boolean translations, boolean ranks, boolean columns) {
-		
+	public boolean defaultCreateTiltChannel(Channel channel, int tid, double azimuth, boolean channels, boolean translations, boolean ranks, boolean columns) {
 		try {
 			defaultCreateChannel(channel, tid, channels, translations, ranks, columns);
 			
@@ -336,18 +457,21 @@ abstract public class SQLDataSource {
 			Channel ch = defaultGetChannel(channel.getCode(), false);
 			
 			// update the channels table with the azimuth value
+			String azimuth_column_name = null;
+			if(dbName.toLowerCase().contains("tensorstrain")){
+				azimuth_column_name = "natural_azimuth";
+			} else {
+				azimuth_column_name = "azimuth";				
+			}
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("UPDATE channels SET azimuth = ? WHERE cid = ?");
+			ps = database.getPreparedStatement("UPDATE channels SET " + azimuth_column_name + "  = ? WHERE cid = ?");
 			ps.setDouble(1, azimuth);
 			ps.setInt(2, ch.getCID());
 			ps.execute();
-			
 			return true;
-			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTiltChannel() failed.", e);
 		}
-		
 		return false;
 	}
 	
@@ -427,18 +551,20 @@ abstract public class SQLDataSource {
 	/**
 	 * Insert column
 	 * 
-	 * @param column	Column return true if successful
+	 * @param column	Column 
+	 * @return true if successful
 	 */
 	public boolean defaultInsertColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
+			ps.setBoolean(7, column.bypassmanipulations);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
@@ -458,13 +584,14 @@ abstract public class SQLDataSource {
 	public boolean defaultInsertMenuColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active) VALUES (?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
+			ps.setBoolean(7, column.bypassmanipulations);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
@@ -697,12 +824,19 @@ abstract public class SQLDataSource {
 		Channel ch;
 		int cid, ctid;
 		String code, name;
-		double lon, lat, height;
+		double lon, lat, height, azimuth;
 
 		try {
 			database.useDatabase(dbName);
 			
 			sql	= "SELECT cid, code, name, lon, lat, height ";
+			if(dbName.toLowerCase().contains("tensorstrain")){
+				sql = sql + ", natural_azimuth ";
+			} else if(dbName.toLowerCase().contains("tilt")){
+				sql = sql + ", azimuth ";
+			} else {
+				sql = sql + ", 0 ";
+			}
 			if (channelTypes) {
 				sql = sql + ",ctid ";
 			}
@@ -721,12 +855,14 @@ abstract public class SQLDataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(6);
 				if (rs.wasNull()) { height	= Double.NaN; }
+				azimuth	= rs.getDouble(7);
+				if (rs.wasNull()) { azimuth	= Double.NaN; }
 				if (channelTypes) {
-					ctid	= rs.getInt(7);
+					ctid	= rs.getInt(8);
 				} else {
 					ctid	= 0;
 				}				
-				ch	= new Channel(cid, code, name, lon, lat, height, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, azimuth, ctid);
 				result.add(ch);
 			}
 			rs.close();
@@ -931,6 +1067,7 @@ abstract public class SQLDataSource {
 	
 	/**
 	 * Get List of columns from the database
+	 * param menuColumns flag to retrieve database columns or plottable columns
 	 * @return String List of columns
 	 */
 	public List<String> defaultGetMenuColumns(boolean menuColumns) {
@@ -952,7 +1089,7 @@ abstract public class SQLDataSource {
 
 		Column column;
 		List<Column> columns = new ArrayList<Column>();
-		boolean checked, active;
+		boolean checked, active, bypassmanipulations;
 		String tableName	= "";
 		
 		if (menuColumns) {
@@ -963,7 +1100,7 @@ abstract public class SQLDataSource {
 
 		try {
 			database.useDatabase(dbName);
-			sql  = "SELECT idx, name, description, unit, checked, active ";
+			sql  = "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
 			sql += "FROM " + tableName + " ";
 			if (!allColumns && !menuColumns) {
 				sql += "WHERE active = 1 ";
@@ -982,7 +1119,12 @@ abstract public class SQLDataSource {
 				} else {
 					active = true;
 				}
-				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active);
+				if (rs.getInt(7) == 0) {
+					bypassmanipulations = false;
+				} else {
+					bypassmanipulations = true;
+				}
+				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active, bypassmanipulations);
 				columns.add(column);
 			}
 			rs.close();
@@ -1004,12 +1146,12 @@ abstract public class SQLDataSource {
 		Column col = null;
 		int idx;
 		String name, description, unit;
-		boolean checked, active;
+		boolean checked, active, bypassmanipulations;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT idx, name, description, unit, checked, active ";
+			sql	= "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
 			sql = sql + "FROM  columns ";
 			sql = sql + "WHERE colid = ?";
 			
@@ -1031,7 +1173,12 @@ abstract public class SQLDataSource {
 				} else {
 					active = true;
 				}
-				col	= new Column(idx, name, description, unit, checked, active);
+				if (rs.getInt(7) == 0) {
+					bypassmanipulations = false;
+				} else {
+					bypassmanipulations = true;
+				}
+				col	= new Column(idx, name, description, unit, checked, active, bypassmanipulations);
 			}
 			rs.close();
 
@@ -1072,6 +1219,7 @@ abstract public class SQLDataSource {
 	/**
 	 * Get options list in format "idx:code:name" from database
 	 * 
+	 * @param type suffix of table name
 	 * @return List of Strings with : separated values
 	 */
 	public List<String> defaultGetOptions(String type) {
@@ -1130,9 +1278,13 @@ abstract public class SQLDataSource {
 	 * @param et			end time
 	 * @param translations	if the database has translations
 	 * @param ranks			if the database has ranks
+	 * @param maxrows       limit on number of rows returned
+	 * @param ds            Downsampling type
+	 * @param dsInt         argument for downsampling
 	 * @return GenericDataMatrix containing the data
+	 * @throws UtilException
 	 */
-	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks) {
+	public GenericDataMatrix defaultGetData(int cid, int rid, double st, double et, boolean translations, boolean ranks, int maxrows, DownsamplingType ds, int dsInt) throws UtilException {
 
 		double[] dataRow;
 		List<double[]> pts			= new ArrayList<double[]>();
@@ -1140,7 +1292,6 @@ abstract public class SQLDataSource {
 		List<Column> columns		= new ArrayList<Column>();
 		Column column;
 		int columnsReturned = 0;
-		double value;
 
 		try {
 			database.useDatabase(dbName);
@@ -1158,7 +1309,7 @@ abstract public class SQLDataSource {
 			}
 
 			// SELECT sql
-			sql = "SELECT a.j2ksec";
+			sql = "SELECT j2ksec";
 			
 			if (ranks) {
 				sql = sql + ", c.rid";
@@ -1198,27 +1349,49 @@ abstract public class SQLDataSource {
 				                            "AND    d.j2ksec <= ? ) ";
 			}
 			sql = sql + "ORDER BY a.j2ksec ASC";
+			try{
+				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
+			} catch (UtilException e){
+				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			}
+			if(maxrows !=0){
+				sql += " LIMIT " + (maxrows+1);
+			}
 
 			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			if (ranks && rid != 0) {
-				ps.setInt(3, rid);
-			} else {
+			if(ds.equals(DownsamplingType.MEAN)){
+				ps.setDouble(1, st);
+				ps.setInt(2, dsInt);
 				ps.setDouble(3, st);
 				ps.setDouble(4, et);
+				if (ranks && rid != 0) {
+					ps.setInt(5, rid);
+				} else {
+					ps.setDouble(5, st);
+					ps.setDouble(6, et);
+				}
+			} else {
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				if (ranks && rid != 0) {
+					ps.setInt(3, rid);
+				} else {
+					ps.setDouble(3, st);
+					ps.setDouble(4, et);
+				}
 			}
 			rs = ps.executeQuery();
 			
+			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+				throw new UtilException("Max rows (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+			}
 			// loop through each result and add to the list
 			while (rs.next()) {
 				
 				// loop through each of the columns and convert to Double.NaN if it was null in the DB
 				dataRow = new double[columnsReturned];
 				for (int i = 0; i < columnsReturned; i++) {
-					value	= rs.getDouble(i + 1);
-					if (rs.wasNull()) { value = Double.NaN; }
-					dataRow[i] = value;
+					dataRow[i] = getDoubleNullCheck(rs, i+1);
 				}
 				pts.add(dataRow);
 			}
@@ -1228,11 +1401,28 @@ abstract public class SQLDataSource {
 				result = new GenericDataMatrix(pts);
 			}
 
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Retrieves the value of the designated column in the current row
+     * of <code>ResultSet</code> object as
+     * a <code>double</code> in the Java programming language
+	 * @param rs result set to extract data
+	 * @param columnIndex the first column is 1, the second is 2, ...
+	 * @return column value; not like ResultSet.getData(), if the value is SQL <code>NULL</code>, the
+     * value returned is <code>Double.NaN</code>
+	 * @throws SQLException
+	 */
+	
+	public double getDoubleNullCheck(ResultSet rs, int columnIndex) throws SQLException{
+		double value	= rs.getDouble(columnIndex);
+		if (rs.wasNull()) { value = Double.NaN; }
+		return  value;
 	}
 
 	/**
@@ -1313,6 +1503,19 @@ abstract public class SQLDataSource {
 		}
 	}
 	
+	/**
+	 * Insert Tilt data into V2 database
+	 *
+	 * @param code
+	 * @param j2ksec time
+	 * @param x
+	 * @param y
+	 * @param h
+	 * @param b
+	 * @param i
+	 * @param g
+	 * @param r
+	 */
 	public void insertV2TiltData (String code, double j2ksec, double x, double y, double h, double b, double i, double g, double r) {
 		try {
 			
@@ -1367,6 +1570,15 @@ abstract public class SQLDataSource {
 		}
 	}
 
+	/**
+	 * Insert Strain data into V2 database
+	 *
+	 * @param code
+	 * @param j2ksec time
+	 * @param dt01
+	 * @param dt02
+	 * @param barometer
+	 */
 	public void insertV2StrainData(String code, double j2ksec, double dt01, double dt02, double barometer) {		
 		try {
 			
@@ -1413,6 +1625,13 @@ abstract public class SQLDataSource {
 		}		
 	}
 	
+	/**
+	 * Insert Gas data into V2 database
+	 *
+	 * @param sid station ID
+	 * @param t time
+	 * @param co2 co2 value
+	 */
 	public void insertV2GasData(int sid, double t, double co2) {		
 		try {
 			
@@ -1430,5 +1649,546 @@ abstract public class SQLDataSource {
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLDataSource.insertV2GasData() failed.", e);
 		}		
+	}
+	
+	/**
+	 * Insert a piece of metadata
+	 * 
+	 * @param md the MetaDatum to be added
+	 */
+	public void insertMetaDatum( MetaDatum md ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO channelmetadata (cid,colid,rid,name,value) VALUES (" + md.cid + "," + md.colid + "," + md.rid + ",\"" + md.name + "\",\"" + md.value + "\");";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+	}
+	
+	/**
+	 * Update a piece of metadata
+	 * 
+	 * @param md the MetaDatum to be updated
+	 */
+	public void updateMetaDatum( MetaDatum md ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "UPDATE channelmetadata SET cid='" + md.cid + "', colid='" + md.colid +
+				"', rid='" + md.rid + "', name='" + md.name + "', value='" + md.value +
+				"' WHERE cmid='" + md.cmid + "'";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.updateMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+	}
+	
+	/**
+	 * Retrieve a piece of metadata
+	 * 
+	 * @param cmid the ID of the metadata to retrieve
+	 * @return MetaDatum the desired metadata (null if not found)
+	 */
+	public MetaDatum getMetaDatum( int cmid ) {
+		try {
+			database.useDatabase(dbName);
+			MetaDatum md = null;
+			sql = "SELECT * FROM channelmetadata WHERE cmid = " + cmid;
+			ps = database.getPreparedStatement( sql );
+			rs	= ps.executeQuery();
+			if (rs.next()) {
+				md = new MetaDatum();
+				md.cmid    = rs.getInt(1);
+				md.cid     = rs.getInt(2);
+				md.colid   = rs.getInt(3);
+				md.rid     = rs.getInt(4);
+				md.name    = rs.getString(5);
+				md.value   = rs.getString(6);
+				md.chName  = rs.getString(7);
+				md.colName = rs.getString(8);
+				md.rkName  = rs.getString(9);
+			}
+			rs.close();
+			return md;
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMetaDatum() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}	
+
+	/**
+	 * Retrieve a collection of metadata
+	 * 
+	 * @param md the pattern to match (integers < 0 & null strings are ignored)
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @return List<MetaDatum> the desired metadata (null if an error occurred)
+	 */
+	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT MD.cmid, MD.cid, MD.colid, MD.rid, MD.name, MD.value, " +
+				"CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
+			String where = "WHERE MD.cid=CH.cid AND MD.colid=COL.colid AND MD.rid=RK.rid";
+			
+			if ( md.chName != null )
+				where = where + " AND CH.code='" + md.chName + "'";
+			else if ( md.cid >= 0 )
+				where = where + " AND MD.cid=" + md.cid;
+			if ( md.colName != null )
+				where = where + " AND COL.name='" + md.colName + "'";
+			else if ( md.colid >= 0 )
+				where = where + " AND MD.colid=" + md.colid;
+			if ( md.rkName != null )
+				where = where + " AND RK.name='" + md.rkName + "'";
+			else if ( md.rid >= 0 )
+				where = where + " AND MD.rid=" + md.rid;
+			if ( md.name != null )
+				where = where + " AND MD.name=" + md.name;
+			if ( md.value != null )
+				where = where + " AND MD.value=" + md.value;
+				
+			logger.info( "SQL: " + sql + where );
+			ps = database.getPreparedStatement( sql + where );
+			rs	= ps.executeQuery();
+			List<MetaDatum> result = new ArrayList<MetaDatum>();
+			while (rs.next()) {
+				md = new MetaDatum();
+				md.cmid    = rs.getInt(1);
+				md.cid     = rs.getInt(2);
+				md.colid   = rs.getInt(3);
+				md.rid     = rs.getInt(4);
+				md.name    = rs.getString(5);
+				md.value   = rs.getString(6);
+				md.chName  = rs.getString(7);
+				md.colName = rs.getString(8);
+				md.rkName  = rs.getString(9);
+				result.add( md );
+			}
+			rs.close();
+			return result;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMatchingMetaData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}
+
+	/**
+	 * Process a getData request for metadata from this datasource
+	 * 
+	 * @param params parameters for this request
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @return RequestResult the desired meta data (null if an error occurred)
+	 */
+	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
+		String arg = params.get("byID");
+		List<MetaDatum> data = null;
+		MetaDatum md_s;
+		if ( arg != null && arg.equals("true") ) {
+			int cid			= Integer.parseInt(params.get("ch"));
+			arg = params.get("col");
+			int colid;
+			if ( arg==null || arg=="" )
+				colid = -1;
+			else
+				colid = Integer.parseInt(arg);
+			arg = params.get("rk");
+			int rid;
+			if ( arg==null || arg=="" )
+				rid = -1;
+			else
+				rid = Integer.parseInt(arg);
+			md_s = new MetaDatum( cid, colid, rid );
+		} else {
+			String chName   = params.get("ch");
+			String colName  = params.get("col");
+			String rkName   = params.get("rk");
+			md_s = new MetaDatum( chName, colName, rkName );
+		}
+		data = getMatchingMetaData( md_s, cm );
+		if (data != null) {
+			List<String> result = new ArrayList<String>();
+			for ( MetaDatum md: data )
+				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
+			return new TextResult(result);
+		}
+		return null;
+	}
+
+	/**
+	 * Retrieve a collection of supplementary data
+	 * 
+	 * @param sd the pattern to match (integers < 0 & null strings are ignored)
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @return List<SuppDatum> the desired supplementary data (null if an error occurred)
+	 */
+	public List<SuppDatum> getMatchingSuppData( SuppDatum sd, boolean cm ) {
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT SD.sdid, SD.sdtypeid, SD.st, SD.et, SD.sd_short, SD.sd, " +
+				"CH.code, COL.name, RK.name, ST.supp_data_type, ST.supp_color, SX.cid, SX.colid, SX.rid, ST.draw_line " +
+				"FROM supp_data as SD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK, supp_data_type as ST, supp_data_xref as SX "; // channelmetadata";
+			String where = "WHERE SD.et >= " + sd.st + " AND SD.st <= " + sd.et + " AND SD.sdid=SX.sdid AND SD.sdtypeid=ST.sdtypeid AND SX.cid=CH.cid AND SX.colid=COL.colid AND SX.rid=RK.rid";
+			
+			if ( sd.chName != null )
+				if ( sd.cid < 0 )
+					where = where + " AND CH.code='" + sd.chName + "'";
+				else
+					where = where + " AND CH.cid IN (" + sd.chName + ")";
+			else if ( sd.cid >= 0 )
+				where = where + " AND SX.cid=" + sd.cid;
+				
+			if ( sd.colName != null )
+				if ( sd.colid < 0 )
+					where = where + " AND COL.name='" + sd.colName + "'";
+				else
+					where = where + " AND COL.colid IN (" + sd.colName + ")";
+			else if ( sd.colid >= 0 )
+				where = where + " AND SX.colid=" + sd.colid;
+				
+			if ( sd.rkName != null )
+				if ( sd.rid < 0 )
+					where = where + " AND RK.name='" + sd.rkName + "'";
+				else
+					where = where + " AND RK.rid IN (" + sd.rkName + ")";
+			else if ( sd.rid >= 0 )
+				where = where + " AND SX.rid=" + sd.rid;
+				
+			if ( sd.name != null )
+				where = where + " AND SD.sd_short=" + sd.name;	
+			if ( sd.value != null )
+				where = where + " AND SD.sd=" + sd.value;
+			
+			String type_filter = null;
+			if ( sd.typeName != null )
+				if ( sd.typeName.length() == 0 )
+					;
+				else if ( sd.tid == -1 )
+					type_filter = "ST.supp_data_type='" + sd.typeName + "'";
+				else
+					type_filter = "ST.sdtypeid IN (" + sd.typeName + ")";
+			else if ( sd.tid >= 0 )
+				type_filter = "SD.sdtypeid=" + sd.tid;
+
+			if ( sd.dl == -1 ) {
+				if ( type_filter != null )
+					where = where + " AND " + type_filter;
+			} else if ( sd.dl < 2 ) {
+				if ( type_filter != null )
+					where = where + " AND " + type_filter;
+				where =  where + " AND ST.dl='" + sd.dl;
+			} else if ( type_filter != null ) 
+				where = where + " AND (" + type_filter + " OR ST.draw_line='0')";
+			else
+				where = where + " AND ST.draw_line='0'";
+					
+				
+			//logger.info( "SQL: " + sql + where );
+			ps = database.getPreparedStatement( sql + where );
+			rs	= ps.executeQuery();
+			List<SuppDatum> result = new ArrayList<SuppDatum>();
+			while (rs.next()) {
+				result.add( new SuppDatum(rs) );
+			}
+			rs.close();
+			return result;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getMatchingSuppData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+	}
+	
+	/**
+	 * Insert a piece of supplemental data
+	 * 
+	 * @param sd the SuppDatum to be added
+	 * @return ID of the record, -ID if already present, 0 if failed
+	 */
+	public int insertSuppDatum( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO supp_data (sdtypeid,st,et,sd_short,sd) VALUES (" + 
+				sd.tid + "," + sd.st + "," + sd.et + ",\"" + sd.name  + "\",\"" + sd.value + 
+				"\")";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			rs = ps.getGeneratedKeys(); 
+
+			rs.next();
+			
+			return rs.getInt(1); 
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return 0;
+			}
+		}
+		try {
+			sql = "SELECT sdid FROM supp_data WHERE sdtypeid=" + sd.tid + " AND st=" + sd.st +
+				" AND et=" + sd.et + " AND sd_short='" + sd.name + "'";
+			ps = database.getPreparedStatement(sql);
+			
+			int sdid = 0;
+
+			rs = ps.executeQuery();
+
+			rs.next();
+
+			return -rs.getInt(1);
+		} catch ( SQLException e2 ) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. (" + 
+				database.getDatabasePrefix() + "_" + dbName + ")", e2 );
+			return 0;
+		}
+	}
+	
+	/**
+	 * Update a piece of supplemental data
+	 * 
+	 * @param sd the SuppDatum to be added
+	 * @return ID of the record, 0 if failed
+	 */
+	public int updateSuppDatum( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "UPDATE supp_data SET sdtypeid='" + sd.tid + "',st='" + sd.st + "',et='" + sd.et + 
+				"',sd_short='" + sd.name + "',sd='" + sd.value + "' WHERE sdid='" + sd.sdid + "'";
+				
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			return sd.sdid;
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, "SQLDataSource.updateSuppDatum() failed. (" + 
+				database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return 0;
+		}
+	}	
+								
+	/**
+	 * Insert a supplemental data xref
+	 * 
+	 * @param sd the SuppDatum xref to be added
+	 * @return true if successful, false otherwise
+	 */
+	public boolean insertSuppDatumXref( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+			sql		= "INSERT INTO supp_data_xref (sdid, cid, colid, rid) VALUES (" +
+				sd.sdid + "," + sd.cid + "," + sd.colid + "," + sd.rid + ");";
+
+			ps = database.getPreparedStatement(sql);
+		
+			ps.execute();
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatumXref() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return false;
+			}
+			logger.info( "SQLDataSource.insertSuppDatumXref: SDID " + 
+				sd.sdid + " xref already exists for given parameters" );
+		}
+		return true;
+	}
+
+	/**
+	 * Insert a supplemental datatype
+	 * 
+	 * @param sd the datatype to be added
+	 * @return ID of the datatype, -ID if already present, 0 if failed
+	 */
+	public int insertSuppDataType( SuppDatum sd ) {
+		try {
+			database.useDatabase(dbName);
+
+			sql		= "INSERT INTO supp_data_type (supp_data_type,supp_color,draw_line) VALUES (" + 
+				"\"" + sd.typeName + "\",\"" + sd.color + "\"," + sd.dl + ");";
+
+			ps = database.getPreparedStatement(sql);
+			
+			ps.execute();
+			
+			rs = ps.getGeneratedKeys(); 
+
+			rs.next();
+			
+			return rs.getInt(1); 
+		} catch (SQLException e) {
+			if ( !e.getSQLState().equals("23000") ) {
+				logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. (" + 
+					database.getDatabasePrefix() + "_" + dbName + ")", e);
+				return 0;
+			}
+		}
+		try {
+			sql = "SELECT sdid FROM supp_data WHERE sdtypeid=" + sd.tid + " AND st=" + sd.st +
+				" AND et=" + sd.et + " AND sd_short='" + sd.name + "'";
+			ps = database.getPreparedStatement(sql);
+			rs = ps.executeQuery();
+			rs.next();
+			return -rs.getInt(1);
+			
+		} catch (SQLException e) {
+			logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return 0;
+		}
+	}
+
+	/**
+	 * Process a getData request for supplementary data from this datasource
+	 * 
+	 * @param params parameters for this request
+	 * @param cm = "is the name of the columns table coulmns_menu?"
+	 * @return RequestResult the desired supplementary data (null if an error occurred)
+	 */
+	protected RequestResult getSuppData(Map<String, String> params, boolean cm) {
+		double st, et;
+		String arg = null;
+		List<SuppDatum> data = null;
+		SuppDatum sd_s;
+		
+		String tz = params.get("tz");
+		if ( tz==null || tz.equals("") )
+			tz = "UTC";
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		df.setTimeZone(TimeZone.getTimeZone(tz));
+		
+		try {
+			arg = params.get("st");
+			st =  Util.dateToJ2K(df.parse(arg));
+			arg = params.get("et");
+			if ( arg==null || arg.equals("") )
+				et = Double.MAX_VALUE;
+			else
+				et = Util.dateToJ2K(df.parse(arg));
+		} catch (Exception e) {
+			return getErrorResult("Illegal time string: " + arg + ", " + e);
+		}
+
+		arg = params.get("byID");
+		if ( arg != null && arg.equals("true") ) {
+			//arg = params.get("et");
+			//if ( arg==null || arg.equals("") )
+			//	et = Double.MAX_VALUE;
+			//else
+			//	et = Double.parseDouble(arg);
+			sd_s = new SuppDatum( st, et, -1, -1, -1, -1 );
+			String[] args = {"ch","col","rk","type"};
+			for ( int i = 0; i<4; i++ ) {
+				arg = params.get( args[i] );
+				if ( arg==null || arg.equals("") )
+					args[i] = null;
+				else 
+					args[i] = arg;
+			}
+			sd_s.chName = args[0];
+			if ( sd_s.chName != null )
+				sd_s.cid = 0;
+			sd_s.colName = args[1];
+			if ( sd_s.colName != null )
+				sd_s.colid = 0;
+			sd_s.rkName = args[2];
+			if ( sd_s.rkName != null )
+				sd_s.rid = 0;
+			sd_s.typeName = args[3];
+			if ( sd_s.typeName != null )
+				sd_s.tid = 0;
+		} else {
+			String chName   = params.get("ch");
+			String colName  = params.get("col");
+			String rkName   = params.get("rk");
+			String typeName = params.get("type");
+			sd_s = new SuppDatum( st, et, chName, colName, rkName, typeName );
+		}
+		arg = params.get("dl");
+		if ( arg != null )
+			sd_s.dl = Integer.parseInt(arg);
+		data = getMatchingSuppData( sd_s, cm );
+		if (data != null) {
+			List<String> result = new ArrayList<String>();
+			for ( SuppDatum sd: data )
+				result.add(String.format("%d,%1.3f,%1.3f,%d,%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+					sd.sdid, sd.st, sd.et, sd.cid, sd.tid, sd.colid, sd.rid, sd.dl, 
+					sd.name, sd.value.replace('\n',Character.MIN_VALUE), sd.chName, sd.typeName, sd.colName, sd.rkName, sd.color ));
+			return new TextResult(result);
+		}
+		return null;
+	}
+	
+	/**
+	 * Retrieve the collection of supplementary data types
+	 * 
+	 * @return List<SuppDatum> the desired supplementary data types (null if an error occurred)
+	 */
+	public List<SuppDatum> getSuppDataTypes() {
+
+		List<SuppDatum> types = new ArrayList<SuppDatum>();
+		try {
+			database.useDatabase(dbName);
+			sql  = "SELECT sdtypeid, supp_data_type, supp_color, draw_line FROM supp_data_type";
+			ps = database.getPreparedStatement(sql);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				SuppDatum sd = new SuppDatum( 0.0, 0.0, -1, -1, -1, rs.getInt(1) );
+				sd.typeName  = rs.getString(2);
+				sd.color     = rs.getString(3);
+				sd.dl        = rs.getInt(4);
+				types.add(sd);
+			}
+			rs.close();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.getSuppDataTypes() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return null;
+		}
+
+		return types;
+	}
+	
+	/**
+	 * Get supp data types list in format 'sdtypeid"draw_line"name"color' from database
+	 * 
+	 * @param drawOnly yield only the drawable types
+	 * @return List of Strings with " separated values
+	 */
+	public RequestResult getSuppTypes(boolean drawOnly) {
+		List<String> result = new ArrayList<String>();
+
+		try {
+			database.useDatabase(dbName);
+			sql = "SELECT sdtypeid, supp_data_type, supp_color, draw_line FROM supp_data_type";
+			if ( drawOnly )
+				sql = sql + " WHERE draw_line=1";
+			rs = database.getPreparedStatement(sql + " ORDER BY supp_data_type").executeQuery();
+			while (rs.next()) {
+				result.add(String.format("%d\"%d\"%s\"%s", rs.getInt(1), rs.getInt(4), rs.getString(2), rs.getString(3)));
+			}
+			rs.close();
+
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLDataSource.defaultGetSuppdataTypes() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+
+		return new TextResult(result);
 	}
 }

@@ -1,10 +1,14 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.LinkedList;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -16,6 +20,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class GenericDataMatrix implements BinaryDataSet
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.GenericDataMatrix"); 
 	protected DoubleMatrix2D data;
 	protected HashMap<String, Integer> columnMap;
 	
@@ -31,7 +36,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Construct GenericDataMatrix from given 2d matrix
-	 * @param d
+	 * @param d 2d matrix
 	 */
 	public GenericDataMatrix(DoubleMatrix2D d)
 	{
@@ -41,7 +46,6 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Create a GenericDataMatrix from a byte buffer.  
-	 * 
 	 * @param bb the byte buffer
 	 */
 	public GenericDataMatrix(ByteBuffer bb)
@@ -52,7 +56,7 @@ public class GenericDataMatrix implements BinaryDataSet
 
 	/**
 	 * Create a GenericDataMatrix from a List<double[]>.  
-	 * 
+	 * @param list of double arrays
 	 */
 	public GenericDataMatrix(List<double[]> list)
 	{
@@ -73,7 +77,8 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 	
 	/**
-	 * Dumps content as ByteBuffer
+	 * Returns content as ByteBuffer
+	 * @return content as ByteBuffer
 	 */
 	public ByteBuffer toBinary()
 	{
@@ -91,6 +96,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Init content from ByteBuffer
+	 * @param bb content
 	 */
 	public void fromBinary(ByteBuffer bb)
 	{
@@ -106,6 +112,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	
 	/**
 	 * Dumps content as CSV
+	 * @return string w/ content in CSV format
 	 */
 	public String toCSV()
 	{
@@ -132,7 +139,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 
 	/**
-	 * Sets names of matrix conumns
+	 * Sets names of matrix columns
 	 */
 	public void setColumnNames()
 	{}
@@ -162,7 +169,8 @@ public class GenericDataMatrix implements BinaryDataSet
 		return c;
 	}
 	
-	/** Gets the number of rows in the data.
+	/** 
+	 * Gets the number of rows in the data.
 	 * @return the row count
 	 */
 	public int rows()
@@ -173,7 +181,8 @@ public class GenericDataMatrix implements BinaryDataSet
 			return 0;
 	}
 
-	/** Gets the number of columns in the data.
+	/** 
+	 * Gets the number of columns in the data.
 	 * @return the column count
 	 */
 	public int columns()
@@ -238,7 +247,7 @@ public class GenericDataMatrix implements BinaryDataSet
 
 	/**
 	 * Sums column, value in resulting column is sum of all previous raws.
-	 * @param c
+	 * @param c column to sum
 	 */
 	public void sum(int c)
 	{
@@ -250,6 +259,10 @@ public class GenericDataMatrix implements BinaryDataSet
 		}
 	}
 
+	/**
+	 * Performs data detrending
+	 * @param c number of column to detrend
+	 */
 	public void detrend(int c) {
 
         double xm	= mean(0);
@@ -273,8 +286,300 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 	
 	/**
+	 * Despike data from column c using period p
+	 * @param c column to despike
+	 * @param p period used for despiking
+	 */
+	public void despike(int c, double p ) {
+		set2mean( c, p );
+	}		
+
+	/**
+	 * Replace data in column c with rolling mean of period p
+	 * @param c column to change
+	 * @param p period used for rolling mean
+	 */
+	public void set2mean( int c, double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = data.getQuick(0,0); // time of oldest value in window
+		Meaner window = new Meaner();
+		window.add( data.getQuick(0,c) );
+		int r = rows();
+		for ( int i=1; i<r; i++ ) {
+			double itime = data.getQuick(i,0);
+			double ival = data.getQuick(i,c);
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = data.getQuick(j,0);
+			}
+			data.setQuick(i,c,window.avg());
+		}
+	}
+
+	/**
+	 * Replace data in column c with rolling median of period p
+	 * @param c column to change
+	 * @param p period used for rolling median
+	 */
+	public void set2median( int c, double p ) {
+		int j = 0; // index of oldest value in window
+		double jtime = data.getQuick(0,0); // time of oldest value in window
+		Medianer window = new Medianer();
+		window.add( data.getQuick(0,c) );
+		int r = rows();
+		for ( int i=1; i<r; i++ ) {
+			double itime = data.getQuick(i,0);
+			double ival = data.getQuick(i,c);
+			window.add(ival);
+			// While oldest value is outside period, remove it
+			while ( itime - jtime > p ) {
+				window.removeOldest();
+				j++;
+				jtime = data.getQuick(j,0);
+			}
+			data.setQuick(i,c,window.avg());
+		}
+	}
+	
+	/** Class to maintain a FIFO of doubles & report its mean 
+	 */
+	private class Meaner {
+		private LinkedList<Double> data;	// the values
+		private double sum;					// their sum
+		
+		Meaner() {
+			data = new LinkedList<Double>();
+			sum = 0;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			data.addLast( val );
+			sum += val;
+		}
+		
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public double removeOldest() {
+			Double datum = data.removeFirst();
+			sum -= datum;
+			return datum;
+		}
+		
+		/** Mean of values in queue
+		 * 
+		 * @return the mean
+		 */
+		public double avg() {
+			return sum / data.size();
+		}
+	}
+	
+		
+	/** Class to maintain a FIFO of doubles & report its median 
+	 */
+	private class Medianer {
+		
+		private class MultiMap {
+			private TreeMap<Double,LinkedList<Integer>> mm;
+			private TreeMap<Integer,Double>unmm;
+			
+			MultiMap() {
+				mm = new TreeMap<Double,LinkedList<Integer>>();
+				unmm = new TreeMap<Integer,Double>();
+			}
+			
+			protected void put( Double key, Integer val ) {
+				LinkedList<Integer> entry = mm.get( key );
+				if ( entry == null ) {
+					entry = new LinkedList<Integer>();
+				}
+				unmm.put( val, key );
+				if ( entry.size() == 0 ) {
+					entry.add( val );
+					mm.put( key, entry );
+					return;
+				}
+				if ( val < entry.getFirst() )
+					entry.addFirst( val );
+				else
+					entry.addLast( val );
+			}
+			
+			protected Double lastKey() {
+				return mm.lastKey();
+			}
+			
+			protected Integer removeLastIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeLast();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			protected Double firstKey() {
+				return mm.firstKey();
+			}
+			
+			protected Integer removeFirstIndex( Double key ) {
+				LinkedList<Integer> entry = mm.get( key );
+				// entry should not be null!
+				Integer index = entry.removeFirst();
+				if ( entry.size() == 0 )
+					mm.remove( key );
+				unmm.remove( index );
+				return index;
+			}
+			
+			public int size() {
+				return unmm.size();
+			}
+			
+			public void addLo( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key >= other.firstKey() ) {
+					other.put( key, val );
+					key = other.firstKey();
+					val = other.removeFirstIndex( key );
+				}
+				put( key, val );
+			}
+						
+			public void addHi( Double key, Integer val, MultiMap other ) {
+				if ( other.size() > 0 && key <= other.lastKey() ) {
+					other.put( key, val );
+					key = other.lastKey();
+					val = other.removeLastIndex( key );
+				}
+				put( key, val );
+			}
+			
+			public boolean indexIsMember( Integer val ) {
+				return unmm.containsKey( val );
+			}
+			
+			public boolean removeIndex( Integer val ) {
+				Double key = unmm.remove( val );
+				if ( key == null )
+					return false;
+				List<Integer> entry = mm.get( key );
+				if ( entry.size() == 1 )
+					mm.remove( key );
+				else
+					entry.remove( val );
+				return true;
+			}
+			
+			public void dump() {
+				for ( Double d: mm.keySet() ) {
+					List<Integer> d_ids = mm.get(d);
+					if ( d_ids == null || d_ids.size() == 0 )
+						continue;
+					System.out.print( d );
+					if ( d_ids.size() > 1 )
+						System.out.print( "x" + mm.get(d).size());
+					System.out.print( " " );
+				}
+			}
+		}		
+
+		private MultiMap loHalf;	// values in lower half
+		private MultiMap hiHalf;	// values in upper half
+		private int idx1, idx2;	// values window have indices idx1..idx2
+		
+		Medianer() {
+			// Invariant: |loHalf| - |hiHalf| = 0 or 1
+			//				All keys in loHalf <= all keys in hiHalf
+			loHalf = new MultiMap();
+			hiHalf = new MultiMap();
+			idx1 = 0;
+			idx2 = -1;
+		}
+		
+		/** Add val to the queue 
+		 * 
+		 * @param val value to add
+		 */
+		public void add( double val ) {
+			idx2++;
+			if ( loHalf.size() == hiHalf.size() )
+				loHalf.addLo( val, idx2, hiHalf );
+			else
+				hiHalf.addHi( val, idx2, loHalf );
+		}
+		
+		/**
+		 * Dumps median data to stdout
+		 */
+		public void dump() {
+			System.out.print( "[" );
+			loHalf.dump();
+			System.out.print( "]:[" );
+			hiHalf.dump();
+			System.out.println("]");
+		}
+
+		/** Remove the oldest value from the queue
+		 * 
+		 * @return value removed
+		 */
+		public void removeOldest() {
+			if ( !loHalf.removeIndex( idx1 ) ) {
+				hiHalf.removeIndex( idx1 );
+			}
+			idx1++;
+			int loSize = loHalf.size();
+			int hiSize = hiHalf.size();
+			if ( loSize < hiSize ) {
+				// Shift min of hi to lo
+				Double d = hiHalf.firstKey();
+				Integer ix = hiHalf.removeFirstIndex( d );
+				loHalf.put( d, ix );
+			} else if ( loSize > hiSize+1 ) {
+				// Shift max of lo to hi
+				Double d = loHalf.lastKey();
+				Integer ix = loHalf.removeLastIndex( d );
+				hiHalf.put( d, ix );
+			}
+		}
+		
+		/** Median of values in queue
+		 * 
+		 * @return the median
+		 */
+		public double avg() {
+			if ( loHalf.size() == hiHalf.size() )
+				return (loHalf.lastKey() + hiHalf.firstKey()) / 2;
+			return loHalf.lastKey();
+		}
+	}
+
+	/**
+	 * Get first value in column
+	 * @param c column number
+	 */
+	public double first(int c)
+	{
+		if ( rows() == 0 )
+			return Double.NaN;
+		return data.getQuick(0,c);
+	}
+
+
+	/**
 	 * Get maximum value in column
 	 * @param c column number
+	 * @return maximum of column
 	 */
 	public double max(int c)
 	{
@@ -290,6 +595,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/**
 	 * Get minimum value in column
 	 * @param c column number
+	 * @return minimum of column
 	 */
 	public double min(int c)
 	{
@@ -305,14 +611,17 @@ public class GenericDataMatrix implements BinaryDataSet
 	/**
 	 * Get mean value in column
 	 * @param c column number
+	 * @return mean of column
 	 */
 	public double mean(int c)
 	{
 		double t = 0;
 		double j = 0;
-		for (int i = 0; i < rows(); i++) {
-			if (!Double.isNaN(data.getQuick(i, c))) {
-				t += data.getQuick(i, c);
+		int r = rows();
+		for (int i = 0; i < r; i++) {
+			double val = data.getQuick(i, c);
+			if (!Double.isNaN(val)) {
+				t += val;
 				j++;
 			}
 		}
@@ -322,7 +631,7 @@ public class GenericDataMatrix implements BinaryDataSet
 	/** Returns the least squares fit line from a column.  Data are returned
 	 * as a double array, first element slope, second element y-intercept.
 	 * NEEDS SUPPORT FOR NO_DATA!
-	 * @param column the column index
+	 * @param c the column index
 	 * @return the slope and y-intercept of the line
 	 */
     public double[] leastSquares(int c)
@@ -367,7 +676,8 @@ public class GenericDataMatrix implements BinaryDataSet
 			return data.get(rows()-1,0);
 	}
 	
-	/** Adds a value to the time column (for time zone management).
+	/**
+	 * Adds a value to the time column (for time zone management).
 	 * @param adj the time adjustment
 	 */
 	public void adjustTime(double adj)
@@ -375,7 +685,8 @@ public class GenericDataMatrix implements BinaryDataSet
 		add(0, adj);
 	}
 
-	/** Gets the time column (column 1) of the data.
+	/** 
+	 * Gets the time column (column 1) of the data.
 	 * @return the time column
 	 */
 	public DoubleMatrix2D getTimes()
@@ -426,7 +737,6 @@ public class GenericDataMatrix implements BinaryDataSet
 	}
 	
 	/**
-	 * 
 	 * @return size of memory occuped by data matrix, in bytes
 	 */
 	public int getMemorySize()

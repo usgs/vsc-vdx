@@ -35,6 +35,7 @@ abstract public class Poller extends Thread
     }
     
     /** This function is called every time the polling time comes around.
+     * @param filename name of file to process
      */
     abstract public void process(String filename);
     

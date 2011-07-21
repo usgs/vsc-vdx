@@ -50,6 +50,10 @@ public class VDX extends Server {
 		startListening();
 	}
 
+	/**
+	 * Log fatal error & shut down
+	 * @param msg error message
+	 */
 	protected void fatalError(String msg) {
 		logger.severe(msg);
 		System.exit(1);
@@ -105,14 +109,26 @@ public class VDX extends Server {
 		logger.info("config: vdx.maxConnections=" + maxConnections + ".");
 	}
 
+	/**
+	 * Yield database driver
+	 * @return driver
+	 */
 	public String getDbDriver() {
 		return driver;
 	}
 	
+	/**
+	 * Yield database url
+	 * @return url
+	 */
 	public String getDbUrl() {
 		return url;
 	}
 	
+	/**
+	 * Yield prefix
+	 * @return prefix
+	 */
 	public String getPrefix() {
 		return prefix;
 	}
@@ -121,7 +137,7 @@ public class VDX extends Server {
 	 * Main method, 
 	 * starts new thread for VDX server which listen configured port,
 	 * and expect 'q' symbol on stdin to exit.
-	 * @param args
+	 * @param args command line args
 	 * @throws IOException
 	 */
 	public static void main(final String[] args) throws IOException {

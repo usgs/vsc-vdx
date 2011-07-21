@@ -70,6 +70,7 @@ public class RSAMData extends GenericDataMatrix
 	/**
 	 * Get initialized axis to use with histogram graph
 	 * @param bin histogram section period
+	 * @return initialized axis
 	 */
 	protected IAxis getHistogramAxis(BinSize bin)
 	{
@@ -177,6 +178,12 @@ public class RSAMData extends GenericDataMatrix
 		return axis;
 	}
 
+	/**
+	 * Loops for data matrix, scans columns and fills events matrix
+	 * @param threshold event treshold
+	 * @param ratio minimum ratio between new and older value to define event
+	 * @param maxLength maximum event length (ms)
+	 */
 	public void countEvents(double threshold, double ratio, double maxLength)
 	{
 		double oldValue = 0;
@@ -231,6 +238,7 @@ public class RSAMData extends GenericDataMatrix
 	/**
 	 * Get ratio of this data value and given RSAMData data value
 	 * on the time interval where they are intersecting.
+	 * @return RSAMData
 	 */
 	public RSAMData getRatSAM(RSAMData d)
 	{
@@ -265,6 +273,7 @@ public class RSAMData extends GenericDataMatrix
 	
 	/**
 	 * Get cumulative event data by time interval
+	 * @return matrix of event data
 	 */
 	public DoubleMatrix2D getCumulativeCounts()
 	{		
@@ -273,6 +282,7 @@ public class RSAMData extends GenericDataMatrix
 	
 	/**
 	 * Dump cumulative data as CSV string
+	 * @return string representation in CSV
 	 */
 	public String getCountsCSV()
 	{
@@ -293,6 +303,7 @@ public class RSAMData extends GenericDataMatrix
 	/**
 	 * Get initialized histogram of event count by time
 	 * @param bin time interval
+	 * @return initialized histogram
 	 */
 	public Histogram1D getCountsHistogram(BinSize bin)
 	{

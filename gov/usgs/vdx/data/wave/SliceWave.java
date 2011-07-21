@@ -58,6 +58,7 @@ public class SliceWave
 	
 	/**
 	 * Getter for time series
+	 * @return wave
 	 */
 	public Wave getWave()
 	{
@@ -66,6 +67,7 @@ public class SliceWave
 	
 	/**
 	 * Get data range - max and min slice data limits
+	 * @return max and min slice data limits
 	 */
 	public double[] getDataRange()
 	{
@@ -77,6 +79,7 @@ public class SliceWave
 	
 	/**
 	 * Get samples count in represented slice
+	 * @return samples count
 	 */
 	public int samples()
 	{
@@ -85,6 +88,7 @@ public class SliceWave
 
 	/**
 	 * Get sample rate
+	 * @return sample rate
 	 */
 	public double getSamplingRate()
 	{
@@ -93,6 +97,7 @@ public class SliceWave
 	
 	/**
 	 * Get slice start time
+	 * @return start time
 	 */
 	public double getStartTime()
 	{
@@ -101,6 +106,7 @@ public class SliceWave
 	
 	/**
 	 * Get slice end time
+	 * @return end time
 	 */
 	public double getEndTime()
 	{
@@ -109,6 +115,7 @@ public class SliceWave
 
 	/**
 	 * Get wave series end time
+	 * @return end time
 	 */
 	private double getTrueEndTime()
 	{
@@ -404,6 +411,7 @@ public class SliceWave
 	
 	/**
 	 * Check if read pointer in the slice zone
+	 * @return true if more to read
 	 */
 	public boolean hasNext()
 	{
@@ -421,7 +429,7 @@ public class SliceWave
 	
 	/**
 	 * Dump slice content to CSV string
-	 * @return
+	 * @return CSV string
 	 */
 	public String toCSV()
 	{

@@ -60,6 +60,7 @@ public class ServerHandler extends CommandHandler
 	}
 	
 	/**
+	 * Yield data source handler
 	 * @return data source handler computed from vdx parameters
 	 */
 	public DataSourceHandler getDataSourceHandler()
@@ -69,6 +70,9 @@ public class ServerHandler extends CommandHandler
 	
 	/**
 	 * Write log message
+	 * @param level level of message
+	 * @param msg message text
+	 * @param channel where to write to
 	 */
 	public void log(Level level, String msg, SocketChannel channel)
 	{

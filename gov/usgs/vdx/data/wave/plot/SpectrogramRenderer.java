@@ -6,6 +6,7 @@ import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.ImageDataRenderer;
 import gov.usgs.plot.Jet;
 import gov.usgs.plot.Spectrum;
+import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;
@@ -56,9 +57,18 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected double viewStartTime;
 	protected double viewEndTime;
 	protected double overlap;
-	protected double xLabel;
-	protected double yLabel;
+		
+	public boolean xTickMarks = true;
+	public boolean xTickValues = true;
+	public boolean xUnits = true;
+	public boolean xLabel = false;
+	public boolean yTickMarks = true;
+	public boolean yTickValues = true;
+    protected String timeZone;
+	protected String dateFormatString = "yyyy-MM-dd HH:mm:ss";
 	
+	private String yLabelText = null;
+	private String yUnitText = null;
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
 	protected AxisRenderer axis;
@@ -66,8 +76,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected Image im;
 	
 	protected SliceWave wave;
-	
-	protected double timeZoneOffset;
 	
 	protected FrameDecorator decorator;
 	
@@ -103,6 +111,10 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		wave = w;
 	}
 
+	/**
+	 * Set frame decorator
+	 * @param fd frame decorator
+	 */
 	public void setFrameDecorator(FrameDecorator fd)
 	{
 		decorator = fd;
@@ -118,6 +130,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set graph title
+	 * @param t title
 	 */
 	public void setTitle(String t)
 	{
@@ -128,20 +141,32 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		public DefaultWaveFrameDecorator()
 		{
-			yAxisLabel = "Frequency (Hz)";
+			if(yUnitText != null){
+				this.yUnit = yUnitText;
+			}
+			if(yLabelText != null){
+				this.yAxisLabel = yLabelText;
+			}
+			if(xUnits){
+				this.xUnit = timeZone + " Time (" + Util.j2KToDateString(viewStartTime, dateFormatString) + " to " + Util.j2KToDateString(viewEndTime, dateFormatString)+ ")";
+			}
+			this.xAxisLabels = xTickValues;
+			this.yAxisLabels = yTickValues;
+			if(!xTickMarks){
+				vTicks=0;
+			}
+			if(!yTickMarks){
+				hTicks=0;
+			}
 			this.title = channelTitle;
 			this.titleBackground = Color.WHITE;
-		}
-		
-		public void setYAxisLabel(String s)
-		{
-			yAxisLabel = s;
 		}
 	}
 	
 	/**
 	 * Compute spectrogram.
 	 * Reinitialize frame decorator with this renderer data.
+	 * @param oldMaxPower 
 	 * @return maximum magnitude
 	 */
 	public double update(double oldMaxPower)
@@ -237,8 +262,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		
 		this.setImage(im);
 		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
-		this.setDataExtents(wave.getStartTime() + timeZoneOffset, wave.getEndTime() + timeZoneOffset, 0, wave.getSamplingRate() / 2);
-		this.setExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, minF, maxF);
+		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getSamplingRate() / 2);
+		this.setExtents(viewStartTime, viewEndTime, minF, maxF);
 		decorator.decorate(this);
 
 		return maxMag;
@@ -246,12 +271,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 
 	/**
 	 * Set autoscale flag
+	 * @param autoScale autoscale flag
 	 */
 	public void setAutoScale(boolean autoScale)
 	{
 		this.autoScale = autoScale;
 	}
 	/**
+	 * Set size of fft
 	 * @param fftSize The fftSize to set.
 	 */
 	public void setFftSize(String fftSize)
@@ -261,6 +288,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set flag if we have logarithm frequency axis
+	 * @param logFreq logarithm frequency axis flag
 	 */
 	public void setLogFreq(boolean logFreq)
 	{
@@ -269,6 +297,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set flag if we have logarithm power axis
+	 * @param logPower logarithm power axis flag
 	 */
 	public void setLogPower(boolean logPower)
 	{
@@ -277,6 +306,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set maximum frequency
+	 * @param maxFreq maximum frequency
 	 */
 	public void setMaxFreq(double maxFreq)
 	{
@@ -284,7 +314,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
-	 * Get maximum power value
+	 * Set maximum power value
+	 * @param maxPower new maximum power
 	 */
 	public void setMaxPower(double maxPower)
 	{
@@ -293,6 +324,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set minimum frequency
+	 * @param minFreq minimum frequency
 	 */
 	public void setMinFreq(double minFreq)
 	{
@@ -300,6 +332,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	/**
 	 * Set spectrogram overlapping flag
+	 * @param overlap spectrogram overlapping flag
 	 */
 	public void setOverlap(double overlap)
 	{
@@ -307,6 +340,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	/**
 	 * Set viewEndTime.
+	 * @param viewEndTime view end time
 	 */
 	public void setViewEndTime(double viewEndTime)
 	{
@@ -315,6 +349,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set viewStartTime.
+	 * @param viewStartTime view start time
 	 */
 	public void setViewStartTime(double viewStartTime)
 	{
@@ -322,7 +357,35 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
+	 * Set Time Zone name.
+	 * @param timeZone time zone name
+	 */
+	public void setTimeZone(String timeZone)
+	{
+		this.timeZone = timeZone;
+	}
+	
+	/**
+	 * Set Y axis label
+	 * @param s Y axis label
+	 */
+	public void setYLabelText(String s)
+	{
+		yLabelText = s;
+	}
+	
+	/**
+	 * Set Y axis unit
+	 * @param s Y axis unit
+	 */
+	public void setYUnitText(String s)
+	{
+		yUnitText = s;
+	}
+	
+	/**
 	 * Set slice to process
+	 * @param wave slice to process
 	 */
 	public void setWave(SliceWave wave)
 	{
@@ -331,6 +394,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set h ticks count
+	 * @param ticks h ticks count
 	 */
 	public void setHTicks(int ticks)
 	{
@@ -339,39 +403,10 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	
 	/**
 	 * Set v ticks count
+	 * @param ticks v ticks count
 	 */
 	public void setVTicks(int ticks)
 	{
 		vTicks = ticks;
-	}
-	
-	public void setTimeZoneOffset(double tzo)
-	{
-		timeZoneOffset = tzo;
-	}
-	
-	/**
-	 * Set Y label
-	 */
-	public void setYLabel(int i)
-	{
-		yLabel = i;
-	}
-
-	/**
-	 * Set Y axis label
-	 */
-	public void setYAxisLabel(String s)
-	{
-		if (decorator instanceof DefaultWaveFrameDecorator)
-			((DefaultWaveFrameDecorator)decorator).setYAxisLabel(s);
-	}
-
-	/**
-	 * Set X label
-	 */
-	public void setXLabel(int i)
-	{
-		xLabel = i;
 	}
 }

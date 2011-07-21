@@ -35,6 +35,7 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 	
 	/**
 	 * Initialize data source
+	 * @param params config file
 	 */
 	public void initialize(ConfigFile params) {
 		defaultInitialize(params);
@@ -50,31 +51,61 @@ public class SQLNullDataSource extends SQLDataSource implements DataSource
 		defaultDisconnect();
 	}
 	
+	/**
+	 * Create database
+	 * @return true
+	 */
 	public boolean createDatabase()
 	{
 		return true;
 	}
 
+	/**
+	 * Create channel
+	 * @param channel ???
+	 * @param channelName channel name
+	 * @param lon longitude
+	 * @param lat latitude
+	 * @return true
+	 */
 	public boolean createChannel(String channel, String channelName, double lon, double lat)
 	{
 		return true;
 	}
 	
+	/**
+	 * Does database exist?
+	 * @return true
+	 */
 	public boolean databaseExists()
 	{
 		return true;
 	}
 
+	/**
+	 * Get list of channels
+	 * @return null
+	 */
 	public List<String> getChannels()
 	{
 		return null;
 	}
 
+	/**
+	 * Get channel name
+	 * @param plural ???
+	 * @return null
+	 */
 	public String getChannelName(boolean plural)
 	{
 		return null;
 	}
 	
+	/**
+	 * Get data
+	 * @param params mapping of params to their values
+	 * @return null
+	 */
 	public RequestResult getData(Map<String, String> params)
 	{		
 		return null;

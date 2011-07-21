@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data.hypo;
 
+import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 
 import java.io.BufferedReader;
@@ -8,6 +9,7 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -52,6 +54,7 @@ import java.util.TimeZone;
  */
 public class CUBEMessage
 {
+	protected final static Logger logger = Log.getLogger("gov.usgs.vdx.data.hypo.CUBEMessage"); 
     private static SimpleDateFormat dateIn = new SimpleDateFormat("yyyyMMddHHmmss");
     private static SimpleDateFormat dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     public static final int EARTHQUAKE = 1;
@@ -73,6 +76,7 @@ public class CUBEMessage
     
     /**
      * Get message type
+     * @return message type
      */
     public int getMessageType()
     {
@@ -93,7 +97,8 @@ public class CUBEMessage
     
     /**
      * Get event ID
-      */
+     * @return event id
+     */
     public String getEventID()
     {
         return message.substring(2, 10);
@@ -101,6 +106,7 @@ public class CUBEMessage
     
     /**
      * Get data source
+     * @return data source
      */
     public String getDataSource()
     {
@@ -109,7 +115,8 @@ public class CUBEMessage
     
     /**
      * Get message version
-      */
+     * @return version
+     */
     public char getVersion()
     {
         return message.charAt(12);
@@ -117,6 +124,7 @@ public class CUBEMessage
     
     /**
      * Get message date
+     * @return date as Date
      */
     public Date getDate()
     {
@@ -137,6 +145,7 @@ public class CUBEMessage
   
     /**
      * Get message date as j2k
+     * @return date as j2k
      */
     public double getJ2KSec()
     {
@@ -145,6 +154,7 @@ public class CUBEMessage
     
     /**
      * Get message event latitude
+     * @return latitude
      */
     public double getLatitude()
     {
@@ -156,6 +166,7 @@ public class CUBEMessage
  
     /**
      * Get message event longitude
+     * @return longitude
      */
     public double getLongitude()
     {
@@ -167,6 +178,7 @@ public class CUBEMessage
     
     /**
      * Get message event depth
+     * @return depth
      */
     public double getDepth()
     {
@@ -178,6 +190,7 @@ public class CUBEMessage
    
     /**
      * Get message event magnitude
+     * @return magnitude
      */
     public double getMagnitude()
     {
@@ -191,6 +204,7 @@ public class CUBEMessage
      * Main method
      * Reads all files in the current directory, assume each of them contains one message.
      * Print all found earthquakes event on stdout.
+     * @param args command line arguments
      */
     public static void main(String[] args)
     {
@@ -202,7 +216,7 @@ public class CUBEMessage
                 BufferedReader in = new BufferedReader(new FileReader(files[i]));
                 CUBEMessage msg = new CUBEMessage(in.readLine());
                 if (msg.getMessageType() == EARTHQUAKE)
-                    System.out.println(files[i].getName() + ": " + msg.getEventID() + " " + msg.getVersion() + " " + msg.getDataSource() + " " + dateOut.format(msg.getDate()) + " " + msg.getLongitude() + 
+                   logger.info(files[i].getName() + ": " + msg.getEventID() + " " + msg.getVersion() + " " + msg.getDataSource() + " " + dateOut.format(msg.getDate()) + " " + msg.getLongitude() + 
                         " " + msg.getLatitude() + " " + msg.getDepth() + " " + msg.getMagnitude());
                 in.close();
             }
