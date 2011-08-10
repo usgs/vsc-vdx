@@ -4,19 +4,26 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
+import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
+import gov.usgs.vdx.in.hw.Device;
+
 /**
  * A class for handling String communication over an IP socket.
  *
- * @author Dan Cervelli
- * @version 1.2
+ * @author Dan Cervelli, Loren Antolik
+ * @version 1.3
  */
-public class IPConnection extends Thread implements Connection
-{
-	/** the IP address of the socket */
-	protected String deviceIP;
+public class IPConnection extends Thread implements Connection {
+	
+	/** the host address of the socket */
+	protected String host;
 	
 	/** the port number of the socket */
-	protected int devicePort;
+	protected int port;
+	
+	/** the connection timeout */
+	protected int timeout;
 	
 	/** the actual socket for communication */
 	private Socket socket;
@@ -33,135 +40,109 @@ public class IPConnection extends Thread implements Connection
 	/** the size of the character buffer */
 	private static final int BUFFER_SIZE = 2048;
 	
-	/** whether or not to echo incoming bytes from the socket to standard out */
-	private boolean echo;
-	
 	/** whether or not to stop the thread from executing (used when quitting) */
-	protected boolean stopThread = false;
+	protected volatile boolean stopThread = true;
 	
 	/** whether or not the socket is open */
 	protected boolean open;
 	
 	/** an ordered message queue */
-	protected Vector msgQueue;
+	protected Vector<String> msgQueue;
 	
 	/** a mechanism to lock the queue.  Also used by subclasses. */
 	protected boolean lockQueue;
 	
-	/** Creates an unopened IPConnection to the specified IP address and port.
-	 * @param i the IP address
-	 * @param p the port
+	/** 
+	 * default constructor
 	 */
-	public IPConnection(String i, int p, String threadName) {
-		super(threadName);
-		deviceIP		= i;
-		devicePort		= p;
-		buffer			= new char[BUFFER_SIZE];
-		msgQueue		= new Vector(100);
-		echo			= false;
+	public IPConnection() {
+		super("IPConnection");
 	}
 	
-	public IPConnection(String i, int p) {
-		this(i, p, "IPConnection Thread");
-	}
-	
-	/** Sets whether or not to echo received bytes to standard out
-	 * @param b the echo state
+	/**
+	 * constructor
+	 * @param name thread name
 	 */
-	public void setEcho(boolean b) {
-		echo = b;
+	public IPConnection(String name) {
+		super(name);
 	}
 	
+	/**
+	 * Initialize IPConnection
+	 */
+	public void initialize(ConfigFile params) throws Exception {
+		host		= params.getString("host");
+		port		= Util.stringToInt(params.getString("port"));
+		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
+		buffer		= new char[BUFFER_SIZE];
+		msgQueue	= new Vector<String>(100);
+	}
+	
+	/**
+	 * Connects to socket for communication
+	 */
 	public void connect() throws Exception {
-		open();
+		try {
+			open();
+		} catch (UnknownHostException e) {
+			throw new Exception("Unknown host: " + host + ":" + port);
+		} catch (IOException e) {
+			throw new Exception("Couldn't open socket input/output streams");
+		}
 	}
 	
+	/**
+	 * Disconnects from socket
+	 */
 	public void disconnect() {
 		close();
 	}
-
-	/** Writes a string to the socket.
-	 * @param s the string
-	 */
-	public void writeString(String s) {
-		int len = s.length();
-		int idx = 0;
-		while (idx < len)
-			out.write ((int)s.charAt(idx++));
-		
-		out.flush();
-	}
 	
-	/** Gets the first message in the queue.
-	 * @return the message
-	 */
-	public synchronized String readString(long timeout) {
-		String msg = null;
-		if (msgQueue.size() != 0) {
-			msg = (String)msgQueue.elementAt(0);
-			msgQueue.removeElementAt(0);
-		}
-		return msg;
-	}
-	
-	/** Opens the socket for communication.
+	/** 
+	 * Opens the socket for communication.
 	 * @throws UnknownHostException if the host (IP) can't be found
 	 * @throws IOException if the socket fails to open
 	 * @return whether or not the operation was successful
 	 */
-	private boolean open() throws UnknownHostException, IOException {
+	public boolean open() throws UnknownHostException, IOException {
 		boolean result	= false;
-		socket			= new Socket(deviceIP, devicePort);
+		socket			= new Socket(host, port);
 		out				= new PrintWriter(socket.getOutputStream());
 		in				= new InputStreamReader(socket.getInputStream());
 		result			= true;
 		open			= true;
 		stopThread		= false;
-		if (!this.isAlive())
+		socket.setSoLinger(true, 0);
+		if (!this.isAlive()) {
 			start();
-		
+		}
 		return result;
 	}
 	
-	/** Closes the connection and stops waiting for bytes.
+	/** 
+	 * Closes the connection and stops waiting for bytes.  Sets stopThread to true, which silently kills the thread
 	 */
-	private void close() {
+	public void close() {
 		try {
-			if (open) {
-				open		= false;
-				stopThread	= true;
-				out.close();
-				in.close();
-				socket.close();
-				msgQueue.removeAllElements();
-			}
+			open		= false;
+			stopThread	= true;
+			out.close();
+			in.close();
+			socket.close();
+			msgQueue.removeAllElements();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	/** Gets the open state of this connection.
-	 * @return the open state
-	 */
-	public boolean isOpen() {
-		return open;
-	}
-	
-	/** Thread run() implementation.  Just constantly trys reading bytes from the socket.
+	/** Thread run() implementation.  Just constantly tries reading bytes from the socket.
 	 */
 	public void run() {
-		while (true) {
+		while (!stopThread) {
 			try {
-				if (open && !stopThread) {
-					int count = in.read(buffer);
-					receiveData(buffer, count);
-				} else
-					Thread.sleep(300);
-			} catch (SocketException sockEx) {
-				// this occurs whenever the socket closes, this is normal
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+				int count = in.read(buffer);
+				receiveData(buffer, count);
+			} catch (Exception e) { }
 		}
 	}
 	
@@ -169,20 +150,110 @@ public class IPConnection extends Thread implements Connection
 	 * @param data the received bytes
 	 * @param count the number of bytes (note count != data.length)
 	 */
-	private synchronized void receiveData(char[] data, int count) {
+	private synchronized void receiveData(char[] buffer, int count) {
 		lockQueue	= true;
-		String msg	 = new String(data, 0, count);
+		String msg	= new String(buffer, 0, count);
 		msgQueue.add(msg);
-		if (echo)
-			System.out.print(msg);
-		lockQueue = false;
+		lockQueue	= false;
 	}
 
-	/** Writes a character to the socket.
-	 * @param c the character
-	 */	
-	public void writeChar(char c) {
-		out.print(c);
+	/** 
+	 * Writes a string to the socket.
+	 * @param s the string
+	 */
+	public void writeString(String msg) throws Exception {
+		
+		if (!open) throw new Exception("Connection not open");
+		
+		int len		= msg.length();
+		int idx		= 0;
+		while (idx < len) {
+			out.write((int)msg.charAt(idx++));
+		}
 		out.flush();
+	}
+	
+	/** Gets the first message in the queue.
+	 * @return the message
+	 */
+	public String readString(Device device, int dataTimeout) throws Exception {
+		
+		if (!open) throw new Exception("Connection not open");
+		
+		// initialize variables
+		long start		= System.currentTimeMillis();
+		long end		= start + dataTimeout;
+		long now		= start;
+		long delay		= 10;
+		
+		if ((dataTimeout > 0) && (dataTimeout < delay)) {
+			delay	= dataTimeout;
+		}
+		
+		StringBuffer sb	= new StringBuffer();
+		
+		// try the message queue while we are within the timeout
+		while ((now < end) || (-1L == dataTimeout)) {
+			if (!lockQueue) {
+				if (!msgQueue.isEmpty()) {
+					sb.append(msgQueue.elementAt(0));
+					msgQueue.removeElementAt(0);
+					
+					// if the message is complete
+					if (device != null) {
+						if (device.messageCompleted(sb.toString())) {
+							return sb.toString();
+						}
+					} else {
+						return sb.toString();
+					}
+				}
+			}
+			
+			// sleep, then try to get more parts of the message
+			try {
+				Thread.sleep(delay);
+			} catch (InterruptedException e) {}
+			
+			// update the current time
+			now = System.currentTimeMillis();
+		}
+		
+		// if a complete message wasn't found, then return what was found
+		String txt	= "Timeout while waiting for data.\n" + sb.toString();
+		throw new Exception(txt);
+	}
+	
+	public String readString(int dataTimeout) throws Exception {
+		return readString(null, dataTimeout);
+	}
+	
+	public String readString(Device device) throws Exception {
+		return readString(device, device.getTimeout());
+	}
+	
+	/**
+	 * returns status of open variable
+	 */
+	public boolean isOpen() {
+		return open;
+	}
+	
+	/**
+	 * Get settings
+	 */
+	public String toString() {
+		String settings	= "host:" + host + "/";
+		settings	   += "port:" + port + "/";
+		settings	   += "timeout:" + timeout + "/";
+		return settings;
+	}
+	
+	public String getMsgQueue()	{
+		return msgQueue.toString();
+	}
+	
+	public void emptyMsgQueue() {
+		msgQueue.removeAllElements();
 	}
 }

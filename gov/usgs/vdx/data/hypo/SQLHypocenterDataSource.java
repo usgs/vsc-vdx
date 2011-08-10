@@ -365,11 +365,13 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * Insert data
 	 * @param hc	Hypocenter
 	 */
-	public void insertHypocenter(Hypocenter hc) {
+	public int insertHypocenter(Hypocenter hc) {
+		
+		int result = -1;
 		
 		try {
 			database.useDatabase(dbName);
-			sql = "INSERT IGNORE INTO hypocenters ";
+			sql = "REPLACE INTO hypocenters ";
 			sql+= "       (j2ksec, eid, rid, lat, lon, depth, prefmag, ampmag, codamag, ";
 			sql+= "        nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk) ";
 			sql+= "VALUES (?,?,?,round(?, 4),round(?, 4),round(?, 2),round(?, 2),round(?, 2),round(?, 2),?,?,?,?,?,?,?,?,?)";
@@ -397,10 +399,11 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			if (hc.magtype == null)			ps.setNull(17, java.sql.Types.VARCHAR);		else ps.setString(17, hc.magtype);
 			if (hc.rmk == null)				ps.setNull(18, java.sql.Types.VARCHAR);		else ps.setString(18, hc.rmk);
 			
-			ps.execute();
+			result = ps.executeUpdate();
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLHypocenterDataSource.insertHypocenter() failed.", e);
 		}
+		return result;
 	}
 }

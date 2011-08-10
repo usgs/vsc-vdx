@@ -1,11 +1,15 @@
 package gov.usgs.vdx.in;
 
-import java.text.SimpleDateFormat;
+import java.lang.reflect.Constructor;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -13,8 +17,8 @@ import java.util.regex.Pattern;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
+
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.GenericDataMatrix;
@@ -22,16 +26,38 @@ import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
 
+import gov.usgs.vdx.in.conn.Connection;
+import gov.usgs.vdx.in.hw.Device;
+
 import cern.colt.matrix.*;
 
+
 /**
- * Import files
- *  
+ * A program to stream data from an ip device and put it in the database
+ *
  * @author Loren Antolik
  */
-public class ImportFile extends Import implements Importer {
+public class ImportStream extends Import implements Importer {
+
+	public ConfigFile stationParams;
+	public ConfigFile deviceParams;
+	public ConfigFile connectionParams;
 	
-	public ResourceReader rr;
+	public String stationCode;
+	public List<String> stationList;
+	public Map<String, String> stationChannelMap;
+	public Map<String, Device> stationDeviceMap;
+	public Map<String, Connection> stationConnectionMap;
+	public Map<String, ConfigFile> stationConnectionParamsMap;
+	public Map<String, String> stationTimesourceMap;
+	
+	public String timesource;
+
+	public int postConnectDelay;
+	public int betweenPollDelay;
+	
+	public Connection connection;	
+	public Device device;
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
@@ -83,29 +109,15 @@ public class ImportFile extends Import implements Importer {
 		url			= vdxParams.getString("vdx.url");
 		prefix		= vdxParams.getString("vdx.prefix");
 		
-		// information related to the time stamps
-		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss"));
-		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
+		// define a format for log message dates
+		dateOut	= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+		// get connection settings related to this instance
+		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
+		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
 		
-		// ImportFile specific directives
-		filemask	= Util.stringToString(params.getString("filemask"), "");
-		headerlines	= Util.stringToInt(params.getString("headerlines"), 0);
-		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		logger.log(Level.INFO, "delimiter:" + delimiter);
-		
-		// Import Fields
-		fields	= Util.stringToString(params.getString("fields"), "");
-		if (fields.length() == 0) {
-			logger.log(Level.SEVERE, "fields parameter missing from config file");
-			System.exit(-1);
-		}
-		fieldsArray	= fields.split(",");
-		fieldMap		= new HashMap<Integer, String>();
-		for (int i = 0; i < fieldsArray.length; i++) {
-			fieldMap.put(i, fieldsArray[i].trim());
-		}
-		
-		// get the list of ranks that are being used in this import
+		// get the rank configuration for this import.  there can only be a single rank per import
 		rankParams		= params.getSubConfig("rank");
 		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
@@ -116,7 +128,6 @@ public class ImportFile extends Import implements Importer {
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
-		channelList		= new ArrayList<String>();
 		stringList		= params.getList("channel");
 		for (int i = 0; i < stringList.size(); i++) {
 			channelCode		= stringList.get(i);
@@ -127,7 +138,79 @@ public class ImportFile extends Import implements Importer {
 			channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
 			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
 			channelMap.put(channelCode, channel);
+		}
+		
+		// define the station objects to store station configurations
+		stationList					= new ArrayList<String>();
+		channelList					= new ArrayList<String>();
+		stationChannelMap			= new HashMap<String, String>();
+		stationDeviceMap			= new HashMap<String, Device>();
+		stationConnectionParamsMap	= new HashMap<String, ConfigFile>();
+		stationTimesourceMap		= new HashMap<String, String>();
+		
+		// validate that station are defined in the config file
+		stringList	= params.getList("station");
+		if (stringList == null) {
+			logger.log(Level.SEVERE, "station parameter(s) missing from config file");
+			System.exit(-1);			
+		}
+		
+		// get the list of station that are being used in this import
+		for (int i = 0; i < stringList.size(); i++) {
+			
+			// station configuration
+			stationCode			= stringList.get(i);
+			stationParams		= params.getSubConfig(stationCode);
+			deviceParams		= stationParams.getSubConfig("device");
+			connectionParams	= stationParams.getSubConfig("connection");
+			channelCode			= Util.stringToString(stationParams.getString("channel"), stationCode);
+			timesource			= stationParams.getString("timesource");
+			
+			// verify that the time source is configured for this station
+			if (timesource == null) {
+				logger.log(Level.SEVERE, "timesource parameter for " + stationCode + " missing from config file");
+				System.exit(-1);			
+			}
+
+			// try to create a connection object
+			try {
+				Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
+				Constructor<?> cnst	= connClass.getConstructor(new Class[]{String.class});
+				connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
+				connection.initialize(connectionParams);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Connection initialization failed", e);
+				continue;
+			}
+			
+			// try to create a device object
+			try {
+				device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
+				device.initialize(deviceParams);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Device driver initialization failed", e);
+				System.exit(-1);
+			}
+			
+			stationList.add(stationCode);
 			channelList.add(channelCode);
+			stationChannelMap.put(stationCode, channelCode);
+			stationDeviceMap.put(stationCode, device);
+			stationConnectionParamsMap.put(stationCode, connectionParams);
+			stationTimesourceMap.put(stationCode, timesource);
+			
+			// display configuration information related to this station
+			logger.log(Level.INFO, "[Station] " + stationCode);
+			logger.log(Level.INFO, "[Connection] " + connection.toString());
+			logger.log(Level.INFO, "[ConnDriver] " + connectionParams.getString("driver"));
+			logger.log(Level.INFO, "[Device] " + device.toString());
+			logger.log(Level.INFO, "[DevDriver] " + deviceParams.getString("driver"));
+			logger.log(Level.INFO, "[Fields] " + device.getFields());
+			logger.log(Level.INFO, "[Channel] " + channelCode);
+			logger.log(Level.INFO, "");
+			
+			// destroy this temporary connection
+			connection = null;
 		}
 		
 		// define a comma separated list of channels affected in this import
@@ -139,7 +222,7 @@ public class ImportFile extends Import implements Importer {
 		defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
 		logger.log(Level.INFO, "[defaultChannels] " + defaultChannels);
 		
-		// get the list of data sources that are being used in this import
+		// validate that data sources are defined in the config file
 		dataSourceList	= params.getList("dataSource");
 		if (dataSourceList == null) {
 			logger.log(Level.SEVERE, "dataSource parameter(s) missing from config file");
@@ -148,7 +231,7 @@ public class ImportFile extends Import implements Importer {
 		
 		// define the data source handler that acts as a wrapper for data sources
 		sqlDataSourceHandler	= new SQLDataSourceHandler(driver, url, prefix);
-		sqlDataSourceMap		= new HashMap<String, SQLDataSource>();
+		sqlDataSourceMap		= new HashMap<String, SQLDataSource>();		
 		dataSourceChannelMap	= new HashMap<String, String>();
 		dataSourceColumnMap		= new HashMap<String, String>();
 		dataSourceRIDMap		= new HashMap<String, Integer>();
@@ -157,7 +240,7 @@ public class ImportFile extends Import implements Importer {
 		for (int i = 0; i < dataSourceList.size(); i++) {
 			
 			// get the data source name
-			dataSource			= dataSourceList.get(i);
+			dataSource	= dataSourceList.get(i);
 			
 			// lookup the data source from the list that is in vdxSources.config
 			sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
@@ -176,7 +259,7 @@ public class ImportFile extends Import implements Importer {
 			sqlDataSourceMap.put(dataSource, sqlDataSource);
 			
 			// get the config for this data source
-			dataSourceParams	= params.getSubConfig(dataSource);
+			dataSourceParams	= params.getSubConfig(dataSource);	
 			
 			// if this is a ranked data source, then create the rank in the database
 			if (sqlDataSource.getRanksFlag()) {
@@ -332,71 +415,150 @@ public class ImportFile extends Import implements Importer {
 	 * @param filename
 	 */
 	public void process(String filename) {
+			
+		// output initial polling message
+		logger.log(Level.INFO, "");
+		logger.log(Level.INFO, "BEGIN STREAMING CYCLE");
 		
+		// add an extra message to notify the nature of a streaming process
+		if (stationList.size() != 1) {
+			logger.log(Level.SEVERE, "ImportStream supports only one station");
+			System.exit(-1);
+		}
+		
+		// get the station name, and it's associated configuration
+		stationCode			= stationList.get(0);
+		channelCode			= stationChannelMap.get(stationCode);
+		device				= stationDeviceMap.get(stationCode);
+		connectionParams	= stationConnectionParamsMap.get(stationCode);
+		timesource			= stationTimesourceMap.get(stationCode);
+		
+		// get the import line definition for this channel
+		fieldsArray	= device.getFields().split(",");
+		fieldMap	= new HashMap<Integer, String>();
+		for (int i = 0; i < fieldsArray.length; i++) {
+			fieldMap.put(i, fieldsArray[i].trim());
+		}
+		
+		// get the latest data time from data source that keeps track of time
+		sqlDataSource		= sqlDataSourceMap.get(timesource);
+		Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield());
+		if (lastDataTime == null) {
+			lastDataTime = new Date(0);
+		}
+		
+		// display logging information
+		logger.log(Level.INFO, "");
+		logger.log(Level.INFO, "Streaming " + stationCode + " [lastDataTime:" + dateOut.format(lastDataTime) + "]");
+		
+		// initialize data objects related to this device
+		dateIn	= new SimpleDateFormat(device.getTimestamp());
+		dateIn.setTimeZone(TimeZone.getTimeZone(device.getTimezone()));
+		
+		// create a connection to the station
 		try {
+			Class<?> connClass	= Class.forName(connectionParams.getString("driver"));				
+			Constructor<?> cnst	= connClass.getConstructor(new Class[]{String.class});
+			connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
+			connection.initialize(connectionParams);
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Connection initialization failed", e);
+			System.exit(-1);
+		}
+
+		// initialize the reconnect flag to force connect the first time
+		boolean reconnect	= true;			
+		String line			= "";
+		int lineNumber		= 0;
+		
+		// continue trying to acquire data until the program exits
+		while (true) {	
 			
-			// check that the file exists
-			ResourceReader rr = ResourceReader.getResourceReader(filename);
-			if (rr == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
-				return;
-			}
-			
-			// make a short file name.  we'll use this later on
-			String shortFilename = filename.substring(filename.lastIndexOf("/") + 1);
-			
-			// move to the first line in the file
-			String line		= rr.nextLine();
-			int lineNumber	= 0;
-			
-			// check that the file has data
-			if (line == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is empty)");
-				return;
-			}
-			
-			logger.info("importing: " + filename);
-			
-			// if a filename mask is defined, then get the channel code from it
-			if (filemask.length() > 0) {
-				
-				// reset the channel code, as it will be derived from the filename, and not the config file, or the contents of the file
-				channelCode				= "";
-				
-				// filename mask can be shorter than the filename, but not longer
-				if (filemask.length() > shortFilename.length()) {
-					logger.log(Level.SEVERE, "skipping: " + filename + " (bad filename mask)");
-					return;
-				}
-				
-				// build up the channel code from the mask
-				for (int i = 0; i < filemask.length(); i++) {
-					if (String.valueOf(filemask.charAt(i)).equals("C")) {
-						channelCode	= channelCode + String.valueOf(shortFilename.charAt(i));
-					}
+			// connect to the device
+			if (reconnect) {
+				try {
+					connection.connect();
+					reconnect = false;
+					Thread.sleep(postConnectDelay);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Station Connection failed", e);
+					if (connection.isOpen()) connection.disconnect();
+					reconnect = true;
+					continue;
 				}
 			}
 			
-			// if any header lines are defined then skip them
-			if (headerlines > 0) {
-				logger.log(Level.INFO, "skipping " + headerlines + " header lines");
-				for (int i = 0; i < headerlines; i++) {
-					line	= rr.nextLine();
-					lineNumber++;
+			// try to build the data request string
+			String dataRequest = "";
+			try {
+				dataRequest	= device.requestData(lastDataTime);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Device build request failed", e);
+				continue;
+			}
+			
+			// send the request to the device
+			if (dataRequest.length() > 0) {
+				try {
+					connection.writeString(dataRequest);
+					// logger.log(Level.INFO, "dataRequest:" + dataRequest);
+				} catch (Exception e) {
+					logger.log(Level.SEVERE, "Connection send data request failed", e);
+					continue;
 				}
 			}
 			
-			// we are now at the first row of data.  time to import!
-			while (line != null) {
+			// try wait (eh) for the response from the device (clear out the message queue first)
+			String dataResponse = "";
+			try {
+				// connection.emptyMsgQueue();
+				dataResponse	= connection.readString(device);
+				// logger.log(Level.INFO, "dataResponse:" + dataResponse);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Device receive data response failed", e);
+				continue;
+			}
+			
+			// try to validate the response from the device
+			try {
+				device.validateMessage(dataResponse, true);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Message validation failed", e);
+				continue;
+			}
+				
+			// format the response based on the type of device
+			String dataMessage	= device.formatMessage(dataResponse);
+				
+			// parse the response by lines
+			StringTokenizer st	= new StringTokenizer(dataMessage, "\n");
+				
+			// iterate through each line
+			while (st.hasMoreTokens()) {
 				
 				// increment the line number variable
 				lineNumber++;
+				
+				// save this token for processing
+				line = st.nextToken();
+					
+				// try to validate this data line
+				try {
+					device.validateLine(line);
+				} catch (Exception e) {
+					logger.log(Level.INFO, "invalid:" + line);
+					continue;
+				}
+				
+				// format this data line
+				line = device.formatLine(line);
+				
+				// output this line to the log file
 				logger.log(Level.INFO, line);
 				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-				// Pattern p	= Pattern.compile(delimiter, Pattern.LITERAL);
-				Pattern p	= Pattern.compile(delimiter);
-				String[] valueArray	= p.split(line, -1);
+				Pattern p	= Pattern.compile(device.getDelimiter(), Pattern.LITERAL);
+				String[] valueArray		= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
 					valueMap.put(i, valueArray[i].trim());
@@ -404,8 +566,7 @@ public class ImportFile extends Import implements Importer {
 				
 				// make sure the data row matches the defined data columns
 				if (fieldMap.size() > valueMap.size()) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " has too few values");
-					line	= rr.nextLine();
+					logger.log(Level.SEVERE, "line " + lineNumber + " has too few values:" + line);
 					continue;
 				}
 				
@@ -419,7 +580,7 @@ public class ImportFile extends Import implements Importer {
 				
 				// try to parse the values from this data line
 				try {
-					for (int i = 0; i < fieldMap.size(); i++) {					
+					for (int i = 0; i < fieldMap.size(); i++) {								
 						name		= fieldMap.get(i);
 						
 						// skip IGNORE columns
@@ -433,7 +594,7 @@ public class ImportFile extends Import implements Importer {
 							
 						// parse out the TIMESTAMP
 						} else if (name.equals("TIMESTAMP")) {
-							tsValue	= tsValue + valueMap.get(i) + " ";
+							tsValue	+= valueMap.get(i) + " ";
 							continue;
 							
 						// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
@@ -453,41 +614,27 @@ public class ImportFile extends Import implements Importer {
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "line " + lineNumber + " parse error");
 					logger.log(Level.SEVERE, e.getMessage());
-					line	= rr.nextLine();
 					continue;
-				}
-				
-				// make sure that the channel code has something in it
-				if (channelCode.length() == 0) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " channel code not found");
-					line	= rr.nextLine();
-					continue;
-					
-				// convert bad sql characters to dollar signs
-				} else {
-					channelCode = channelCode.replace('\\', '$').replace('/', '$').replace('.', '$').replace(' ', '$');;
 				}
 				
 				// make sure that the timestamp has something in it
 				if (tsValue.length() == 0) {
 					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp not found");
-					line	= rr.nextLine();
 					continue;
 				}
 				
-				// convert the time zone of the input date and convert to j2ksec
+				// convert the timezone of the input date and convert to j2ksec
 				try {
 					String timestamp	= tsValue.trim();
 					date				= dateIn.parse(timestamp);				
 					j2ksec				= Util.dateToJ2K(date);
 				} catch (ParseException e) {
 					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp parse error");
-					line	= rr.nextLine();
 					continue;
 				}
-				
+					
 				ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
-				
+					
 				// iterate through each data source that was defined and assign data from this line to it
 				for (int i = 0; i < dataSourceList.size(); i++) {
 					
@@ -576,14 +723,7 @@ public class ImportFile extends Import implements Importer {
 					// insert the data to the database
 					sqlDataSource.defaultInsertData(channelCode, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), rid);
 				}
-				
-				// go to the next line
-				line	= rr.nextLine();
 			}
-		
-		// catch exceptions
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "ImportFile.process(" + filename + ") failed.", e);
 		}
 	}
 	
@@ -591,7 +731,7 @@ public class ImportFile extends Import implements Importer {
 		if (message != null) {
 			System.err.println(message);
 		}
-		System.err.println(importerClass + " -c configfile filelist");
+		System.err.println(importerClass + " -c configfile");
 	}
 
 	/**
@@ -604,7 +744,7 @@ public class ImportFile extends Import implements Importer {
 	 */
 	public static void main(String as[]) {
 		
-		ImportFile importer	= new ImportFile();
+		ImportStream importer	= new ImportStream();
 		
 		Arguments args = new Arguments(as, flags, keys);
 		
@@ -619,13 +759,9 @@ public class ImportFile extends Import implements Importer {
 		}
 
 		importer.initialize(importer.getClass().getName(), args.get("-c"), args.flagged("-v"));
-
-		List<String> files	= args.unused();
-		for (String file : files) {
-			importer.process(file);
-		}
 		
-		importer.deinitialize();
+		importer.process("");
+		
+		System.exit(0);
 	}	
 }
-

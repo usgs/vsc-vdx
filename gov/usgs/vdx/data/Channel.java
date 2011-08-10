@@ -55,6 +55,19 @@ public class Channel {
 	}
 	
 	/**
+	 * Constructor for not specifying the channel type id
+	 * @param cid		channel id
+	 * @param code		channel code
+	 * @param name		channel name
+	 * @param lon		longitude
+	 * @param lat		latitude
+	 * @param height	height
+	 */
+	public Channel(int cid, String code, String name, double lon, double lat, double height) {
+		this(cid, code, name, lon, lat, height, 0, 0);
+	}
+	
+	/**
 	 * Constructor
 	 * @param ch ':'-separated string of parameters
 	 */
