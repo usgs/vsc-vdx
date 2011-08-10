@@ -372,7 +372,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				delcount	= ps.executeUpdate();
 				ps			= database.getPreparedStatement("DELETE FROM sources WHERE sid = ?");
 				ps.setInt(1, sid);
-				ps.executeQuery();
+				ps.executeUpdate();
 				rank		= defaultGetRank(rid);
 				logger.severe("deleted " + name + " rank " + rank.getName() + " (" + delcount + " solutions)");
 			}

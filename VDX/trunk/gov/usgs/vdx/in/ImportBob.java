@@ -2,9 +2,11 @@ package gov.usgs.vdx.in;
 
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
+import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Time;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.GenericDataMatrix;
+import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLNullDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
@@ -12,12 +14,17 @@ import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -47,13 +54,66 @@ import cern.colt.matrix.DoubleMatrix2D;
  * @author Dan Cervelli
  * @version $Id: ImportBob.java,v 1.7 2007-06-12 20:44:29 tparker Exp $
  */
-public class ImportBob {
+public class ImportBob implements Importer {
+	
+	public ResourceReader rr;
+	
+	public static Set<String> flags;
+	public static Set<String> keys;
+	
+	public String vdxConfig;
+	
+	public ConfigFile params;
+	public ConfigFile vdxParams;
+	public ConfigFile rankParams;
+	public ConfigFile columnParams;
+	public ConfigFile channelParams;
+	public ConfigFile dataSourceParams;
+	public ConfigFile translationParams;
+	
+	public String driver, prefix, url;
+	
+	public SimpleDateFormat dateIn;
+	public SimpleDateFormat dateOut;
+	public Date date;
+	public Double j2ksec;
+
+	public String filenameMask;
+	public int headerLines;
+	public String timestamp;
+	public String timezone;
+	
+	public Rank rank;
+	public String rankName;
+	public int rankValue, rankDefault;
+	public int rid;
+	
+	public SQLDataSource sqlDataSource;
+	
+	public Logger logger;
+	
+	static {
+		flags	= new HashSet<String>();
+		keys	= new HashSet<String>();
+		keys.add("-c");
+		flags.add("-h");
+		flags.add("-v");
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public int goodCount;
 	public double[] t;
 	public float[] d;
 	private int year;
 	private static final String CONFIG_FILE = "VDX.config";
-	public ConfigFile params;
+	//public ConfigFile params;
 	Map<String, SQLDataSource> sources;
 
 	/**
@@ -81,6 +141,92 @@ public class ImportBob {
 		sources.put("ewrsamValues", new SQLEWRSAMDataSource("Values"));
 		sources.put("null", new SQLNullDataSource());
 
+	}
+
+	/**
+	 * takes a config file as a parameter and parses it to prepare for importing
+	 * @param cf configuration file
+	 * @param verbose true for info, false for severe
+	 */
+	public void initialize(String importerClass, String configFile, boolean verbose) {
+		
+		// initialize the logger for this importer
+		logger	= Logger.getLogger(importerClass);
+		logger.log(Level.INFO, "ImportBob.initialize() succeeded.");
+		
+		// process the config file
+		processConfigFile(configFile);
+	}
+	
+	/**
+	 * disconnects from the database
+	 */
+	public void deinitialize() {
+		sqlDataSource.disconnect();
+	}
+	
+	/**
+	 * Parse configuration file.  This sets class variables used in the importing process
+	 * @param configFile	name of the config file
+	 */
+	public void processConfigFile(String configFile) {
+		
+		logger.log(Level.INFO, "Reading config file " + configFile);
+		
+		// initialize the config file and verify that it was read
+		params		= new ConfigFile(configFile);
+		if (!params.wasSuccessfullyRead()) {
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			System.exit(-1);
+		}
+		
+		// get the vdx parameter, and exit if it's missing
+		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		if (vdxConfig == null) {
+			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			System.exit(-1);
+		}
+		
+		// get the vdx config as it's own config file object
+		vdxParams	= new ConfigFile(vdxConfig);
+		driver		= vdxParams.getString("vdx.driver");
+		url			= vdxParams.getString("vdx.url");
+		prefix		= vdxParams.getString("vdx.prefix");
+		
+		// ImportFile specific directives
+		filenameMask	= Util.stringToString(params.getString("filenameMask"), "");
+		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
+		
+		// information related to the timestamps
+		timestamp		= Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss");
+		timezone		= Util.stringToString(params.getString("timezone"), "GMT");
+		dateIn			= new SimpleDateFormat(timestamp);
+		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateIn.setTimeZone(TimeZone.getTimeZone(timezone));
+		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
+		
+		// get the list of ranks that are being used in this import
+		rankParams		= params.getSubConfig("rank");
+		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rank			= new Rank(0, rankName, rankValue, rankDefault);
+		
+	}
+	
+	/**
+	 * Parse file from url (resource locator or file name)
+	 * @param filename
+	 */
+	public void process(String filename) {
+		
+	}
+	
+	public void outputInstructions(String importerClass, String message) {
+		if (message == null) {
+			System.err.println(message);
+		}
+		System.err.println(importerClass + " -c configfile filelist");
 	}
 
 	/**
@@ -167,6 +313,37 @@ public class ImportBob {
 	 * @param as command line args
 	 */
 	public static void main(String[] as) {
+		
+		ImportFile importer	= new ImportFile();
+		
+		Arguments args = new Arguments(as, flags, keys);
+		
+		if (args.flagged("-h")) {
+			importer.outputInstructions(importer.getClass().getName(), null);
+			System.exit(-1);
+		}
+		
+		if (args.contains("-c")) {
+			importer.initialize(importer.getClass().getName(), args.get("-c"), args.flagged("-v"));
+			importer.outputInstructions(importer.getClass().getName(), "Config file required");
+			System.exit(-1);
+		}
+
+		importer.initialize(importer.getClass().getName(), args.get("-c"), args.flagged("-v"));
+
+		List<String> files	= args.unused();
+		for (String file : files) {
+			importer.process(file);
+		}
+		
+		importer.deinitialize();
+		
+		
+		
+		
+		
+		
+		/*
 
 		String cf = CONFIG_FILE;
 		String name = "";
@@ -211,5 +388,6 @@ public class ImportBob {
 
 		for (String f: files)
 			in.process(channel, f);
+		 */
 	}
 }

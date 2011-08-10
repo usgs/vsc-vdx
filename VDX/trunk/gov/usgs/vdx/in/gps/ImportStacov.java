@@ -60,7 +60,6 @@ public class ImportStacov implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
 	public String timeZone;
 	
 	public String importColumns;
@@ -150,7 +149,7 @@ public class ImportStacov implements Importer {
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
 			System.exit(-1);
 		}
 		
@@ -188,14 +187,12 @@ public class ImportStacov implements Importer {
 		}
 		
 		// information related to the timestamps
-		timestampMask	= "yyMMMdd";
-		timeZone		= "GMT";
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		dateIn	= new SimpleDateFormat("yyMMMdd");
+		dateIn.setTimeZone(TimeZone.getTimeZone("GMT"));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);

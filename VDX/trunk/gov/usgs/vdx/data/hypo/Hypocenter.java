@@ -88,7 +88,7 @@ public class Hypocenter
 	 */
     public static String getHeaderLine()
     {
-        return "j2ksec,lat,lon,depth,mag";
+        return "j2ksec,eid,lat,lon,depth,mag";
     }
     
 	/** Converts the data to a comma-delimited String.
@@ -96,7 +96,7 @@ public class Hypocenter
 	 */
     public String toString()
     {
-        return this.j2ksec + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.prefmag;
+        return this.j2ksec + "," + this.eid + "," + this.lat + "," + this.lon + "," + this.depth + "," + this.prefmag;
     }
 	
     /**

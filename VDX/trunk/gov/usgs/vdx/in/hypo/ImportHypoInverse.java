@@ -58,8 +58,6 @@ public class ImportHypoInverse implements Importer {
 
 	public String filenameMask;
 	public int headerLines;
-	public String timestampMask;
-	public String timeZone;
 	
 	public String importColumns;
 	public String[] importColumnArray;
@@ -148,7 +146,7 @@ public class ImportHypoInverse implements Importer {
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, "%s was not successfully read", configFile);
+			logger.log(Level.SEVERE, configFile + " was not successfully read");
 			System.exit(-1);
 		}
 		
@@ -185,15 +183,13 @@ public class ImportHypoInverse implements Importer {
 			System.exit(-1);
 		}
 		
-		// information related to the timestamps
-		timestampMask	= "yyyyMMddHHmmssSS";
-		timeZone		= "GMT";
-		dateIn			= new SimpleDateFormat(timestampMask);
-		dateIn.setTimeZone(TimeZone.getTimeZone(timeZone));
+		// information related to the time stamps
+		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyyMMddHHmmssSS"));
+		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
 		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
@@ -219,6 +215,7 @@ public class ImportHypoInverse implements Importer {
 	public void process(String filename) {
 		
 		// initialize variables local to this method
+		int result;
 		double j2ksec, lat, lon, depth, prefmag;
 		String eid;
 		Double ampmag	= Double.NaN;
@@ -244,7 +241,7 @@ public class ImportHypoInverse implements Importer {
 			
 			// move to the first line in the file
 			String line		= rr.nextLine();
-			int lineNumber	= 1;
+			int lineNumber	= 0;
 			
 			// check that the file has data
 			if (line == null) {
@@ -256,17 +253,9 @@ public class ImportHypoInverse implements Importer {
 
 			while (line != null) {
 				
-				// do some validation
-				if (!line.substring(45,46).equals(" ")) {
-					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Corrupt data at column 46.");					
-					line	= rr.nextLine();
-					lineNumber++;
-					continue;
-					
-				// all systems go then
-				} else {					
-					logger.log(Level.INFO, "importing: line number " + lineNumber);
-				}
+				// increment the line number variable
+				lineNumber++;
+				// logger.log(Level.INFO, line);
 				
 				// DATE
 				try {
@@ -276,7 +265,6 @@ public class ImportHypoInverse implements Importer {
 				} catch (ParseException e) {
 					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Timestamp not valid.");					
 					line	= rr.nextLine();
-					lineNumber++;
 					continue;
 				}
 				
@@ -285,7 +273,6 @@ public class ImportHypoInverse implements Importer {
 				if (eid.trim().length() == 0) {
 					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Event ID not valid.");					
 					line	= rr.nextLine();
-					lineNumber++;
 					continue;
 				}
 
@@ -312,7 +299,6 @@ public class ImportHypoInverse implements Importer {
 				} catch (NumberFormatException e) {
 					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Depth not valid.");					
 					line	= rr.nextLine();
-					lineNumber++;
 					continue;
 				}
 				
@@ -400,10 +386,11 @@ public class ImportHypoInverse implements Importer {
 				
 				Hypocenter hc	= new Hypocenter(j2ksec, eid, rid, lat, lon, depth, prefmag, ampmag, codamag, 
 						nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk);
-				sqlDataSource.insertHypocenter(hc);
+				result = sqlDataSource.insertHypocenter(hc);				
+				logger.log(Level.INFO, result + ":" + hc.toString());
 				
+				// move to the next line in the file
 				line	= rr.nextLine();
-				lineNumber++;
 			}
 				
 		} catch (Exception e) {
