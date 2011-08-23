@@ -49,8 +49,9 @@ public class Import {
 	public String delimiter;
 	
 	public String fields;
-	public String[] fieldsArray;
+	public String[] fieldArray;
 	public Map<Integer, String> fieldMap;
+	public Map<Integer, String> defaultFieldMap;
 	
 	public String dataSource;
 	public SQLDataSource sqlDataSource;
@@ -77,6 +78,8 @@ public class Import {
 	public String defaultChannels;
 	public String[] channelArray;
 	public String[] dsChannelArray;
+	public String channelFields;
+	public Map<String, String> channelFieldMap;
 	
 	public Column column;
 	public String columnName, columnDescription, columnUnit;

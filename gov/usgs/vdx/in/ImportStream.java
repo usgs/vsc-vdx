@@ -87,7 +87,6 @@ public class ImportStream extends Import implements Importer {
 	public void processConfigFile(String configFile) {
 		
 		logger.log(Level.INFO, "Reading config file " + configFile);
-		logger.log(Level.INFO, "");
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
@@ -124,7 +123,6 @@ public class ImportStream extends Import implements Importer {
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		logger.log(Level.INFO, "[Rank] " + rankName);
-		logger.log(Level.INFO, "");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -241,6 +239,7 @@ public class ImportStream extends Import implements Importer {
 			
 			// get the data source name
 			dataSource	= dataSourceList.get(i);
+			logger.log(Level.INFO, "[DataSource] " + dataSource);
 			
 			// lookup the data source from the list that is in vdxSources.config
 			sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
@@ -248,9 +247,6 @@ public class ImportStream extends Import implements Importer {
 				logger.log(Level.SEVERE, dataSource + " not in vdxSources.config - Skipping");
 				continue;
 			}
-			
-			logger.log(Level.INFO, "");
-			logger.log(Level.INFO, "[DataSource] " + dataSource);
 			
 			// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 			sqlDataSource	= sqlDataSourceDescriptor.getSQLDataSource();
@@ -302,15 +298,9 @@ public class ImportStream extends Import implements Importer {
 					columns	   += columnList.get(j).name + ",";
 				}
 				columns		= columns.substring(0, columns.length() - 1);
-			
-				// get the columns for this data source
-				if (dataSourceParams.getString("columns") != null) {
-					columns	= dataSourceParams.getString("columns");
-				}
-				
-				// save this list of columns to update for this data source in the map
-				logger.log(Level.INFO, "[Columns] " + columns);
+				columns	= Util.stringToString(dataSourceParams.getString("columns"), columns);
 				dataSourceColumnMap.put(dataSource, columns);
+				logger.log(Level.INFO, "[Columns] " + columns);
 			}
 			
 			// create translations table which is based on column entries
@@ -319,13 +309,9 @@ public class ImportStream extends Import implements Importer {
 			}
 			
 			// get the channels for this data source
-			if (dataSourceParams.getString("channels") != null) {
-				channels	= dataSourceParams.getString("channels");
-			} else {
-				channels	= defaultChannels;
-			}
-			logger.log(Level.INFO, "[Channels]" + channels);
+			channels = Util.stringToString(dataSourceParams.getString("channels"), defaultChannels);
 			dataSourceChannelMap.put(dataSource, channels);
+			logger.log(Level.INFO, "[Channels]" + channels);
 
 			// create channels tables for this data source
 			if (sqlDataSource.getChannelsFlag()) {				
@@ -434,10 +420,10 @@ public class ImportStream extends Import implements Importer {
 		timesource			= stationTimesourceMap.get(stationCode);
 		
 		// get the import line definition for this channel
-		fieldsArray	= device.getFields().split(",");
+		fieldArray	= device.getFields().split(",");
 		fieldMap	= new HashMap<Integer, String>();
-		for (int i = 0; i < fieldsArray.length; i++) {
-			fieldMap.put(i, fieldsArray[i].trim());
+		for (int i = 0; i < fieldArray.length; i++) {
+			fieldMap.put(i, fieldArray[i].trim());
 		}
 		
 		// get the latest data time from data source that keeps track of time
@@ -501,7 +487,6 @@ public class ImportStream extends Import implements Importer {
 			if (dataRequest.length() > 0) {
 				try {
 					connection.writeString(dataRequest);
-					// logger.log(Level.INFO, "dataRequest:" + dataRequest);
 				} catch (Exception e) {
 					logger.log(Level.SEVERE, "Connection send data request failed", e);
 					continue;
@@ -511,9 +496,7 @@ public class ImportStream extends Import implements Importer {
 			// try wait (eh) for the response from the device (clear out the message queue first)
 			String dataResponse = "";
 			try {
-				// connection.emptyMsgQueue();
 				dataResponse	= connection.readString(device);
-				// logger.log(Level.INFO, "dataResponse:" + dataResponse);
 			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Device receive data response failed", e);
 				continue;
@@ -557,7 +540,7 @@ public class ImportStream extends Import implements Importer {
 				logger.log(Level.INFO, line);
 				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
-				Pattern p	= Pattern.compile(device.getDelimiter(), Pattern.LITERAL);
+				Pattern p	= Pattern.compile(device.getDelimiter());
 				String[] valueArray		= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
@@ -665,7 +648,7 @@ public class ImportStream extends Import implements Importer {
 					// channel for this data source.  create it if it doesn't exist
 					if (sqlDataSource.getChannelsFlag()) {
 						if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, null, Double.NaN, Double.NaN, Double.NaN), 1,
+							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, channelCode, Double.NaN, Double.NaN, Double.NaN), 1,
 									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
 						}
