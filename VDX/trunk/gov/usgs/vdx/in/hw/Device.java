@@ -23,6 +23,7 @@ public interface Device {
 	public String getDelimiter();
 	public String getFields();
 	public String getNullfield();
+	public boolean getPollhist();
 	public String toString();
 	public int getTimeout();
 	public int getMaxtries();

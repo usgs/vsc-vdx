@@ -69,6 +69,9 @@ public class CCSAIL implements Device {
 	/** the column to check for null in database */
 	protected String nullfield;
 	
+	/** flag to set last data time to system default or NOW */
+	protected boolean pollhist;
+	
 	/** the columns available on the device */
 	protected String fields;
 	
@@ -104,6 +107,7 @@ public class CCSAIL implements Device {
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
 		nullfield	= Util.stringToString(params.getString("nullfield"), "");
+		pollhist	= Util.stringToBoolean(params.getString("pollhist"), true);
 		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
 		
@@ -143,6 +147,7 @@ public class CCSAIL implements Device {
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
 		settings	   += "nullfield:" + nullfield + "/";
+		settings	   += "pollhist:" + pollhist + "/";
 		return settings;
 	}
 
@@ -326,6 +331,13 @@ public class CCSAIL implements Device {
      */
     public String getNullfield() {
     	return nullfield;
+    }
+    
+    /**
+     * getter method for polling historical data
+     */
+    public boolean getPollhist() {
+    	return pollhist;
     }
     
     /**
