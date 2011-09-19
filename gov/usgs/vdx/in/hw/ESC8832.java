@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A class that handles ESC8832 data logger commands
@@ -50,6 +52,12 @@ public class ESC8832 implements Device {
 	/** the column to check for null in database */
 	protected String nullfield;
 	
+	/** flag to set last data time to system default or NOW */
+	protected boolean pollhist;
+	
+	/** the name of the channel that is associated with the calibration column */
+	protected String calchannel;
+	
 	/** the columns available on the device */
 	protected String fields;
 	
@@ -74,6 +82,8 @@ public class ESC8832 implements Device {
 			}
 		}
 	}
+
+	public Logger logger;
 	
 	/**
 	 * Initialize Lily Device
@@ -88,6 +98,8 @@ public class ESC8832 implements Device {
 		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
 		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
 		nullfield	= Util.stringToString(params.getString("nullfield"), "");
+		pollhist	= Util.stringToBoolean(params.getString("pollhist"), true);
+		calchannel	= Util.stringToString(params.getString("calchannel"), "");
 		fields		= Util.stringToString(params.getString("fields"), "");
 		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
 		
@@ -98,7 +110,10 @@ public class ESC8832 implements Device {
 			throw new Exception("invalid acquisition type");
 		} else if (id.length() != 2) {
 			throw new Exception("id must be 2 characters");
+		} else if (calchannel.length() != 2) {
+			throw new Exception("calchannel must be 2 characters");
 		}
+		logger	= Logger.getLogger("gov.usgs.vdx.in.hw.ESC8832");
 	}
 	
 	/**
@@ -115,6 +130,8 @@ public class ESC8832 implements Device {
 		settings	   += "samplerate:" + samplerate + "/";
 		settings	   += "delimiter:" + delimiter + "/";
 		settings	   += "nullfield:" + nullfield + "/";
+		settings	   += "pollhist:" + pollhist + "/";
+		settings	   += "calchannel:" + calchannel + "/";
 		return settings;
 	}
 	
@@ -123,11 +140,22 @@ public class ESC8832 implements Device {
 	 */
 	public String requestData (Date startDate) throws Exception {
 		
-		String cmd = "";
+		String cmd 			= "";
+    	Calendar calendar	= new GregorianCalendar(TimeZone.getTimeZone("GMT"));
 		
 		switch (acquisition) {
 
 		case POLL: 
+			
+			// modulo the data to the nearest sample interval.  
+			long startSeconds	= startDate.getTime();
+			startSeconds	   -= startSeconds % (1000 * samplerate);
+			startDate			= new Date(startSeconds);
+			calendar.setTime(startDate);
+			
+			// subtract the sample rate from the start date to get one additional, overlapping sample
+			calendar.add(Calendar.SECOND, -samplerate);
+			startDate			= calendar.getTime();
 		
 			// calculate the number of seconds since the last data request
 			long secs	= (System.currentTimeMillis() - startDate.getTime()) / 1000;
@@ -136,19 +164,17 @@ public class ESC8832 implements Device {
 			int samps	= (int) Math.floor(secs  / samplerate);
 	
 			// request the smaller of the two, samples accumulated or lines
-			currentlines	= samps;
+			currentlines	= Math.min(samps, maxlines);
 			
 			// if no data is available then throw exception indicating we don't need to poll
 			if (currentlines == 0) {
 				throw new Exception("no data to poll");
 			}
 			
-			// calculate the start date and end date
-			Date endDate 	= new Date();
-			// Calendar cal	= Calendar.getInstance();
-			// cal.setTime(endDate);
-			// long endSeconds	= cal.getTimeInMillis();
-			// endSeconds -= endSeconds % (1000 * 60 * 15);			
+			// calculate the end date
+			calendar.setTime(startDate);
+			calendar.add(Calendar.SECOND, samplerate * currentlines);
+			Date endDate	= calendar.getTime();		
 			
 			// build up the command else {
 			cmd += "!5600015M";
@@ -224,6 +250,7 @@ public class ESC8832 implements Device {
     	String dataDay;
     	ESC8832DataPacket dataPacket;
     	ArrayList<ESC8832DataPacket> dataPacketList;
+    	Double calValue;
     	
     	Date currentDate	= new Date();
     	String currentDay	= new SimpleDateFormat("DDD").format(currentDate);
@@ -231,12 +258,15 @@ public class ESC8832 implements Device {
     	Calendar calendar	= new GregorianCalendar(TimeZone.getTimeZone("GMT"));
     	calendar.setTime(currentDate);
     	
+    	String message2 = "";
+    	
     	switch (acquisition) {
 
     	case POLL:
     		
     		// trim the special characters at the beginning/end of the message
-    		message = message.substring(4, message.length() - 15);
+    		message = message.substring(5);
+    		message = message.substring(0, message.lastIndexOf("&") + 1);
     		
     		// parse the message into individual time/data units
     		st				= new StringTokenizer(message, "!");
@@ -244,7 +274,7 @@ public class ESC8832 implements Device {
 			while (st.hasMoreTokens()) {
 				
 				// get the next line and validate
-				line		= st.nextToken();
+				line	= st.nextToken();
 				if (!line.startsWith("56") || !line.endsWith("&")) {
 					continue;
 				}
@@ -259,7 +289,7 @@ public class ESC8832 implements Device {
 					dataDate	= dateIn.parse(line.substring(8, 17));
 					calendar.setTime(dataDate);
 					
-					// if the data jday is greater than the current jday, then the year of the data needs to be decremented
+					// if the data julian day is greater than the current jday, then the year of the data needs to be decremented
 					dataDay		= line.substring(8, 11);					
 					if (Integer.valueOf(dataDay) > Integer.valueOf(currentDay)) {
 						calendar.set(Calendar.YEAR, Integer.valueOf(currentYear) - 1);
@@ -269,8 +299,6 @@ public class ESC8832 implements Device {
 					
 					// add the averaging interval to the date
 					calendar.add(Calendar.SECOND, samplerate);
-					
-					// re-defined the data date
 					dataDate	= calendar.getTime();						
 						
 				} catch (Exception e) {
@@ -279,23 +307,34 @@ public class ESC8832 implements Device {
 				
 				// parse the value
 				try {
-					dataValue	= Double.valueOf(line.substring(16, 26));
+					dataValue	= Double.valueOf(line.substring(17, 27));
 				} catch (Exception e) {
-					continue;
+					dataValue	= Double.NaN;
 				}
 				
 				// parse the flags
-				if (line.indexOf("&") > 26) {
-					dataFlag	= line.substring(26, line.length() - 1);
+				if (line.indexOf("&") > 27) {
+					dataFlag	= line.substring(27, line.length() - 1);
 				} else {
 					dataFlag	= "";
 				}
 				
-				// apply the flags
-				if (dataFlag.indexOf(">") >= 0) {
-					dataValue	= Double.NaN;
-				} else if (dataFlag.indexOf("C") >= 0) {
-					dataValue	= Double.NaN;
+				// if the data flag has something in it, then update the data value
+				if (dataFlag.length() > 0) {
+					if (dataFlag.indexOf(">") < 0) {
+						dataValue	= Double.NaN;
+					}
+				}
+				
+				// create a calibration packet if this is the calibration channel
+				if (dataChannel.equals(calchannel)) {
+					if (dataFlag.indexOf("C") >= 0) {
+						calValue	= 0.0;
+					} else {
+						calValue	= 1.0;
+					}
+					dataPacket = new ESC8832DataPacket("00", dataDate, calValue);
+					dataPacketList.add(dataPacket);
 				}
 				
 				// build the data packet and store it in a list
@@ -314,31 +353,38 @@ public class ESC8832 implements Device {
 				dataPacket	= (ESC8832DataPacket)dataPacketArray[0];
 				currentDate	= dataPacket.dataDate;
 				message		= dateOut.format(currentDate);
+				message2	= dateOut.format(currentDate);
 				
 				// parse each data packet in the list
 				for (int i = 0; i < dataPacketArray.length; i++) {
 					dataPacket	= (ESC8832DataPacket)dataPacketArray[i];
 					dataDate	= dataPacket.dataDate;
 					dataValue	= dataPacket.dataValue;
+					dataChannel	= dataPacket.dataChannel;
 					
 					// if this is a new data date then create a new line
-					if (dataDate != currentDate) {
+					if (dataDate.compareTo(currentDate) != 0) {
 						currentDate	= dataDate;
 						message += "\n";
-						message += dateOut.format(dataDate);
+						message += dateOut.format(currentDate);
+						message2 += "\n";
+						message2 += dateOut.format(currentDate);
 					}
 					
 					// output this info to the
 					message += "," + dataValue;
+					message2 += "," + dataChannel;
 				}
 				
 			} else {
 				message = "";
+				message2= "No Data Packets";
 			}
 
     		break;
     	}
     	
+    	logger.log(Level.INFO, message2);
     	return message;
     }
     
@@ -392,6 +438,13 @@ public class ESC8832 implements Device {
     }
     
     /**
+     * getter method for polling historical data
+     */
+    public boolean getPollhist() {
+    	return pollhist;
+    }
+    
+    /**
      * getter method for columns
      */
     public String getFields() {
@@ -437,6 +490,10 @@ class ESC8832DataPacket {
 		this.dataChannel	= dataChannel;
 		this.dataDate		= dataDate;
 		this.dataValue		= dataValue;
+	}
+	
+	public String toString () {
+		return this.dataChannel + "/" + this.dataDate + "/" + this.dataValue;
 	}
 }
 

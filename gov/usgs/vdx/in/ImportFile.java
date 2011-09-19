@@ -111,6 +111,7 @@ public class ImportFile extends Import implements Importer {
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		logger.log(Level.INFO, "[Rank] " + rankName);
+		logger.log(Level.INFO, "");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -342,7 +343,8 @@ public class ImportFile extends Import implements Importer {
 				return;
 			}
 			
-			logger.info("importing: " + filename);
+			logger.log(Level.INFO, "");
+			logger.log(Level.INFO, "importing: " + filename);
 			
 			// reset the channel code, as it will be derived from the filename, and not the config file, or the contents of the file
 			channelCode	= "";
@@ -388,7 +390,7 @@ public class ImportFile extends Import implements Importer {
 			if (headerlines > 0) {
 				logger.log(Level.INFO, "skipping " + headerlines + " header lines");
 				for (int i = 0; i < headerlines; i++) {
-					line	= rr.nextLine();
+					line	= rr.nextLine();	
 					lineNumber++;
 				}
 			}
@@ -404,7 +406,7 @@ public class ImportFile extends Import implements Importer {
 				String[] valueArray	= p.split(line, -1);
 				HashMap<Integer, String> valueMap	= new HashMap<Integer, String>();
 				for (int i = 0; i < valueArray.length; i++) {
-					valueMap.put(i, valueArray[i].trim());
+					valueMap.put(i, valueArray[i].replaceAll("[\'\"]", "").trim());
 				}
 				
 				// make sure the data row matches the defined data columns
@@ -474,7 +476,7 @@ public class ImportFile extends Import implements Importer {
 							
 						// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
 						} else {					
-							if (valueMap.get(i).length() == 0) {
+							if (valueMap.get(i).length() == 0 || valueMap.get(i).toUpperCase() == "NAN") {
 								value	= Double.NaN;
 							} else {
 								value	= Double.parseDouble(valueMap.get(i));

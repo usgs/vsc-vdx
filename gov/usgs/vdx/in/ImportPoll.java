@@ -50,9 +50,11 @@ public class ImportPoll extends Import implements Importer {
 	public Map<String, String> stationTimesourceMap;
 	
 	public String timesource;
+	public boolean lastDataTimeNow;
 	
 	public int postConnectDelay;
 	public int betweenPollDelay;
+	public int betweenCycleDelay;
 	
 	public Connection connection;	
 	public Device device;
@@ -113,6 +115,7 @@ public class ImportPoll extends Import implements Importer {
 		// get connection settings related to this instance
 		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
 		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
+		betweenCycleDelay	= Util.stringToInt(params.getString("betweenCycleDelay"), 1000);	
 		
 		// get the rank configuration for this import.  there can only be a single rank per import
 		rankParams		= params.getSubConfig("rank");
@@ -121,6 +124,7 @@ public class ImportPoll extends Import implements Importer {
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		logger.log(Level.INFO, "[Rank] " + rankName);
+		logger.log(Level.INFO, "");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -431,10 +435,7 @@ public class ImportPoll extends Import implements Importer {
 				
 				// get the latest data time from data source that keeps track of time
 				sqlDataSource		= sqlDataSourceMap.get(timesource);
-				Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield());
-				if (lastDataTime == null) {
-					lastDataTime = new Date(0);
-				}
+				Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield(), device.getPollhist());
 				
 				// initialize data objects related to this device
 				dateIn	= new SimpleDateFormat(device.getTimestamp());
@@ -525,7 +526,7 @@ public class ImportPoll extends Import implements Importer {
 						
 					// format the response based on the type of device
 					String dataMessage	= device.formatMessage(dataResponse);
-					// logger.log(Level.INFO, "dataMessage:" + dataMessage);
+					// logger.log(Level.INFO, "dataMessage:\n" + dataMessage);
 						
 					// parse the response by lines
 					StringTokenizer st	= new StringTokenizer(dataMessage, "\n");
@@ -747,6 +748,13 @@ public class ImportPoll extends Import implements Importer {
 			}
 			logger.log(Level.INFO, "");
 			logger.log(Level.INFO, "END POLLING CYCLE");
+			
+			// try to sleep before going to the next polling cycle
+			try {
+				Thread.sleep(betweenCycleDelay);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Thread.sleep(betweenCycleDelay) failed.", e);
+			}
 		}
 	}
 	

@@ -52,9 +52,11 @@ public class ImportStream extends Import implements Importer {
 	public Map<String, String> stationTimesourceMap;
 	
 	public String timesource;
+	public boolean lastDataTimeNow;
 
 	public int postConnectDelay;
 	public int betweenPollDelay;
+	public int betweenCycleDelay;
 	
 	public Connection connection;	
 	public Device device;
@@ -115,6 +117,7 @@ public class ImportStream extends Import implements Importer {
 		// get connection settings related to this instance
 		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
 		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
+		betweenCycleDelay	= Util.stringToInt(params.getString("betweenCycleDelay"), 1000);	
 		
 		// get the rank configuration for this import.  there can only be a single rank per import
 		rankParams		= params.getSubConfig("rank");
@@ -123,6 +126,7 @@ public class ImportStream extends Import implements Importer {
 		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		logger.log(Level.INFO, "[Rank] " + rankName);
+		logger.log(Level.INFO, "");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -428,10 +432,7 @@ public class ImportStream extends Import implements Importer {
 		
 		// get the latest data time from data source that keeps track of time
 		sqlDataSource		= sqlDataSourceMap.get(timesource);
-		Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield());
-		if (lastDataTime == null) {
-			lastDataTime = new Date(0);
-		}
+		Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield(), device.getPollhist());
 		
 		// display logging information
 		logger.log(Level.INFO, "");

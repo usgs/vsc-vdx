@@ -1249,8 +1249,14 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param channelCode
 	 * @return most recent timestamp
 	 */
-	public synchronized Date defaultGetLastDataTime(String channelCode, String nullField) {
-		Date lastDataTime = null;
+	public synchronized Date defaultGetLastDataTime(String channelCode, String nullField, boolean pollhist) {
+		
+		Date lastDataTime;
+		if (pollhist) {
+			lastDataTime = new Date(0);
+		} else {
+			lastDataTime = new Date();
+		}
 
 		try {
 			database.useDatabase(dbName);
@@ -1258,8 +1264,9 @@ abstract public class SQLDataSource implements DataSource {
 			if (nullField.length() > 0) sql += " WHERE " + nullField + " IS NOT NULL";
 			ps	= database.getPreparedStatement(sql);
 			rs	= ps.executeQuery();
-			if (rs.next()) {
-				double result	= rs.getDouble(1);
+			rs.next();
+			double result	= rs.getDouble(1);
+			if (!rs.wasNull()) {
 				lastDataTime	= Util.j2KToDate(result);
 			}
 			rs.close();
