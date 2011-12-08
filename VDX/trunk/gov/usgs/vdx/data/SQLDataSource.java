@@ -1327,9 +1327,9 @@ abstract public class SQLDataSource implements DataSource {
 			for (int i = 0; i < columns.size(); i++) {
 				column = columns.get(i);
 				if (translations) {
-					sql = sql + "," + column.name + " * c" + column.name + " + d" + column.name + " as " + column.name + " ";
+					sql = sql + ",a." + column.name + " * b.c" + column.name + " + b.d" + column.name + " as " + column.name + " ";
 				} else {
-					sql = sql + "," + column.name + " ";
+					sql = sql + ",a." + column.name + " ";
 				}
 			}
 
