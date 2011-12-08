@@ -48,9 +48,10 @@ public class ImportPoll extends Import implements Importer {
 	public Map<String, Device> stationDeviceMap;
 	public Map<String, ConfigFile> stationConnectionParamsMap;
 	public Map<String, String> stationTimesourceMap;
+	public Map<String, Date> stationLastDataTimeMap;
 	
 	public String timesource;
-	public boolean lastDataTimeNow;
+	public Date lastDataTime;
 	
 	public int postConnectDelay;
 	public int betweenPollDelay;
@@ -147,6 +148,7 @@ public class ImportPoll extends Import implements Importer {
 		stationDeviceMap			= new HashMap<String, Device>();
 		stationConnectionParamsMap	= new HashMap<String, ConfigFile>();
 		stationTimesourceMap		= new HashMap<String, String>();
+		stationLastDataTimeMap		= new HashMap<String, Date>();
 		
 		// validate that station are defined in the config file
 		stringList	= params.getList("station");
@@ -198,6 +200,7 @@ public class ImportPoll extends Import implements Importer {
 			stationDeviceMap.put(stationCode, device);
 			stationConnectionParamsMap.put(stationCode, connectionParams);
 			stationTimesourceMap.put(stationCode, timesource);
+			stationLastDataTimeMap.put(stationCode, null);
 			
 			// display configuration information related to this station
 			logger.log(Level.INFO, "[Station] " + stationCode);
@@ -434,8 +437,12 @@ public class ImportPoll extends Import implements Importer {
 				}
 				
 				// get the latest data time from data source that keeps track of time
-				sqlDataSource		= sqlDataSourceMap.get(timesource);
-				Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield(), device.getPollhist());
+				if (stationLastDataTimeMap.get(stationCode) == null) {
+					sqlDataSource	= sqlDataSourceMap.get(timesource);
+					lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield(), device.getPollhist());
+					stationLastDataTimeMap.put(stationCode, lastDataTime);
+				}
+				lastDataTime	= stationLastDataTimeMap.get(stationCode);
 				
 				// initialize data objects related to this device
 				dateIn	= new SimpleDateFormat(device.getTimestamp());
@@ -635,6 +642,11 @@ public class ImportPoll extends Import implements Importer {
 						}
 							
 						ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
+						
+						// define the last data time for this download
+						if (Util.j2KToDate(j2ksec).after(stationLastDataTimeMap.get(stationCode))) {
+							stationLastDataTimeMap.put(stationCode, Util.j2KToDate(j2ksec));
+						}
 							
 						// iterate through each data source that was defined and assign data from this line to it
 						for (int i = 0; i < dataSourceList.size(); i++) {
@@ -729,8 +741,6 @@ public class ImportPoll extends Import implements Importer {
 						done = true;
 					}
 				}
-				
-				// connection.disconnect();
 				
 				// output a status message based on how everything went above
 				if (done) {					
