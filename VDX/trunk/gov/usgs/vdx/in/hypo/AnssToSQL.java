@@ -13,7 +13,7 @@ import java.util.Scanner;
 import java.util.TimeZone;
 /**
  * ANSS to SQL
- * Reads an ANSS hypocenter file and returns SQL statements suitable for insertion into a Valve 3 database to the stdout.
+ * Reads a ANSS hypocenter files and returns SQL statements suitable for insertion into a Valve 3 database to the stdout.
  * See: http://www.ncedc.org/ftp/pub/doc/cat5/cnss.catalog.5 for a description of the hypocenter format file.
  *
  * @author Peter Cervelli
