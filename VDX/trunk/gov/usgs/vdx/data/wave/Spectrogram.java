@@ -73,6 +73,17 @@ public class Spectrogram {
 		time = computeTime();
 		window = Util.kaiser(binSize, beta);
 		spectraAmplitude = computeSpectraAmplitude();
+		
+		System.out.printf("Spectrogram info:\n");
+		System.out.printf("\tNumber of samples: %d\n",getNSamples());
+		System.out.printf("\tSampling Rate: %d\n",samplingRate);
+		System.out.printf("\tN FFT: %d\n",nfft);
+		System.out.printf("\tBin Size: %d\n",binSize);
+		System.out.printf("\tOverlap: %d\n",overlap);
+		System.out.printf("\tBeta: %f\n",beta);
+		System.out.printf("\tN rows: %d\n",nRows);
+		System.out.printf("\tN columns: %d\n",nColumns);
+
 	}
 	
 	/**
