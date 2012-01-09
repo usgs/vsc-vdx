@@ -10,6 +10,9 @@ import gov.usgs.util.Util;
  * TODO: return DoubleMatrix2D from FFT()
  * 
  * $Log: not supported by cvs2svn $
+ * Revision 1.7  2012/01/04 02:12:29  pcervelli
+ * Changed toSpectrogram method to use the Spectrogram class.
+ * 
  * Revision 1.6  2005/12/28 02:12:29  tparker
  * Add toCSV method to support raw data export
  *
@@ -280,44 +283,73 @@ public class SliceWave
 	 * @param overlap the overlap as a percentage in FFT bins 
 	 * @return the magnitude array
 	 */
-	public double[][] toSpectrogram(int sampleSize, boolean logPower, 
-			boolean logFreq, double overlap)
-	{
-		int overlapSize = (int)(sampleSize * overlap);
-		if (overlapSize >= sampleSize)
-			overlapSize = sampleSize - 1;
-		int xSize = (samples() / (sampleSize - overlapSize));
-		int ySize = sampleSize / 2;
+//	public double[][] toSpectrogram(int sampleSize, boolean logPower, 
+//			boolean logFreq, double overlap)
+//	{
+//		int overlapSize = (int)(sampleSize * overlap);
+//		if (overlapSize >= sampleSize)
+//			overlapSize = sampleSize - 1;
+//		int xSize = (samples() / (sampleSize - overlapSize));
+//		int ySize = sampleSize / 2;
+//		
+//		double[][] powerBuf = new double[xSize][ySize];
+//		double[][] smallBuf = new double[sampleSize][2];
+//		double re, im, mag;
+////			int m = (int)Math.round(mean());
+//		int m = 0;
+//		for (int i = 0; i < xSize; i++)
+//		{
+//			int si = i * (sampleSize - overlapSize);
+//			for (int j = 0; j < sampleSize; j++)
+//			{
+//				if (si + j < samples() && source.buffer[position + si + j] != Wave.NO_DATA)
+//					smallBuf[j][0] = source.buffer[position + si + j];
+//				else 
+//					smallBuf[j][0] = m;
+//				smallBuf[j][1] = 0;
+//			}
+//			
+//			FFT.fft(smallBuf);
+//			for (int j = 1; j < sampleSize / 2; j++)
+//			{
+//				re = smallBuf[j][0];
+//				im = smallBuf[j][1];
+//				mag = Math.sqrt(re * re + im * im);
+//				if (logPower)
+//					mag = Math.log(mag) / FFT.LOG10;
+//				powerBuf[i][j] = mag;
+//			}
+//		}
+//		return powerBuf;
+//	}
+	
+// This is the new (as of 2012) code that uses the gov.usgs.vdx.data.wave.Spectrogram class
+	
+  public double[][] toSpectrogram(int binSize, int nfft, boolean logPower, int overlap)
+	{		
+		double[] signal;
+
+		signal = new double[source.buffer.length];
+		for (int i = 0; i < source.buffer.length; i++)
+			signal[i] = (double)source.buffer[i];
+				
+		int samplingRate = (int)source.getSamplingRate();
 		
-		double[][] powerBuf = new double[xSize][ySize];
-		double[][] smallBuf = new double[sampleSize][2];
-		double re, im, mag;
-//			int m = (int)Math.round(mean());
-		int m = 0;
-		for (int i = 0; i < xSize; i++)
-		{
-			int si = i * (sampleSize - overlapSize);
-			for (int j = 0; j < sampleSize; j++)
-			{
-				if (si + j < samples() && source.buffer[position + si + j] != Wave.NO_DATA)
-					smallBuf[j][0] = source.buffer[position + si + j];
-				else 
-					smallBuf[j][0] = m;
-				smallBuf[j][1] = 0;
-			}
-			
-			FFT.fft(smallBuf);
-			for (int j = 1; j < sampleSize / 2; j++)
-			{
-				re = smallBuf[j][0];
-				im = smallBuf[j][1];
-				mag = Math.sqrt(re * re + im * im);
-				if (logPower)
-					mag = Math.log(mag) / FFT.LOG10;
-				powerBuf[i][j] = mag;
-			}
+		// if nfft equals zero, then set it automatically
+		
+		if (nfft==0) {
+			if (samplingRate<100)
+				nfft = binSize;
+			else
+				nfft = 2 * binSize;
 		}
-		return powerBuf;
+		
+		Spectrogram spectrogram = new Spectrogram(signal, samplingRate, nfft, binSize, overlap, 5);
+		
+		if (logPower)
+			return spectrogram.getLogSpectraAmplitude();
+		else
+			return spectrogram.getSpectraAmplitude();
 	}
 	
 	/**
