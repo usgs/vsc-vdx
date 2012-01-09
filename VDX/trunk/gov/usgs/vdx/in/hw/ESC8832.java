@@ -137,6 +137,7 @@ public class ESC8832 implements Device {
 	
 	/**
 	 * Request data
+	 * @param startDate last data time, in GMT
 	 */
 	public String requestData (Date startDate) throws Exception {
 		
@@ -255,7 +256,7 @@ public class ESC8832 implements Device {
     	Date currentDate	= new Date();
     	String currentDay	= new SimpleDateFormat("DDD").format(currentDate);
     	String currentYear	= new SimpleDateFormat("yyyy").format(currentDate);
-    	Calendar calendar	= new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+    	Calendar calendar	= new GregorianCalendar(TimeZone.getTimeZone(timezone));
     	calendar.setTime(currentDate);
     	
     	String message2 = "";
