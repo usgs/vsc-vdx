@@ -1252,27 +1252,28 @@ abstract public class SQLDataSource implements DataSource {
 	public synchronized Date defaultGetLastDataTime(String channelCode, String nullField, boolean pollhist) {
 		
 		Date lastDataTime;
+		
 		if (pollhist) {
 			lastDataTime = new Date(0);
+			try {
+				database.useDatabase(dbName);
+				sql	= "SELECT max(j2ksec) FROM " + channelCode;
+				if (nullField.length() > 0) sql += " WHERE " + nullField + " IS NOT NULL";
+				ps	= database.getPreparedStatement(sql);
+				rs	= ps.executeQuery();
+				rs.next();
+				double result	= rs.getDouble(1);
+				if (!rs.wasNull()) {
+					lastDataTime	= Util.j2KToDate(result);
+				}
+				rs.close();
+
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "SQLDataSource.defaultGetLastDataTime() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			}
+			
 		} else {
 			lastDataTime = new Date();
-		}
-
-		try {
-			database.useDatabase(dbName);
-			sql	= "SELECT max(j2ksec) FROM " + channelCode;
-			if (nullField.length() > 0) sql += " WHERE " + nullField + " IS NOT NULL";
-			ps	= database.getPreparedStatement(sql);
-			rs	= ps.executeQuery();
-			rs.next();
-			double result	= rs.getDouble(1);
-			if (!rs.wasNull()) {
-				lastDataTime	= Util.j2KToDate(result);
-			}
-			rs.close();
-
-		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.defaultGetLastDataTime() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 		}
 
 		return lastDataTime;
