@@ -4,7 +4,7 @@ import gov.usgs.plot.AxisRenderer;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.ImageDataRenderer;
-import gov.usgs.plot.Jet;
+import gov.usgs.plot.Jet2;
 import gov.usgs.plot.Spectrum;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
@@ -13,6 +13,13 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 /**
  * Renderer to draw spectrograms.
@@ -42,21 +49,24 @@ import java.awt.image.MemoryImageSource;
  */
 public class SpectrogramRenderer extends ImageDataRenderer
 {
-	private static final int[] SAMPLE_SIZES = new int[] {64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};
-	private String fftSize;
 
 	protected int hTicks;
 	protected int vTicks;
+	protected int nfft;
+	protected int binSize;
 	
 	protected boolean logPower;
 	protected boolean logFreq;
 	protected boolean autoScale;
+	
 	protected double minFreq;
 	protected double maxFreq;
+	protected double minScale;
+	protected double maxScale;
 	protected double maxPower;
+	protected double overlap;
 	protected double viewStartTime;
 	protected double viewEndTime;
-	protected double overlap;
 		
 	public boolean xTickMarks = true;
 	public boolean xTickValues = true;
@@ -91,14 +101,16 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		vTicks = -1;
 		minFreq = 0.75;
 		maxFreq = 20;
+		minScale = 20;
+		maxScale = 120;
 		maxPower = -Double.MAX_VALUE;
-		overlap = 0.2;
-		fftSize = "Auto";
-		autoScale = true;
+		overlap = 0.859375;
+		nfft = 0; // Auto
+		binSize = 256;
+		autoScale = false;
 		logPower = false;
 		logFreq = false;
-		imgBuffer = new byte[64000];
-		spectrum = Jet.getInstance();
+		spectrum = Jet2.getInstance();
 	}
 	
 	/**
@@ -171,91 +183,89 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	 */
 	public double update(double oldMaxPower)
 	{
+		
+        Scanner s;
+		try {
+			s = new Scanner(new BufferedReader(new FileReader("d:/sgram.config")));
+	        nfft = s.nextInt();
+	        binSize = s.nextInt();
+	        overlap = s.nextDouble();
+	        minScale = s.nextDouble();
+	        maxScale = s.nextDouble();
+	        s.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
 		if (decorator == null)
 			createDefaultFrameDecorator();
-		
+
 		wave.setSlice(viewStartTime, viewEndTime);
+		System.out.printf("%f %f\n", wave.getStartTime(),wave.getEndTime());
 		
-		int sampleSize = 128;
-			
-		if (fftSize.toLowerCase().equals("auto"))
-		{
-			double bestFit = 1E300;
-			int bestIndex = -1;
-			for (int i = 0; i < SAMPLE_SIZES.length; i++)
-			{
-				double xs = (double)wave.samples() / (double)SAMPLE_SIZES[i];
-				double ys = (double)SAMPLE_SIZES[i] / 2;
-				double ar = xs / ys;
-				double fit = Math.abs(ar - 1);
-				if (fit < bestFit)
-				{
-					bestFit = fit;
-					bestIndex = i;
+		// Overlap is expressed as percentage of bin size -- needs to be converted to absolute number of samples
+		
+		double[][] powerBuffer = wave.toSpectrogram(binSize, nfft, logPower, (int)(binSize * overlap));
+		
+		int imgXSize = powerBuffer.length;
+		int imgYSize = powerBuffer[0].length; 
+		
+		System.out.printf("X: %d, Y: %d\n",imgXSize,imgYSize);
+		
+		imgBuffer = new byte[imgXSize * imgYSize];
+		
+		// Maps the range of power values to [0 254] (255/-1 is transparent). 
+
+		if (autoScale) {
+			maxScale = Double.MIN_VALUE;
+			minScale = Double.MIN_VALUE;
+			for (int i = 0; i < imgXSize; i++)
+				for (int j = 0; j < imgYSize; j++) {
+					if (powerBuffer[i][j] > maxScale)
+						maxScale = powerBuffer[i][j];
+					if (powerBuffer[i][j] < minScale)
+						minScale = powerBuffer[i][j];
 				}
-			}
-			sampleSize = SAMPLE_SIZES[bestIndex];
+			System.out.printf("Autoscaling from %f to %f\n",minScale,maxScale);
 		}
-		else
-			sampleSize = Integer.parseInt(fftSize);
-
-		int imgXSize = wave.samples() / sampleSize;
-//		int imgYSize = sampleSize / 2;
-		int imgYSize = sampleSize / 4;
-		if (imgXSize <= 0 || imgYSize <= 0)
-			return -1;
-
-		double minF = minFreq;
-		double maxF = maxFreq;
-		double maxMag = -1E300;
-		double mag, f;
-		double[][] powerBuffer = wave.toSpectrogram(sampleSize, logPower, logFreq, overlap);
-		imgYSize = powerBuffer[0].length;
-		imgXSize = powerBuffer.length;
-		
-		for (int i = 0; i < imgXSize; i++)
-		{
-			for (int j = 0; j < imgYSize; j++)
-			{
-				f = ((double)j / (double)(imgYSize)) * wave.getSamplingRate() / 2;
-				mag = powerBuffer[i][j];
-				if (f >= minF && f <= maxF && mag > maxMag)
-					maxMag = mag;
+				
+		double slope = 254 / (maxScale - minScale);
+		double intercept = -slope * minScale;
+		int counter = 0;
+		double index;
+		for (int i = imgXSize -1; i >= 0; i--)
+			for (int j = 0; j < imgYSize; j++) {
+				index = slope * powerBuffer[i][j] + intercept;
+				if (index<0)
+					index=0;
+				else if (index>254)
+					index=254;
+				imgBuffer[counter++] = (byte)index;
 			}
-		}
-		
-		if (autoScale)		
-		{
-			if (logPower)
-				maxMag = Math.pow(10, maxMag);
-			
-			maxMag = Math.max(maxMag, oldMaxPower);
-		}
-		else
-			maxMag = maxPower;
+	
+//		FileWriter outFile;
+//		try {
+//		outFile = new FileWriter("d:/output.txt");
+//		PrintWriter out = new PrintWriter(outFile);		
+//
+//		counter = 0;
+//		for (int i = imgXSize -1; i >= 0; i--)
+//			for (int j = 0; j < imgYSize; j++) {
+//				out.printf("%f %d\n",powerBuffer[i][j],imgBuffer[counter++]);
+//			}
+//		out.close();
+//		}
+//		catch (IOException e) {
+//			e.printStackTrace();
+//		}
 
-		if (logPower)
-			maxMag = Math.log(maxMag) / Math.log(10);
 		
-		if (imgBuffer.length < imgXSize * imgYSize)
-			imgBuffer = new byte[imgXSize * imgYSize];
-		
-		double logMinMag = maxMag - 3;
-		for (int i = 0; i < imgXSize; i++)
-			for (int j = imgYSize - 1, k = 0; j >= 0; j--, k++)
-			{
-				double ratio = logPower ? (powerBuffer[i][j] - logMinMag) / (maxMag - logMinMag) : powerBuffer[i][j] / maxMag;
-				if (ratio < 0)
-					ratio = 0;
-				if (ratio > 1)
-					ratio = 1;
-				imgBuffer[i + imgXSize * k] = (byte)(spectrum.getColorIndexByRatio(ratio) + 9);
-			}
-
 		if (mis == null || im.getWidth(null) != imgXSize || im.getHeight(null) != imgYSize)
 		{
-			mis = new MemoryImageSource(imgXSize, imgYSize, spectrum.palette,
-					imgBuffer, 0, imgXSize);
+			mis = new MemoryImageSource(imgYSize, imgXSize, spectrum.palette,
+					imgBuffer, 0, imgYSize);
 		}
 		
 		im = Toolkit.getDefaultToolkit().createImage(mis);
@@ -263,10 +273,10 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		this.setImage(im);
 		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
 		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getSamplingRate() / 2);
-		this.setExtents(viewStartTime, viewEndTime, minF, maxF);
+		this.setExtents(viewStartTime, viewEndTime, minFreq, maxFreq);
 		decorator.decorate(this);
 
-		return maxMag;
+		return 15000.0;
 	}
 
 	/**
@@ -279,13 +289,20 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	/**
 	 * Set size of fft
-	 * @param fftSize The fftSize to set.
+	 * @param nfft Sets the number of points for the fft
 	 */
-	public void setFftSize(String fftSize)
+	public void setNfft(int nfft)
 	{
-		this.fftSize = fftSize;
+		this.nfft = nfft;
 	}
-	
+	/**
+	 * Set size of bin
+	 * @param binSize The bin size to set.
+	 */
+	public void setBinSize(int binSize)
+	{
+		this.binSize = binSize;
+	}
 	/**
 	 * Set flag if we have logarithm frequency axis
 	 * @param logFreq logarithm frequency axis flag
