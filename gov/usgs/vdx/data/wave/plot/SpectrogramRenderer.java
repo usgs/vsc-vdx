@@ -13,10 +13,13 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
-// import java.io.BufferedReader;
-// import java.io.FileNotFoundException;
-// import java.io.FileReader;
-// import java.util.Scanner;
+//import java.io.BufferedReader;
+//import java.io.FileNotFoundException;
+//import java.io.FileReader;
+//import java.io.FileWriter;
+//import java.io.IOException;
+//import java.io.PrintWriter;
+//import java.util.Scanner;
 
 /**
  * Renderer to draw spectrograms.
@@ -53,13 +56,11 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected int binSize;
 	
 	protected boolean logPower;
-	protected boolean logFreq;
+//	protected boolean logFreq;
 	protected boolean autoScale;
 	
 	protected double minFreq;
 	protected double maxFreq;
-	// protected double minScale;
-	// protected double maxScale;
 	protected double minPower;
 	protected double maxPower;
 	protected double overlap;
@@ -75,7 +76,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
     protected String timeZone;
 	protected String dateFormatString = "yyyy-MM-dd HH:mm:ss";
 	
-	private String yLabelText = null;
+	private String yLabelText = "Frequency (Hz)";
 	private String yUnitText = null;
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
@@ -99,17 +100,13 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		vTicks = -1;
 		minFreq = 0.75;
 		maxFreq = 20;
-		// minScale = 20;
-		// maxScale = 120;
-		// maxPower = -Double.MAX_VALUE;
-		minPower = 20;
-		maxPower = 120;
+		maxPower = -Double.MAX_VALUE;
 		overlap = 0.859375;
 		nfft = 0; // Auto
 		binSize = 256;
 		autoScale = false;
 		logPower = false;
-		logFreq = false;
+//		logFreq = false;
 		spectrum = Jet2.getInstance();
 	}
 	
@@ -171,7 +168,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 				hTicks=0;
 			}
 			this.title = channelTitle;
-			this.titleBackground = Color.WHITE;
+			this.titleBackground = Color.white;
 		}
 	}
 	
@@ -181,40 +178,21 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	 * @param oldMaxPower 
 	 * @return maximum magnitude
 	 */
-	public double update(double oldMaxPower)
+	public double[] update()
 	{
-		/*
-        Scanner s;
-		try {
-			s = new Scanner(new BufferedReader(new FileReader("d:/sgram.config")));
-	        nfft = s.nextInt();
-	        binSize = s.nextInt();
-	        overlap = s.nextDouble();
-	        minPower = s.nextDouble();
-	        maxPower = s.nextDouble();
-	        // minScale = s.nextDouble();
-	        // maxScale = s.nextDouble();
-	        s.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
-
+		
 		if (decorator == null)
 			createDefaultFrameDecorator();
 
 		wave.setSlice(viewStartTime, viewEndTime);
-		System.out.printf("%f %f\n", wave.getStartTime(),wave.getEndTime());
+//		System.out.printf("%f %f\n", wave.getStartTime(),wave.getEndTime());
 		
 		// Overlap is expressed as percentage of bin size -- needs to be converted to absolute number of samples
 		
-		double[][] powerBuffer = wave.toSpectrogram(binSize, nfft, logPower, (int)(binSize * overlap));
+		double[][] powerBuffer = wave.toSpectrogram(binSize, nfft, true, (int)(binSize * overlap));
 		
 		int imgXSize = powerBuffer.length;
 		int imgYSize = powerBuffer[0].length; 
-		
-		System.out.printf("X: %d, Y: %d\n",imgXSize,imgYSize);
 		
 		imgBuffer = new byte[imgXSize * imgYSize];
 		
@@ -222,7 +200,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 
 		if (autoScale) {
 			maxPower = Double.MIN_VALUE;
-			minPower = Double.MIN_VALUE;
+			minPower = Double.MAX_VALUE;
 			for (int i = 0; i < imgXSize; i++)
 				for (int j = 0; j < imgYSize; j++) {
 					if (powerBuffer[i][j] > maxPower)
@@ -232,6 +210,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 				}
 			System.out.printf("Autoscaling from %f to %f\n",minPower,maxPower);
 		}
+		else
+			System.out.printf("Manual scaling from %f to %f\n",minPower,maxPower);
 				
 		double slope = 254 / (maxPower - minPower);
 		double intercept = -slope * minPower;
@@ -246,23 +226,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 					index=254;
 				imgBuffer[counter++] = (byte)index;
 			}
-	
-//		FileWriter outFile;
-//		try {
-//		outFile = new FileWriter("d:/output.txt");
-//		PrintWriter out = new PrintWriter(outFile);		
-//
-//		counter = 0;
-//		for (int i = imgXSize -1; i >= 0; i--)
-//			for (int j = 0; j < imgYSize; j++) {
-//				out.printf("%f %d\n",powerBuffer[i][j],imgBuffer[counter++]);
-//			}
-//		out.close();
-//		}
-//		catch (IOException e) {
-//			e.printStackTrace();
-//		}
-
 		
 		if (mis == null || im.getWidth(null) != imgXSize || im.getHeight(null) != imgYSize)
 		{
@@ -273,12 +236,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		im = Toolkit.getDefaultToolkit().createImage(mis);
 		
 		this.setImage(im);
-		//this.setDataExtents(viewStartTime + timeZoneOffset, viewEndTime + timeZoneOffset, 0, wave.getSamplingRate() / 2);				 
-		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getSamplingRate() / 2);
+		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getNyquist());
 		this.setExtents(viewStartTime, viewEndTime, minFreq, maxFreq);
 		decorator.decorate(this);
+		
+		double Power[] = {minPower, maxPower};
+		
+		return Power;
 
-		return 15000.0;
 	}
 
 	/**
@@ -305,14 +270,14 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		this.binSize = binSize;
 	}
-	/**
-	 * Set flag if we have logarithm frequency axis
-	 * @param logFreq logarithm frequency axis flag
-	 */
-	public void setLogFreq(boolean logFreq)
-	{
-		this.logFreq = logFreq;
-	}
+//	/**
+//	 * Set flag if we have logarithm frequency axis
+//	 * @param logFreq logarithm frequency axis flag
+//	 */
+//	public void setLogFreq(boolean logFreq)
+//	{
+//		this.logFreq = logFreq;
+//	}
 	
 	/**
 	 * Set flag if we have logarithm power axis
@@ -324,12 +289,12 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
-	 * Set minimum power value
-	 * @param minPower new minimum power
+	 * Set maximum frequency
+	 * @param maxFreq maximum frequency
 	 */
-	public void setMinPower(double minPower)
+	public void setMaxFreq(double maxFreq)
 	{
-		this.minPower = minPower;
+		this.maxFreq = maxFreq;
 	}
 	
 	/**
@@ -342,6 +307,15 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
+	 * Set minimum power value
+	 * @param maxPower new minimum power
+	 */
+	public void setMinPower(double minPower)
+	{
+		this.minPower = minPower;
+	}
+	
+	/**
 	 * Set minimum frequency
 	 * @param minFreq minimum frequency
 	 */
@@ -349,16 +323,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		this.minFreq = minFreq;
 	}
-	
-	/**
-	 * Set maximum frequency
-	 * @param maxFreq maximum frequency
-	 */
-	public void setMaxFreq(double maxFreq)
-	{
-		this.maxFreq = maxFreq;
-	}
-	
 	/**
 	 * Set spectrogram overlapping flag
 	 * @param overlap spectrogram overlapping flag
