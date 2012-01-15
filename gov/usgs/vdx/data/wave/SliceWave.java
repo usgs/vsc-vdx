@@ -88,7 +88,16 @@ public class SliceWave
 	{
 		return limit - position;
 	}
-
+	
+	/**
+	 * Get Nyquist frequency
+	 * @return Nyquist frequency
+	 */
+	public double getNyquist()
+	{
+		return source.getNyquist();
+	}
+	
 	/**
 	 * Get sample rate
 	 * @return sample rate
@@ -330,9 +339,14 @@ public class SliceWave
 		double[] signal;
 
 		signal = new double[source.buffer.length];
+		double mu = source.mean();
 		for (int i = 0; i < source.buffer.length; i++)
-			signal[i] = (double)source.buffer[i];
-				
+			if (source.buffer[i] == Wave.NO_DATA)
+				signal[i] = mu;
+			else
+				signal[i] = (double)source.buffer[i];
+		
+		System.out.println(Wave.NO_DATA);
 		int samplingRate = (int)source.getSamplingRate();
 		
 		// if nfft equals zero, then set it automatically
@@ -425,7 +439,7 @@ public class SliceWave
 		}
 		for (; i < newSize; i++)
 		{
-			buf[i * 2] = m;
+			buf[i * 2] = 0;
 		}
 	
 		FFT.fft(buf);

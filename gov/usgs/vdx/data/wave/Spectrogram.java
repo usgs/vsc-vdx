@@ -19,6 +19,7 @@ public class Spectrogram {
 	public static final int DEFAULT_OVERLAP = 220;
 	public static final double DEFAULT_BETA = 5;
 	public static final double DEFAULT_MULTIPLIER = 20;
+	public static final double REFERENCE_AMPLITUDE = 1;
 	
 	private final int samplingRate;
 	private final int nfft;
@@ -234,22 +235,22 @@ public class Spectrogram {
 	 */
 	public double[][] getLogSpectraAmplitude() {
 		
-		return getLogSpectraAmplitude(DEFAULT_MULTIPLIER);
+		return getLogSpectraAmplitude(DEFAULT_MULTIPLIER, REFERENCE_AMPLITUDE);
 		
 	}
 	
 	/**
-	 * Returns an array of log10 of the spectra amplitudes times
+	 * Returns an array of log10 of the scaled spectra amplitudes times
 	 * the specified multiplier.
 	 * 
 	 * @param multiplier Multiplier
 	 */
-	public double[][] getLogSpectraAmplitude(double multiplier) {
+	public double[][] getLogSpectraAmplitude(double multiplier, double reference_amplitude) {
 	
 		double[][] logAmp = new double[nRows][nColumns];
 		for (int i = 0; i < nRows; i++)
 			for (int j = 0; j < nColumns; j++)
-				logAmp[i][j] = multiplier * Math.log10(spectraAmplitude[i][j]);
+				logAmp[i][j] = multiplier * Math.log10(spectraAmplitude[i][j]/reference_amplitude);
 		
 		return logAmp;
 	}
