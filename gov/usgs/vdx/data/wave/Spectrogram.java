@@ -1,7 +1,14 @@
 package gov.usgs.vdx.data.wave;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import gov.usgs.math.FFT;
 import gov.usgs.math.Util;
+
+import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
+
 
 /**
  * An immutable class for calculating spectrograms. User defines
@@ -73,7 +80,10 @@ public class Spectrogram {
 		frequency = computeFrequency();
 		time = computeTime();
 		window = Util.kaiser(binSize, beta);
+		
+		long Start = System.nanoTime();
 		spectraAmplitude = computeSpectraAmplitude();
+		System.out.printf("Execution time: %f\n",(System.nanoTime()-Start)/1e9);
 		
 		System.out.printf("Spectrogram info:\n");
 		System.out.printf("\tNumber of samples: %d\n",getNSamples());
@@ -277,7 +287,7 @@ public class Spectrogram {
 		for (int i=0;i<T.length;i++)
 			T[i] = i * delta;	
 		return T;		
-	}	
+	}
 	
 	/**
 	 * Computes the spectra amplitudes with the FFT.
@@ -285,27 +295,63 @@ public class Spectrogram {
 	private double[][] computeSpectraAmplitude() {
 
 		double[][] specAmp = new double[nRows][nColumns];
-		double[][] bin = new double[nfft][2];
-		
+		double[] bin = new double[nfft];
+
 		int c = 0;
 		for (int i = 0; i < nColumns; i++) {
 			
 			for (int j = 0; j < binSize; j++) {
-				bin[j][0] = signal[c] * window[j];
-				bin[j][1] = 0;
+				bin[j] = signal[c] * window[j];
 				c++;
 			}			
 			c = c - overlap;
-			FFT.fft(bin);
-			for (int j = 0; j < nfft; j++) {
-				if (j < nRows)
-					specAmp[j][i] = Math.sqrt(bin[j][0]*bin[j][0] + bin[j][1]*bin[j][1]);
-				bin[j][0] = 0;
-				bin[j][1] = 0;
+			
+			DoubleFFT_1D transform = new DoubleFFT_1D(nfft);
+			transform.realForward(bin);
+						
+			specAmp[0][i] = Math.abs(bin[0]);
+			specAmp[nfft/2][i] = Math.abs(bin[1]);
+			for (int j = 2; j < nfft; j=j+2) {
+				specAmp[j/2][i] = Math.sqrt(bin[j]*bin[j] + bin[j+1]*bin[j+1]);
+				bin[j] = 0;
+				bin[j+1] = 0;
 			}
+			
 		}
-		
 		return specAmp;
+		
 	}
+	
+//	/**
+//	 * Computes the spectra amplitudes with the FFT.
+//	 */
+//	private double[][] computeSpectraAmplitude() {
+//
+//		double[][] specAmp = new double[nRows][nColumns];
+//		double[][] bin = new double[nfft][2];
+//		
+//		int c = 0;
+//		for (int i = 0; i < nColumns; i++) {
+//			
+//			for (int j = 0; j < binSize; j++) {
+//				bin[j][0] = signal[c] * window[j];
+//				bin[j][1] = 0;
+//				c++;
+//			}			
+//			c = c - overlap;
+//
+//			FFT.fft(bin);
+//			
+//			for (int j = 0; j < nfft; j++) {
+//				if (j < nRows)
+//					specAmp[j][i] = Math.sqrt(bin[j][0]*bin[j][0] + bin[j][1]*bin[j][1]);
+//				bin[j][0] = 0;
+//				bin[j][1] = 0;
+//			}
+//			
+//		}
+//		
+//		return specAmp;
+//	}
 
 }

@@ -1132,7 +1132,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 			ca[1] = bb.getChar();
 			dataType = new String( ca );
 		} catch (Exception e) {
-			logger.warning("Extracting dataType from Wave failed: " + e);
+			logger.fine("Extracting dataType from Wave failed: " + e);
 			dataType = null;
 		}
 	}
