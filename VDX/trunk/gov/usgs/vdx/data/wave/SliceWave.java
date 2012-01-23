@@ -1,5 +1,9 @@
 package gov.usgs.vdx.data.wave;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import gov.usgs.math.FFT;
 import gov.usgs.util.Util;
 
@@ -265,74 +269,14 @@ public class SliceWave
 	}
 
 	/**
-	 * Calculates the spectrogram of this <code>Wave</code>.  This 
-	 * function has several variables that determines it's behavior.  The 
-	 * primary parameter is <code>sampleSize</code>, which specifies how large
-	 * the FFT bin size is.  This unchecked value should be a power of 2. Next
-	 * is <code>logPower</code>, which it whether or not the log of the power 
-	 * should be taken before the magnitude is put into the final array.  The
-	 * third parameter, <code>logFreq</code>, is reserved in case anyone
-	 * wants to implement a log frequency function (noone asked for it and
-	 * it seemed a bit silly so I didn't implement it).  The last variable is
-	 * <code>overlap</code> which is used to specify how much overlap (as a
-	 * percentage) there should be in subsequent FFT bins.  There is no input
-	 * checking on this value so be careful what you ask for.  In general, 
-	 * the higher the overlap value the 'smoother' the spectrogram will look at
-	 * the cost of introducing artifacts.
+	 * Calculates the spectrogram of this <code>Wave</code>. 
 	 * 
-	 * The returned array is the magnitude for the frequency range in each of 
-	 * the <code>sampleSize</code> sized bins.  This array is best used as
-	 * the input to an <code>ImageDataRenderer</code>.
-	 * 
-	 * @param sampleSize the number of samples for each FFT bin (must be a power
-	 * of 2)
+	 * @param binSize the number of samples for per window
+	 * @param nfft the length of the FFT (0 = auto)  
 	 * @param logPower whether or not to take the log of the power
-	 * @param logFreq whether or not to take the log of the frequency (not
-	 * implemented)
-	 * @param overlap the overlap as a percentage in FFT bins 
+	 * @param overlap the overlap in samples 
 	 * @return the magnitude array
 	 */
-//	public double[][] toSpectrogram(int sampleSize, boolean logPower, 
-//			boolean logFreq, double overlap)
-//	{
-//		int overlapSize = (int)(sampleSize * overlap);
-//		if (overlapSize >= sampleSize)
-//			overlapSize = sampleSize - 1;
-//		int xSize = (samples() / (sampleSize - overlapSize));
-//		int ySize = sampleSize / 2;
-//		
-//		double[][] powerBuf = new double[xSize][ySize];
-//		double[][] smallBuf = new double[sampleSize][2];
-//		double re, im, mag;
-////			int m = (int)Math.round(mean());
-//		int m = 0;
-//		for (int i = 0; i < xSize; i++)
-//		{
-//			int si = i * (sampleSize - overlapSize);
-//			for (int j = 0; j < sampleSize; j++)
-//			{
-//				if (si + j < samples() && source.buffer[position + si + j] != Wave.NO_DATA)
-//					smallBuf[j][0] = source.buffer[position + si + j];
-//				else 
-//					smallBuf[j][0] = m;
-//				smallBuf[j][1] = 0;
-//			}
-//			
-//			FFT.fft(smallBuf);
-//			for (int j = 1; j < sampleSize / 2; j++)
-//			{
-//				re = smallBuf[j][0];
-//				im = smallBuf[j][1];
-//				mag = Math.sqrt(re * re + im * im);
-//				if (logPower)
-//					mag = Math.log(mag) / FFT.LOG10;
-//				powerBuf[i][j] = mag;
-//			}
-//		}
-//		return powerBuf;
-//	}
-	
-// This is the new (as of 2012) code that uses the gov.usgs.vdx.data.wave.Spectrogram class
 	
   public double[][] toSpectrogram(int binSize, int nfft, boolean logPower, int overlap)
 	{		
@@ -346,7 +290,6 @@ public class SliceWave
 			else
 				signal[i] = (double)source.buffer[i];
 		
-		System.out.println(Wave.NO_DATA);
 		int samplingRate = (int)source.getSamplingRate();
 		
 		// if nfft equals zero, then set it automatically
@@ -420,28 +363,22 @@ public class SliceWave
 	public double[] fastFFT()
 	{
 		int n = samples();
-		int p2 = (int)Math.ceil(Math.log((double)n) / Math.log(2));
+		int p2 = (int)Math.floor(Math.log((double)n) / Math.log(2));
 		int newSize = (int)Math.pow(2, p2);
 		double[] buf = new double[newSize * 2];
 		double m = mean();
-		
 		reset();
-		double d;
-		int i = 0;
-		while (hasNext())
-		{
-			d = next();
-			if (d == Wave.NO_DATA)
-				buf[i * 2] = m;
+		
+		for (int i = 0; i < newSize; i++) {
+			if (hasNext()) {
+				buf[i * 2] = next();
+				if (buf[i * 2] == Wave.NO_DATA)
+					buf[i * 2] = m;
+			}
 			else
-				buf[i * 2] = d;
-			i++;
+				buf[i * 2] = 0;
 		}
-		for (; i < newSize; i++)
-		{
-			buf[i * 2] = 0;
-		}
-	
+
 		FFT.fft(buf);
 		
 		return buf;
