@@ -13,13 +13,6 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.MemoryImageSource;
-//import java.io.BufferedReader;
-//import java.io.FileNotFoundException;
-//import java.io.FileReader;
-//import java.io.FileWriter;
-//import java.io.IOException;
-//import java.io.PrintWriter;
-//import java.util.Scanner;
 
 /**
  * Renderer to draw spectrograms.
@@ -56,7 +49,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	protected int binSize;
 	
 	protected boolean logPower;
-//	protected boolean logFreq;
 	protected boolean autoScale;
 	
 	protected double minFreq;
@@ -76,7 +68,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
     protected String timeZone;
 	protected String dateFormatString = "yyyy-MM-dd HH:mm:ss";
 	
-	private String yLabelText = "Frequency (Hz)";
+	private String yLabelText = null;
 	private String yUnitText = null;
 	protected byte[] imgBuffer;
 	protected Spectrum spectrum;
@@ -98,7 +90,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		axis = new AxisRenderer(this);
 		hTicks = -1;
 		vTicks = -1;
-		minFreq = 0.75;
+		minFreq = 0;
 		maxFreq = 20;
 		maxPower = -Double.MAX_VALUE;
 		overlap = 0.859375;
@@ -106,7 +98,6 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		binSize = 256;
 		autoScale = false;
 		logPower = false;
-//		logFreq = false;
 		spectrum = Jet2.getInstance();
 	}
 	
@@ -143,7 +134,7 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	 */
 	public void setTitle(String t)
 	{
-		channelTitle = t;
+		channelTitle = t.split("\\.")[0];
 	}
 	
 	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
@@ -185,19 +176,16 @@ public class SpectrogramRenderer extends ImageDataRenderer
 			createDefaultFrameDecorator();
 
 		wave.setSlice(viewStartTime, viewEndTime);
-//		System.out.printf("%f %f\n", wave.getStartTime(),wave.getEndTime());
-		
-		// Overlap is expressed as percentage of bin size -- needs to be converted to absolute number of samples
 		
 		double[][] powerBuffer = wave.toSpectrogram(binSize, nfft, true, (int)(binSize * overlap));
-		
+
 		int imgXSize = powerBuffer.length;
 		int imgYSize = powerBuffer[0].length; 
-		
+		System.out.printf("X-size: %d, Y-Size: %d\n",imgXSize,imgYSize);
 		imgBuffer = new byte[imgXSize * imgYSize];
 		
 		// Maps the range of power values to [0 254] (255/-1 is transparent). 
-
+		
 		if (autoScale) {
 			maxPower = Double.MIN_VALUE;
 			minPower = Double.MAX_VALUE;
@@ -237,11 +225,10 @@ public class SpectrogramRenderer extends ImageDataRenderer
 		
 		this.setImage(im);
 		this.setDataExtents(wave.getStartTime(), wave.getEndTime(), 0, wave.getNyquist());
-		this.setExtents(viewStartTime, viewEndTime, minFreq, maxFreq);
+		this.setExtents(viewStartTime, viewEndTime, Math.max(minFreq, wave.getNyquist()/(imgXSize-1)), maxFreq);
 		decorator.decorate(this);
 		
 		double Power[] = {minPower, maxPower};
-		
 		return Power;
 
 	}
@@ -402,4 +389,5 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	{
 		vTicks = ticks;
 	}
+		
 }

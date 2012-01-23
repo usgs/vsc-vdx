@@ -1,15 +1,14 @@
 package gov.usgs.vdx.data.wave.plot;
 
-import gov.usgs.math.FFT;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.MatrixRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -36,11 +35,12 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	private double minFreq;
 	private double maxFreq;
-//	private boolean logFreq;
-	private boolean logPower;
-	private double maxPower;
-	private boolean autoScale;
+
 	private String channelTitle;
+	
+	private boolean logFreq;
+	private boolean logPower;
+	private boolean autoScale;
 	
 	public boolean xTickMarks = true;
 	public boolean xTickValues = true;
@@ -48,7 +48,8 @@ public class SpectraRenderer extends MatrixRenderer
 	public boolean xLabel = true;
 	public boolean yTickMarks = true;
 	public boolean yTickValues = true;
-	private String yLabelText = "Power";
+	
+	private String yLabelText = null;
 	private String yUnitText = null;
 	private Color color = null;
 	protected String timeZone;
@@ -85,7 +86,7 @@ public class SpectraRenderer extends MatrixRenderer
 	 */
 	public void setTitle(String t)
 	{
-		channelTitle = t;
+		channelTitle = t.split("\\.")[0];
 	}
 	
 	protected class DefaultSpectraFrameDecorator extends DefaultFrameDecorator
@@ -117,18 +118,10 @@ public class SpectraRenderer extends MatrixRenderer
 		
 		public void update()
 		{
-			
-//			if (logFreq)
-//				xAxis = DefaultFrameDecorator.XAxis.LOG;
-//			else
-//				xAxis = DefaultFrameDecorator.XAxis.LINEAR;
-			
-			xAxis = DefaultFrameDecorator.XAxis.LINEAR;
-			if (logPower)
-				yAxis = DefaultFrameDecorator.YAxis.LOG;
-			else
-				yAxis = DefaultFrameDecorator.YAxis.LINEAR;
+			xAxis = (logFreq) ? DefaultFrameDecorator.XAxis.LOG: DefaultFrameDecorator.XAxis.LINEAR;
+			yAxis = (logPower) ? DefaultFrameDecorator.YAxis.LOG: DefaultFrameDecorator.YAxis.LINEAR;
 		}
+		
 	}
 	
 	/**
@@ -138,8 +131,12 @@ public class SpectraRenderer extends MatrixRenderer
 	 * @return maximum spectra power value
 	 */
 	
-	public double update(double oldMaxPower)
+	public void update()
 	{
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS (z)");
+		Date date = new Date();
+		System.out.printf("Updating spectra at: %s\n", dateFormat.format(date));
+		
 		if (decorator == null)
 			decorator = new DefaultSpectraFrameDecorator();
 
@@ -150,47 +147,65 @@ public class SpectraRenderer extends MatrixRenderer
 		double P, F;
 		double maxp = -1E300;
 		double minp = 1E300;
-		
-		DoubleMatrix2D dm = DoubleFactory2D.dense.make(data.length / 4 + 1, 2);
+
+		DoubleMatrix2D dm = DoubleFactory2D.dense.make(data.length / 4, 2);
+
+		for (int i = 2; i <= data.length / 2; i=i+2) {
 			
-		for (int i = 0; i <= data.length / 2; i=i+2) {
 			F = i/2 *delta;
 			P = Math.sqrt(data[i]*data[i]+data[i+1]*data[i+1]);
+			
+			if (logFreq)
+				F = Math.log10(F);
+			
 			if (logPower)
-				P = Math.log(P)/FFT.LOG10;
+				P = Math.log10(P);
 
-			dm.setQuick(i/2, 0, F);
-			dm.setQuick(i/2, 1, P);
-
-			if (F >= minFreq && F <= maxFreq) {
-				if (P > maxp)
-					maxp = P;
-				if (P < minp)
-					minp = P;
-			}
+			dm.setQuick(i/2 - 1, 0, F);
+			dm.setQuick(i/2 - 1, 1, P);
+			
+			if (P > maxp)
+				maxp = P;
+			if (P < minp)
+				minp = P;
+			
+//			if (F >= minFreq && F <= maxFreq) {
+//		
+//			}
 		}
+		
+		double minf = delta;
+		double maxf = data.length / 4 * delta;
 		
 		setData(dm);
 		
 		setVisible(0, false);
+
+		double X1, X2, Y1, Y2;
 		
-//		if (autoScale)		
-//			maxp = Math.max(maxp, oldMaxPower);
-//		else
-//			maxp = maxPower;
-
-		System.out.printf("SpectraRenderer(182): minFreq: %f, maxFreq: %f, minPower: %f, maxPower: %f\n", minFreq,maxFreq,Math.floor(Math.log(minp)/FFT.LOG10),Math.ceil(Math.log(maxp)/FFT.LOG10));
+		if (logPower) {
+			Y1 = Math.floor(minp);
+			Y2 = Math.ceil(maxp);
+		}
+		else {
+			Y1 = minp;
+			Y2 = maxp;
+		}
+			
+		if (logFreq) {
+			X1 = Math.log10(Math.max(minFreq, minf));
+			X2 = Math.log10(Math.min(maxFreq, maxf));
+		}
+		else {
+			X1 = Math.max(minFreq, minf);
+			X2 = Math.min(maxFreq, maxf);
+		}
 		
-		if (logPower)
-			setExtents(minFreq, maxFreq, Math.floor(minp), Math.ceil(maxp));
-		else
-			setExtents(minFreq, maxFreq, minp, maxp);
-
-
+		setExtents(X1, X2, Y1, Y2);
+		
 		createDefaultLineRenderers(color);
 		decorator.decorate(this);
 		
-		return maxp;
 	}
 
 	/**
@@ -211,23 +226,23 @@ public class SpectraRenderer extends MatrixRenderer
 		this.autoScale = autoScale;
 	}
 
-//	/**
-//	 * Get flag if we have logarithm frequency axis
-//	 * @return log freq flag
-//	 */
-//	public boolean isLogFreq()
-//	{
-//		return logFreq;
-//	}
+	/**
+	 * Get flag if we have logarithm frequency axis
+	 * @return log freq flag
+	 */
+	public boolean isLogFreq()
+	{
+		return logFreq;
+	}
 
-//	/**
-//	 * Set flag if we have logarithm frequency axis
-//	 * @param logFreq true if freq axis is logarithmic
-//	 */
-//	public void setLogFreq(boolean logFreq)
-//	{
-//		this.logFreq = logFreq;
-//	}
+	/**
+	 * Set flag if we have logarithm frequency axis
+	 * @param logFreq true if freq axis is logarithmic
+	 */
+	public void setLogFreq(boolean logFreq)
+	{
+		this.logFreq = logFreq;
+	}
 
 	/**
 	 * Get flag if we have logarithm power axis
@@ -263,24 +278,6 @@ public class SpectraRenderer extends MatrixRenderer
 	public void setMaxFreq(double maxFreq)
 	{
 		this.maxFreq = maxFreq;
-	}
-
-	/**
-	 * Get maximum power
-	 * @return maximum power
-	 */
-	public double getMaxPower()
-	{
-		return maxPower;
-	}
-
-	/**
-	 * Set maximum power
-	 * @param maxPower maximum power
-	 */
-	public void setMaxPower(double maxPower)
-	{
-		this.maxPower = maxPower;
 	}
 
 	/**

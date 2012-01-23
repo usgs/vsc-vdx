@@ -281,7 +281,7 @@ public class SliceWaveRenderer extends FrameRenderer
 	 */
 	public void setTitle(String s)
 	{
-		title = s;
+		title = s.split("\\.")[0];
 	}
 	
 	/**
