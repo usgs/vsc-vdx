@@ -11,6 +11,6 @@
 	<classpathentry kind="lib" path="/USGS/contrib/commons-collections-3.2.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Plot"/>
+	<classpathentry kind="lib" path="D:/workspace/USGS/contrib/jtransforms-2.4.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
-
