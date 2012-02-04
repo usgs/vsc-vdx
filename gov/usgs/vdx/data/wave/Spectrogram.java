@@ -1,10 +1,5 @@
 package gov.usgs.vdx.data.wave;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import gov.usgs.math.FFT;
 import gov.usgs.math.Util;
 
 import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
@@ -81,19 +76,17 @@ public class Spectrogram {
 		time = computeTime();
 		window = Util.kaiser(binSize, beta);
 		
-		long Start = System.nanoTime();
 		spectraAmplitude = computeSpectraAmplitude();
-		System.out.printf("Execution time: %f\n",(System.nanoTime()-Start)/1e9);
-		
-		System.out.printf("Spectrogram info:\n");
-		System.out.printf("\tNumber of samples: %d\n",getNSamples());
-		System.out.printf("\tSampling Rate: %d\n",samplingRate);
-		System.out.printf("\tN FFT: %d\n",nfft);
-		System.out.printf("\tBin Size: %d\n",binSize);
-		System.out.printf("\tOverlap: %d\n",overlap);
-		System.out.printf("\tBeta: %f\n",beta);
-		System.out.printf("\tN rows: %d\n",nRows);
-		System.out.printf("\tN columns: %d\n",nColumns);
+				
+//		System.out.printf("Spectrogram info:\n");
+//		System.out.printf("\tNumber of samples: %d\n",getNSamples());
+//		System.out.printf("\tSampling Rate: %d\n",samplingRate);
+//		System.out.printf("\tN FFT: %d\n",nfft);
+//		System.out.printf("\tBin Size: %d\n",binSize);
+//		System.out.printf("\tOverlap: %d\n",overlap);
+//		System.out.printf("\tBeta: %f\n",beta);
+//		System.out.printf("\tN rows: %d\n",nRows);
+//		System.out.printf("\tN columns: %d\n",nColumns);
 
 	}
 	
@@ -272,7 +265,7 @@ public class Spectrogram {
 
 		double[] omega = new double[nRows];
 		double delta = (double)samplingRate / (double)(nfft);
-		for (int i=0;i<omega.length;i++)
+		for (int i = 0; i < omega.length; i++)
 			omega[i] = i * delta;
 		return omega;
 	}
@@ -284,8 +277,9 @@ public class Spectrogram {
 		
 		double[] T = new double[nColumns];
 		double delta = ((double)binSize - (double)overlap) / (double)samplingRate;
-		for (int i=0;i<T.length;i++)
-			T[i] = i * delta;	
+		double alpha = (double)binSize/samplingRate/2;
+		for (int i = 0; i < T.length; i++)
+			T[i] = i * delta + alpha;	
 		return T;		
 	}
 	
@@ -321,37 +315,5 @@ public class Spectrogram {
 		return specAmp;
 		
 	}
-	
-//	/**
-//	 * Computes the spectra amplitudes with the FFT.
-//	 */
-//	private double[][] computeSpectraAmplitude() {
-//
-//		double[][] specAmp = new double[nRows][nColumns];
-//		double[][] bin = new double[nfft][2];
-//		
-//		int c = 0;
-//		for (int i = 0; i < nColumns; i++) {
-//			
-//			for (int j = 0; j < binSize; j++) {
-//				bin[j][0] = signal[c] * window[j];
-//				bin[j][1] = 0;
-//				c++;
-//			}			
-//			c = c - overlap;
-//
-//			FFT.fft(bin);
-//			
-//			for (int j = 0; j < nfft; j++) {
-//				if (j < nRows)
-//					specAmp[j][i] = Math.sqrt(bin[j][0]*bin[j][0] + bin[j][1]*bin[j][1]);
-//				bin[j][0] = 0;
-//				bin[j][1] = 0;
-//			}
-//			
-//		}
-//		
-//		return specAmp;
-//	}
 
 }
