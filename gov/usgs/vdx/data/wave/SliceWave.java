@@ -1,10 +1,5 @@
 package gov.usgs.vdx.data.wave;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import gov.usgs.math.FFT;
 import gov.usgs.util.Util;
 
 /**
@@ -269,121 +264,30 @@ public class SliceWave
 	}
 
 	/**
-	 * Calculates the spectrogram of this <code>Wave</code>. 
-	 * 
-	 * @param binSize the number of samples for per window
-	 * @param nfft the length of the FFT (0 = auto)  
-	 * @param logPower whether or not to take the log of the power
-	 * @param overlap the overlap in samples 
-	 * @return the magnitude array
-	 */
+	 * Returns an array containing the signal from the slice starting position
+	 * to the slice ending position.
+	 * @return the signal array
+	 */	
+	public double[] getSignal() {
+		  
+			double[] signal;
+			double mu = mean();
+			
+			int nSamples = samples();
+			
+			signal = new double[nSamples];
 	
-  public double[][] toSpectrogram(int binSize, int nfft, boolean logPower, int overlap)
-	{		
-		double[] signal;
-
-		signal = new double[source.buffer.length];
-		double mu = source.mean();
-		for (int i = 0; i < source.buffer.length; i++)
-			if (source.buffer[i] == Wave.NO_DATA)
-				signal[i] = mu;
-			else
-				signal[i] = (double)source.buffer[i];
-		
-		int samplingRate = (int)source.getSamplingRate();
-		
-		// if nfft equals zero, then set it automatically
-		
-		if (nfft==0) {
-			if (samplingRate<100)
-				nfft = binSize;
-			else
-				nfft = 2 * binSize;
-		}
-		
-		Spectrogram spectrogram = new Spectrogram(signal, samplingRate, nfft, binSize, overlap, 5);
-		
-		if (logPower)
-			return spectrogram.getLogSpectraAmplitude();
-		else
-			return spectrogram.getSpectraAmplitude();
-	}
-	
-	/**
-	 * Computes the FFT of the <code>Wave</code>.  This function will
-	 * perform the necessary zero-padding in order to make the samples buffer
-	 * be an power of 2 in size.
-	 *  
-	 * @return the FFT (n rows x 2 column [real/imaginary]) array
-	 * @see FFT
-	 */
-	// TODO: fix Wave.NO_DATA to work with doubles
-	public double[][] fft()
-	{
-		int n = samples();
-		int p2 = (int)Math.ceil(Math.log((double)n) / Math.log(2));
-		int newSize = (int)Math.pow(2, p2);
-		double[] buf = new double[newSize * 2];
-		double m = mean();
-		
-		reset();
-		double d;
-		int i = 0;
-		while (hasNext())
-		{
-			d = next();
-			if (d == Wave.NO_DATA)
-				buf[i * 2] = m;
-			else
-				buf[i * 2] = d;
-			i++;
-		}
-		for (; i < newSize; i++)
-		{
-			buf[i * 2] = m;
-		}
-	
-		FFT.fft(buf);
-		
-		double[][] r = new double[newSize][2];
-		for (i = 0; i < newSize; i++)
-		{
-			r[i][0] = buf[i * 2];
-			r[i][1] = buf[i * 2 + 1];
-		}
-		return r;
-	}
-	
-	/**
-	 * The same as FFT(), without separation real and imaginary part
-	 *  
-	 * @return the FFT (n*2 rows) array
-	 * @see FFT
-	 */
-	public double[] fastFFT()
-	{
-		int n = samples();
-		int p2 = (int)Math.floor(Math.log((double)n) / Math.log(2));
-		int newSize = (int)Math.pow(2, p2);
-		double[] buf = new double[newSize * 2];
-		double m = mean();
-		reset();
-		
-		for (int i = 0; i < newSize; i++) {
-			if (hasNext()) {
-				buf[i * 2] = next();
-				if (buf[i * 2] == Wave.NO_DATA)
-					buf[i * 2] = m;
+			reset();
+			for (int i = 0; i < nSamples; i++) {
+				signal[i] = next();
+				if (signal[i] == Wave.NO_DATA)
+					signal[i] = mu;
 			}
-			else
-				buf[i * 2] = 0;
-		}
-
-		FFT.fft(buf);
-		
-		return buf;
+			
+			return signal;
+		  
 	}
-	
+		
 	/**
 	 * Set read pointer in the slice starting position
 	 */

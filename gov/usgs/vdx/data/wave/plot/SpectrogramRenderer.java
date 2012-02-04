@@ -8,6 +8,7 @@ import gov.usgs.plot.Jet2;
 import gov.usgs.plot.Spectrum;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
+import gov.usgs.vdx.data.wave.Spectrogram;
 
 import java.awt.Color;
 import java.awt.Image;
@@ -172,16 +173,28 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	public double[] update()
 	{
 		
+		double[][] powerBuffer;	
+		
 		if (decorator == null)
 			createDefaultFrameDecorator();
 
 		wave.setSlice(viewStartTime, viewEndTime);
+		double[] signal = wave.getSignal();
 		
-		double[][] powerBuffer = wave.toSpectrogram(binSize, nfft, true, (int)(binSize * overlap));
+		if (nfft == 0)
+			nfft = binSize;
+		
+		Spectrogram spectrogram = new Spectrogram(signal, (int)wave.getSamplingRate(), nfft, binSize, (int)(binSize * overlap), 5);
+
+		if (logPower)
+			powerBuffer = spectrogram.getLogSpectraAmplitude();
+		else
+			powerBuffer = spectrogram.getSpectraAmplitude();
+		
 
 		int imgXSize = powerBuffer.length;
 		int imgYSize = powerBuffer[0].length; 
-		System.out.printf("X-size: %d, Y-Size: %d\n",imgXSize,imgYSize);
+
 		imgBuffer = new byte[imgXSize * imgYSize];
 		
 		// Maps the range of power values to [0 254] (255/-1 is transparent). 
@@ -196,11 +209,8 @@ public class SpectrogramRenderer extends ImageDataRenderer
 					if (powerBuffer[i][j] < minPower)
 						minPower = powerBuffer[i][j];
 				}
-			System.out.printf("Autoscaling from %f to %f\n",minPower,maxPower);
 		}
-		else
-			System.out.printf("Manual scaling from %f to %f\n",minPower,maxPower);
-				
+		
 		double slope = 254 / (maxPower - minPower);
 		double intercept = -slope * minPower;
 		int counter = 0;
