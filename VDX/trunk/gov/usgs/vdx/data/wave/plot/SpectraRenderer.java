@@ -1,14 +1,13 @@
 package gov.usgs.vdx.data.wave.plot;
 
+import gov.usgs.math.Spectra;
+import gov.usgs.math.Util;
 import gov.usgs.plot.DefaultFrameDecorator;
 import gov.usgs.plot.FrameDecorator;
 import gov.usgs.plot.MatrixRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
@@ -133,73 +132,27 @@ public class SpectraRenderer extends MatrixRenderer
 	
 	public void update()
 	{
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS (z)");
-		Date date = new Date();
-		System.out.printf("Updating spectra at: %s\n", dateFormat.format(date));
 		
 		if (decorator == null)
 			decorator = new DefaultSpectraFrameDecorator();
 
 		decorator.update();
 		
-		double[] data = wave.fastFFT(); // FFT of the wave: [real;imag;real;imag ...]
-		double delta = wave.getSamplingRate() / data.length * 2;
-		double P, F;
-		double maxp = -1E300;
-		double minp = 1E300;
+		int nfft = (int)Util.getPreviousPowerOf2(wave.samples());
+		Spectra spectra = new Spectra(wave.getSignal(), wave.getSamplingRate(), nfft);
+	
+		DoubleMatrix2D dm = DoubleFactory2D.dense.make(spectra.getMatrix(logPower,logFreq));
 
-		DoubleMatrix2D dm = DoubleFactory2D.dense.make(data.length / 4, 2);
-
-		for (int i = 2; i <= data.length / 2; i=i+2) {
-			
-			F = i/2 *delta;
-			P = Math.sqrt(data[i]*data[i]+data[i+1]*data[i+1]);
-			
-			if (logFreq)
-				F = Math.log10(F);
-			
-			if (logPower)
-				P = Math.log10(P);
-
-			dm.setQuick(i/2 - 1, 0, F);
-			dm.setQuick(i/2 - 1, 1, P);
-			
-			if (P > maxp)
-				maxp = P;
-			if (P < minp)
-				minp = P;
-			
-//			if (F >= minFreq && F <= maxFreq) {
-//		
-//			}
-		}
-		
-		double minf = delta;
-		double maxf = data.length / 4 * delta;
-		
 		setData(dm);
-		
 		setVisible(0, false);
-
-		double X1, X2, Y1, Y2;
 		
-		if (logPower) {
-			Y1 = Math.floor(minp);
-			Y2 = Math.ceil(maxp);
-		}
-		else {
-			Y1 = minp;
-			Y2 = maxp;
-		}
-			
-		if (logFreq) {
-			X1 = Math.log10(Math.max(minFreq, minf));
-			X2 = Math.log10(Math.min(maxFreq, maxf));
-		}
-		else {
-			X1 = Math.max(minFreq, minf);
-			X2 = Math.min(maxFreq, maxf);
-		}
+		double minf = Math.max(minFreq, wave.getSamplingRate()/nfft);
+		double maxf = Math.min(maxFreq, wave.getNyquist());
+		
+		double X1 = logFreq ? Math.log10(minf) : minf;
+		double X2 = logFreq ? Math.log10(maxf) : maxf;
+		double Y1 = logPower ? Math.log10(spectra.getMinPower(minf, maxf)) : spectra.getMinPower(minf, maxf);
+		double Y2 = logPower ? Math.log10(spectra.getMaxPower(minf, maxf)) : spectra.getMaxPower(minf, maxf);
 		
 		setExtents(X1, X2, Y1, Y2);
 		
