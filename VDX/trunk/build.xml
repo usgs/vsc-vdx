@@ -85,6 +85,7 @@ dist    -- creates a binary distribution
 				<include name="mysql.jar" />
 				<include name="seed-pdcc.jar" />
 				<include name="commons-collections-3.2.1.jar" />
+				<include name="jtransforms-2.4.jar" />
 			</fileset>
 		</copy>
 		
