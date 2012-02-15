@@ -24,6 +24,7 @@ public class AnssToSQL {
 	private static int rankID = 1;
 	private static String clause = "REPLACE";
 	private static GeographicFilter GF = new GeographicFilter();
+	private static boolean web = false;
 
 	private static double parseTime(String line) {	
 
@@ -81,6 +82,22 @@ public class AnssToSQL {
 		
 	}
 	
+	private static void printLineWeb(String line, String Preamble){
+		
+
+		System.out.printf("%s(\"%s\",%s,%s,%s,%s,\"%s%s\")",
+						   Preamble,
+						   Util.j2KToDateString(parseTime(line)),	// Time
+						   parse(line,24,33), // Latitude
+						   parse(line,33,43), // Longitude
+						   parse(line,43,51), // Depth
+						   parse(line,129,134), // Preferred Magnitude
+						   parse(line,53,55).toLowerCase(), // Network
+						   parse(line,111,123,"") //Event ID
+						   );
+		
+	}
+	
 	private static int parseArguments(String[] args) {
 		
 		int c = 0;
@@ -101,6 +118,9 @@ public class AnssToSQL {
 			}
 			else if (key.toLowerCase().startsWith("i")) {
 				clause = "INSERT IGNORE";
+			}
+			else if (key.toLowerCase().startsWith("w")) {
+				web = true;
 			}
 			c++;
 		}
@@ -230,13 +250,23 @@ public class AnssToSQL {
 		    		
 		    		if (GF.test(longitude,latitude)) {
 		    			if (first) {
-		    				System.out.printf("%s INTO hypocenters (j2ksec,eid,rid,lat,lon,depth,prefmag,nphases,azgap,dmin,rms,nstimes,herr,verr,magtype) VALUES\n", clause);
-		    				printLine(line,"");
+		    				if (web) {
+			    				System.out.printf("%s INTO hypocenter (hypocenter_date_time,latitude,longitude,depth,magnitude,event_id) VALUES\n", clause);
+			    				printLineWeb(line,"");
+		    				}
+		    				else {
+			    				System.out.printf("%s INTO hypocenters (j2ksec,eid,rid,lat,lon,depth,prefmag,nphases,azgap,dmin,rms,nstimes,herr,verr,magtype) VALUES\n", clause);
+			    				printLine(line,"");
+		    				}
+		    					
 		    				first = false;
 		    				continue;
 		    			}
-		
-		    			printLine(line,",\n");
+		    			if (web)
+		    				printLineWeb(line,",\n");
+		    			else
+		    				printLine(line,",\n");
+
 		    		}
 	    		}
 	    		catch (Exception e) {
