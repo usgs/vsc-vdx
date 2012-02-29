@@ -286,7 +286,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				sql += "AND (a.lon >= ? OR a.lon <= ?) ";
 				
 			sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
-			sql += "AND    a.depth   <= ? AND a.depth   >= ? ";
+			sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
 			sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
 			sql += "AND    a.nphases >= ? AND a.nphases <= ? ";
 			sql += "AND    a.rms     >= ? AND a.rms     <= ? ";

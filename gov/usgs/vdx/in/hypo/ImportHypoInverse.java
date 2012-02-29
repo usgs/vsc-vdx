@@ -295,7 +295,6 @@ public class ImportHypoInverse implements Importer {
 				// DEPTH
 				try {
 					depth		= Double.parseDouble(line.substring(31, 34).trim() + "." + line.substring(34, 36).trim());
-					depth *= -1;
 				} catch (NumberFormatException e) {
 					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Depth not valid.");					
 					line	= rr.nextLine();
