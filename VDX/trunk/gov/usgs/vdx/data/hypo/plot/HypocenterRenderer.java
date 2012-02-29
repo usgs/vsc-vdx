@@ -149,7 +149,7 @@ public class HypocenterRenderer implements Renderer
 	/** 
 	 * The depth intervals
 	 */
-    public static double[] depths = new double[] {10000, 0, -5, -13, -20, -40, -10000};
+    public static double[] depths = new double[] {-10000, 0, 5, 13, 20, 40, 10000};
     public static String[] depthStrings = new String[] {"", "0", "5", "13", "20", "40", "70+"};
     
 	/** Constructor for HypocenterRenderer that gets the data, the coordinate
@@ -456,7 +456,7 @@ public class HypocenterRenderer implements Renderer
 	                case DEPTH:
 	                	for (int j = 0; j < depths.length - 1; j++)
 	                	{
-	                        if (hc.depth <= depths[j] && hc.depth > depths[j + 1])
+	                        if (hc.depth >= depths[j] && hc.depth < depths[j + 1])
 	                        {
 	                            color = colors[j];
 	                            break;

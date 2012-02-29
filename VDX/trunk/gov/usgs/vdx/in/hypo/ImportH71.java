@@ -94,7 +94,7 @@ public class ImportH71 extends Importer
 					lon *= -1;
 				
 				// DEPTH
-				double depth = -Double.parseDouble(s.substring(38, 45).trim());
+				double depth = Double.parseDouble(s.substring(38, 45).trim());
 				
 				// MAGNITUDE
 				double mag = Double.parseDouble(s.substring(47, 52).trim());

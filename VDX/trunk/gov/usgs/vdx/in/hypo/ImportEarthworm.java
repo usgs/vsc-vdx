@@ -76,7 +76,6 @@ public class ImportEarthworm extends Importer
 				
 				// DEPTH
 				double depth	= Double.parseDouble(s.substring(39, 45).trim());
-				depth *= -1;
 				
 				// MAGNITUDE
 				double mag		= Double.parseDouble(s.substring(47, 52).trim());
