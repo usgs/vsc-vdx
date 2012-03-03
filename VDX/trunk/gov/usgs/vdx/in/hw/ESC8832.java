@@ -259,8 +259,6 @@ public class ESC8832 implements Device {
     	Calendar calendar	= new GregorianCalendar(TimeZone.getTimeZone(timezone));
     	calendar.setTime(currentDate);
     	
-    	String message2 = "";
-    	
     	switch (acquisition) {
 
     	case POLL:
@@ -286,10 +284,6 @@ public class ESC8832 implements Device {
 				// parse the date
 				try {
 					
-					// define a date, but it has no year, so it will be 1970
-					dataDate	= dateIn.parse(line.substring(8, 17));
-					calendar.setTime(dataDate);
-					
 					// if the data julian day is greater than the current jday, then the year of the data needs to be decremented
 					dataDay		= line.substring(8, 11);					
 					if (Integer.valueOf(dataDay) > Integer.valueOf(currentDay)) {
@@ -297,6 +291,15 @@ public class ESC8832 implements Device {
 					} else {
 						calendar.set(Calendar.YEAR, Integer.valueOf(currentYear));
 					}
+					
+					calendar.set(Calendar.DAY_OF_YEAR, Integer.valueOf(dataDay));
+					calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(line.substring(11, 13)));
+					calendar.set(Calendar.MINUTE, Integer.valueOf(line.substring(13, 15)));
+					calendar.set(Calendar.SECOND, Integer.valueOf(line.substring(15, 17)));
+					
+					// set the day of year, hour, min and sec
+					// dataDate	= dateIn.parse(line.substring(8, 17));
+					// calendar.setTime(dataDate);
 					
 					// add the averaging interval to the date
 					calendar.add(Calendar.SECOND, samplerate);
@@ -354,7 +357,6 @@ public class ESC8832 implements Device {
 				dataPacket	= (ESC8832DataPacket)dataPacketArray[0];
 				currentDate	= dataPacket.dataDate;
 				message		= dateOut.format(currentDate);
-				message2	= dateOut.format(currentDate);
 				
 				// parse each data packet in the list
 				for (int i = 0; i < dataPacketArray.length; i++) {
@@ -368,24 +370,19 @@ public class ESC8832 implements Device {
 						currentDate	= dataDate;
 						message += "\n";
 						message += dateOut.format(currentDate);
-						message2 += "\n";
-						message2 += dateOut.format(currentDate);
 					}
 					
 					// output this info to the
 					message += "," + dataValue;
-					message2 += "," + dataChannel;
 				}
 				
 			} else {
 				message = "";
-				message2= "No Data Packets";
 			}
 
     		break;
     	}
-    	
-    	logger.log(Level.INFO, message2);
+
     	return message;
     }
     
