@@ -117,18 +117,20 @@ public class ImportFile extends Import implements Importer {
 		channelMap		= new HashMap<String, Channel>();
 		channelFieldMap	= new HashMap<String, String>();
 		stringList		= params.getList("channel");
-		for (int i = 0; i < stringList.size(); i++) {
-			channelCode		= stringList.get(i);
-			channelParams	= params.getSubConfig(channelCode);
-			channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-			channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
-			channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
-			channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
-			channelMap.put(channelCode, channel);
-			
-			// default the fields for this channel if they are not specified specifically
-			channelFieldMap.put(channelCode, Util.stringToString(channelParams.getString("fields"), fields));
+		if (stringList != null) {
+			for (int i = 0; i < stringList.size(); i++) {
+				channelCode		= stringList.get(i);
+				channelParams	= params.getSubConfig(channelCode);
+				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
+				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
+				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
+				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
+				channelMap.put(channelCode, channel);
+				
+				// default the fields for this channel if they are not specified specifically
+				channelFieldMap.put(channelCode, Util.stringToString(channelParams.getString("fields"), fields));
+			}
 		}
 		
 		// get the list of data sources that are being used in this import
@@ -525,7 +527,7 @@ public class ImportFile extends Import implements Importer {
 				}
 				
 				// log the line to the log file that is being imported, now that all potential errors have been caught
-				logger.log(Level.INFO, line);
+				// logger.log(Level.INFO, line);
 				
 				ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
 				
