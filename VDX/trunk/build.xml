@@ -54,6 +54,7 @@ dist    -- creates a binary distribution
 	
 	<target name="deploy">
 		<!--<ant target="jar" inheritAll="false" antfile="../Util/build.xml" />-->
+		<ant target="jar" inheritAll="false" antfile="../Earthworm/build.xml" />
 		<ant target="jar" inheritAll="false" antfile="../Math/build.xml" />
 		<ant target="jar" inheritAll="false" antfile="../Net/build.xml" />
 		<ant target="jar" inheritAll="false" antfile="../Pinnacle/build.xml" />
@@ -96,11 +97,9 @@ dist    -- creates a binary distribution
 		</copy>
 		
 		<jar destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile-bin}">
-			<!--
 			<fileset dir="${source}/../Earthworm/${classdir}">
 				<include name="**/**.class" />	
 			</fileset>
-			-->
 			<fileset dir="${source}/../Math/${classdir}">
 				<include name="**/**.class" />	
 			</fileset>
