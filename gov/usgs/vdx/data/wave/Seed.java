@@ -92,6 +92,71 @@ public class Seed
 		}
 		return map;
 	}
+
+	/**
+	 * Reads miniseed file
+	 * @param fn file name
+	 * @return list of segments as Wave objects
+	 */
+	public static List<Wave> readMiniSeed(String fn)
+	{
+		List<Wave> parts = new ArrayList<Wave>();
+		
+		try
+		{
+			DataInputStream ls = new DataInputStream(new BufferedInputStream(
+	                new FileInputStream(fn)));
+
+			ImportDirector importDirector = new SeedImportDirector();
+			SeedObjectBuilder objectBuilder = new SeedObjectBuilder();
+			importDirector.assignBuilder(objectBuilder);  // register the builder with the director
+			// begin reading the stream with the construct command
+			importDirector.construct(ls);  // construct SEED objects silently
+			SeedObjectContainer container = (SeedObjectContainer)importDirector.getBuilder().getContainer();
+			
+			Object object;
+			container.iterate();
+			
+			
+			while ((object = container.getNext()) != null)
+			{
+				Blockette b = (Blockette)object;
+				if (b.getType() != 999)
+					continue;
+//				String code = b.getFieldVal(4) + "$" + b.getFieldVal(6) + "$" + b.getFieldVal(7);
+//				String loc = (String)b.getFieldVal(5);
+//				if (loc.trim().length() > 0)
+//					code = code + "$" + loc;
+//				
+//				List<Wave> parts = map.get(code);
+//                if (parts == null)
+//                {
+//                	parts = new ArrayList<Wave>();
+//                	map.put(code, parts);
+//                }
+
+				
+                if (b.getWaveform() != null)
+                {
+	                Waveform wf = b.getWaveform();
+                	Wave sw = new Wave();
+	                sw.setSamplingRate(getSampleRate(((Integer)b.getFieldVal(10)).intValue(), ((Integer)b.getFieldVal(11)).intValue()));
+	                Btime bTime = (Btime)b.getFieldVal(8);
+	                sw.setStartTime(Util.dateToJ2K(btimeToDate(bTime)));
+	                sw.buffer = wf.getDecodedIntegers();
+	                sw.register();
+	                parts.add(sw);
+                }
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		return parts;
+//		return null;
+	}
 	 
 	/**
 	 * Convert binary time to Date
