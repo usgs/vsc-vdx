@@ -97,8 +97,9 @@ public class HypocenterRenderer implements Renderer
 
 			switch (ax)
 			{
-			case ARB_TIME:
 			case MAP_VIEW:
+			case TIME_DEPTH:
+			case ARB_TIME:
 				return DEPTH;
 
 			case LON_DEPTH:
