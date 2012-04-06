@@ -32,25 +32,25 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public static final boolean menuColumns		= true;
 	
 	public static final Column[] DATA_COLUMNS	= new Column[] {
-		new Column(1, "xTilt",		"East",			"microrad",	false, true, false),
-		new Column(2, "yTilt",		"North",		"microrad",	false, true, false), 
-		new Column(3, "holeTemp",	"Hole Temp",	"degrees C",false, true, true), 
-		new Column(4, "boxTemp",	"Box Temp",		"degrees C",false, true, true),
-		new Column(5, "instVolt",	"Inst Voltage",	"volts",	false, true, true),
-		new Column(6, "gndVolt",	"Grnd Voltage",	"volts",	false, true, false),
-		new Column(7, "rainfall",	"Rainfall",		"mm",		false, true, true)};
+		new Column(1, "xTilt",		"East",				"microrad",	false, true, false),
+		new Column(2, "yTilt",		"North",			"microrad",	false, true, false), 
+		new Column(3, "holeTemp",	"Hole Temp.",		"celcius",  false, true, true), 
+		new Column(4, "boxTemp",	"Box Temp.",		"celcius",  false, true, true),
+		new Column(5, "instVolt",	"Inst. Voltage",	"volts",	false, true, true),
+		new Column(6, "gndVolt",	"Gnd. Voltage",		"volts",	false, true, false),
+		new Column(7, "rainfall",	"Rainfall",			"mm",		false, true, true)};
 
 	public static final Column[] MENU_COLUMNS	= new Column[] {
-		new Column(1, "radial",		"Radial",		"microrad",	true,	true,  false),
-		new Column(2, "tangential",	"Tangential",	"microrad",	true,	true,  false), 
-		new Column(3, "xTilt",		"East",			"microrad",	false,	true,  false),
-		new Column(4, "yTilt",		"North",		"microrad",	false,	true,  false), 
-		new Column(5, "magnitude",	"Magnitude",	"microrad",	false,	false, false),
-		new Column(6, "azimuth",	"Azimuth",		"microrad",	false,	false, false), 
-		new Column(7, "holeTemp",	"Hole Temp",	"degrees C",false,	false, false), 
-		new Column(8, "boxTemp",	"Box Temp",		"degrees C",false,	false, true),
-		new Column(9, "instVolt",	"Inst Voltage",	"volts",	false,	false, true),
-		new Column(10, "rainfall",	"Rainfall",		"mm",		false,	false, true)};
+		new Column(1, "radial",		"Radial",			"microrad",	true,	true,  false),
+		new Column(2, "tangential",	"Tangential",		"microrad",	true,	true,  false), 
+		new Column(3, "xTilt",		"East",				"microrad",	false,	true,  false),
+		new Column(4, "yTilt",		"North",			"microrad",	false,	true,  false), 
+		new Column(5, "magnitude",	"Magnitude",		"microrad",	false,	true,  false),
+		new Column(6, "azimuth",	"Azimuth",			"microrad",	false,	true,  false), 
+		new Column(7, "holeTemp",	"Hole Temp.",		"celcius",  false,	true,  true), 
+		new Column(8, "boxTemp",	"Box Temp.",		"celcius",  false,	true,  true),
+		new Column(9, "instVolt",	"Inst. Voltage",	"volts",	false,	true,  true),
+		new Column(10, "rainfall",	"Rainfall",			"mm",		false,	true,  true)};
 
 	/**
 	 * Get database type, generic in this case
