@@ -17,7 +17,29 @@ public class Column
 	public String unit;
 	public boolean checked;
 	public boolean active;
-	public boolean bypassmanipulations;
+	public boolean bypassmanip;
+	public boolean accumulate;
+	
+	/**
+	 * Constructor
+	 * @param i column index
+	 * @param n name
+	 * @param d description
+	 * @param u measurement unit
+	 * @param b is checked?
+	 * @param a is active? (detrendable for plot columns)
+	 * @param m disable data manipulation options?
+	 */
+	public Column(int i, String n, String d, String u, boolean b, boolean a, boolean m, boolean c) {
+		idx			= i;
+		name		= n;
+		description	= d;
+		unit		= u;
+		checked		= b;
+		active		= a;
+		bypassmanip = m;
+		accumulate	= c;
+	}
 	
 	/**
 	 * Constructor
@@ -36,7 +58,8 @@ public class Column
 		unit		= u;
 		checked		= b;
 		active		= a;
-		bypassmanipulations = m;
+		bypassmanip = m;
+		accumulate	= false;
 	}
 
 	/**
@@ -55,7 +78,8 @@ public class Column
 		unit		= u;
 		checked		= b;
 		active		= a;
-		bypassmanipulations = false;
+		bypassmanip = false;
+		accumulate 	= false;
 	}
 
 	/**
@@ -73,7 +97,8 @@ public class Column
 		unit		= u;
 		checked		= b;
 		active		= true;
-		bypassmanipulations = false;
+		bypassmanip = false;
+		accumulate 	= false;
 	}
 	
 	/**
@@ -88,7 +113,8 @@ public class Column
 		unit		= ss[3];
 		checked		= ss[4].equals("T");
 		active		= ss[5].equals("T");
-		bypassmanipulations = ss[6].equals("T");
+		bypassmanip = ss[6].equals("T");
+		accumulate	= ss[7].equals("T");
 	}
 	
 	/**
@@ -96,7 +122,9 @@ public class Column
 	 * @return string rep of this Column
 	 */
 	public String toString() {
-		return(String.format("%d:%s:%s:%s:%s:%s:%s", idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F"), (bypassmanipulations ? "T" : "F")));
+		return(String.format("%d:%s:%s:%s:%s:%s:%s:%s", 
+				idx, name, description, unit, (checked ? "T" : "F"), (active ? "T" : "F"), 
+				(bypassmanip ? "T" : "F"), (accumulate ? "T" : "F")));
 	}
 	
 	/**

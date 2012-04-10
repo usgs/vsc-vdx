@@ -258,6 +258,39 @@ public class GenericDataMatrix implements BinaryDataSet
 			data.setQuick(i,c,d);
 		}
 	}
+	
+	/**
+	 * Accumulates columns, but only if current value is greater than previous value.  
+	 * Useful for rainfall data
+	 * @param c column to accumulate
+	 */
+	public void accumulate(int c) {
+		
+		// default a matrix with NaN values
+    	// DoubleMatrix2D rain = DoubleFactory2D.dense.make(data.rows(), 1, Double.NaN);
+
+		double total	= 0;
+		double r		= 0;
+		double last		= data.getQuick(0, c);
+		
+		// set the initial amount of rainfall to be zero for this time period
+		data.setQuick(0, 0, 0);
+		
+		// iterate through all subsequent rows and assign a rainfall amount if the 
+		// data increases.  Keep the total of the rainfall is less than the previous reading
+		for (int i = 1; i < data.rows(); i++) {
+			r = data.getQuick(i, c);
+			if (!Double.isNaN(r)) {
+				if (r < last) {
+					last = 0;
+				}
+				total += (r - last);
+				last = r;
+				data.setQuick(i, c, total);
+			}
+		}
+    	// return rain;
+	}
 
 	/**
 	 * Performs data detrending

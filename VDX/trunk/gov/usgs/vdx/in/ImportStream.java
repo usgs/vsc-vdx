@@ -288,7 +288,10 @@ public class ImportStream extends Import implements Importer {
 						columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
 						columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
 						columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-						column 				= new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked, columnActive);
+						columnBypass		= Util.stringToBoolean(columnParams.getString("bypass"), false);
+						columnAccumulate	= Util.stringToBoolean(columnParams.getString("accumulate"), false);
+						column 				= new Column(columnIdx, columnName, columnDescription, 
+								columnUnit, columnChecked, columnActive, columnBypass, columnAccumulate);
 						if (sqlDataSource.defaultGetColumn(columnName) == null) {
 							sqlDataSource.defaultInsertColumn(column);
 						}

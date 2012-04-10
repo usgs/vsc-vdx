@@ -264,14 +264,14 @@ abstract public class SQLDataSource implements DataSource {
 
 			if (columns) {
 				ps.execute("CREATE TABLE columns (colid INT PRIMARY KEY AUTO_INCREMENT, "
-					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
+					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), unit VARCHAR(255), "
+					+ "checked TINYINT, active TINYINT, bypassmanipulations TINYINT, accumulate TINYINT)");
 			}
 
 			if (menuColumns) {
 				ps.execute("CREATE TABLE columns_menu (colid INT PRIMARY KEY AUTO_INCREMENT, "
-					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), "
-					+ "unit VARCHAR(255), checked TINYINT, active TINYINT, bypassmanipulations TINYINT)");
+					+ "idx INT, name VARCHAR(255) UNIQUE, description VARCHAR(255), unit VARCHAR(255), "
+					+ "checked TINYINT, active TINYINT, bypassmanipulations TINYINT, accumulate TINYINT)");
 			}
 
 			// the usage of ranks does not depend on there being a channels table
@@ -557,14 +557,15 @@ abstract public class SQLDataSource implements DataSource {
 	public boolean defaultInsertColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns (idx, name, description, unit, checked, active, bypassmanipulations, accumulate) VALUES (?,?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
-			ps.setBoolean(7, column.bypassmanipulations);
+			ps.setBoolean(7, column.bypassmanip);
+			ps.setBoolean(8, column.accumulate);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");			
@@ -584,14 +585,15 @@ abstract public class SQLDataSource implements DataSource {
 	public boolean defaultInsertMenuColumn(Column column) {
 		try {
 			database.useDatabase(dbName);
-			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active, bypassmanipulations) VALUES (?,?,?,?,?,?,?)");
+			ps = database.getPreparedStatement("INSERT IGNORE INTO columns_menu (idx, name, description, unit, checked, active, bypassmanipulations, accumulate) VALUES (?,?,?,?,?,?,?,?)");
 			ps.setInt(1, column.idx);
 			ps.setString(2, column.name);
 			ps.setString(3, column.description);
 			ps.setString(4, column.unit);
 			ps.setBoolean(5, column.checked);
 			ps.setBoolean(6, column.active);
-			ps.setBoolean(7, column.bypassmanipulations);
+			ps.setBoolean(7, column.bypassmanip);
+			ps.setBoolean(8, column.accumulate);
 			ps.execute();
 			
 			logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
@@ -1089,7 +1091,7 @@ abstract public class SQLDataSource implements DataSource {
 
 		Column column;
 		List<Column> columns = new ArrayList<Column>();
-		boolean checked, active, bypassmanipulations;
+		boolean checked, active, bypassmanipulations, accumulate;
 		String tableName	= "";
 		
 		if (menuColumns) {
@@ -1100,7 +1102,7 @@ abstract public class SQLDataSource implements DataSource {
 
 		try {
 			database.useDatabase(dbName);
-			sql  = "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
+			sql  = "SELECT idx, name, description, unit, checked, active, bypassmanipulations, accumulate ";
 			sql += "FROM " + tableName + " ";
 			if (!allColumns && !menuColumns) {
 				sql += "WHERE active = 1 ";
@@ -1124,7 +1126,12 @@ abstract public class SQLDataSource implements DataSource {
 				} else {
 					bypassmanipulations = true;
 				}
-				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active, bypassmanipulations);
+				if (rs.getInt(8) == 0) {
+					accumulate = false;
+				} else {
+					accumulate = true;
+				}
+				column = new Column(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4), checked, active, bypassmanipulations, accumulate);
 				columns.add(column);
 			}
 			rs.close();
@@ -1146,12 +1153,12 @@ abstract public class SQLDataSource implements DataSource {
 		Column col = null;
 		int idx;
 		String name, description, unit;
-		boolean checked, active, bypassmanipulations;
+		boolean checked, active, bypassmanipulations, accumulate;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT idx, name, description, unit, checked, active, bypassmanipulations ";
+			sql	= "SELECT idx, name, description, unit, checked, active, bypassmanipulations, accumulate ";
 			sql = sql + "FROM  columns ";
 			sql = sql + "WHERE colid = ?";
 			
@@ -1178,7 +1185,12 @@ abstract public class SQLDataSource implements DataSource {
 				} else {
 					bypassmanipulations = true;
 				}
-				col	= new Column(idx, name, description, unit, checked, active, bypassmanipulations);
+				if (rs.getInt(8) == 0) {
+					accumulate = false;
+				} else {
+					accumulate = true;
+				}
+				col	= new Column(idx, name, description, unit, checked, active, bypassmanipulations, accumulate);
 			}
 			rs.close();
 
