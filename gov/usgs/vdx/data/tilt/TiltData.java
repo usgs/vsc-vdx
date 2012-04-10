@@ -66,9 +66,10 @@ public class TiltData extends GenericDataMatrix
                 {{data.viewPart(0, 0, data.rows(), 2),
                   getRotatedDataWithoutTime(theta),
                   data.viewPart(0, 2, data.rows(), 2),
-                  getVelocityDataWithoutTime(),                  
-                  data.viewPart(0, 4, data.rows(), 3),
-                  getRainDataWithoutTime()}});
+                  getVelocityDataWithoutTime(),                     
+                  data.viewPart(0, 4, data.rows(), 4)}});               
+                  // data.viewPart(0, 4, data.rows(), 3),
+                  // getRainDataWithoutTime()}});
     }
     
     /**

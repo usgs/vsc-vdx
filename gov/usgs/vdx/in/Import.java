@@ -84,7 +84,7 @@ public class Import {
 	public Column column;
 	public String columnName, columnDescription, columnUnit;
 	public int columnIdx;
-	public boolean columnActive, columnChecked;
+	public boolean columnActive, columnChecked, columnBypass, columnAccumulate;
 	public List<Column> columnList;
 	public String columns;
 	public String[] columnArray;	
