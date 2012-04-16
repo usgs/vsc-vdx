@@ -289,7 +289,6 @@ public class GenericDataMatrix implements BinaryDataSet
 				data.setQuick(i, c, total);
 			}
 		}
-    	// return rain;
 	}
 
 	/**
