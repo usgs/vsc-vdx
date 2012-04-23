@@ -621,6 +621,7 @@ public class GenericDataMatrix implements BinaryDataSet
 				m = Math.max(m, data.getQuick(i, c));
 			}
 		}
+		if (m == -1E300) m = 0;
 		return m;
 	}
 
@@ -637,6 +638,7 @@ public class GenericDataMatrix implements BinaryDataSet
 				m = Math.min(m, data.getQuick(i, c));
 			}
 		}
+		if (m == 1E300) m = 0;
 		return m;
 	}
 	
