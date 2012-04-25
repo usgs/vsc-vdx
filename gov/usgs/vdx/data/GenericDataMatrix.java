@@ -274,7 +274,7 @@ public class GenericDataMatrix implements BinaryDataSet
 		double last		= data.getQuick(0, c);
 		
 		// set the initial amount of rainfall to be zero for this time period
-		data.setQuick(0, 0, 0);
+		data.setQuick(0, c, 0);
 		
 		// iterate through all subsequent rows and assign a rainfall amount if the 
 		// data increases.  Keep the total of the rainfall is less than the previous reading
