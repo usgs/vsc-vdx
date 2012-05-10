@@ -34,8 +34,8 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	public static final Column[] DATA_COLUMNS	= new Column[] {
 		new Column(1, "xTilt",		"East",				"microrad",	false, true, false),
 		new Column(2, "yTilt",		"North",			"microrad",	false, true, false), 
-		new Column(3, "holeTemp",	"Hole Temp.",		"celcius",  false, true, true), 
-		new Column(4, "boxTemp",	"Box Temp.",		"celcius",  false, true, true),
+		new Column(3, "holeTemp",	"Hole Temp.",		"celsius",  false, true, true), 
+		new Column(4, "boxTemp",	"Box Temp.",		"celsius",  false, true, true),
 		new Column(5, "instVolt",	"Inst. Voltage",	"volts",	false, true, true),
 		new Column(6, "gndVolt",	"Gnd. Voltage",		"volts",	false, true, false),
 		new Column(7, "rainfall",	"Rainfall",			"mm",		false, true, true)};
@@ -47,8 +47,8 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		new Column(4, "yTilt",		"North",			"microrad",	false,	true,  false), 
 		new Column(5, "magnitude",	"Magnitude",		"microrad",	false,	true,  false),
 		new Column(6, "azimuth",	"Azimuth",			"microrad",	false,	true,  false), 
-		new Column(7, "holeTemp",	"Hole Temp.",		"celcius",  false,	true,  true), 
-		new Column(8, "boxTemp",	"Box Temp.",		"celcius",  false,	true,  true),
+		new Column(7, "holeTemp",	"Hole Temp.",		"celsius",  false,	true,  true), 
+		new Column(8, "boxTemp",	"Box Temp.",		"celsius",  false,	true,  true),
 		new Column(9, "instVolt",	"Inst. Voltage",	"volts",	false,	true,  true),
 		new Column(10, "rainfall",	"Rainfall",			"mm",		false,	true,  true)};
 
