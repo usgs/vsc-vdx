@@ -347,6 +347,16 @@ public class SpectrogramRenderer extends ImageDataRenderer
 	}
 	
 	/**
+	 * Set viewStartTime.
+	 * @param viewStartTime view start time
+	 */
+	public void setViewTimes()
+	{
+		viewStartTime = wave.getStartTime();
+		viewEndTime = wave.getEndTime();
+	}
+	
+	/**
 	 * Set Time Zone name.
 	 * @param timeZone time zone name
 	 */
