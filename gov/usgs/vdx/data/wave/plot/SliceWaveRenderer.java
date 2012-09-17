@@ -241,6 +241,15 @@ public class SliceWaveRenderer extends FrameRenderer
 	}
 	
 	/**
+	 * Set limits on time axis from wave
+	 * @param timeZone
+	 */
+	public void setViewTimes(String timeZone)
+	{
+		setViewTimes(wave.getStartTime(), wave.getEndTime(), timeZone);
+	}
+	
+	/**
 	 * Set color
 	 * @param c color
 	 */
