@@ -1196,11 +1196,13 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 	 */
 	public void detrend() {
 
-        double xm	= this.buffer.length/2;
+        double xm	= buffer.length/2;
 		double ym	= mean();
         double ssxx	= 0;
         double ssxy	= 0;        
-        for (int i = 0; i < this.buffer.length; i++) {
+        for (int i = 0; i < buffer.length; i++) {
+        	if (buffer[i] == NO_DATA)
+        		continue;
 			ssxy += (i - xm) * ((double)buffer[i] - ym);
 			ssxx += (i - xm) * (i - xm);
         }
@@ -1209,6 +1211,8 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
         double b	= ym - m * xm;
         for (int i = 0; i < this.buffer.length; i++) {
 			//data.setQuick(i, c, data.getQuick(i, c) - (data.getQuick(i, 0) * m + b));
+        	if (buffer[i] == NO_DATA)
+        		continue;
 			buffer[i] -= ((double)buffer[i] * m + b);
         }
 	}
