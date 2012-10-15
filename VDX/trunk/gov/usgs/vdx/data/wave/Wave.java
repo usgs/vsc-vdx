@@ -34,24 +34,6 @@ import java.util.logging.Logger;
  * All data are stored as 32-bit signed integers. The start time, as in the
  * whole USGS Java codebase, is in j2ksec (decimal seconds since Jan 1, 2000).
  * 
- * $Log: not supported by cvs2svn $
- * Revision 1.6  2006/08/10 14:31:44  cervelli
- * Changed join().
- *
- * Revision 1.5  2006/04/08 01:27:11  dcervelli
- * Changed exportToText() to throw exceptions for bug #34.
- *
- * Revision 1.4  2006/04/08 01:00:17  dcervelli
- * Changed subset() for bug #84.
- *
- * Revision 1.3  2006/04/03 05:15:28  dcervelli
- * New join method for better Swarm monitor mode.
- *
- * Revision 1.2  2005/09/22 20:51:23  dcervelli
- * Fixed toSAC().
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
  *
  * @author Dan Cervelli
  */
@@ -306,6 +288,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable
 
 	/**
 	 * Invalidates the cached statistics.
+	 * TODO: document when and why this should be called
 	 */
 	public void invalidateStatistics()
 	{
