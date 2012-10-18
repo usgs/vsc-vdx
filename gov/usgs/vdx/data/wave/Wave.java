@@ -684,21 +684,18 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	/**
 	 * <p>
 	 * Combines this wave with another overlapping one. This function will
-	 * return a combination of the two waves. This modifies one of the waves and
-	 * returns it. Neither wave is guaranteed to be safe from modification.
+	 * return a combination of the two waves. This may modify this wave before
+	 * returning it. Neither wave is guaranteed to be safe from modification.
 	 * <p>
 	 * This is only intended to work on overlapping waves (as checked by the
 	 * <code>overlap()</code> function.
-	 * 
+	 * <p>
 	 * @param wave
 	 * @return combined wave
 	 */
 	public Wave combine(Wave wave) {
-		if (samplingRate != wave.getSamplingRate())
+		if (samplingRate != wave.getSamplingRate() || !overlaps(wave))
 			return null;
-
-		// if (!overlaps(wave))
-		// return null;
 
 		// other wave dominates this wave
 		if (startTime >= wave.getStartTime()
@@ -710,82 +707,29 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 				&& getEndTime() >= wave.getEndTime())
 			return this;
 
+		double newLength = Math.max(getEndTime(), wave.getEndTime()) - Math.min(startTime, wave.getStartTime());
+		newLength *= samplingRate;
+		int[] newbuf = new int[(int) Math.ceil(newLength)];
+
 		// this wave is left of other wave
+		Wave leftWave;
+		Wave rightWave;
+
 		if (startTime <= wave.getStartTime()) {
-			// System.out.println("left join");
-			// System.out.println(((wave.getEndTime() - startTime) *
-			// samplingRate));
-			// int[] newbuf = new int[(int) ((wave.getEndTime() - startTime) *
-			// samplingRate)];
-			int[] newbuf = new int[(int) Math
-					.round((wave.getEndTime() - startTime) * samplingRate)];
-			// System.out.println("newbuf.length " + newbuf.length);
-			System.arraycopy(buffer, 0, newbuf, 0, buffer.length);
-			// System.out.println("delta et*sr: " + ((wave.getEndTime() -
-			// getEndTime()) * samplingRate));
-			int len = (int) Math.round((wave.getEndTime() - getEndTime())
-					* samplingRate);
-			// System.out.println("len " + len);
-
-			// System.out.println("this.et-wave.st * sr: " + (getEndTime() -
-			// wave.getStartTime()) * samplingRate);
-			int i = (int) ((getEndTime() - wave.getStartTime()) * samplingRate);
-
-			// Commented these out after implementing registration
-			// was causing little dropouts to 0.
-			// System.out.println("i " + i);
-			// if (buffer.length + len >= newbuf.length && len != 0)
-			// {
-			// System.out.println("dec");
-			// len--;
-			// }
-
-			// ArrayIndexOutOfBounds here
-			// System.out.println("blen " + buffer.length);
-			// System.out.println("this: " + this);
-			// System.out.println("wave: " + wave);
-			System.arraycopy(wave.buffer, i, newbuf, buffer.length, len);
-			this.buffer = newbuf;
-			return this;
+			leftWave = this;
+			rightWave = wave;
+		} else {
+			leftWave = wave;
+			rightWave = this;
 		}
+		
+		System.arraycopy(leftWave.buffer, 0, newbuf, 0, leftWave.buffer.length);
 
-		// this wave is right of other wave
-		if (wave.getStartTime() <= startTime) {
-			// System.out.println(wave);
-			// System.out.println(this);
-			// System.out.println("right join");
-			// System.out.println("new startTime: " + wave.startTime);
-			// System.out.println("new endTime: " + getEndTime());
-			double dt = getEndTime() - wave.startTime;
-			// dt += Util.register(dt, 1 / samplingRate);
-			// System.out.println("dt: " + dt);
-			// System.out.println("reg: " + Util.register(dt, 1 /
-			// samplingRate));
-			// int[] newbuf = new int[(int)Math.round((getEndTime() -
-			// wave.startTime) * samplingRate)];
-			int[] newbuf = new int[(int) Math.round((dt) * samplingRate)];
-			// System.out.println("new length: " + newbuf.length);
-			System.arraycopy(wave.buffer, 0, newbuf, 0, wave.buffer.length);
-			// int len = (int) ((getEndTime() - wave.getEndTime()) *
-			// samplingRate);
-			int len = (int) Math.round((getEndTime() - wave.getEndTime())
-					* samplingRate);
-			// System.out.println("len " + len);
-			int i = (int) ((wave.getEndTime() - getStartTime()) * samplingRate);
-			// System.out.println("i " + i);
-			// if (wave.buffer.length + len >= newbuf.length && len != 0)
-			// {
-			// System.out.println("dec");
-			// len--;
-			// }
-			System.arraycopy(buffer, i, newbuf, wave.buffer.length, len);
-			this.buffer = newbuf;
-			this.startTime = wave.startTime;
-			return this;
-		}
-
-		// System.out.println("unknown case");
-		return null;
+		int i = (int) ((rightWave.startTime - leftWave.startTime) * samplingRate);
+		System.arraycopy(rightWave.buffer, 0, newbuf, i, rightWave.buffer.length);
+		this.buffer = newbuf;
+		this.startTime = leftWave.startTime;
+		return this;
 	}
 
 	/**
@@ -1160,7 +1104,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	}
 
 	/**
-	 * Detrend this Wave. Ignore NO_DATA samples 
+	 * Detrend this Wave. Ignore NO_DATA samples
 	 */
 	public void detrend() {
 
