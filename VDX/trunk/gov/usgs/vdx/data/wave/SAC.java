@@ -177,9 +177,9 @@ public class SAC
 	public int lovrok = INT_UNDEF;
 	public int lcalda = INT_UNDEF;
 	public int unused27 = INT_UNDEF;
-	public String kstnm = STRING8_UNDEF;
+	public String kstnm = STRING8_UNDEF; // == SEED station
 	public String kevnm = STRING16_UNDEF;
-	public String khole = STRING8_UNDEF;
+	public String khole = STRING8_UNDEF; // == SEED location
 	public String ko = STRING8_UNDEF;
 	public String ka = STRING8_UNDEF;
 	public String kt0 = STRING8_UNDEF;
@@ -196,9 +196,9 @@ public class SAC
 	public String kuser0 = STRING8_UNDEF;
 	public String kuser1 = STRING8_UNDEF;
 	public String kuser2 = STRING8_UNDEF;
-	public String kcmpnm = STRING8_UNDEF;
-	public String knetwk = STRING8_UNDEF;
-	public String kdatrd = STRING8_UNDEF;
+	public String kcmpnm = STRING8_UNDEF; // == SEED channel
+	public String knetwk = STRING8_UNDEF; // == SEED network
+	public String kdatrd = STRING8_UNDEF; 
 	public String kinst = STRING8_UNDEF;
 
 	public float[] y;
