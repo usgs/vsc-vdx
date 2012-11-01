@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Net"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Math"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Pinnacle"/>
+	<classpathentry kind="lib" path="/USGS/contrib/colt.jar"/>
+	<classpathentry kind="lib" path="/USGS/contrib/mysql.jar"/>
+	<classpathentry kind="lib" path="/USGS/contrib/commons-collections-3.2.1.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Util"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Plot"/>
+	<classpathentry kind="lib" path="/USGS/contrib/jtransforms-2.4.jar"/>
+	<classpathentry kind="lib" path="/Users/tomp/Documents/workspace/USGS/contrib/JavaSeedLite.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
