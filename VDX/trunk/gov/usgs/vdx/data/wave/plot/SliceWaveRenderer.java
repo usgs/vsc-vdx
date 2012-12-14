@@ -21,58 +21,6 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * A renderer for slice of wave time series.
- * 
- * $Log: not supported by cvs2svn $
- * Revision 1.15  2007/03/06 21:07:47  tparker
- * tweak title catch
- *
- * Revision 1.14  2007/03/06 20:05:43  tparker
- * Gracefully deal with lack of title
- *
- * Revision 1.13  2007/03/06 17:53:00  cervelli
- * Renders ylabel on update
- *
- * Revision 1.12  2007/02/27 20:07:48  cervelli
- * Added support for turning calibration use on and off.
- *
- * Revision 1.11  2006/10/26 01:04:44  dcervelli
- * Changes for labeling.
- *
- * Revision 1.10  2006/07/25 16:23:22  cervelli
- * Changes for new DefaultFrameDecorator.
- *
- * Revision 1.9  2006/07/22 20:15:45  cervelli
- * Interim changes for conversion to FrameDecorators.
- *
- * Revision 1.8  2006/06/15 14:29:55  dcervelli
- * Swarm 1.3.4 changes.
- *
- * Revision 1.7  2006/03/02 23:35:31  dcervelli
- * Added calibration stuff.
- *
- * Revision 1.6  2006/02/19 00:32:11  dcervelli
- * Added option for drawing sample boxes.
- *
- * Revision 1.5  2006/01/27 20:57:27  tparker
- * Add configure options for wave plotter
- *
- * Revision 1.4  2005/09/03 20:31:16  dcervelli
- * Changed logic for deciding when to use optimized rendering method.
- *
- * Revision 1.3  2005/09/02 16:19:59  dcervelli
- * Major optimization for most waves.
- *
- * Revision 1.2  2005/09/01 00:30:02  dcervelli
- * Changes for SliceWave refactor.
- *
- * Revision 1.1  2005/08/26 20:39:00  dcervelli
- * Initial avosouth commit.
- *
- * Revision 1.3  2005/03/25 00:17:19  cervelli
- * Comment update.
- *
- * Revision 1.2  2005/03/25 00:15:36  cervelli
- * Fixed bug where NO_DATA gaps weren't being drawn properly.
  *
  * @author Dan Cervelli
  */
@@ -80,7 +28,6 @@ public class SliceWaveRenderer extends FrameRenderer
 {
 	protected SliceWave wave;
 	
-	protected boolean autoScale = true;
 	protected boolean removeBias = false;
 	protected boolean drawSamples = false;
 	
@@ -164,15 +111,6 @@ public class SliceWaveRenderer extends FrameRenderer
 	}
 	
 	/**
-	 * Get autoscale flag
-	 * @return autoscale flag
-	 */
-	public boolean isAutoScale() 
-	{
-		return autoScale;
-	}
-
-	/**
 	 * Get demean flag
 	 * @return demean flag
 	 */
@@ -181,14 +119,6 @@ public class SliceWaveRenderer extends FrameRenderer
 		return removeBias;
 	}
 
-	/**
-	 * Set autoscale flag
-	 * @param b autoscale flag
-	 */
-	public void setAutoScale(boolean b)
-	{
-		autoScale = b;
-	}
 
 	/**
 	 * Set limits on Y axis
@@ -316,9 +246,7 @@ public class SliceWaveRenderer extends FrameRenderer
         sr.stroke			= new BasicStroke();
         for (int i = 0; i < s.length; i++) 
             if (s[i] != null)
-            {
                  getLegendRenderer().addLine(sr, null, s[i]);
-            }
     }
 	
 	protected class DefaultWaveFrameDecorator extends DefaultFrameDecorator
@@ -381,9 +309,11 @@ public class SliceWaveRenderer extends FrameRenderer
 		double step = 1 / wave.getSamplingRate();
 		wave.reset();
 		
-		double bias = 0;
+		double bias;
 		if (removeBias)
 			bias = wave.mean();
+		else
+			bias = 0;
 		
 		g.setColor(color);
         
