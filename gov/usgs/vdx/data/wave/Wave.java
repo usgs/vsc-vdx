@@ -822,7 +822,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * doesn't count the size of the header information, assuming instead that
 	 * it is insignificant compared to the size of the buffer.
 	 * 
-	 * @return the approximate size in RAM of this wave
+	 * @return the approximate size in RAM of this wave in bytes
 	 */
 	public int getMemorySize() {
 		if (buffer == null)
