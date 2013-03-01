@@ -499,19 +499,17 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 
 	/**
 	 * Determines whether or not this wave is adjacent to another wave in time.
+	 * Allows a samplingRate/4 fudge factor to account for rounding errors.
 	 * 
 	 * @param wave
 	 *            the test wave
 	 * @return whether or not these waves are adjacent
 	 */
 	public boolean adjacent(Wave wave) {
-		if (getEndTime() == wave.getStartTime())
-			return true;
-
-		if (getStartTime() == wave.getEndTime())
-			return true;
-
-		return false;
+		double start = Math.abs(getStartTime() - wave.getEndTime());
+		double end = Math.abs(getEndTime() - wave.getStartTime());
+		
+		return (Math.min(start,  end) <= (1/getSamplingRate()) * 1.25);
 	}
 
 	/**
@@ -694,7 +692,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * @return combined wave
 	 */
 	public Wave combine(Wave wave) {
-		if (samplingRate != wave.getSamplingRate() || !overlaps(wave))
+		if (samplingRate != wave.getSamplingRate() || !(adjacent(wave) || overlaps(wave))) 
 			return null;
 
 		// other wave dominates this wave
