@@ -221,7 +221,7 @@ public class HypocenterList implements BinaryDataSet
 	 */
 	public ByteBuffer toBinary()
 	{
-		ByteBuffer buffer = ByteBuffer.allocate(4 + hypocenters.size() * 6 * 8);
+		ByteBuffer buffer = ByteBuffer.allocate(4 + hypocenters.size() * 17 * 8);
 		buffer.putInt(hypocenters.size());
 		for (Hypocenter hc : hypocenters)
 			hc.insertIntoByteBuffer(buffer);
@@ -238,7 +238,9 @@ public class HypocenterList implements BinaryDataSet
 		int rows = bb.getInt();
 		hypocenters = new ArrayList<Hypocenter>(rows);
 		for (int i = 0; i < rows; i++) {
-			Hypocenter hc = new Hypocenter(bb.getDouble(), bb.getInt(), bb.getDouble(), bb.getDouble(), bb.getDouble(), bb.getDouble());
+			Hypocenter hc = new Hypocenter(bb.getDouble(), (String)null, bb.getInt(), bb.getDouble(), bb.getDouble(), bb.getDouble(), bb.getDouble(),
+						bb.getDouble(), bb.getDouble(), bb.getInt(), bb.getInt(), bb.getDouble(), bb.getDouble(), bb.getInt(),
+						bb.getDouble(), bb.getDouble(), Character.toString ((char) bb.getInt()), Character.toString ((char) bb.getInt()) );
 			hypocenters.add(hc);
 		}
 	}

@@ -1448,6 +1448,23 @@ abstract public class SQLDataSource implements DataSource {
 	}
 
 	/**
+	 * Retrieves the value of the designated column in the current row
+     * of <code>ResultSet</code> object as
+     * a <code>int</code> in the Java programming language
+	 * @param rs result set to extract data
+	 * @param columnIndex the first column is 1, the second is 2, ...
+	 * @return column value; not like ResultSet.getData(), if the value is SQL <code>NULL</code>, the
+     * value returned is <code>Integer.MIN_VALUE</code>
+	 * @throws SQLException
+	 */
+	
+	public int getIntNullCheck(ResultSet rs, int columnIndex) throws SQLException{
+		int value	= rs.getInt(columnIndex);
+		if (rs.wasNull()) { value = Integer.MIN_VALUE; }
+		return  value;
+	}
+
+	/**
 	 * Insert data
 	 * 
 	 * @param channelCode	table name
@@ -1829,8 +1846,6 @@ abstract public class SQLDataSource implements DataSource {
 				" AND et=" + sd.et + " AND sd_short='" + sd.name + "'";
 			ps = database.getPreparedStatement(sql);
 			
-			int sdid = 0;
-
 			rs = ps.executeQuery();
 
 			rs.next();

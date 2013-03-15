@@ -112,7 +112,27 @@ public class Hypocenter
     	buffer.putDouble(lon);
     	buffer.putDouble(depth);
     	buffer.putDouble(prefmag);
-    }
+
+    	buffer.putDouble(ampmag);
+    	buffer.putDouble(codamag);
+    	buffer.putInt(nphases);
+    	buffer.putInt(azgap);
+    	buffer.putDouble(dmin);
+    	buffer.putDouble(rms);
+    	buffer.putInt(nstimes);
+    	buffer.putDouble(herr);
+    	buffer.putDouble(verr);
+    	
+    	// We'll represent characters by their ASCII codes, using -1 for null 
+    	if ( magtype != null && magtype.length() > 0 )
+    		buffer.putInt((int)(magtype.charAt(0)));
+    	else
+    		buffer.putInt(-1);
+    	if ( rmk != null && rmk.length() > 0 )
+    		buffer.putInt((int)(rmk.charAt(0)));
+    	else
+    		buffer.putInt( -1 );
+}
     
 	/** Outputs an array of Earthquakes as raw data.
 	 * @param fn the output filename
