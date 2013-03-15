@@ -273,8 +273,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			database.useDatabase(dbName);
 			
 			// build the sql
-			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag ";
-			sql += "FROM   hypocenters a, ranks c ";
+			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
+			sql += "ampmag, codamag, nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk";
+			sql += " FROM   hypocenters a, ranks c ";
 			sql += "WHERE  a.rid = c.rid ";
 			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
 			
@@ -346,15 +347,33 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			
 			double j2ksec, lat, lon, depth, mag;
-			// these will never be null
+			double ampmag, codamag, dmin, rms, herr, verr;
+			int nphases, azgap, nstimes;
+			String magtype, rs_rmk;
 			while (rs.next()) {				
+				// these will never be null
 				j2ksec	= getDoubleNullCheck(rs, 1);
 				rid		= rs.getInt(2);
 				lat		= getDoubleNullCheck(rs, 3);
 				lon		= getDoubleNullCheck(rs, 4);
 				depth	= getDoubleNullCheck(rs, 5);
 				mag		= getDoubleNullCheck(rs, 6);
-				pts.add(new Hypocenter(j2ksec, rid, lat, lon, depth, mag));
+
+				ampmag	= getDoubleNullCheck(rs, 7);
+				codamag	= getDoubleNullCheck(rs, 8);
+				nphases	= getIntNullCheck(rs, 9);
+				azgap	= getIntNullCheck(rs, 10);
+				dmin	= getDoubleNullCheck(rs, 11);
+				rms		= getDoubleNullCheck(rs, 12);
+				nstimes	= getIntNullCheck(rs, 13);
+				herr	= getDoubleNullCheck(rs, 14);
+				verr	= getDoubleNullCheck(rs, 15);
+				magtype	= rs.getString(16);
+				rs_rmk	= rs.getString(17);
+				
+				pts.add(new Hypocenter(j2ksec, (String)null, rid, lat, lon, depth, mag,
+						ampmag, codamag, nphases, azgap, dmin, rms, nstimes,
+						herr, verr, magtype, rs_rmk ));
 			}
 			rs.close();
 			
