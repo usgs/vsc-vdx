@@ -3,6 +3,7 @@ package gov.usgs.vdx.data.wave.plot;
 import gov.usgs.plot.AxisRenderer;
 import gov.usgs.plot.SmartTick;
 
+import java.awt.Color;
 import java.util.ArrayList;
 
 /**
@@ -50,9 +51,9 @@ public class MinuteMarkingWaveRenderer extends SliceWaveRenderer {
        		tickList[i] = firstTick + i * 60;
        	
         if(xTickMarks){
-        	axis.createTopTicks(tickList);
-        	axis.createBottomTicks(tickList);
-        	axis.createVerticalGridLines(tickList);
+        	axis.createTopTicks(tickList, 5, Color.GRAY);
+        	axis.createBottomTicks(tickList, 5, Color.GRAY);
+//        	axis.createVerticalGridLines(tickList);
         }
         if(xTickValues){
         	axis.createBottomTickLabels(tickList, null);

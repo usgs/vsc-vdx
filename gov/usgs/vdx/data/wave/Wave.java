@@ -409,8 +409,8 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 *            the value of n
 	 */
 	public void decimate(int factor) {
-		int[] buf = new int[samples() / factor];
-		for (int i = 0; i < samples() / factor; i++)
+		int[] buf = new int[numSamples() / factor];
+		for (int i = 0; i < numSamples() / factor; i++)
 			buf[i] = buffer[i * factor];
 
 		buffer = buf;
@@ -422,7 +422,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * 
 	 * @return the number of samples
 	 */
-	public int samples() {
+	public int numSamples() {
 		return buffer.length;
 	}
 
@@ -468,10 +468,13 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * Gets the end time for this wave. This is equals to the samples * period,
 	 * so it reports the time AFTER the last sample, not FOR the last sample.
 	 * 
+	 * todo: Tom says this is silly. Make endTime the end time by subtracting 1 
+	 * from samples(). Look carfully for side effects.
+	 * 
 	 * @return the end time
 	 */
 	public double getEndTime() {
-		return startTime + (double) samples() * 1.0 / samplingRate;
+		return startTime + (double) numSamples() * 1.0 / samplingRate;
 	}
 
 	/**
@@ -692,7 +695,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * @return combined wave
 	 */
 	public Wave combine(Wave wave) {
-		if (samplingRate != wave.getSamplingRate() || !(adjacent(wave) || overlaps(wave))) 
+		if (samplingRate != wave.getSamplingRate() || !(adjacent(wave) || !overlaps(wave))) 
 			return null;
 
 		// other wave dominates this wave
