@@ -710,7 +710,6 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 
 		double newLength = Math.max(getEndTime(), wave.getEndTime()) - Math.min(startTime, wave.getStartTime());
 		newLength *= samplingRate;
-		newLength -= 1; // Grrr... getEndTime is one sample too long!
 		int[] newbuf = new int[(int) Math.ceil(newLength)];
 
 		// this wave is left of other wave
@@ -727,14 +726,13 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 		
 		System.arraycopy(leftWave.buffer, 0, newbuf, 0, leftWave.buffer.length);
 
-		int i = (int) ((rightWave.startTime - leftWave.startTime) * samplingRate);
-		try {
-			System.arraycopy(rightWave.buffer, 0, newbuf, i, rightWave.buffer.length);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			System.out.println("Tom asks why this happens: i = " + i + "; rw rate = " + rightWave.samplingRate + "; lw rate = " + leftWave.samplingRate);
-			System.out.println(rightWave.buffer.length + " : " + rightWave.getStartTime() + " -> " + rightWave.getEndTime());
-			System.out.println(leftWave.buffer.length + " : " + leftWave.getStartTime() + " -> " + leftWave.getEndTime());
-		}
+//		int i = (int) ((rightWave.startTime - leftWave.startTime) * samplingRate);
+//		if (rightWave.adjacent(leftWave))
+//			i++;
+		
+		int i = newbuf.length - rightWave.buffer.length;
+		
+		System.arraycopy(rightWave.buffer, 0, newbuf, i, rightWave.buffer.length);
 		
 		this.buffer = newbuf;
 		this.startTime = leftWave.startTime;
