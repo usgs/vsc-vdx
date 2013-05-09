@@ -255,12 +255,12 @@ public class ImportStacov implements Importer {
 			int numParams			= Integer.parseInt(line.substring(0, 5).trim());
 			SolutionPoint[] points	= new SolutionPoint[numParams / 3];
 
-			// read the first line and get date information, add 12 hours to the date to get it in the middle of the day
+			// read the first line and get date information
 			double j2ksec0, j2ksec1;
 			try {
 				String timestamp	= line.substring(20, 27);
 				date				= dateIn.parse(timestamp);
-				date.setTime(date.getTime() + 12 * 60 * 60 * 1000);
+				date.setTime(date.getTime());
 				j2ksec0				= Util.dateToJ2K(date);
 				j2ksec1				= j2ksec0 + 86400;
 			} catch (ParseException e) {
