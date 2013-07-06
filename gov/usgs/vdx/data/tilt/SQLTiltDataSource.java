@@ -230,11 +230,20 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		int columnsReturned	= 0;
 		
 		try {
+			
 			database.useDatabase(dbName);
 			
 			// look up the channel code from the channels table, which is the name of the table to query
 			Channel channel	= defaultGetChannel(cid, channelTypes);
 			columnsReturned	= 8;
+			
+			// calculate the num of rows to limit the query to
+			int tempmaxrows;
+			if (rid != 0) {
+				tempmaxrows = maxrows;
+			} else {
+				tempmaxrows = maxrows * defaultGetNumberOfRanks();
+			}
 
 			// build the sql
 			sql  = "SELECT j2ksec, c.rid, ";
@@ -253,21 +262,24 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			// BEST POSSIBLE DATA QUERY
 			if (ranks && rid != 0) {
 				sql = sql + "AND   c.rid = ? ";
-			} else if (ranks && rid == 0) {
-				sql = sql + "AND   c.rank = (SELECT MAX(e.rank) " +
-				                            "FROM   " + channel.getCode() + " d, ranks e " +
-				                            "WHERE  d.rid = e.rid  " +
-				                            "AND    a.j2ksec = d.j2ksec) ";
 			}
 			
 			sql += "ORDER BY j2ksec ASC";
-			try{
-				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
-			} catch (UtilException e){
-				return getErrorResult("Can't downsample dataset: " + e.getMessage());
+			
+			if (ranks && rid == 0) {
+				sql = sql + ", c.rank DESC";
 			}
-			if(maxrows !=0){
-				sql += " LIMIT " + (maxrows+1);
+			
+			if (ranks && rid != 0) {
+				try {
+					sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
+				} catch (UtilException e) {
+					return getErrorResult("Can't downsample dataset: " + e.getMessage());
+				}
+			}
+			
+			if (maxrows != 0) {
+				sql += " LIMIT " + (tempmaxrows + 1);
 			}
 
 			ps	= database.getPreparedStatement(sql);
@@ -288,21 +300,31 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 		
-			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
 				return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
+			
+			double tempJ2ksec = Double.MAX_VALUE;
+			
+			// loop through each result and add to the list
 			while (rs.next()) {
-				dataRow = new double[columnsReturned];
-				for (int i = 0; i < columnsReturned; i++) {
-					dataRow[i] = getDoubleNullCheck(rs, i+1);
+				
+				// if this is a new j2ksec, then save this data, as it contains the highest rank
+				if (Double.compare(tempJ2ksec, rs.getDouble(1)) != 0) {
+					dataRow = new double[columnsReturned];
+					for (int i = 0; i < columnsReturned; i++) {
+						dataRow[i] = getDoubleNullCheck(rs, i+1);
+					}
+					pts.add(dataRow);
 				}
-				pts.add(dataRow);
+				tempJ2ksec = rs.getDouble(1);
 			}
 			rs.close();
 			
 			if (pts.size() > 0) {
 				return new BinaryResult(new TiltData(pts));
 			}
+			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
 			return null;

@@ -242,38 +242,45 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 		GPSData result = null;
 		
 		try {
+			
 			database.useDatabase(dbName);
 			List<DataPoint> dataPoints = new ArrayList<DataPoint>();
+			
+			// calculate the num of rows to limit the query to
+			int tempmaxrows;
+			if (rid != 0) {
+				tempmaxrows = maxrows;
+			} else {
+				tempmaxrows = maxrows * defaultGetNumberOfRanks();
+			}
+			
 			sql = "SELECT (j2ksec0 + j2ksec1) / 2, d.rid, x, y, z, sxx, syy, szz, sxy, sxz, syz " +
 				  "FROM   solutions a " +
 				  "INNER JOIN channels b ON a.cid = b.cid " +
 				  "INNER JOIN sources  c ON a.sid = c.sid " +
 				  "INNER JOIN ranks    d ON c.rid = d.rid " +
 				  "WHERE  b.cid    = ? " +
-				  "AND    c.j2ksec0 + c.j2ksec1 >= ? * 2 " +
-				  "AND    c.j2ksec0 + c.j2ksec1 <= ? * 2 ";
+				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
+				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
 			
-			// BEST POSSIBLE DATA query
 			if (rid != 0) {
 				sql = sql + "AND   d.rid = ? ";
-			} else {
-				sql = sql + "AND   d.rank = (SELECT MAX(f.rank) " +
-                                            "FROM   sources e, ranks f " +
-                                            "WHERE  e.rid = f.rid " +
-                                            "AND   (c.j2ksec0 + c.j2ksec1) / 2 = (e.j2ksec0 + e.j2ksec1) / 2 " +
-                                            "AND    e.j2ksec0 + e.j2ksec1 >= ? * 2 " +
-                                            "AND    e.j2ksec0 + e.j2ksec1 <= ? * 2 ) ";
 			}
-			sql	= sql +	"ORDER BY 1 ASC";
 			
-			try{
-				sql = getDownsamplingSQL(sql, "(j2ksec0 + j2ksec1) / 2", ds, dsInt);
-			} catch (UtilException e){
-				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			sql	= sql +	"ORDER BY 1 ASC, d.rank DESC";
+			
+			if (rid != 0) {
+				try {
+					sql = getDownsamplingSQL(sql, "(j2ksec0 + j2ksec1) / 2", ds, dsInt);
+				} catch (UtilException e) {
+					throw new UtilException("Can't downsample dataset: " + e.getMessage());
+				}
 			}
-			if(maxrows !=0){
-				sql += " LIMIT " + (maxrows+1);
+			
+			if (maxrows != 0) {
+				sql += " LIMIT " + (tempmaxrows + 1);
 			}
+
 			ps = database.getPreparedStatement(sql);
 			if(ds.equals(DownsamplingType.MEAN)){
 				ps.setDouble(1, st);
@@ -283,9 +290,6 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(5, et);
 				if (rid != 0) {
 					ps.setInt(6, rid);
-				} else {
-					ps.setDouble(6, st);
-					ps.setDouble(7, et);
 				}
 			} else {
 				ps.setInt(1, cid);
@@ -293,29 +297,36 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setDouble(3, et);
 				if (rid != 0) {
 					ps.setInt(4, rid);
-				} else {
-					ps.setDouble(4, st);
-					ps.setDouble(5, et);
 				}
 			}
 			rs = ps.executeQuery();
-			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+			
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
 				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
+			
+			double tempJ2ksec = Double.MAX_VALUE;
+			
+			// loop through each result and add to the list
 			while (rs.next()) {
-				dp		= new DataPoint();
-				dp.t	= getDoubleNullCheck(rs, 1);
-				dp.r	= getDoubleNullCheck(rs, 2);
-				dp.x	= getDoubleNullCheck(rs, 3);
-				dp.y	= getDoubleNullCheck(rs, 4);
-				dp.z	= getDoubleNullCheck(rs, 5);
-				dp.sxx	= getDoubleNullCheck(rs, 6);
-				dp.syy	= getDoubleNullCheck(rs, 7);
-				dp.szz	= getDoubleNullCheck(rs, 8);
-				dp.sxy	= getDoubleNullCheck(rs, 9);
-				dp.sxz	= getDoubleNullCheck(rs, 10);
-				dp.syz	= getDoubleNullCheck(rs, 11);
-				dataPoints.add(dp);
+				
+				// if this is a new j2ksec, then save this data, as it contains the highest rank
+				if (Double.compare(tempJ2ksec, rs.getDouble(1)) != 0) {
+					dp		= new DataPoint();
+					dp.t	= getDoubleNullCheck(rs, 1);
+					dp.r	= getDoubleNullCheck(rs, 2);
+					dp.x	= getDoubleNullCheck(rs, 3);
+					dp.y	= getDoubleNullCheck(rs, 4);
+					dp.z	= getDoubleNullCheck(rs, 5);
+					dp.sxx	= getDoubleNullCheck(rs, 6);
+					dp.syy	= getDoubleNullCheck(rs, 7);
+					dp.szz	= getDoubleNullCheck(rs, 8);
+					dp.sxy	= getDoubleNullCheck(rs, 9);
+					dp.sxz	= getDoubleNullCheck(rs, 10);
+					dp.syz	= getDoubleNullCheck(rs, 11);
+					dataPoints.add(dp);
+				}
+				tempJ2ksec = rs.getDouble(1);
 			}
 			rs.close();
 			

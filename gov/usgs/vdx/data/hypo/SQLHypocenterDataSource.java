@@ -11,6 +11,8 @@ import gov.usgs.vdx.server.TextResult;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -270,12 +272,22 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 		HypocenterList result	= null;
 		
 		try {
+			
 			database.useDatabase(dbName);
+			
+			// calculate the num of rows to limit the query to
+			int tempmaxrows;
+			if (rid != 0) {
+				tempmaxrows = maxrows;
+			} else {
+				tempmaxrows = maxrows * defaultGetNumberOfRanks();
+			}
 			
 			// build the sql
 			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
-			sql += "ampmag, codamag, nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk";
-			sql += " FROM   hypocenters a, ranks c ";
+			sql += "       a.ampmag, a.codamag, a.nphases, a.azgap, a.dmin, a.rms, ";
+			sql += "       a.nstimes, a.herr, a.verr, a.magtype, a.rmk, a.eid ";
+			sql += "FROM   hypocenters a, ranks c ";
 			sql += "WHERE  a.rid = c.rid ";
 			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
 			
@@ -303,19 +315,18 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
 				sql += "AND    c.rid  = ? ";
-			} else if (ranks && rid == 0) {
-				sql += "AND    c.rank = (SELECT MAX(e.rank) " +
-	            					    "FROM   hypocenters d, ranks e " +
-	            					    "WHERE  d.rid = e.rid  " +
-	            					    "AND    trim(a.eid) = trim(d.eid) " +
-	            					    "AND    d.j2ksec >= ? " +
-	            					    "AND    d.j2ksec <= ? ) ";
 			}
 			
-			sql += "ORDER BY j2ksec ASC";
-			if(maxrows !=0){
-				sql += " LIMIT " + (maxrows+1);
+			sql += "ORDER BY eid ASC";
+			
+			if (ranks && rid == 0) {
+				sql = sql + ", c.rank DESC";
 			}
+			
+			if (maxrows != 0) {
+				sql += " LIMIT " + (tempmaxrows + 1);
+			}
+			
 			ps = database.getPreparedStatement(sql);
 			ps.setDouble(1, st);
 			ps.setDouble(2, et);
@@ -337,12 +348,10 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(18, maxVerr);
 			if (ranks && rid != 0) {
 				ps.setInt(19, rid);
-			} else {
-				ps.setDouble(19, st);
-				ps.setDouble(20, et);
 			}
 			rs = ps.executeQuery();
-			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+			
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows){ 
 				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 			}
 			
@@ -350,34 +359,55 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double ampmag, codamag, dmin, rms, herr, verr;
 			int nphases, azgap, nstimes;
 			String magtype, rs_rmk;
-			while (rs.next()) {				
-				// these will never be null
-				j2ksec	= getDoubleNullCheck(rs, 1);
-				rid		= rs.getInt(2);
-				lat		= getDoubleNullCheck(rs, 3);
-				lon		= getDoubleNullCheck(rs, 4);
-				depth	= getDoubleNullCheck(rs, 5);
-				mag		= getDoubleNullCheck(rs, 6);
-
-				ampmag	= getDoubleNullCheck(rs, 7);
-				codamag	= getDoubleNullCheck(rs, 8);
-				nphases	= getIntNullCheck(rs, 9);
-				azgap	= getIntNullCheck(rs, 10);
-				dmin	= getDoubleNullCheck(rs, 11);
-				rms		= getDoubleNullCheck(rs, 12);
-				nstimes	= getIntNullCheck(rs, 13);
-				herr	= getDoubleNullCheck(rs, 14);
-				verr	= getDoubleNullCheck(rs, 15);
-				magtype	= rs.getString(16);
-				rs_rmk	= rs.getString(17);
+			String tempEid = "";
+			
+			// loop through each result and add to the list
+			while (rs.next()) {
 				
-				pts.add(new Hypocenter(j2ksec, (String)null, rid, lat, lon, depth, mag,
-						ampmag, codamag, nphases, azgap, dmin, rms, nstimes,
-						herr, verr, magtype, rs_rmk ));
+				System.out.println(rs.getDouble(1) + " " + rs.getDouble(2) + " " + rs.getString(18));
+				
+				// if this is a new eid, then save this data, as it contains the highest rank
+				if (!tempEid.equals(rs.getString(18))) {
+					System.out.println("match");
+					
+					// these will never be null
+					j2ksec	= getDoubleNullCheck(rs, 1);
+					rid		= rs.getInt(2);
+					lat		= getDoubleNullCheck(rs, 3);
+					lon		= getDoubleNullCheck(rs, 4);
+					depth	= getDoubleNullCheck(rs, 5);
+					mag		= getDoubleNullCheck(rs, 6);
+	
+					ampmag	= getDoubleNullCheck(rs, 7);
+					codamag	= getDoubleNullCheck(rs, 8);
+					nphases	= getIntNullCheck(rs, 9);
+					azgap	= getIntNullCheck(rs, 10);
+					dmin	= getDoubleNullCheck(rs, 11);
+					rms		= getDoubleNullCheck(rs, 12);
+					nstimes	= getIntNullCheck(rs, 13);
+					herr	= getDoubleNullCheck(rs, 14);
+					verr	= getDoubleNullCheck(rs, 15);
+					magtype	= rs.getString(16);
+					rs_rmk	= rs.getString(17);
+					
+					pts.add(new Hypocenter(j2ksec, (String)null, rid, lat, lon, depth, mag,
+							ampmag, codamag, nphases, azgap, dmin, rms, nstimes,
+							herr, verr, magtype, rs_rmk ));
+				}
+				tempEid = rs.getString(18);
 			}
 			rs.close();
 			
 			if (pts.size() > 0) {
+				Collections.sort(pts, new Comparator<Hypocenter>() {
+					public int compare(Hypocenter h1, Hypocenter h2) {
+						if (h1.j2ksec > h2.j2ksec) {
+							return 1;
+						} else {
+							return -1;
+						}
+					}
+				});
 				return new HypocenterList(pts);
 			}
 			

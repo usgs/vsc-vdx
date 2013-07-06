@@ -1002,6 +1002,29 @@ abstract public class SQLDataSource implements DataSource {
 
 		return result;
 	}
+	
+	/**
+	 * Get number of ranks from database
+	 * 
+	 * @return number of ranks, default 1
+	 */
+	public int defaultGetNumberOfRanks() {
+		int result = 1;
+		
+		try {
+			database.useDatabase(dbName);
+			rs = database.getPreparedStatement("SELECT COUNT(*) FROM ranks").executeQuery();
+			if (rs.next()) {
+				result = rs.getInt(1);
+			}
+			rs.close();
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE,  "SQLDataSource.defaultGetNumberOfRanks() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+		}
+		
+		return result;
+	}
 
 	/**
 	 * Gets translation id from database using the parameters passed. Used to determine if the
@@ -1322,6 +1345,14 @@ abstract public class SQLDataSource implements DataSource {
 			// channel types is false because at this point we don't care about that, just trying to get the channel name
 			Channel channel	= defaultGetChannel(cid, false);
 			columns			= defaultGetColumns(false, false);
+			
+			// calculate the num of rows to limit the query to
+			int tempmaxrows;
+			if (rid != 0) {
+				tempmaxrows = maxrows;
+			} else {
+				tempmaxrows = maxrows * defaultGetNumberOfRanks();
+			}
 
 			// if we are getting ranked data back, then we need to include the rid, otherwise, just add in a field for j2ksec
 			if (ranks) {
@@ -1362,22 +1393,24 @@ abstract public class SQLDataSource implements DataSource {
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
 				sql = sql + "AND   c.rid  = ? ";
-			} else if (ranks && rid == 0) {
-				sql = sql + "AND   c.rank = (SELECT MAX(e.rank) " +
-				                            "FROM   " + channel.getCode() + " d, ranks e " +
-				                            "WHERE  d.rid = e.rid  " +
-				                            "AND    a.j2ksec = d.j2ksec " +
-				                            "AND    d.j2ksec >= ? " +
-				                            "AND    d.j2ksec <= ? ) ";
-			}
+			} 
+			
 			sql = sql + "ORDER BY a.j2ksec ASC";
-			try{
-				sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
-			} catch (UtilException e){
-				throw new UtilException("Can't downsample dataset: " + e.getMessage());
+			
+			if (ranks && rid == 0) {
+				sql = sql + ", c.rank DESC";
 			}
-			if(maxrows !=0){
-				sql += " LIMIT " + (maxrows+1);
+			
+			if (ranks && rid != 0) {
+				try {
+					sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
+				} catch (UtilException e) {
+					throw new UtilException("Can't downsample dataset: " + e.getMessage());
+				}
+			}
+			
+			if (maxrows != 0) {
+				sql += " LIMIT " + (tempmaxrows + 1);
 			}
 
 			ps = database.getPreparedStatement(sql);
@@ -1388,34 +1421,36 @@ abstract public class SQLDataSource implements DataSource {
 				ps.setDouble(4, et);
 				if (ranks && rid != 0) {
 					ps.setInt(5, rid);
-				} else {
-					ps.setDouble(5, st);
-					ps.setDouble(6, et);
 				}
 			} else {
 				ps.setDouble(1, st);
 				ps.setDouble(2, et);
 				if (ranks && rid != 0) {
 					ps.setInt(3, rid);
-				} else {
-					ps.setDouble(3, st);
-					ps.setDouble(4, et);
 				}
 			}
 			rs = ps.executeQuery();
 			
-			if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+			if (maxrows != 0 && getResultSetSize(rs)> tempmaxrows) { 
 				throw new UtilException("Max rows (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
 			}
+			
+			double tempJ2ksec = Double.MAX_VALUE;
+			
 			// loop through each result and add to the list
 			while (rs.next()) {
 				
-				// loop through each of the columns and convert to Double.NaN if it was null in the DB
-				dataRow = new double[columnsReturned];
-				for (int i = 0; i < columnsReturned; i++) {
-					dataRow[i] = getDoubleNullCheck(rs, i+1);
+				// if this is a new j2ksec, then save this data, as it contains the highest rank
+				if (Double.compare(tempJ2ksec, rs.getDouble(1)) != 0) {
+				
+					// loop through each of the columns and convert to Double.NaN if it was null in the DB
+					dataRow = new double[columnsReturned];
+					for (int i = 0; i < columnsReturned; i++) {
+						dataRow[i] = getDoubleNullCheck(rs, i+1);
+					}
+					pts.add(dataRow);
 				}
-				pts.add(dataRow);
+				tempJ2ksec = rs.getDouble(1);
 			}
 			rs.close();
 
