@@ -230,7 +230,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
-			if (data != null && data.size() > 0)
+			if (data != null)
 				return new BinaryResult(data);
 		}
 		return null;
@@ -408,12 +408,12 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 						}
 					}
 				});
-				return new HypocenterList(pts);
 			}
 			
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
 		}
+		result = new HypocenterList(pts);
 		return result;
 	}
 	
