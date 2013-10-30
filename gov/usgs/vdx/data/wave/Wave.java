@@ -425,6 +425,20 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	public int numSamples() {
 		return buffer.length;
 	}
+	
+	/**
+	 * Gets the number of samples in the buffer, excluding NO_DATA samples.
+	 * 
+	 * @return the count of non-NO_DATA samples
+	 */
+	public int numValidSamples() {
+		int count = 0;
+		for (int sample : buffer)
+			if (sample != NO_DATA)
+				count++;
+		return count;
+	}
+
 
 	/**
 	 * Converts the starttime from Earthworm time to J2K
