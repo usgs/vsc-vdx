@@ -427,14 +427,14 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	}
 	
 	/**
-	 * Gets the number of samples in the buffer, excluding NO_DATA samples.
+	 * Gets the number of NO_DATA samples in the buffer.
 	 * 
-	 * @return the count of non-NO_DATA samples
+	 * @return the count of NO_DATA samples
 	 */
-	public int numValidSamples() {
+	public int numNoData() {
 		int count = 0;
 		for (int sample : buffer)
-			if (sample != NO_DATA)
+			if (sample == NO_DATA)
 				count++;
 		return count;
 	}
