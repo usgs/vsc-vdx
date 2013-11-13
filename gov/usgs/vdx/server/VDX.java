@@ -77,8 +77,8 @@ public class VDX extends Server {
 		int p = Util.stringToInt(cf.getString("vdx.port"), -1);
 		if (p < 0 || p > 65535)
 			fatalError(configFilename + ": bad or missing 'vdx.port' setting.");
-		port = p;
-		logger.info("config: vdx.port=" + port + ".");
+		serverPort = p;
+		logger.info("config: vdx.port=" + serverPort + ".");
 
 		int h = Util.stringToInt(cf.getString("vdx.handlers"), -1);
 		if (h < 1 || h > 128)

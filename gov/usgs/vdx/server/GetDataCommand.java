@@ -91,7 +91,7 @@ public class GetDataCommand extends BaseCommand
 			result.prepare();
 			result.writeHeader(netTools, channel);
 			result.writeBody(netTools, channel);
-			ct.stop(false);
+			ct.stop();
 			handler.log(Level.FINE, String.format("%s (%1.2f ms): [%s]", inParams.get("source"), ct.getRunTimeMillis(), info), channel);
 		}
 		else

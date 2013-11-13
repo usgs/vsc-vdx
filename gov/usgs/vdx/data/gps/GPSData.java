@@ -311,7 +311,7 @@ public class GPSData implements BinaryDataSet
 		if (data.size() > 0)
 			setToList(data);
 		
-		ct.stop();
+		ct.stopAndReport();
 	}
 
 	/** Converts the XYZ position data to east/north/up (ENU) position data 
@@ -342,7 +342,7 @@ public class GPSData implements BinaryDataSet
 		}
 		xyzData = DENSE.compose(xyz);
 		covData = SPARSE.compose(cov);
-		ct.stop();
+		ct.stopAndReport();
 //		output();
 	}
 	
