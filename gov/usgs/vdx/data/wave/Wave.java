@@ -169,12 +169,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * registered time is stored in <code>registrationOffset</code>.
 	 */
 	public void register() {
-		double n = startTime;
-		double m = 1 / samplingRate;
-
-		double dif = n % m;
-		if (dif >= m / 2)
-			registrationOffset = (m - dif);
+		double dif = startTime % getSamplingPeriod();
+		if (dif >= getSamplingPeriod() / 2)
+			registrationOffset = (getSamplingPeriod() - dif);
 		else
 			registrationOffset = -dif;
 
@@ -464,6 +461,15 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	public double getSamplingRate() {
 		return samplingRate;
 	}
+	
+	/**
+	 * Gets the sampling period.
+	 * 
+	 * @return the sampling period
+	 */
+	public double getSamplingPeriod() {
+		return 1 / samplingRate;
+	}
 
 	public double getNyquist() {
 		return samplingRate / 2;
@@ -488,7 +494,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 * @return the end time
 	 */
 	public double getEndTime() {
-		return startTime + (double) numSamples() * 1.0 / samplingRate;
+		return startTime + (double) numSamples() * getSamplingPeriod();
 	}
 
 	/**
@@ -526,7 +532,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 		double start = Math.abs(getStartTime() - wave.getEndTime());
 		double end = Math.abs(getEndTime() - wave.getStartTime());
 		
-		return (Math.min(start,  end) <= (1/getSamplingRate()) * 1.25);
+		return (Math.min(start,  end) <= getSamplingPeriod() * 1.25);
 	}
 
 	/**
@@ -588,7 +594,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 		System.arraycopy(buffer, 0, sw1.buffer, 0, length1);
 		sw1.dataType = dataType;
 
-		sw2.startTime = startTime + (double) length1 * (1 / samplingRate);
+		sw2.startTime = startTime + (double) length1 * (getSamplingPeriod());
 		sw2.samplingRate = samplingRate;
 		int length2 = buffer.length / 2 + (buffer.length % 2);
 		sw2.buffer = new int[length2];
@@ -619,7 +625,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 			sw.dataType = dataType;
 			sw.buffer = new int[numSamples];
 			System.arraycopy(buffer, j, sw.buffer, 0, numSamples);
-			ct += (double) numSamples * (1 / samplingRate);
+			ct += (double) numSamples * (getSamplingPeriod());
 			j += numSamples;
 			list.add(sw);
 		}
@@ -865,10 +871,9 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 		PrintWriter out = new PrintWriter(
 				new BufferedWriter(new FileWriter(fn)));
 		double ct = startTime + 946728000;
-		double ts = 1 / samplingRate;
 		for (int i = 0; i < buffer.length; i++) {
 			out.println(Math.round(ct * 1000) + " " + buffer[i]);
-			ct += ts;
+			ct += getSamplingPeriod();
 		}
 		out.close();
 	}
@@ -940,7 +945,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 	 */
 	public double[] integrate() {
 		double[] d = new double[this.buffer.length];
-		double period = 1 / samplingRate;
+		double period = getSamplingPeriod();
 		double mean = mean();
 		double sum = 0;
 		for (int i = 0; i < this.buffer.length; i++) {
@@ -1084,7 +1089,7 @@ public class Wave implements BinaryDataSet, Comparable<Wave>, Cloneable {
 		sac.nzmin = cal.get(Calendar.MINUTE);
 		sac.nzsec = cal.get(Calendar.SECOND);
 		sac.nzmsec = cal.get(Calendar.MILLISECOND);
-		sac.delta = (float) (1 / samplingRate);
+		sac.delta = (float) (getSamplingPeriod());
 		sac.y = new float[buffer.length];
 		for (int i = 0; i < buffer.length; i++)
 			sac.y[i] = buffer[i];
