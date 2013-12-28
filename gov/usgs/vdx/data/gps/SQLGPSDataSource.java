@@ -413,6 +413,64 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	}
 	
 	/**
+	 * Insert a source file entry to the database.
+	 * If the filename/rank combination already exist then they are first deleted to allow for an overwrite
+	 * @param name	name of the file
+	 * @param hash	md5 hash code of the file
+	 * @param t0	start time
+	 * @param t1	end time
+	 * @param rid	rank id
+	 * @return source id on success, -1 on failure
+	 */
+	public int insertSourceSimple(String name, double t0, double t1, int rid) {
+		int sid = -1;
+		
+		try {
+			database.useDatabase(dbName);
+			
+			// lookup this filename/rank combination.  if it exists then delete it from the database
+			ps = database.getPreparedStatement("SELECT sid FROM sources WHERE j2ksec0 = ? AND j2ksec1 = ? AND rid = ?");
+			ps.setDouble(1, t0);
+			ps.setDouble(2, t1);
+			ps.setInt(3, rid);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				Rank rank;
+				int delcount;
+				sid			= rs.getInt(1);
+				ps			= database.getPreparedStatement("DELETE FROM solutions WHERE sid = ?");
+				ps.setInt(1, sid);
+				delcount	= ps.executeUpdate();
+				ps			= database.getPreparedStatement("DELETE FROM sources WHERE sid = ?");
+				ps.setInt(1, sid);
+				ps.executeUpdate();
+				rank		= defaultGetRank(rid);
+				logger.severe("deleted j2ksec0:" + String.valueOf(t0) + " / j2ksec1:" + String.valueOf(t1) + " / rank:" + rank.getName() + " (" + delcount + " solutions)");
+			}
+			
+			// it is now safe to insert this NEW source
+			ps = database.getPreparedStatement("INSERT INTO sources (name, j2ksec0, j2ksec1, rid) VALUES (?,?,?,?)");
+			ps.setString(1, name);
+			ps.setDouble(2, t0);
+			ps.setDouble(3, t1);
+			ps.setInt(4, rid);
+			ps.execute();
+			rs = database.getPreparedStatement("SELECT LAST_INSERT_ID()").executeQuery();
+			if (rs.next()) {
+				sid = rs.getInt(1);
+			}
+			rs.close();
+			
+			return sid;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLGPSDataSource.insertSource() failed.", e);
+		}
+		
+		return sid;
+	}
+	
+	/**
 	 * Insert a GPS solution to the database
 	 * @param sid	source id
 	 * @param cid	channel id
