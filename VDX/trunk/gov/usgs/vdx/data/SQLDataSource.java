@@ -253,7 +253,7 @@ abstract public class SQLDataSource implements DataSource {
 				// channel types. logically you must have a channels table to have channel types
 				if (channelTypes) {
 					sql = sql + ", ctid INT DEFAULT 1 NOT NULL";
-					ps.execute("CREATE TABLE channel_types (ctid INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(16) UNIQUE)");
+					ps.execute("CREATE TABLE channel_types (ctid INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(16) UNIQUE, user_default TINYINT(1) DEFAULT 0 NOT NULL)");
 					ps.execute("INSERT INTO channel_types (name) VALUES ('DEFAULT')");
 				}
 
@@ -908,9 +908,9 @@ abstract public class SQLDataSource implements DataSource {
 
 		try {
 			database.useDatabase(dbName);
-			rs = database.getPreparedStatement("SELECT ctid, name FROM channel_types ORDER BY name").executeQuery();
+			rs = database.getPreparedStatement("SELECT ctid, name, user_default FROM channel_types ORDER BY name").executeQuery();
 			while (rs.next()) {
-				result.add(String.format("%d:%s", rs.getInt(1), rs.getString(2)));
+				result.add(String.format("%d:%s:%d", rs.getInt(1), rs.getString(2), rs.getInt(3)));
 			}
 			rs.close();
 
