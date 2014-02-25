@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 /**
  * Superclass for importers.  Handles variable declarations
- * @author lantolik
+ * @author Loren Antolik (USGS)
  *
  */
 public class Import {
