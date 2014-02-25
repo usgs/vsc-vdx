@@ -11,7 +11,7 @@ import java.util.TimeZone;
 /**
  * A class that handles LILY tiltmeter commands
  * 
- * @author lantolik
+ * @author Loren Antolik (USGS)
  */
 public class AGLILY implements Device {
 	
