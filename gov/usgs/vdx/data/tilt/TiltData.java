@@ -110,7 +110,12 @@ public class TiltData extends GenericDataMatrix
     public DoubleMatrix2D getRotatedDataWithoutTime(double theta)
     {
         DoubleMatrix2D en = data.viewPart(0, 2, data.rows(), 2);
-        return Algebra.DEFAULT.mult(en, getRotationMatrix(theta));
+        
+        // this returns a 2D matrix with tangential as first column and radial as second column
+        DoubleMatrix2D tr = Algebra.DEFAULT.mult(en, getRotationMatrix(theta));
+        
+        // flip the radial and tangential columns so radial is first column and tangential is second column
+        return DoubleFactory2D.dense.compose(new DoubleMatrix2D[][] {{tr.viewPart(0, 1, tr.rows(), 1), tr.viewPart(0, 0, tr.rows(), 1)}});
     }
 	
     /** Gets time/radial/tangential data using the specified azimuth.
