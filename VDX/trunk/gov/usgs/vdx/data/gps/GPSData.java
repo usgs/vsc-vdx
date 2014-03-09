@@ -250,100 +250,91 @@ public class GPSData implements BinaryDataSet
 	 * need to be sorted in time ascending order.
 	 * 
 	 * @param baseline the baseline data
+	 * 
+	 * Revised March, 2014 to simplify code. (PFC)
 	 */
 	public void applyBaseline(GPSData baseline)
 	{
-		CodeTimer ct = new CodeTimer("applyBaseline");
-		int si = 0; 
-		int bi = 0;
+		int k = 0;
 		List<DataPoint> data = new ArrayList<DataPoint>(observations());
-		boolean done = false;
-		while (!done)
-		{
-			double st = tData.getQuick(si, 0);
-			double bt = baseline.tData.getQuick(bi, 0);
-			if (Math.abs(st - bt) < 0.001)
-			{
-				DataPoint dp = new DataPoint();
-				dp.t = st;
-				dp.x = xyzData.getQuick(si * 3, 0) - baseline.xyzData.getQuick(bi * 3, 0);
-				dp.y = xyzData.getQuick(si * 3 + 1, 0) - baseline.xyzData.getQuick(bi * 3 + 1, 0);
-				dp.z = xyzData.getQuick(si * 3 + 2, 0) - baseline.xyzData.getQuick(bi * 3 + 2, 0);
-				
-				dp.sxx = covData.getQuick(si * 3, si * 3) + baseline.covData.getQuick(bi * 3, bi * 3);
-				dp.syy = covData.getQuick(si * 3 + 1, si * 3 + 1) + baseline.covData.getQuick(bi * 3 + 1, bi * 3 + 1);
-				dp.szz = covData.getQuick(si * 3 + 2, si * 3 + 2) + baseline.covData.getQuick(bi * 3 + 2, bi * 3 + 2);
-				
-				dp.sxy = covData.getQuick(si * 3, si * 3 + 1) + baseline.covData.getQuick(bi * 3, bi * 3 + 1);
-				dp.sxz = covData.getQuick(si * 3, si * 3 + 2) + baseline.covData.getQuick(bi * 3, bi * 3 + 2);
-				dp.syz = covData.getQuick(si * 3 + 1, si * 3 + 2) + baseline.covData.getQuick(bi * 3 + 1, bi * 3 + 2);
-				
-				dp.len = Math.sqrt(dp.x * dp.x + dp.y * dp.y + dp.z * dp.z);
-				data.add(dp);
-				si++;
-				bi++;
-			}
-			else
-			{
-				if (st < bt)
-				{
-					do
-					{
-						si++;
-					} while (si < tData.rows() && tData.getQuick(si, 0) < baseline.tData.getQuick(bi, 0));
-					if (si == tData.rows())
-						done = true;
-				}
-				else
-				{
-					do
-					{
-						bi++;
-					} while (bi < baseline.tData.rows() && baseline.tData.getQuick(bi, 0) < tData.getQuick(si, 0));
-					if (bi == baseline.tData.rows())
-						done = true;
-				}
-			}
-			if (si == tData.rows() || bi == baseline.tData.rows())
-				done = true;
-		}
 		
+		for (int i = 0; i < baseline.observations(); i++)
+			if (tData.getQuick(1, 0) == baseline.tData.getQuick(i, 0))
+				k = i;
+		
+		for (int i = 0; i < observations(); i++)
+			for (int j = k; j < baseline.observations(); j++)
+				if (tData.getQuick(i, 0) == baseline.tData.getQuick(j, 0))
+				{
+					DataPoint dp = new DataPoint();
+					dp.t = tData.getQuick(i, 0);
+					dp.x = xyzData.getQuick(i * 3, 0) - baseline.xyzData.getQuick(j * 3, 0);
+					dp.y = xyzData.getQuick(i * 3 + 1, 0) - baseline.xyzData.getQuick(j * 3 + 1, 0);
+					dp.z = xyzData.getQuick(i * 3 + 2, 0) - baseline.xyzData.getQuick(j * 3 + 2, 0);
+					
+					dp.sxx = covData.getQuick(i * 3, i * 3) + baseline.covData.getQuick(j * 3, j * 3);
+					dp.syy = covData.getQuick(i * 3 + 1, i * 3 + 1) + baseline.covData.getQuick(j * 3 + 1, j * 3 + 1);
+					dp.szz = covData.getQuick(i * 3 + 2, i * 3 + 2) + baseline.covData.getQuick(j * 3 + 2, j * 3 + 2);
+					
+					dp.sxy = covData.getQuick(i * 3, i * 3 + 1) + baseline.covData.getQuick(j * 3, j * 3 + 1);
+					dp.sxz = covData.getQuick(i * 3, i * 3 + 2) + baseline.covData.getQuick(j * 3, j * 3 + 2);
+					dp.syz = covData.getQuick(i * 3 + 1, i * 3 + 2) + baseline.covData.getQuick(j * 3 + 1, j * 3 + 2);
+					
+					dp.len = Math.sqrt(dp.x * dp.x + dp.y * dp.y + dp.z * dp.z);
+					data.add(dp);
+					k = j + 1;
+					break;
+				}
+
 		if (data.size() > 0)
 			setToList(data);
-		
-		ct.stopAndReport();
-	}
 
+	}
 	/** Converts the XYZ position data to east/north/up (ENU) position data 
 	 * based on a specified origin.
 	 * @param lon origin longitude
 	 * @param lat origin latitude
+	 * 
+	 * Revised March, 2014 to provide better performance. (PFC)
 	 */
 	public void toENU(double lon, double lat)
 	{
-		// works, but slow
-		/*
-		DoubleMatrix2D t = GPS.createFullENUTransform(lon, lat, observations());
-		xyzData = Algebra.DEFAULT.mult(t, xyzData);
-		logger.info(covData.rows() + " " + covData.columns() + "\n" + t.rows() + " " + t.columns());
-		CodeTimer ct = new CodeTimer("toENU just cov");
-		covData = Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(t, covData), t.viewDice());
-		ct.stop();
-		*/
-		CodeTimer ct = new CodeTimer("fast toENU");
-		DoubleMatrix2D t = GPS.createENUTransform(lon, lat);
-		DoubleMatrix2D tt = t.viewDice();
-		DoubleMatrix2D[][] xyz = new DoubleMatrix2D[observations()][1];
-		DoubleMatrix2D[][] cov = new DoubleMatrix2D[observations()][observations()];
+		double x, y, z;
+		double sxx, sxy, sxz, syy, syz, szz;
+
+		double s1 = Math.sin(Math.toRadians(lon));
+		double c1 = Math.cos(Math.toRadians(lon));
+		double s2 = Math.sin(Math.toRadians(lat));
+		double c2 = Math.cos(Math.toRadians(lat));
+
 		for (int i = 0; i < observations(); i++)
 		{
-			xyz[i][0] = Algebra.DEFAULT.mult(t, xyzData.viewPart(i * 3, 0, 3, 1));
-			cov[i][i] = Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(t, covData.viewPart(i * 3, i * 3, 3, 3)), tt);
+			x = xyzData.getQuick(i*3, 0);
+			y = xyzData.getQuick(i*3 + 1, 0);
+			z = xyzData.getQuick(i*3 + 2, 0);
+	
+			xyzData.setQuick(i*3, 0, -s1*x + c1*y);
+			xyzData.setQuick(i*3 + 1, 0, -s2*(c1*x + s1*y) + c2*z);
+			xyzData.setQuick(i*3 + 2, 0, c2*(c1*x + s1*y) + s2*z);
+			
+			
+			sxx = covData.getQuick(i*3, i*3);
+			sxy = covData.getQuick(i*3 + 1, i*3);
+			sxz = covData.getQuick(i*3 + 2, i*3);
+			syy = covData.getQuick(i*3 + 1, i*3 + 1);
+			syz = covData.getQuick(i*3 + 2, i*3 + 1);
+			szz = covData.getQuick(i*3 + 2, i*3 + 2);
+			
+			covData.setQuick(i*3, i*3, s1*s1*sxx - 2*c1*s1*sxy + c1*c1*syy);
+			covData.setQuick(i*3 + 1, i*3, -c1*c1*s2*sxy + s1*(s2*s1*sxy - c2*sxz) + c1*s2*s1*(sxx - syy) + c2*c1*syz);
+			covData.setQuick(i*3, i*3 + 1, covData.getQuick(i*3 + 1, i*3));
+			covData.setQuick(i*3 + 2, i*3, -s1*(c2*c1*sxx + c2*s1*sxy + s2*sxz) + c1*(c2*c1*sxy + c2*s1*syy + s2*syz));
+			covData.setQuick(i*3, i*3 + 2, covData.getQuick(i*3 + 2, i*3));
+			covData.setQuick(i*3 + 1, i*3 + 1, s2*(c1*c1*s2*sxx + 2*c1*s2*s1*sxy - 2*c2*c1*sxz + s2*s1*s1*syy - 2*c2*s1*syz) + c2*c2*szz);
+			covData.setQuick(i*3 + 2, i*3 + 1, -c1*s2*(c2*c1*sxx + c2*s1*sxy + s2*sxz) - s2*s1*(c2*c1*sxy + c2*s1*syy + s2*syz) + c2*(c2*c1*sxz + c2*s1*syz + s2*szz));
+			covData.setQuick(i*3 + 1, i*3 + 2, covData.getQuick(i*3 + 2, i*3 + 1));
+			covData.setQuick(i*3 + 2, i*3 + 2, c2*(c2*(c1*c1*sxx + 2*c1*s1*sxy + s1*s1*syy) + 2*s2*(c1*sxz + s1*syz)) + s2*s2*szz);
 		}
-		xyzData = DENSE.compose(xyz);
-		covData = SPARSE.compose(cov);
-		ct.stopAndReport();
-//		output();
 	}
 	
 	/** Generates position/time time-series data for plotting by Valve.  The returned 
@@ -358,7 +349,7 @@ public class GPSData implements BinaryDataSet
 		if (baseline != null)
 			applyBaseline(baseline);
 		toENU(originLLH[0], originLLH[1]);
-		
+
 		DoubleMatrix2D enuRows = GPS.column3NToRows(xyzData);
 		DoubleMatrix2D bigMatrix = DoubleFactory2D.dense.compose(new DoubleMatrix2D[][] {{tData, rData, enuRows, lenData}});
 		return bigMatrix;
