@@ -1,129 +1,97 @@
-//package gov.usgs.vdx.data.gps;
-//
-//import Jama.Matrix;
-//
-//public class Estimator {
-//
-//	public final Matrix A;
-//	public final Matrix b;
-//	public Matrix m;
-//	public Matrix mcov;
-//	public Matrix T;
-//	
-//	public double[] getErrorEllipseParameters()
-//	{
-//		return this.getErrorEllipseParameters(getChi2());
-//	}
-//	
-//	public double[] getErrorEllipseParameters(double scale)
-//	{
-//		double result[] = new double[4];
-//		
-//		double[][] C = getModelCovariance();
-//		int n = C.length - 3;
-//
-//		double e1 = scale * (C[0+n][0+n] - Math.sqrt(4*Math.pow(C[1+n][0+n],2) + Math.pow((C[0+n][0+n] - C[1+n][1+n]),2)) + C[1+n][1+n])/2;
-//		double e2 =	scale * (C[0+n][0+n] + Math.sqrt(4*Math.pow(C[1+n][0+n],2) + Math.pow((C[0+n][0+n] - C[1+n][1+n]),2)) + C[1+n][1+n])/2;
-//		
-//		result[0] = Math.atan2(-(-C[0+n][0+n] + Math.sqrt(4*Math.pow(C[1+n][0+n],2) + Math.pow((C[0+n][0+n] - C[1+n][1+n]),2)) + C[1+n][1+n])/(2*C[1+n][0+n]),1);
-//		result[1] = Math.max(e1, e2);
-//		result[2] = Math.min(e1, e2);
-//		result[3] = scale * C[2+n][2+n];
-//		
-//		return result;		
-//		
-//	}
-//	
-//	public double getChi2() {
-//		
-//		return Math.pow(A.getMatrix(0,b.getRowDimension()-1,0,m.getRowDimension()-1).times(m).minus(b).norm2(),2) / (b.getRowDimension() - m.getRowDimension());
-//	}
-//	
-//	public double[] getModel() {
-//	
-//		return T.getMatrix(0,m.getRowDimension()-1,0,m.getRowDimension()-1).times(m).getRowPackedCopy();
-//
-//	}	
-//	
-//	public double[][] getModelCovariance() {		
-//
-//		return T.getMatrix(0,mcov.getRowDimension()-1,0,mcov.getRowDimension()-1).times(mcov).times(T.getMatrix(0,mcov.getRowDimension()-1,0,mcov.getRowDimension()-1).transpose()).getArray();
-//	}
-//
-//	public void calculateVelocity() {
-//		
-//		m = A.solve(b);
-//		mcov = A.transpose().times(A).inverse();
-//
-//	}
-//	
-//	public void calculateMean() {
-//		
-//		m = A.getMatrix(0,b.getRowDimension()-1,0,2).solve(b);
-//		mcov = A.getMatrix(0,b.getRowDimension()-1,0,2).transpose().times(A.getMatrix(0,b.getRowDimension()-1,0,2)).inverse();
-//	}
-//
-//	public void unSetOrigin() {
-//		
-//		T = Matrix.identity(6,6);
-//	}
-//
-//	public void setOrigin(double lon, double lat) {
-//		
-//        double sinLon = Math.sin(Math.toRadians(lon));
-//        double sinLat = Math.sin(Math.toRadians(lat));
-//        double cosLon = Math.cos(Math.toRadians(lon));
-//        double cosLat = Math.cos(Math.toRadians(lat));
-//        T = new Matrix(new double[][] 
-//        {
-//            {          -sinLon,           cosLon,      0,                0,                0,      0 },
-//            { -sinLat * cosLon, -sinLat * sinLon, cosLat,                0,                0,      0 },
-//            {  cosLat * cosLon,  cosLat * sinLon, sinLat,                0,                0,      0 },
-//            {                0,                0,      0,          -sinLon,           cosLon,      0 },
-//            {                0,                0,      0, -sinLat * cosLon, -sinLat * sinLon, cosLat },
-//            {                0,                0,      0,  cosLat * cosLon,  cosLat * sinLon, sinLat }
-//        });
-//		
-//	}
-//	
-//	public Estimator(double[] t, double[] d, double[][] dcov) {
-//
-//		double[] w = new double[6];
-//		int[] I = {0,1,2,1,2,2};
-//		int[] J = {0,0,0,1,1,2};
-//
-//		A = new Matrix(d.length,6);
-//		b = new Matrix(d.length,1);
-//		
-//		for (int i = 0; i < d.length; i = i + 3) {
-//			
-//			w[0] = 1/Math.sqrt(dcov[i][i]);
-//			w[1] = -(dcov[i+1][i]/(dcov[i][i]*Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + dcov[i+1][i+1])));
-//			w[2] = (-(dcov[i+2][i]*dcov[i+1][i+1]) + dcov[i+1][i]*dcov[i+2][i+1])/((-Math.pow(dcov[i+1][i], 2) + 
-//					dcov[i][i]*dcov[i+1][i+1])*Math.sqrt(-(Math.pow(dcov[i+2][i], 2)/dcov[i][i]) + dcov[i+2][i+2] - 
-//					( Math.pow(-((dcov[i+1][i]*dcov[i+2][i])/dcov[i][i]) + dcov[i+2][i+1], 2)*(1/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + 
-//					dcov[i+1][i+1])))/ Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + dcov[i+1][i+1])));
-//			w[3] = 1/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + dcov[i+1][i+1]);
-//			w[4] = (dcov[i+1][i]*dcov[i+2][i] - dcov[i][i]*dcov[i+2][i+1])/((-Math.pow(dcov[i+1][i], 2) + 
-//					dcov[i][i]*dcov[i+1][i+1])*Math.sqrt(-(Math.pow(dcov[i+2][i], 2)/dcov[i][i]) + dcov[i+2][i+2] - 
-//					( Math.pow(-((dcov[i+1][i]*dcov[i+2][i])/dcov[i][i]) + dcov[i+2][i+1], 2)*(1/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + 
-//					dcov[i+1][i+1])))/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + dcov[i+1][i+1])));
-//			w[5] = 1/Math.sqrt(-(Math.pow(dcov[i+2][i], 2)/dcov[i][i]) + dcov[i+2][i+2] - 
-//					( Math.pow(-((dcov[i+1][i]*dcov[i+2][i])/dcov[i][i]) + dcov[i+2][i+1], 2)*(1/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) +
-//					dcov[i+1][i+1])))/Math.sqrt(-(Math.pow(dcov[i+1][i], 2)/dcov[i][i]) + dcov[i+1][i+1]));
-//						
-//			for (int j = 0; j < 6; j++) {
-//				A.set(i+I[j], J[j], w[j]);
-//				A.set(i+I[j], J[j]+3, w[j] * (t[i/3] - t[0]));
-//			}
-//							
-//			b.set(i, 0,   d[i] * w[0]);
-//			b.set(i+1, 0, d[i] * w[1] + d[i+1] * w[3]);
-//			b.set(i+2, 0, d[i] * w[2] + d[i+1] * w[4] + d[i+2] * w[5]);
-//		}		
-//			
-//		unSetOrigin();
-//		
-//	}
-//
-//}
+package gov.usgs.vdx.data.gps;
+
+import cern.colt.matrix.*;
+import cern.colt.matrix.linalg.*;
+
+public class Estimator {
+   
+    public DoubleMatrix2D WG;
+    public DoubleMatrix2D Wd;
+    public DoubleMatrix2D m;
+    public DoubleMatrix2D dhat;
+    public DoubleMatrix2D mcov;
+    public DoubleMatrix2D r;
+    public double chi2;
+	
+    public Estimator(DoubleMatrix2D G, DoubleMatrix2D d, DoubleMatrix2D dcov) {		
+
+    	double sxx, sxy, sxz, syy, syz, szz;
+    	double w1, w2, w3, w4, w5, w6;
+    	double t1, t2;
+    	double M;
+    	
+    	WG = G.copy();
+    	Wd = d.copy();
+
+    	for (int i = 0; i < WG.rows()/3; i++)
+    	{
+			sxx = dcov.getQuick(i*3, i*3);
+			sxy = dcov.getQuick(i*3 + 1, i*3);
+			sxz = dcov.getQuick(i*3 + 2, i*3);
+			syy = dcov.getQuick(i*3 + 1, i*3 + 1);
+			syz = dcov.getQuick(i*3 + 2, i*3 + 1);
+			szz = dcov.getQuick(i*3 + 2, i*3 + 2);
+
+		    t1 = (sxy*sxy - sxx*syy);
+		    t2 = Math.sqrt((sxz*sxz*syy - 2*sxy*sxz*syz + sxx*syz*syz)/(sxy*sxy - sxx*syy) + szz);
+		    w1 = 1/Math.sqrt(sxx);
+		    w2 = -sxy/sxx/Math.sqrt(syy - sxy*sxy/sxx);
+		    w3 = (sxz*syy - sxy*syz)/t1/t2;
+		    w4 = 1/Math.sqrt(syy - sxy*sxy/sxx);
+		    w5 = (sxx*syz - sxy*sxz)/t1/t2;
+		    w6 = 1/t2;
+		    
+		    Wd.setQuick(i*3, 0, d.getQuick(i*3, 0)*w1);
+		    Wd.setQuick(i*3 + 1, 0, d.getQuick(i*3, 0)*w2 + d.getQuick(i*3 + 1, 0)*w4);
+		    Wd.setQuick(i*3 + 2, 0, d.getQuick(i*3, 0)*w3 + d.getQuick(i*3 + 1, 0)*w5+ d.getQuick(i*3 + 2, 0)*w6);
+		    
+		    for (int j = 0; j < WG.columns()/3; j++)
+		    {
+		    	M = G.getQuick(i*3, j*3);
+		    	WG.setQuick(i*3, j*3, M*w1);
+		    	WG.setQuick(i*3 + 1, j*3, M*w2);
+		    	WG.setQuick(i*3 + 2, j*3, M*w3);
+		    	WG.setQuick(i*3 + 1, j*3 + 1, M*w4);
+		    	WG.setQuick(i*3 + 2, j*3 + 1, M*w5);
+		    	WG.setQuick(i*3 + 2, j*3 + 2, M*w6);
+		    }
+    	}
+    }
+    
+    public void solve()
+    {
+    	mcov = Algebra.DEFAULT.inverse(Algebra.DEFAULT.mult(Algebra.DEFAULT.transpose(WG),WG));
+    	m = Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(mcov,Algebra.DEFAULT.transpose(WG)),Wd);
+    	dhat = Algebra.DEFAULT.mult(WG, m);
+    	r = dhat.copy();
+    	for (int i = 0; i < Wd.rows(); i++)
+    		r.setQuick(i,0,Wd.getQuick(i,0) - dhat.getQuick(i,0));
+    	chi2 = Algebra.DEFAULT.mult(r.viewDice(),r).getQuick(0,0) /(Wd.rows() - 6);
+    }
+    	
+    public DoubleMatrix2D getModel()
+    {
+    	return m;
+    }
+    
+    public DoubleMatrix2D getModelCovariance()
+    {
+    	return mcov;
+    }
+    
+    public DoubleMatrix2D getPrediction()
+    {
+    	return dhat;
+    }
+    
+    public DoubleMatrix2D getResidual()
+    {
+    	return r;
+    }
+    
+    public double getChi2()
+    {
+    	return chi2;
+    }
+    
+}
