@@ -1,10 +1,10 @@
 package gov.usgs.vdx.data.wave.plot;
 
-import gov.usgs.plot.DefaultFrameDecorator;
-import gov.usgs.plot.FrameDecorator;
-import gov.usgs.plot.FrameRenderer;
-import gov.usgs.plot.LegendRenderer;
-import gov.usgs.plot.ShapeRenderer;
+import gov.usgs.plot.decorate.DefaultFrameDecorator;
+import gov.usgs.plot.decorate.FrameDecorator;
+import gov.usgs.plot.render.FrameRenderer;
+import gov.usgs.plot.render.LegendRenderer;
+import gov.usgs.plot.render.ShapeRenderer;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 import gov.usgs.vdx.data.wave.Wave;
