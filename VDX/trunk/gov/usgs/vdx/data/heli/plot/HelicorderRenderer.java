@@ -1,12 +1,12 @@
 package gov.usgs.vdx.data.heli.plot;
 
-import gov.usgs.plot.AxisRenderer;
-import gov.usgs.plot.FrameDecorator;
-import gov.usgs.plot.FrameRenderer;
-import gov.usgs.plot.LegendRenderer;
-import gov.usgs.plot.ShapeRenderer;
-import gov.usgs.plot.SmartTick;
-import gov.usgs.plot.TextRenderer;
+import gov.usgs.plot.decorate.FrameDecorator;
+import gov.usgs.plot.decorate.SmartTick;
+import gov.usgs.plot.render.AxisRenderer;
+import gov.usgs.plot.render.FrameRenderer;
+import gov.usgs.plot.render.LegendRenderer;
+import gov.usgs.plot.render.ShapeRenderer;
+import gov.usgs.plot.render.TextRenderer;
 import gov.usgs.util.Time;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.heli.HelicorderData;

@@ -1,11 +1,11 @@
 package gov.usgs.vdx.data.wave.plot;
 
-import gov.usgs.plot.AxisRenderer;
-import gov.usgs.plot.DefaultFrameDecorator;
-import gov.usgs.plot.FrameDecorator;
-import gov.usgs.plot.ImageDataRenderer;
-import gov.usgs.plot.Jet2;
-import gov.usgs.plot.Spectrum;
+import gov.usgs.plot.color.Jet2;
+import gov.usgs.plot.color.Spectrum;
+import gov.usgs.plot.decorate.DefaultFrameDecorator;
+import gov.usgs.plot.decorate.FrameDecorator;
+import gov.usgs.plot.render.AxisRenderer;
+import gov.usgs.plot.render.ImageDataRenderer;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.wave.SliceWave;
 import gov.usgs.vdx.data.wave.Spectrogram;

@@ -2,9 +2,9 @@ package gov.usgs.vdx.data.wave.plot;
 
 import gov.usgs.math.Spectra;
 import gov.usgs.math.Util;
-import gov.usgs.plot.DefaultFrameDecorator;
-import gov.usgs.plot.FrameDecorator;
-import gov.usgs.plot.MatrixRenderer;
+import gov.usgs.plot.decorate.DefaultFrameDecorator;
+import gov.usgs.plot.decorate.FrameDecorator;
+import gov.usgs.plot.render.MatrixRenderer;
 import gov.usgs.vdx.data.wave.SliceWave;
 
 import java.awt.Color;

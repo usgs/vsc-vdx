@@ -1,7 +1,7 @@
 package gov.usgs.vdx.data.wave.plot;
 
-import gov.usgs.plot.AxisRenderer;
-import gov.usgs.plot.SmartTick;
+import gov.usgs.plot.decorate.SmartTick;
+import gov.usgs.plot.render.AxisRenderer;
 
 import java.awt.Color;
 import java.util.ArrayList;
