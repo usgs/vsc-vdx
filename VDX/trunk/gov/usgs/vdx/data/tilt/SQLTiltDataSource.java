@@ -1,16 +1,16 @@
 package gov.usgs.vdx.data.tilt;
 
+import gov.usgs.math.DownsamplingType;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
-import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

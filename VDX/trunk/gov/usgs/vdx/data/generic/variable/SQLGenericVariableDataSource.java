@@ -1,10 +1,10 @@
 package gov.usgs.vdx.data.generic.variable;
 
+import gov.usgs.math.DownsamplingType;
 import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
