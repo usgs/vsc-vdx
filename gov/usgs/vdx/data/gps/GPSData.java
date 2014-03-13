@@ -1,8 +1,8 @@
 package gov.usgs.vdx.data.gps;
 
+import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.util.CodeTimer;
 import gov.usgs.util.Log;
-import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

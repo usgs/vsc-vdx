@@ -1,6 +1,6 @@
 package gov.usgs.vdx.in.tilt;
 
-import gov.usgs.vdx.data.GenericDataMatrix;
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 import gov.usgs.vdx.data.tilt.ptx.PTXRecord;
 import gov.usgs.vdx.db.VDXDatabase;

@@ -2,12 +2,12 @@ package gov.usgs.vdx.in.tilt;
 
 import gov.usgs.pinnacle.Client;
 import gov.usgs.pinnacle.StatusBlock;
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
 

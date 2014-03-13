@@ -1,10 +1,10 @@
 package gov.usgs.vdx.client;
 
 import gov.usgs.net.InternetClient;
+import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

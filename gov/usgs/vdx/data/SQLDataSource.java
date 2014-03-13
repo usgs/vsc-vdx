@@ -1,5 +1,6 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;

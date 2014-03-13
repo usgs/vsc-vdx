@@ -1,12 +1,12 @@
 package gov.usgs.vdx.in.generic.fixed;
 
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Column;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 
 import java.text.SimpleDateFormat;
