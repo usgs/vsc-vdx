@@ -1,11 +1,11 @@
 package gov.usgs.vdx.in;
 
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Time;
 import gov.usgs.util.Util;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLNullDataSource;

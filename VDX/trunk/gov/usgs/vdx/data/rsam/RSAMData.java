@@ -1,7 +1,7 @@
 package gov.usgs.vdx.data.rsam;
 
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Util;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.hypo.HypocenterList.BinSize;
 import hep.aida.IAxis;
 import hep.aida.ref.FixedAxis;

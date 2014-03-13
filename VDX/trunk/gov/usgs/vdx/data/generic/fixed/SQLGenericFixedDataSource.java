@@ -1,10 +1,10 @@
 package gov.usgs.vdx.data.generic.fixed;
 
+import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
 import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
-import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;

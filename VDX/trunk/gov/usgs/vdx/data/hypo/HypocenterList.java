@@ -1,8 +1,8 @@
 package gov.usgs.vdx.data.hypo;
 
+import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.proj.Projection;
 import gov.usgs.util.Util;
-import gov.usgs.vdx.data.BinaryDataSet;
 import hep.aida.IAxis;
 import hep.aida.ref.FixedAxis;
 import hep.aida.ref.Histogram1D;
