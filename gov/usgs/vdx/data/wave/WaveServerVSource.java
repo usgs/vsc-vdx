@@ -1,4 +1,4 @@
-package gov.usgs.vdx.data.seismic;
+package gov.usgs.vdx.data.wave;
 
 import gov.usgs.earthworm.Menu;
 import gov.usgs.earthworm.MenuItem;

@@ -1,4 +1,4 @@
-package gov.usgs.vdx.data.seismic;
+package gov.usgs.vdx.data.wave;
 
 
 /**
