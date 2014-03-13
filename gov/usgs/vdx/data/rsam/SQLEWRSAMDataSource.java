@@ -2,6 +2,7 @@ package gov.usgs.vdx.data.rsam;
 
 import gov.usgs.math.DownsamplingType;
 import gov.usgs.plot.data.GenericDataMatrix;
+import gov.usgs.plot.data.RSAMData;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
 import gov.usgs.vdx.data.Channel;

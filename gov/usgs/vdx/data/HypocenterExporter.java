@@ -4,7 +4,6 @@ import gov.usgs.vdx.data.Exportable;
 import gov.usgs.vdx.data.hypo.Hypocenter;
 import gov.usgs.vdx.data.hypo.HypocenterList;
 
-
 import java.util.List;
 
 
