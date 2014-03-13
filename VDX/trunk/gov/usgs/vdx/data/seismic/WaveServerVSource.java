@@ -1,4 +1,4 @@
-package gov.usgs.vdx.data;
+package gov.usgs.vdx.data.seismic;
 
 import gov.usgs.earthworm.Menu;
 import gov.usgs.earthworm.MenuItem;
@@ -6,6 +6,7 @@ import gov.usgs.earthworm.WaveServer;
 import gov.usgs.plot.data.Wave;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;

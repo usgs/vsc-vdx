@@ -1,4 +1,4 @@
-package gov.usgs.vdx.data;
+package gov.usgs.vdx.data.seismic;
 
 import gov.usgs.plot.data.Wave;
 import gov.usgs.plot.render.wave.SliceWaveRenderer;
