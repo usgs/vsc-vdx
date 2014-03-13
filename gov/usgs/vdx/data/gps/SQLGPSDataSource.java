@@ -1,8 +1,8 @@
 package gov.usgs.vdx.data.gps;
 
+import gov.usgs.math.DownsamplingType;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;

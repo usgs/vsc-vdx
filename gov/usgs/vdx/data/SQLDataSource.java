@@ -1,12 +1,10 @@
 package gov.usgs.vdx.data;
 
+import gov.usgs.math.DownsamplingType;
 import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
-import gov.usgs.vdx.client.VDXClient.DownsamplingType;
-import gov.usgs.vdx.data.MetaDatum;
-import gov.usgs.vdx.data.SuppDatum;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
@@ -20,9 +18,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
