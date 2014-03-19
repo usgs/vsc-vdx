@@ -27,6 +27,8 @@ public class GPSData implements BinaryDataSet
 	private static final DoubleFactory2D SPARSE	= DoubleFactory2D.sparse;
 	private static final DoubleMatrix2D I3X3	= DENSE.identity(3);
 	private static final DoubleMatrix2D ZERO3X3	= DENSE.make(3, 3);
+	private static final double SECONDSPERYEAR = 31557600;
+
 
 	private DoubleMatrix2D tData;
 	private DoubleMatrix2D rData;
@@ -392,7 +394,7 @@ public class GPSData implements BinaryDataSet
 		DoubleMatrix2D temp;
 		for (int i = 0; i < observations(); i++)
 		{
-			ta = (tData.getQuick(i, 0) - t0) / (86400 * 365.25);
+			ta = (tData.getQuick(i, 0) - t0) / SECONDSPERYEAR;
 			temp = DENSE.make(3, 3);
 			temp.setQuick(0, 0, ta);
 			temp.setQuick(1, 1, ta);
