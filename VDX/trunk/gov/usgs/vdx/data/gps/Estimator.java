@@ -19,18 +19,18 @@ public class Estimator {
     	double w1, w2, w3, w4, w5, w6;
     	double t1, t2;
     	double M;
-    	
+
     	WG = G.copy();
-    	Wd = d.copy();
+    	Wd = DoubleFactory2D.dense.make(WG.rows(),1);
 
     	for (int i = 0; i < WG.rows()/3; i++)
     	{
-			sxx = dcov.getQuick(i*3, i*3);
-			sxy = dcov.getQuick(i*3 + 1, i*3);
-			sxz = dcov.getQuick(i*3 + 2, i*3);
-			syy = dcov.getQuick(i*3 + 1, i*3 + 1);
-			syz = dcov.getQuick(i*3 + 2, i*3 + 1);
-			szz = dcov.getQuick(i*3 + 2, i*3 + 2);
+			sxx = dcov.getQuick(i, 0);
+			sxy = dcov.getQuick(i, 1);
+			sxz = dcov.getQuick(i, 2);
+			syy = dcov.getQuick(i, 3);
+			syz = dcov.getQuick(i, 4);
+			szz = dcov.getQuick(i, 5);	
 
 		    t1 = (sxy*sxy - sxx*syy);
 		    t2 = Math.sqrt((sxz*sxz*syy - 2*sxy*sxz*syz + sxx*syz*syz)/(sxy*sxy - sxx*syy) + szz);
@@ -40,11 +40,11 @@ public class Estimator {
 		    w4 = 1/Math.sqrt(syy - sxy*sxy/sxx);
 		    w5 = (sxx*syz - sxy*sxz)/t1/t2;
 		    w6 = 1/t2;
-		    
-		    Wd.setQuick(i*3, 0, d.getQuick(i*3, 0)*w1);
-		    Wd.setQuick(i*3 + 1, 0, d.getQuick(i*3, 0)*w2 + d.getQuick(i*3 + 1, 0)*w4);
-		    Wd.setQuick(i*3 + 2, 0, d.getQuick(i*3, 0)*w3 + d.getQuick(i*3 + 1, 0)*w5+ d.getQuick(i*3 + 2, 0)*w6);
-		    
+
+		    Wd.setQuick(i*3, 0, d.getQuick(i, 0)*w1);
+		    Wd.setQuick(i*3 + 1, 0, d.getQuick(i, 0)*w2 + d.getQuick(i, 1)*w4);
+		    Wd.setQuick(i*3 + 2, 0, d.getQuick(i, 0)*w3 + d.getQuick(i, 1)*w5+ d.getQuick(i, 2)*w6);
+
 		    for (int j = 0; j < WG.columns()/3; j++)
 		    {
 		    	M = G.getQuick(i*3, j*3);
