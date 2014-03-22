@@ -378,11 +378,19 @@ public class GPSData implements BinaryDataSet
 		DoubleMatrix2D[][] g = new DoubleMatrix2D[observations()][2];
 		for (int i = 0; i < observations(); i++)
 		{
-			if (tData.getQuick(i, 0) < dt)
+			if (tData.getQuick(i, 0) == dt)
+			{
 				g[i][0] = ZERO3X3;
+				g[i][1] = ZERO3X3;
+			}
 			else
-				g[i][0] = I3X3;
-			g[i][1] = I3X3;
+			{
+				if (tData.getQuick(i, 0) < dt)
+					g[i][0] = ZERO3X3;
+				else
+					g[i][0] = I3X3;
+				g[i][1] = I3X3;
+			}
 		}
 		return SPARSE.compose(g);
 	}
