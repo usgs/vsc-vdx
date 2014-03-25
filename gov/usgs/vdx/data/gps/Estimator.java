@@ -15,7 +15,8 @@ public class Estimator {
 	
     public Estimator(DoubleMatrix2D G, DoubleMatrix2D d, DoubleMatrix2D dcov) {		
 
-    	double sxx, sxy, sxz, syy, syz, szz;
+
+    	double sxx, syy, szz, sxy, sxz, syz;
     	double w1, w2, w3, w4, w5, w6;
     	double t1, t2;
     	double M;
@@ -25,14 +26,15 @@ public class Estimator {
 
     	for (int i = 0; i < WG.rows()/3; i++)
     	{
+	
 			sxx = dcov.getQuick(i, 0);
-			sxy = dcov.getQuick(i, 1);
-			sxz = dcov.getQuick(i, 2);
-			syy = dcov.getQuick(i, 3);
-			syz = dcov.getQuick(i, 4);
-			szz = dcov.getQuick(i, 5);	
+			syy = dcov.getQuick(i, 1);
+			szz = dcov.getQuick(i, 2);
+			sxy = dcov.getQuick(i, 3);
+			sxz = dcov.getQuick(i, 4);
+			syz = dcov.getQuick(i, 5);
 
-		    t1 = (sxy*sxy - sxx*syy);
+			t1 = (sxy*sxy - sxx*syy);
 		    t2 = Math.sqrt((sxz*sxz*syy - 2*sxy*sxz*syz + sxx*syz*syz)/(sxy*sxy - sxx*syy) + szz);
 		    w1 = 1/Math.sqrt(sxx);
 		    w2 = -sxy/sxx/Math.sqrt(syy - sxy*sxy/sxx);
