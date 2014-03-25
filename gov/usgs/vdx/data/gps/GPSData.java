@@ -1,12 +1,9 @@
 package gov.usgs.vdx.data.gps;
 
 import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.CodeTimer;
 import gov.usgs.util.Log;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +11,6 @@ import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
 
 /**
  * A class that deals with GPS data.  The data are stored in four matrices:
@@ -82,12 +78,12 @@ public class GPSData implements BinaryDataSet
 
 			// set sigmas
 			covData.setQuick(i, 0, dp.sxx);
-			covData.setQuick(i, 1, dp.sxy);
-			covData.setQuick(i, 2, dp.sxz);
-			covData.setQuick(i, 3, dp.syy);
-			covData.setQuick(i, 4, dp.syz);
-			covData.setQuick(i, 5, dp.szz);
-			
+			covData.setQuick(i, 1, dp.syy);
+			covData.setQuick(i, 2, dp.szz);
+			covData.setQuick(i, 3, dp.sxy);
+			covData.setQuick(i, 4, dp.sxz);
+			covData.setQuick(i, 5, dp.syz);
+
 			//set length
 			if (hasLen)
 				lenData.setQuick(i, 0, dp.len);
@@ -139,6 +135,7 @@ public class GPSData implements BinaryDataSet
 		covData	= DENSE.make(rows, 6);
 		lenData	= DENSE.make(rows, 1);
 		DataPoint dp = new DataPoint();
+
 		for (int i = 0; i < rows; i++)
 		{
 			dp.fromBinary(bb);
@@ -155,11 +152,12 @@ public class GPSData implements BinaryDataSet
 
 			// set sigmas
 			covData.setQuick(i, 0, dp.sxx);
-			covData.setQuick(i, 1, dp.sxy);
-			covData.setQuick(i, 2, dp.sxz);
-			covData.setQuick(i, 3, dp.syy);
-			covData.setQuick(i, 4, dp.syz);
-			covData.setQuick(i, 5, dp.szz);
+			covData.setQuick(i, 1, dp.syy);
+			covData.setQuick(i, 2, dp.szz);
+			covData.setQuick(i, 3, dp.sxy);
+			covData.setQuick(i, 4, dp.sxz);
+			covData.setQuick(i, 5, dp.syz);
+
 		}
 	}
 	
@@ -263,11 +261,11 @@ public class GPSData implements BinaryDataSet
 					dp.z = xyzData.getQuick(i, 2) - baseline.xyzData.getQuick(j, 2);
 
 					dp.sxx = covData.getQuick(i, 0) + baseline.covData.getQuick(j, 0);
-					dp.sxy = covData.getQuick(i, 1) + baseline.covData.getQuick(j, 1);
-					dp.sxz = covData.getQuick(i, 2) + baseline.covData.getQuick(j, 2);
-					dp.syy = covData.getQuick(i, 3) + baseline.covData.getQuick(j, 3);
-					dp.syz = covData.getQuick(i, 4) + baseline.covData.getQuick(j, 4);
-					dp.szz = covData.getQuick(i, 5) + baseline.covData.getQuick(j, 5);
+					dp.syy = covData.getQuick(i, 1) + baseline.covData.getQuick(j, 1);
+					dp.szz = covData.getQuick(i, 2) + baseline.covData.getQuick(j, 2);
+					dp.sxy = covData.getQuick(i, 3) + baseline.covData.getQuick(j, 3);
+					dp.sxz = covData.getQuick(i, 4) + baseline.covData.getQuick(j, 4);
+					dp.syz = covData.getQuick(i, 5) + baseline.covData.getQuick(j, 5);
 					
 					dp.len = Math.sqrt(dp.x * dp.x + dp.y * dp.y + dp.z * dp.z);
 					data.add(dp);
@@ -308,23 +306,21 @@ public class GPSData implements BinaryDataSet
 			xyzData.setQuick(i, 0, -s1*x + c1*y);
 			xyzData.setQuick(i, 1, -s2*(c1*x + s1*y) + c2*z);
 			xyzData.setQuick(i, 2, c2*(c1*x + s1*y) + s2*z);
-
+			
 			sxx = covData.getQuick(i, 0);
-			sxy = covData.getQuick(i, 1);
-			sxz = covData.getQuick(i, 2);
-			syy = covData.getQuick(i, 3);
-			syz = covData.getQuick(i, 4);
-			szz = covData.getQuick(i, 5);
-			
-			covData.setQuick(i, 0, s1*s1*sxx - 2*c1*s1*sxy + c1*c1*syy);					
-			covData.setQuick(i, 1, -c1*c1*s2*sxy + s1*(s2*s1*sxy - c2*sxz) + c1*s2*s1*(sxx - syy) + c2*c1*syz);
-			covData.setQuick(i, 2, -s1*(c2*c1*sxx + c2*s1*sxy + s2*sxz) + c1*(c2*c1*sxy + c2*s1*syy + s2*syz));
-			covData.setQuick(i, 3, s2*(c1*c1*s2*sxx + 2*c1*s2*s1*sxy - 2*c2*c1*sxz + s2*s1*s1*syy - 2*c2*s1*syz) + c2*c2*szz);
-			covData.setQuick(i, 4, -c1*s2*(c2*c1*sxx + c2*s1*sxy + s2*sxz) - s2*s1*(c2*c1*sxy + c2*s1*syy + s2*syz) + c2*(c2*c1*sxz + c2*s1*syz + s2*szz));
-			covData.setQuick(i, 5, c2*(c2*(c1*c1*sxx + 2*c1*s1*sxy + s1*s1*syy) + 2*s2*(c1*sxz + s1*syz)) + s2*s2*szz);
-	
-			
-			
+			syy = covData.getQuick(i, 1);
+			szz = covData.getQuick(i, 2);
+			sxy = covData.getQuick(i, 3);
+			sxz = covData.getQuick(i, 4);
+			syz = covData.getQuick(i, 5);
+
+			covData.setQuick(i, 0, s1*s1*sxx - 2*c1*s1*sxy + c1*c1*syy);
+			covData.setQuick(i, 1, s2*(c1*c1*s2*sxx + 2*c1*s2*s1*sxy - 2*c2*c1*sxz + s2*s1*s1*syy - 2*c2*s1*syz) + c2*c2*szz);
+			covData.setQuick(i, 2, c2*(c2*(c1*c1*sxx + 2*c1*s1*sxy + s1*s1*syy) + 2*s2*(c1*sxz + s1*syz)) + s2*s2*szz);
+			covData.setQuick(i, 3, -c1*c1*s2*sxy + s1*(s2*s1*sxy - c2*sxz) + c1*s2*s1*(sxx - syy) + c2*c1*syz);
+			covData.setQuick(i, 4, -s1*(c2*c1*sxx + c2*s1*sxy + s2*sxz) + c1*(c2*c1*sxy + c2*s1*syy + s2*syz));
+			covData.setQuick(i, 5, -c1*s2*(c2*c1*sxx + c2*s1*sxy + s2*sxz) - s2*s1*(c2*c1*sxy + c2*s1*syy + s2*syz) + c2*(c2*c1*sxz + c2*s1*syz + s2*szz));			
+
 		}
 	}
 	
