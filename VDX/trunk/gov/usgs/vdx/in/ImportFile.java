@@ -627,6 +627,9 @@ public class ImportFile extends Import implements Importer {
 				// go to the next line
 				line	= rr.nextLine();
 			}
+			
+			// close the resource
+			rr.close();
 		
 		// catch exceptions
 		} catch (Exception e) {

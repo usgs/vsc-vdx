@@ -70,6 +70,8 @@ public class ImportSum
 		
 		dataSource.createChannel(bm, bm, lon, lat, height);
 		System.out.printf("%s %f %f %f\n", bm, lon, lat, height);
+		
+		rr.close();
 	}
 	
 	/**
