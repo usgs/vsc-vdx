@@ -371,9 +371,10 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			// lookup this filename/rank combination.  if it exists then delete it from the database
-			ps = database.getPreparedStatement("SELECT sid FROM sources WHERE name = ? AND rid = ?");
-			ps.setString(1, name);
-			ps.setInt(2, rid);
+			ps = database.getPreparedStatement("SELECT sid FROM sources WHERE j2ksec0 = ? AND j2ksec1 = ? AND rid = ?");
+			ps.setDouble(1, t0);
+			ps.setDouble(2, t1);
+			ps.setInt(3, rid);
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				Rank rank;
