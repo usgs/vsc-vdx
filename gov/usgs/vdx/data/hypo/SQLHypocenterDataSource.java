@@ -223,10 +223,14 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double minVerr		= Double.parseDouble(params.get("minVerr"));
 			double maxVerr		= Double.parseDouble(params.get("maxVerr"));
 			String rmk			= params.get("rmk");
+			double minStDst		= Double.parseDouble(params.get("minStDst"));
+			double maxStDst		= Double.parseDouble(params.get("maxStDst"));
+			double maxGap		= Double.parseDouble(params.get("maxGap"));
 			HypocenterList data = null;
 			try{
 				data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
-					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, getMaxRows());
+					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, minStDst,
+					maxStDst, maxGap, getMaxRows());
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -259,6 +263,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minVerr		minimum vertical error
 	 * @param maxVerr		maximum vertical error
 	 * @param rmk			remarks filter
+	 * @param minStDst		min distance from closest station
+	 * @param maxStDst		max distance from closest station
+	 * @param maxGap		max gap filter
 	 * @param maxrows       maximum nbr of rows returned
 	 * @return list of hypocenter data
 	 * @throws UtilException
@@ -266,7 +273,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,
 			Integer minNPhases, Integer maxNPhases, double minRMS, double maxRMS, 
-			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, int maxrows) throws UtilException {
+			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, double minStDst, 
+			double maxStDst, double maxGap, int maxrows) throws UtilException {
 
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
@@ -305,6 +313,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
 			sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
 			sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
+			sql += "AND    a.dmin    >= ? AND a.dmin	<= ? ";
+			sql += "AND    a.azgap   <= ? ";
 			sql += "AND    a.prefmag IS NOT NULL ";
 			
 			// remarks filtering options
@@ -346,8 +356,11 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(16, maxHerr);
 			ps.setDouble(17, minVerr);
 			ps.setDouble(18, maxVerr);
+			ps.setDouble(19, minStDst);
+			ps.setDouble(20, maxStDst);
+			ps.setDouble(21, maxGap);
 			if (ranks && rid != 0) {
-				ps.setInt(19, rid);
+				ps.setInt(22, rid);
 			}
 			rs = ps.executeQuery();
 			
