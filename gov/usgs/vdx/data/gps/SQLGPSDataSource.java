@@ -330,9 +330,23 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			rs.close();
 			
-			if (dataPoints.size() > 0) {
-				return new GPSData(dataPoints);
+			if (dataPoints.size() == 0) {
+				dp		= new DataPoint();
+				dp.t	= Double.NaN;
+				dp.r	= Double.NaN;
+				dp.x	= Double.NaN;
+				dp.y	= Double.NaN;
+				dp.z	= Double.NaN;
+				dp.sxx	= Double.NaN;
+				dp.syy	= Double.NaN;
+				dp.szz	= Double.NaN;
+				dp.sxy	= Double.NaN;
+				dp.sxz	= Double.NaN;
+				dp.syz	= Double.NaN;
+				dataPoints.add(dp);
 			}
+			
+			result = new GPSData(dataPoints);
 			
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLGPSDataSource.getGPSData(" + cid + "," + rid + "," + st + "," + et + ") failed.", e);

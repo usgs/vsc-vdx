@@ -244,39 +244,57 @@ public class GPSData implements BinaryDataSet
 		int k = 0;
 		List<DataPoint> data = new ArrayList<DataPoint>(observations());
 		
-		for (int i = 0; i < baseline.observations(); i++)
-			if (tData.getQuick(0, 0) == baseline.tData.getQuick(i, 0))
-				k = i;
-
-		for (int i = 0; i < observations(); i++)
-			for (int j = k; j < baseline.observations(); j++)
-				if (tData.getQuick(i, 0) == baseline.tData.getQuick(j, 0))
-				{
-					DataPoint dp = new DataPoint();
-					
-					dp.t = tData.getQuick(i, 0);
-					
-					dp.x = xyzData.getQuick(i, 0) - baseline.xyzData.getQuick(j, 0);
-					dp.y = xyzData.getQuick(i, 1) - baseline.xyzData.getQuick(j, 1);
-					dp.z = xyzData.getQuick(i, 2) - baseline.xyzData.getQuick(j, 2);
-
-					dp.sxx = covData.getQuick(i, 0) + baseline.covData.getQuick(j, 0);
-					dp.syy = covData.getQuick(i, 1) + baseline.covData.getQuick(j, 1);
-					dp.szz = covData.getQuick(i, 2) + baseline.covData.getQuick(j, 2);
-					dp.sxy = covData.getQuick(i, 3) + baseline.covData.getQuick(j, 3);
-					dp.sxz = covData.getQuick(i, 4) + baseline.covData.getQuick(j, 4);
-					dp.syz = covData.getQuick(i, 5) + baseline.covData.getQuick(j, 5);
-					
-					dp.len = Math.sqrt(dp.x * dp.x + dp.y * dp.y + dp.z * dp.z);
-					data.add(dp);
-					
-					k = j + 1;
-					
-					break;
+		// if either the data or the baseline is null, then the resultant baseline plot should be null too
+		if (Double.isNaN(tData.getQuick(0, 0)) || Double.isNaN(baseline.tData.getQuick(0, 0))) {
+			DataPoint dp = new DataPoint();
+			dp.t	= Double.NaN;
+			dp.r	= Double.NaN;
+			dp.x	= Double.NaN;
+			dp.y	= Double.NaN;
+			dp.z	= Double.NaN;
+			dp.sxx	= Double.NaN;
+			dp.syy	= Double.NaN;
+			dp.szz	= Double.NaN;
+			dp.sxy	= Double.NaN;
+			dp.sxz	= Double.NaN;
+			dp.syz	= Double.NaN;
+			data.add(dp);
+			
+		// if there is some data in each of the data arrays, then apply the normal baseline comparison	
+		} else {
+		
+			for (int i = 0; i < baseline.observations(); i++)
+				if (tData.getQuick(0, 0) == baseline.tData.getQuick(i, 0))
+					k = i;
+	
+			for (int i = 0; i < observations(); i++) {
+				for (int j = k; j < baseline.observations(); j++) {
+					if (tData.getQuick(i, 0) == baseline.tData.getQuick(j, 0)) {
+						DataPoint dp = new DataPoint();
+						
+						dp.t = tData.getQuick(i, 0);
+						
+						dp.x = xyzData.getQuick(i, 0) - baseline.xyzData.getQuick(j, 0);
+						dp.y = xyzData.getQuick(i, 1) - baseline.xyzData.getQuick(j, 1);
+						dp.z = xyzData.getQuick(i, 2) - baseline.xyzData.getQuick(j, 2);
+	
+						dp.sxx = covData.getQuick(i, 0) + baseline.covData.getQuick(j, 0);
+						dp.syy = covData.getQuick(i, 1) + baseline.covData.getQuick(j, 1);
+						dp.szz = covData.getQuick(i, 2) + baseline.covData.getQuick(j, 2);
+						dp.sxy = covData.getQuick(i, 3) + baseline.covData.getQuick(j, 3);
+						dp.sxz = covData.getQuick(i, 4) + baseline.covData.getQuick(j, 4);
+						dp.syz = covData.getQuick(i, 5) + baseline.covData.getQuick(j, 5);
+						
+						dp.len = Math.sqrt(dp.x * dp.x + dp.y * dp.y + dp.z * dp.z);
+						data.add(dp);
+						
+						k = j + 1;
+						
+						break;
+					}
 				}
-
-//		if (data.size() > 0)
-//			setToList(data);
+			}
+		}
 		setToList(data);
 
 	}

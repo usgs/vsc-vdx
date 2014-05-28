@@ -204,8 +204,8 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
+		BinaryResult result = null;
 		int columnsReturned	= 0;
-		double value;
 		
 		try {
 			
@@ -303,15 +303,22 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			}
 			rs.close();
 			
-			if (pts.size() > 0) {
-				return new BinaryResult(new TensorstrainData(pts));
+			if (pts.size() == 0) {
+				dataRow = new double[columnsReturned];
+				for (int i = 0; i < columnsReturned; i++) {
+					dataRow[i] = Double.NaN;
+				}
+				pts.add(dataRow);
 			}
+			
+			result = new BinaryResult(new TensorstrainData(pts));
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getTensorstrainData()", e);
 			return null;
 		}
-		return null;
+		
+		return result;
 	}
 
 	/**

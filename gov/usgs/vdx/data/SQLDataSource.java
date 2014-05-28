@@ -1453,9 +1453,16 @@ abstract public class SQLDataSource implements DataSource {
 			}
 			rs.close();
 
-			if (pts.size() > 0) {
-				result = new GenericDataMatrix(pts);
+			// if no data rows were returned, instantiate a data matrix with a single row with all null values
+			if (pts.size() == 0) {
+				dataRow = new double[columnsReturned];
+				for (int i = 0; i < columnsReturned; i++) {
+					dataRow[i] = Double.NaN;
+				}
+				pts.add(dataRow);
 			}
+			
+			result = new GenericDataMatrix(pts);
 
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
