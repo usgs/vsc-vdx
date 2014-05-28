@@ -227,6 +227,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
+		BinaryResult result	= null;
 		int columnsReturned	= 0;
 		
 		try {
@@ -321,15 +322,20 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			rs.close();
 			
-			if (pts.size() > 0) {
-				return new BinaryResult(new TiltData(pts));
+			if (pts.size() == 0) {
+				dataRow = new double[columnsReturned];
+				for (int i = 0; i < columnsReturned; i++) {
+					dataRow[i] = Double.NaN;
+				}
+				pts.add(dataRow);
 			}
+			
+			result = new BinaryResult(new TiltData(pts));
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
-			return null;
 		}
-		return null;
+		return result;
 	}
 
 	/**

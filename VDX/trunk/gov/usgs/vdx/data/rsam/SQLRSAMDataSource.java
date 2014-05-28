@@ -245,13 +245,19 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			rs.close();
 			
-			if (pts.size() > 0) {
-				return new RSAMData(pts);
+			if (pts.size() == 0) {
+				dataRow		= new double[2];
+				dataRow[0]	= Double.NaN;
+				dataRow[1]	= Double.NaN;
+				pts.add(dataRow);
 			}
+			
+			result = new RSAMData(pts);
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLRSAMDataSource.getRSAMData()", e);
 		}
+		
 		return result;
 	}
 

@@ -430,6 +430,7 @@ public class HypocenterList implements BinaryDataSet
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
 		for (Hypocenter hc : hypocenters)
 			hist.fill(hc.j2ksec);
+		
 		return hist;
 	}
 	
