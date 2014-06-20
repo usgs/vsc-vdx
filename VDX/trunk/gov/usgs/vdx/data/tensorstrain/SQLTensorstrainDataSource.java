@@ -241,15 +241,21 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			sql += "WHERE  j2ksec >= ? ";
 			sql += "AND    j2ksec <= ? ";
 			
+			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c ON a.rid = c.rid ";
+			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
+			
 			// BEST POSSIBLE DATA QUERY
 			if (ranks && rid != 0) {
-				sql = sql + "AND   c.rid = ? ";
+				sql 	 += "AND   c.rid = ? ";
+				sqlCount += "AND c.rid = ? ";
 			}
 			
-			sql += "ORDER BY j2ksec ASC";
+			sql 	 += "ORDER BY j2ksec ASC";
+			sqlCount += "ORDER BY j2ksec ASC";
 			
 			if (ranks && rid == 0) {
-				sql = sql + ", c.rank DESC";
+				sql 	 += ", c.rank DESC";
+				sqlCount += ", c.rank DESC";
 			}
 			
 			if (ranks && rid != 0) {
@@ -262,6 +268,24 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
+				
+				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+				// exceed that number prior to running the full query. This can save a decent amount of time
+				// for large queries. Note that this only applies for non-downsampled queries. This is done for
+				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
+				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
+				// just doing the full query to begin with.
+				if (ds.equals(DownsamplingType.NONE)) {
+					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (maxrows + 1) + ") as T");
+					ps.setDouble(1, st);
+					ps.setDouble(2, et);
+					if (ranks && rid != 0) {
+						ps.setInt(3, rid);
+					}
+					rs = ps.executeQuery();
+					if (rs.next() && rs.getInt(1) > tempmaxrows)
+						return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+				}
 			}
 
 			ps	= database.getPreparedStatement(sql);
@@ -282,7 +306,9 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			}
 			rs = ps.executeQuery();
 		
-			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
+			// This might seem like it's duplicating the COUNT(*) code above, but it's actually still here
+			// to handle the case where a downsampled query is still too large.
+			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
 				return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			

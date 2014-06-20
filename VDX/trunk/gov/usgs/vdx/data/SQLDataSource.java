@@ -43,6 +43,7 @@ abstract public class SQLDataSource implements DataSource {
 	protected PreparedStatement ps;
 	protected ResultSet rs;
 	protected String sql;
+	protected String sqlCount;
 	private int maxrows = 0;
 	
 	/**
@@ -1364,40 +1365,46 @@ abstract public class SQLDataSource implements DataSource {
 			sql = "SELECT j2ksec";
 			
 			if (ranks) {
-				sql = sql + ", c.rid";
+				sql += ", c.rid";
 			}
 			
 			for (int i = 0; i < columns.size(); i++) {
 				column = columns.get(i);
 				if (translations) {
-					sql = sql + ",a." + column.name + " * b.c" + column.name + " + b.d" + column.name + " as " + column.name + " ";
+					sql += ",a." + column.name + " * b.c" + column.name + " + b.d" + column.name + " as " + column.name + " ";
 				} else {
-					sql = sql + ",a." + column.name + " ";
+					sql += ",a." + column.name + " ";
 				}
 			}
 
 			// FROM sql
-			sql	= sql + "FROM " + channel.getCode() + " a ";
+			sql	+= "FROM " + channel.getCode() + " a ";
 			if (translations) {
-				sql = sql + "INNER JOIN translations b on a.tid = b.tid ";
+				sql += "INNER JOIN translations b on a.tid = b.tid ";
 			}
 			if (ranks) {
-				sql	= sql + "INNER JOIN ranks        c on a.rid = c.rid ";
+				sql	+= "INNER JOIN ranks        c on a.rid = c.rid ";
 			}
 
 			// WHERE sql
-			sql = sql + "WHERE j2ksec >= ? ";
-			sql = sql + "AND   j2ksec <= ? ";
+			sql += "WHERE j2ksec >= ? ";
+			sql += "AND   j2ksec <= ? ";
+			
+			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c ON a.rid=c.rid ";
+			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
 			
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
-				sql = sql + "AND   c.rid  = ? ";
+				sql 	 += "AND   c.rid  = ? ";
+				sqlCount += "AND c.rid = ? ";
 			} 
 			
-			sql = sql + "ORDER BY a.j2ksec ASC";
+			sql 	 += "ORDER BY a.j2ksec ASC";
+			sqlCount += "ORDER BY a.j2ksec ASC";
 			
 			if (ranks && rid == 0) {
-				sql = sql + ", c.rank DESC";
+				sql 	 += ", c.rank DESC";
+				sqlCount += ", c.rank DESC";
 			}
 			
 			if (ranks && rid != 0) {
@@ -1410,8 +1417,26 @@ abstract public class SQLDataSource implements DataSource {
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
+				
+				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+				// exceed that number prior to running the full query. This can save a decent amount of time
+				// for large queries. Note that this only applies for non-downsampled queries. This is done for
+				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
+				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
+				// just doing the full query to begin with.
+				if (ds.equals(DownsamplingType.NONE)) {
+					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (tempmaxrows + 1) + ") as T");
+					ps.setDouble(1, st);
+					ps.setDouble(2, et);
+					if (ranks && rid != 0) {
+						ps.setInt(3, rid);
+					}
+					rs = ps.executeQuery();
+					if (rs.next() && rs.getInt(1) > tempmaxrows)
+						throw new UtilException("Max rows (" + maxrows + " rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+				}
 			}
-
+			
 			ps = database.getPreparedStatement(sql);
 			if(ds.equals(DownsamplingType.MEAN)){
 				ps.setDouble(1, st);
@@ -1430,8 +1455,9 @@ abstract public class SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 			
-			if (maxrows != 0 && getResultSetSize(rs)> tempmaxrows) { 
-				throw new UtilException("Max rows (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
+			// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
+			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
+				throw new UtilException("Max rows (" + maxrows + " rows) for source '" + dbName + "' exceeded. Please downsample further.");
 			}
 			
 			double tempJ2ksec = Double.MAX_VALUE;

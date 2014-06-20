@@ -291,6 +291,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				tempmaxrows = maxrows * defaultGetNumberOfRanks();
 			}
 			
+			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
+			
 			// build the sql
 			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
 			sql += "       a.ampmag, a.codamag, a.nphases, a.azgap, a.dmin, a.rms, ";
@@ -335,6 +337,38 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
+				
+				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+				// exceed that number prior to running the full query. This can save a decent amount of time
+				// for large queries.
+				ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
+				ps.setDouble(1, st);
+				ps.setDouble(2, et);
+				ps.setDouble(3, west);
+				ps.setDouble(4, east);
+				ps.setDouble(5, south);
+				ps.setDouble(6, north);
+				ps.setDouble(7, minDepth);
+				ps.setDouble(8, maxDepth);
+				ps.setDouble(9, minMag);
+				ps.setDouble(10, maxMag);
+				ps.setInt(11, minNPhases);
+				ps.setInt(12, maxNPhases);
+				ps.setDouble(13, minRMS);
+				ps.setDouble(14, maxRMS);
+				ps.setDouble(15, minHerr);
+				ps.setDouble(16, maxHerr);
+				ps.setDouble(17, minVerr);
+				ps.setDouble(18, maxVerr);
+				ps.setDouble(19, minStDst);
+				ps.setDouble(20, maxStDst);
+				ps.setDouble(21, maxGap);
+				if (ranks && rid != 0) {
+					ps.setInt(22, rid);
+				}
+				rs = ps.executeQuery();
+				if (rs.next() && rs.getInt(1) > tempmaxrows)
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 			}
 			
 			ps = database.getPreparedStatement(sql);
@@ -363,10 +397,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				ps.setInt(22, rid);
 			}
 			rs = ps.executeQuery();
-			
-			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows){ 
-				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
-			}
 			
 			double j2ksec, lat, lon, depth, mag;
 			double ampmag, codamag, dmin, rms, herr, verr;
