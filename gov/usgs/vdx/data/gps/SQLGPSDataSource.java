@@ -254,20 +254,30 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				tempmaxrows = maxrows * defaultGetNumberOfRanks();
 			}
 			
-			sql = "SELECT (j2ksec0 + j2ksec1) / 2, d.rid, x, y, z, sxx, syy, szz, sxy, sxz, syz " +
-				  "FROM   solutions a " +
-				  "INNER JOIN channels b ON a.cid = b.cid " +
-				  "INNER JOIN sources  c ON a.sid = c.sid " +
-				  "INNER JOIN ranks    d ON c.rid = d.rid " +
-				  "WHERE  b.cid    = ? " +
-				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
-				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
+			sql  = "SELECT (j2ksec0 + j2ksec1) / 2, d.rid, x, y, z, sxx, syy, szz, sxy, sxz, syz ";
+			sql	+= "FROM   solutions a " +
+				   "INNER JOIN channels b ON a.cid = b.cid " +
+				   "INNER JOIN sources  c ON a.sid = c.sid " +
+				   "INNER JOIN ranks    d ON c.rid = d.rid " +
+				   "WHERE  b.cid    = ? " +
+				   "AND    (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
+				   "AND    (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
+			
+			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 FROM solutions a " +
+					   "INNER JOIN channels b ON a.cid = b.cid " + 
+					   "INNER JOIN sources c ON a.sid = c.sid " + 
+					   "INNER JOIN ranks d ON c.rid = d.rid " +
+					   "WHERE b.cid = ? " +
+					   "AND (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
+					   "AND (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
 			
 			if (rid != 0) {
-				sql = sql + "AND   d.rid = ? ";
+				sql 	 += "AND   d.rid = ? ";
+				sqlCount += "AND d.rid = ? ";
 			}
 			
-			sql	= sql +	"ORDER BY 1 ASC, d.rank DESC";
+			sql		 += "ORDER BY 1 ASC, d.rank DESC";
+			sqlCount += "ORDER BY 1 ASC, d.rank DESC";
 			
 			if (rid != 0) {
 				try {
@@ -279,6 +289,25 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
+				
+				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+				// exceed that number prior to running the full query. This can save a decent amount of time
+				// for large queries. Note that this only applies for non-downsampled queries. This is done for
+				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
+				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
+				// just doing the full query to begin with.
+				if(ds.equals(DownsamplingType.NONE)) {
+					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (tempmaxrows + 1) + ") as T");
+					ps.setInt(1, cid);
+					ps.setDouble(2, st);
+					ps.setDouble(3, et);
+					if (rid != 0) {
+						ps.setInt(4, rid);
+					}
+					rs = ps.executeQuery();
+					if (rs.next() && rs.getInt(1) > tempmaxrows)
+						throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+				}
 			}
 
 			ps = database.getPreparedStatement(sql);
@@ -301,8 +330,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 			
-			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
-				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
+			// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
+			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
+				throw new UtilException("Max rows (" + maxrows + " rows) for source '" + vdxName + "' exceeded. Please downsample further.");
 			}
 			
 			double tempJ2ksec = Double.MAX_VALUE;
