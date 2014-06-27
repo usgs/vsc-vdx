@@ -236,6 +236,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			}
 			if (data != null)
 				return new BinaryResult(data);
+		} else if (action.equals("metadata")) {
+			return getMetaData( params, false );
 		}
 		return null;
 	}

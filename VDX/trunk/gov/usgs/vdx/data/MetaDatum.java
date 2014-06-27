@@ -61,6 +61,42 @@ public class MetaDatum
 		name = null;
 		value = null;
 	}
-
+	
+	/**
+	 * Constructor
+	 *   String rep of MetaDatum is a CSV with:
+	 *		- strings each enclosed in quotes
+	 *		- all MIN_VALUE characters will be translated to newlines
+	 *		- component order: cmid, cid, colid, rid, name, value, chName, colName, rkName
+	 * @param str CSV rep of a MetaDatum
+	 */
+	public MetaDatum( String str ) {
+		String[] qp  = str.replace(Character.MIN_VALUE ,'\n').split( "\"" );
+		this.name 	 = qp[1];
+		this.value 	 = qp[3];
+		this.chName  = qp[5];
+		this.colName = qp[7];
+		this.rkName  = qp[9];
+		qp 			 = qp[0].split(",");
+		this.cmid	 = Integer.parseInt(qp[0]);
+		this.cid	 = Integer.parseInt(qp[1]);
+		this.colid	 = Integer.parseInt(qp[2]);
+		this.rid	 = Integer.parseInt(qp[3]);
+	}
+	
+	/**
+	 * @return MetaDatum's xml representation
+	 */
+	public String toXML()
+	{
+		StringBuffer sb = new StringBuffer();
+		sb.append("<metadatum>\n");
+		sb.append("<![CDATA[" + cmid + "\"" + cid + "\"" + colid + "\"" + rid);
+		String[] names = {name, value, chName, colName, rkName};
+		for (String s : names)
+			sb.append("\"" + (s == null ? "" : s));
+		sb.append("]]>\n</metadatum>\n");
+		return sb.toString();
+	}
 }	
 	
