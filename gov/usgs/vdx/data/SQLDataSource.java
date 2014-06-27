@@ -1701,46 +1701,87 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param cm = "is the name of the columns table coulmns_menu?"
 	 * @return List<MetaDatum> the desired metadata (null if an error occurred)
 	 */
-	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
+	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm, String source ) {
 		try {
 			database.useDatabase(dbName);
-			sql = "SELECT MD.cmid, MD.cid, MD.colid, MD.rid, MD.name, MD.value, " +
-				"CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
-			String where = "WHERE MD.cid=CH.cid AND MD.colid=COL.colid AND MD.rid=RK.rid";
+			sql = "SELECT MD.*, CH.code, ";
+			if (source.contains("rsam")) {
+				// RSAM has no rank
+				sql += "COL.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN columns" + 
+					   (cm ? "_menu" : "") + " COL ON MD.colid=COL.colid WHERE ";
+			} else if (source.contains("hypocenters")) {
+				sql = "SELECT MD.*, RK.name FROM channelmetadata MD INNER JOIN ranks RK ON MD.rid=RK.rid WHERE ";
+			} else {
+				sql += "COL.name, RK.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN columns" + 
+					   (cm ? "_menu" : "") + " COL ON MD.colid=COL.colid INNER JOIN ranks RK ON MD.rid=RK.rid WHERE ";
+			}
+			
+			List<String> wheres = new ArrayList<String>();
 			
 			if ( md.chName != null )
-				where = where + " AND CH.code='" + md.chName + "'";
+				wheres.add("CH.code='" + md.chName + "'");
 			else if ( md.cid >= 0 )
-				where = where + " AND MD.cid=" + md.cid;
+				wheres.add("MD.cid=" + md.cid);
 			if ( md.colName != null )
-				where = where + " AND COL.name='" + md.colName + "'";
+				wheres.add("COL.name='" + md.colName + "'");
 			else if ( md.colid >= 0 )
-				where = where + " AND MD.colid=" + md.colid;
+				wheres.add("MD.colid=" + md.colid);
 			if ( md.rkName != null )
-				where = where + " AND RK.name='" + md.rkName + "'";
+				wheres.add("RK.name='" + md.rkName + "'");
 			else if ( md.rid >= 0 )
-				where = where + " AND MD.rid=" + md.rid;
+				wheres.add("MD.rid=" + md.rid);
 			if ( md.name != null )
-				where = where + " AND MD.name=" + md.name;
+				wheres.add("MD.name=" + md.name);
 			if ( md.value != null )
-				where = where + " AND MD.value=" + md.value;
-				
-			logger.info( "SQL: " + sql + where );
+				wheres.add("MD.value=" + md.value);
+			
+			StringBuffer where = new StringBuffer();
+			boolean first = true;
+			for (String s : wheres) {
+				if (first) {
+					where.append(s);
+					first = false;
+				} else {
+					where.append(" AND " + s);
+				}
+			}
+			
+			logger.info( "SQL: " + sql + where.toString() );
 			ps = database.getPreparedStatement( sql + where );
 			rs	= ps.executeQuery();
 			List<MetaDatum> result = new ArrayList<MetaDatum>();
 			while (rs.next()) {
-				md = new MetaDatum();
-				md.cmid    = rs.getInt(1);
-				md.cid     = rs.getInt(2);
-				md.colid   = rs.getInt(3);
-				md.rid     = rs.getInt(4);
-				md.name    = rs.getString(5);
-				md.value   = rs.getString(6);
-				md.chName  = rs.getString(7);
-				md.colName = rs.getString(8);
-				md.rkName  = rs.getString(9);
-				result.add( md );
+				if (source.contains("rsam")) {
+					md = new MetaDatum();
+					md.cmid    = rs.getInt(1);
+					md.cid     = rs.getInt(2);
+					md.colid   = rs.getInt(3);
+					md.name    = rs.getString(4);
+					md.value   = rs.getString(5);
+					md.chName  = rs.getString(6);
+					md.colName = rs.getString(7);
+					result.add( md );
+				} else if (source.contains("hypocenters")) {
+					md = new MetaDatum();
+					md.cmid    = rs.getInt(1);
+					md.rid     = rs.getInt(2);
+					md.name    = rs.getString(3);
+					md.value   = rs.getString(4);
+					md.rkName  = rs.getString(5);
+					result.add( md );
+				} else {
+					md = new MetaDatum();
+					md.cmid    = rs.getInt(1);
+					md.cid     = rs.getInt(2);
+					md.colid   = rs.getInt(3);
+					md.rid     = rs.getInt(4);
+					md.name    = rs.getString(5);
+					md.value   = rs.getString(6);
+					md.chName  = rs.getString(7);
+					md.colName = rs.getString(8);
+					md.rkName  = rs.getString(9);
+					result.add( md );
+				}
 			}
 			rs.close();
 			return result;
@@ -1759,39 +1800,48 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return RequestResult the desired meta data (null if an error occurred)
 	 */
 	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
-		String arg = params.get("byID");
+		String source = params.get("source");
 		List<MetaDatum> data = null;
 		MetaDatum md_s;
-		if ( arg != null && arg.equals("true") ) {
-			int cid			= Integer.parseInt(params.get("ch"));
-			arg = params.get("col");
-			int colid;
-			if ( arg==null || arg=="" )
-				colid = -1;
-			else
-				colid = Integer.parseInt(arg);
-			arg = params.get("rk");
-			int rid;
-			if ( arg==null || arg=="" )
-				rid = -1;
-			else
-				rid = Integer.parseInt(arg);
-			md_s = new MetaDatum( cid, colid, rid );
-		} else {
-			String chName   = params.get("ch");
-			String colName  = params.get("col");
-			String rkName   = params.get("rk");
-			md_s = new MetaDatum( chName, colName, rkName );
+		List<String> result = new ArrayList<String>();
+		
+		String[] cols = params.get("col").split(",");
+		for (String col : cols) {
+			String arg = params.get("byID");
+			if ( arg != null && arg.equals("true") ) {
+				arg = params.get("ch");
+				int cid;
+				if (arg == null || arg.equals("") || source.contains("hypocenters"))
+					cid = -1;
+				else
+					cid = Integer.parseInt(arg);
+				arg = params.get("col");
+				int colid;
+				if ( arg==null || arg.equals(""))
+					colid = -1;
+				else
+					colid = Integer.parseInt(col);
+				arg = params.get("rk");
+				int rid;
+				if ( arg==null || arg.equals("") || source.contains("rsam") )
+					rid = -1;
+				else
+					rid = Integer.parseInt(arg);
+				md_s = new MetaDatum( cid, colid, rid );
+			} else {
+				String chName   = params.get("ch");
+				String colName  = params.get("col");
+				String rkName   = params.get("rk");
+				md_s = new MetaDatum( chName, colName, rkName );
+			}
+			data = getMatchingMetaData( md_s, cm, source );
+			if (data != null) {
+				for ( MetaDatum md: data )
+					result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
+						md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
+			}
 		}
-		data = getMatchingMetaData( md_s, cm );
-		if (data != null) {
-			List<String> result = new ArrayList<String>();
-			for ( MetaDatum md: data )
-				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
-					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
-			return new TextResult(result);
-		}
-		return null;
+		return new TextResult(result);
 	}
 
 	/**
