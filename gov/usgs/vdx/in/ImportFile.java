@@ -124,7 +124,8 @@ public class ImportFile extends Import implements Importer {
 				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
 				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
+				channelActive   = Util.stringToInt(channelParams.getString("active"), 1);
+				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelActive);
 				channelMap.put(channelCode, channel);
 				
 				// default the fields for this channel if they are not specified specifically
@@ -565,7 +566,7 @@ public class ImportFile extends Import implements Importer {
 					// channel for this data source.  create it if it doesn't exist
 					if (sqlDataSource.getChannelsFlag()) {
 						if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, channelCode, Double.NaN, Double.NaN, Double.NaN), 1,
+							sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, channelCode, Double.NaN, Double.NaN, Double.NaN, 1), 1,
 									sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 									sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
 						}

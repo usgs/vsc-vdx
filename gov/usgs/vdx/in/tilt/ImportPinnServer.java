@@ -82,7 +82,7 @@ public class ImportPinnServer extends Client
 		
 		// this is commented out for now until i figure out how i want to handle channel existence
 		// if (!ips.dataSource.defaultChannelExists("etilt", ips.channel)) {
-			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 0, 0))
+			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 1, 0, 0))
 				ips.logger.info("created channel.");
 		// }
 		return ips;

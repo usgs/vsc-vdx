@@ -127,10 +127,11 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
+	 * @param active		active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active, int tid) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, active, tid, channels, translations, ranks, columns);
 	}
 	
 	

@@ -133,12 +133,13 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
+	 * @param active		active
 	 * @param tid           translation id
 	 * @param natural_azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double natural_azimuth) {
-		Channel channel = new Channel(0, channelCode, channelName, lon, lat, natural_azimuth, height);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active, int tid, double natural_azimuth) {
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, height, active, natural_azimuth);
 		return defaultCreateTiltChannel(channel, tid, natural_azimuth, channels, translations, ranks, columns);
 	}
 

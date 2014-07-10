@@ -68,7 +68,7 @@ public class ImportSum
 		ss 		= rr.nextLine().split("\t");
 		height	= Double.parseDouble(ss[1].trim());
 		
-		dataSource.createChannel(bm, bm, lon, lat, height);
+		dataSource.createChannel(bm, bm, lon, lat, height, 1);
 		System.out.printf("%s %f %f %f\n", bm, lon, lat, height);
 		
 		rr.close();

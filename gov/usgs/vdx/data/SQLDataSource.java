@@ -243,7 +243,7 @@ abstract public class SQLDataSource implements DataSource {
 				// these are the basic channel options, we can add on to this below
 				sql = "CREATE TABLE channels (cid INT PRIMARY KEY AUTO_INCREMENT, "
 						+ "code VARCHAR(16) UNIQUE, name VARCHAR(255), "
-						+ "lon DOUBLE, lat DOUBLE, height DOUBLE";
+						+ "lon DOUBLE, lat DOUBLE, height DOUBLE, active TINYINT(1) NOT NULL DEFAULT 1";
 
 				// translations. logically you must have a channels table to have translations
 				if (translations) {
@@ -334,7 +334,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return true if success
 	 */
 	public boolean defaultCreateChannel(Channel channel, int tid, boolean channels, boolean translations, boolean ranks, boolean columns) {
-		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(), tid,
+		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(), channel.getActive(), tid,
 				channels, translations, ranks, columns);
 	}
 
@@ -346,6 +346,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
+	 * @param active		active status
 	 * @param tid			translation id
 	 * @param channels		if we need to add record in 'channels' table
 	 * @param translations	if we need to add tid field in channel table
@@ -354,7 +355,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return true if success
 	 */
 	public boolean defaultCreateChannel(String channelCode, String channelName, 
-			double lon, double lat, double height, int tid,
+			double lon, double lat, double height, int active, int tid,
 			boolean channels, boolean translations, boolean ranks, boolean columns) {
 
 		try {
@@ -374,8 +375,8 @@ abstract public class SQLDataSource implements DataSource {
 
 			// channels flag states we need to add a record to the channels table
 			if (channels) {
-				String columnList	= "code, name, lon, lat, height";
-				String variableList	= "?,?,?,?,?";
+				String columnList	= "code, name, lon, lat, height, active";
+				String variableList	= "?,?,?,?,?,?";
 				
 				if (translations) {
 					columnList		= columnList + ",tid";
@@ -389,7 +390,8 @@ abstract public class SQLDataSource implements DataSource {
 				if (Double.isNaN(lon))    { ps.setNull(3, java.sql.Types.DOUBLE); } else { ps.setDouble(3, lon);    }
 				if (Double.isNaN(lat))    { ps.setNull(4, java.sql.Types.DOUBLE); } else { ps.setDouble(4, lat);    }
 				if (Double.isNaN(height)) { ps.setNull(5, java.sql.Types.DOUBLE); } else { ps.setDouble(5, height); }
-				if (translations)         { ps.setInt(6, tid); }
+				ps.setInt(6, active);
+				if (translations)         { ps.setInt(7, tid); }
 				ps.execute();
 			}
 
@@ -747,13 +749,14 @@ abstract public class SQLDataSource implements DataSource {
 	public Channel defaultGetChannel(int cid, boolean channelTypes) {
 		Channel ch = null;
 		String code, name;
+		int active;
 		double lon, lat, height;
 		int ctid = 0;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT code, name, lon, lat, height ";
+			sql	= "SELECT code, name, lon, lat, height, active ";
 			if (channelTypes) {
 				sql = sql + ",ctid ";
 			}
@@ -772,11 +775,12 @@ abstract public class SQLDataSource implements DataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(5);
 				if (rs.wasNull()) { height	= Double.NaN; }
+				active  = rs.getInt(6);
 				if (channelTypes) {
-					ctid	= rs.getInt(6);
+					ctid	= rs.getInt(7);
 				}
 				
-				ch	= new Channel(cid, code, name, lon, lat, height, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, active, ctid);
 			}
 			rs.close();
 
@@ -824,14 +828,14 @@ abstract public class SQLDataSource implements DataSource {
 	public List<Channel> defaultGetChannelsList(boolean channelTypes) {
 		List<Channel> result = new ArrayList<Channel>();
 		Channel ch;
-		int cid, ctid;
+		int active, cid, ctid;
 		String code, name;
 		double lon, lat, height, azimuth;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT cid, code, name, lon, lat, height ";
+			sql	= "SELECT cid, code, name, lon, lat, height, active ";
 			if(dbName.toLowerCase().contains("tensorstrain")){
 				sql = sql + ", natural_azimuth ";
 			} else if(dbName.toLowerCase().contains("tilt")){
@@ -857,14 +861,15 @@ abstract public class SQLDataSource implements DataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(6);
 				if (rs.wasNull()) { height	= Double.NaN; }
-				azimuth	= rs.getDouble(7);
+				active  = rs.getInt(7);
+				azimuth	= rs.getDouble(8);
 				if (rs.wasNull()) { azimuth	= Double.NaN; }
 				if (channelTypes) {
-					ctid	= rs.getInt(8);
+					ctid	= rs.getInt(9);
 				} else {
 					ctid	= 0;
 				}				
-				ch	= new Channel(cid, code, name, lon, lat, height, azimuth, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, active, azimuth, ctid);
 				result.add(ch);
 			}
 			rs.close();
@@ -1507,7 +1512,6 @@ abstract public class SQLDataSource implements DataSource {
      * value returned is <code>Double.NaN</code>
 	 * @throws SQLException
 	 */
-	
 	public double getDoubleNullCheck(ResultSet rs, int columnIndex) throws SQLException{
 		double value	= rs.getDouble(columnIndex);
 		if (rs.wasNull()) { value = Double.NaN; }
@@ -1524,7 +1528,6 @@ abstract public class SQLDataSource implements DataSource {
      * value returned is <code>Integer.MIN_VALUE</code>
 	 * @throws SQLException
 	 */
-	
 	public int getIntNullCheck(ResultSet rs, int columnIndex) throws SQLException{
 		int value	= rs.getInt(columnIndex);
 		if (rs.wasNull()) { value = Integer.MIN_VALUE; }
