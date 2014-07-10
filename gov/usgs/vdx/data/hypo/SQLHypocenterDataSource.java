@@ -409,8 +409,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			// loop through each result and add to the list
 			while (rs.next()) {
 				
-				System.out.println(rs.getDouble(1) + " " + rs.getDouble(2) + " " + rs.getString(18));
-				
 				// if this is a new eid, then save this data, as it contains the highest rank
 				if (!tempEid.equals(rs.getString(18))) {
 					System.out.println("match");
