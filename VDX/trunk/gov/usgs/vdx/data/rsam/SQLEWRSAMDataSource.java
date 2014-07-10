@@ -144,16 +144,17 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param lon
 	 * @param lat
 	 * @param height
+	 * @param active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active) {
 		
 		// create an entry in the channels table but don't build the table
-		defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
+		defaultCreateChannel(channelCode, channelName, lon, lat, height, active, 0, channels, translations, ranks, columns);
 		
 		// create a values and events table, and don't create an entry in the channels table
-		defaultCreateChannel(channelCode + "_values", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
-		defaultCreateChannel(channelCode + "_events", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_values", null, Double.NaN, Double.NaN, Double.NaN, 0, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_events", null, Double.NaN, Double.NaN, Double.NaN, 0, 0, false, translations, ranks, columns);
 		
 		return true;
 	}

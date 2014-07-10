@@ -150,10 +150,11 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @param lon
 	 * @param lat
 	 * @param height
+	 * @param active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, active, 0, channels, translations, ranks, columns);
 	}
 	
 	/**

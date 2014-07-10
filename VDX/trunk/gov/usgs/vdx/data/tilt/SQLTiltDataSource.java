@@ -157,11 +157,12 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
+	 * @param active		active
 	 * @param azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
-		Channel channel = new Channel(0, channelCode, channelName, lon, lat, azimuth, height);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active, int tid, double azimuth) {
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, height, active, azimuth);
 		return defaultCreateTiltChannel(channel, tid, azimuth, channels, translations, ranks, columns);
 	}
 
