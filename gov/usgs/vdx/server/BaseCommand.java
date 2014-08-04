@@ -13,7 +13,6 @@ import java.util.logging.Level;
  * Base abstract class to represent command performed by server.
  * All concrete command should derived from this class.
  * </p>
- * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
  */
 abstract public class BaseCommand implements Command
@@ -59,5 +58,13 @@ abstract public class BaseCommand implements Command
 			return;
 		String paramString = cmd.substring(ci + 1);
 		inParams = Util.stringToMap(paramString);
+	}
+	
+	/**
+	 * all VDX commands are a single line
+	 * @return true if commands span more than a one line
+	 */
+	public boolean isMultiLine() {
+	    return false;
 	}
 }
