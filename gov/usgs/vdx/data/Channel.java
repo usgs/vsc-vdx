@@ -16,7 +16,6 @@ public class Channel {
 	private double lon;
 	private double lat;
 	private double height;
-	private int active;
 	private double azimuth;
 	private int ctid;
 	
@@ -28,18 +27,16 @@ public class Channel {
 	 * @param lon		longitude
 	 * @param lat		latitude
 	 * @param height	height
-	 * @param active	channel active/inactive status
 	 * @param azimuth	azimuth
 	 * @param ctid		channel type id
 	 */
-	public Channel(int cid, String code, String name, double lon, double lat, double height, int active, double azimuth, int ctid) {
+	public Channel(int cid, String code, String name, double lon, double lat, double height, double azimuth, int ctid) {
 		this.cid	= cid;
 		this.code	= code;
 		this.name	= name;
 		this.lon	= lon;
 		this.lat	= lat;
 		this.height	= height;
-		this.active = active;
 		this.azimuth= azimuth;
 		this.ctid	= ctid;
 	}
@@ -52,11 +49,9 @@ public class Channel {
 	 * @param lon		longitude
 	 * @param lat		latitude
 	 * @param height	height
-	 * @param active	active
-	 * @param azimuth	azimuth
 	 */
-	public Channel(int cid, String code, String name, double lon, double lat, double height, int active, double azimuth) {
-		this(cid, code, name, lon, lat, height, active, azimuth, 0);
+	public Channel(int cid, String code, String name, double lon, double lat, double height, double azimuth) {
+		this(cid, code, name, lon, lat, height, azimuth, 0);
 	}
 	
 	/**
@@ -67,10 +62,9 @@ public class Channel {
 	 * @param lon		longitude
 	 * @param lat		latitude
 	 * @param height	height
-	 * @param active	active
 	 */
-	public Channel(int cid, String code, String name, double lon, double lat, double height, int active) {
-		this(cid, code, name, lon, lat, height, active, 0, 0);
+	public Channel(int cid, String code, String name, double lon, double lat, double height) {
+		this(cid, code, name, lon, lat, height, 0, 0);
 	}
 	
 	/**
@@ -113,19 +107,13 @@ public class Channel {
 		}
 		
 		if (parts.length > 6) {
-			active  = Integer.parseInt(parts[6]);
-		} else {
-			active  = 1;
-		}
-		
-		if (parts.length > 7) {
-			azimuth	= Double.parseDouble(parts[7]);
+			azimuth	= Double.parseDouble(parts[6]);
 		} else {
 			azimuth	= Double.NaN;
 		}
 		
-		if (parts.length > 8) {
-			ctid	= Integer.parseInt(parts[8]);
+		if (parts.length > 7) {
+			ctid	= Integer.parseInt(parts[7]);
 		} else {
 			ctid	= 0;
 		}
@@ -196,14 +184,6 @@ public class Channel {
 	}
 	
 	/**
-	 * Getter for channel active status
-	 * @return channel active status
-	 */
-	public int getActive() {
-		return active;
-	}
-	
-	/**
 	 * Getter for azimuth
 	 * @return azimuth
 	 */
@@ -243,6 +223,6 @@ public class Channel {
 		if (Double.isNaN(getLat()))    { lat    = "NaN"; } else { lat    = String.valueOf(getLat()); }
 		if (Double.isNaN(getHeight())) { height = "NaN"; } else { height = String.valueOf(getHeight()); }
 		if (Double.isNaN(getAzimuth())){ azimuth= "NaN"; } else { azimuth= String.valueOf(getAzimuth()); }
-		return String.format("%d:%s:%s:%s:%s:%s:%d:%s:%d", getCID(), getCode(), getName(), lon, lat, height, getActive(), azimuth, getCtid());
+		return String.format("%d:%s:%s:%s:%s:%s:%s:%d", getCID(), getCode(), getName(), lon, lat, height, azimuth, getCtid());
 	}
 }

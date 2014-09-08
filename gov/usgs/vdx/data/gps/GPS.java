@@ -13,6 +13,7 @@ import cern.colt.matrix.linalg.*;
 public class GPS
 {
     private static final DoubleFactory2D DENSE = DoubleFactory2D.dense;
+    private static final DoubleFactory2D SPARSE = DoubleFactory2D.sparse;
 	
 	/** The constructor is private because the class is composed entirely
 	 * of static methods and not meant to be instantiated.
@@ -23,7 +24,7 @@ public class GPS
 	 * array composed of t, x, y, z, sx, sy, sz.  The time matrix returned
 	 * is simply a Nx1 matrix of times.  The position matrix is a (3*N)x1 
 	 * composed of x, y, z triples.  The covariance matrix is a (3*N)x(3*N) 
-	 * spare array with the main diagonal populated.
+	 * spare array with the main diagnol populated.
 	 * @param data the input data
 	 * @return the time, position, and covariance matrices
 	 */
@@ -47,15 +48,12 @@ public class GPS
         DoubleMatrix2D cov = null;
         if (data[0].length > 4)
         {
-            cov = DENSE.make(data.length, 6);
+            cov = SPARSE.make(3 * data.length, 3 * data.length);
             for (int i = 0; i < data.length; i++)
             {
-                cov.setQuick(i, 0, data[i][4] * data[i][4]);
-                cov.setQuick(i, 1, 0);
-                cov.setQuick(i, 2, 0);
-                cov.setQuick(i, 3, data[i][5] * data[i][5]);
-                cov.setQuick(i, 4, 0);
-                cov.setQuick(i, 5, data[i][6] * data[i][6]);
+                cov.setQuick(i * 3, i * 3, data[i][4] * data[i][4]);
+                cov.setQuick(i * 3 + 1, i * 3 + 1, data[i][5] * data[i][5]);
+                cov.setQuick(i * 3 + 2, i * 3 + 2, data[i][6] * data[i][6]);
             }
         }
         
@@ -144,5 +142,63 @@ public class GPS
             {  cosLat * cosLon,  cosLat * sinLon, sinLat }
         });
         return t;
+    }
+ 
+	/** Creates a sparse transformation matrix (see createENUTransform) that 
+	 * can be multiplied by a position matrix of length 3*n.
+	 * @param lon origin longitude
+	 * @param lat origin latitude
+	 * @param n the number of coordinates
+	 * @return the transformation matrix
+	 */
+	public static DoubleMatrix2D createFullENUTransform(double lon, double lat, int n)
+    {
+        DoubleMatrix2D t = createENUTransform(lon, lat);
+        DoubleMatrix2D[][] parts = new DoubleMatrix2D[n][n];
+        for (int i = 0; i < n; i++)
+            parts[i][i] = t;
+        DoubleMatrix2D fullT = DoubleFactory2D.sparse.compose(parts);
+        return fullT;
+    }
+    
+	/** Rearranges columnar 3*Nx1 matrix to an Nx3 row matrix.
+	 * @param rm source data
+	 * @return row oriented data
+	 */
+    public static DoubleMatrix2D column3NToRows(DoubleMatrix2D rm)
+    {
+        DoubleMatrix2D r = DENSE.make(rm.rows() / 3, 3);
+        for (int i = 0; i < rm.rows() / 3; i++)
+        {
+            r.setQuick(i, 0, rm.getQuick(i * 3, 0));
+            r.setQuick(i, 1, rm.getQuick(i * 3 + 1, 0));
+            r.setQuick(i, 2, rm.getQuick(i * 3 + 2, 0));
+        }
+        return r;
+    }
+    
+	/** Solves weighted least squares.
+	 * @param g model parameters
+	 * @param d data
+	 * @param sd sigmas
+	 * @return least squares solution
+	 */
+    public static DoubleMatrix2D solveWeightedLeastSquares(DoubleMatrix2D g, DoubleMatrix2D d, DoubleMatrix2D sd)
+    {
+        DoubleMatrix2D sdi = Algebra.DEFAULT.inverse(sd);
+        DoubleMatrix2D m1 = Algebra.DEFAULT.inverse(Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(g.viewDice(), sdi), g));
+        m1 = Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(m1, g.viewDice()), sdi), d);
+        return m1;
+    }
+    
+	/** Gets error parameters.
+	 * @param g model parameters
+	 * @param sd sigmas
+	 * @return residual
+	 */
+    public static DoubleMatrix2D getErrorParameters(DoubleMatrix2D g, DoubleMatrix2D sd)
+    {
+		DoubleMatrix2D sdi = Algebra.DEFAULT.inverse(sd);
+		return Algebra.DEFAULT.inverse(Algebra.DEFAULT.mult(Algebra.DEFAULT.mult(g.viewDice(), sdi), g));
     }
 }

@@ -72,7 +72,6 @@ public class Import {
 	public Channel channel;	
 	public String channelCode, channelName;
 	public double channelLon, channelLat, channelHeight;
-	public int channelActive;
 	public Map<String, Channel> channelMap;
 	public List<String> channelList;
 	public String channels;

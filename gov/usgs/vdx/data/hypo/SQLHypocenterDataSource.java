@@ -223,21 +223,15 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double minVerr		= Double.parseDouble(params.get("minVerr"));
 			double maxVerr		= Double.parseDouble(params.get("maxVerr"));
 			String rmk			= params.get("rmk");
-			double minStDst		= Double.parseDouble(params.get("minStDst"));
-			double maxStDst		= Double.parseDouble(params.get("maxStDst"));
-			double maxGap		= Double.parseDouble(params.get("maxGap"));
 			HypocenterList data = null;
 			try{
 				data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
-					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, minStDst,
-					maxStDst, maxGap, getMaxRows());
+					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, getMaxRows());
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
 			if (data != null)
 				return new BinaryResult(data);
-		} else if (action.equals("metadata")) {
-			return getMetaData( params, false );
 		}
 		return null;
 	}
@@ -265,9 +259,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minVerr		minimum vertical error
 	 * @param maxVerr		maximum vertical error
 	 * @param rmk			remarks filter
-	 * @param minStDst		min distance from closest station
-	 * @param maxStDst		max distance from closest station
-	 * @param maxGap		max gap filter
 	 * @param maxrows       maximum nbr of rows returned
 	 * @return list of hypocenter data
 	 * @throws UtilException
@@ -275,8 +266,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	public HypocenterList getHypocenterData(int rid, double st, double et, double west, double east, 
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,
 			Integer minNPhases, Integer maxNPhases, double minRMS, double maxRMS, 
-			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, double minStDst, 
-			double maxStDst, double maxGap, int maxrows) throws UtilException {
+			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, int maxrows) throws UtilException {
 
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
@@ -292,8 +282,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			} else {
 				tempmaxrows = maxrows * defaultGetNumberOfRanks();
 			}
-			
-			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
 			
 			// build the sql
 			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
@@ -317,8 +305,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
 			sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
 			sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
-			sql += "AND    a.dmin    >= ? AND a.dmin	<= ? ";
-			sql += "AND    a.azgap   <= ? ";
 			sql += "AND    a.prefmag IS NOT NULL ";
 			
 			// remarks filtering options
@@ -339,38 +325,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
-				
-				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-				// exceed that number prior to running the full query. This can save a decent amount of time
-				// for large queries.
-				ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
-				ps.setDouble(1, st);
-				ps.setDouble(2, et);
-				ps.setDouble(3, west);
-				ps.setDouble(4, east);
-				ps.setDouble(5, south);
-				ps.setDouble(6, north);
-				ps.setDouble(7, minDepth);
-				ps.setDouble(8, maxDepth);
-				ps.setDouble(9, minMag);
-				ps.setDouble(10, maxMag);
-				ps.setInt(11, minNPhases);
-				ps.setInt(12, maxNPhases);
-				ps.setDouble(13, minRMS);
-				ps.setDouble(14, maxRMS);
-				ps.setDouble(15, minHerr);
-				ps.setDouble(16, maxHerr);
-				ps.setDouble(17, minVerr);
-				ps.setDouble(18, maxVerr);
-				ps.setDouble(19, minStDst);
-				ps.setDouble(20, maxStDst);
-				ps.setDouble(21, maxGap);
-				if (ranks && rid != 0) {
-					ps.setInt(22, rid);
-				}
-				rs = ps.executeQuery();
-				if (rs.next() && rs.getInt(1) > tempmaxrows)
-					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 			}
 			
 			ps = database.getPreparedStatement(sql);
@@ -392,13 +346,14 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			ps.setDouble(16, maxHerr);
 			ps.setDouble(17, minVerr);
 			ps.setDouble(18, maxVerr);
-			ps.setDouble(19, minStDst);
-			ps.setDouble(20, maxStDst);
-			ps.setDouble(21, maxGap);
 			if (ranks && rid != 0) {
-				ps.setInt(22, rid);
+				ps.setInt(19, rid);
 			}
 			rs = ps.executeQuery();
+			
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows){ 
+				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+			}
 			
 			double j2ksec, lat, lon, depth, mag;
 			double ampmag, codamag, dmin, rms, herr, verr;
@@ -408,6 +363,8 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			
 			// loop through each result and add to the list
 			while (rs.next()) {
+				
+				System.out.println(rs.getDouble(1) + " " + rs.getDouble(2) + " " + rs.getString(18));
 				
 				// if this is a new eid, then save this data, as it contains the highest rank
 				if (!tempEid.equals(rs.getString(18))) {

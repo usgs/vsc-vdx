@@ -1,8 +1,8 @@
 package gov.usgs.vdx.server;
 
 import gov.usgs.net.NetTools;
-import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;

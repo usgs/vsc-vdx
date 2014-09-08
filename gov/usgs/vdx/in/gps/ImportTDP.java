@@ -243,13 +243,6 @@ public class ImportTDP implements Importer {
 			while (rr.nextLine() != null) {
 				numberOfLines++;
 			}
-			rr.close();
-			
-			// if the file is empty then exit
-			if (numberOfLines == 0) {
-				logger.log(Level.SEVERE, "skipping: " + filename + "(resource has 0 lines)");
-				return;
-			}
 
 			// print out a confirmation message that we are getting going
 			logger.log(Level.INFO, "filename:" + filename);
@@ -328,7 +321,7 @@ public class ImportTDP implements Importer {
 				// if the channel isn't in the channel list from the db then it needs to be created
 				if (channel == null) {
 					llh	= GPS.xyz2LLH(spt.dp.x, spt.dp.y, spt.dp.z);
-					sqlDataSource.createChannel(spt.channel, spt.channel, llh[0], llh[1], llh[2], 1);
+					sqlDataSource.createChannel(spt.channel, spt.channel, llh[0], llh[1], llh[2]);
 					channel	= sqlDataSource.getChannel(spt.channel);
 					channelMap.put(spt.channel, channel);
 				}

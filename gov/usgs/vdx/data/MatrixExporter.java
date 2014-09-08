@@ -1,9 +1,9 @@
 package gov.usgs.vdx.data;
 
-import gov.usgs.plot.render.MatrixRenderer;
+import gov.usgs.plot.MatrixRenderer;
 import gov.usgs.vdx.data.Exportable;
-import cern.colt.matrix.DoubleMatrix2D;
 
+import cern.colt.matrix.DoubleMatrix2D;
 import java.util.Map;
 
 

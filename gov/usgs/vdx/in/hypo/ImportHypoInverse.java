@@ -391,8 +391,6 @@ public class ImportHypoInverse implements Importer {
 				// move to the next line in the file
 				line	= rr.nextLine();
 			}
-			
-			rr.close();
 				
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "ImportHypoInverse.process(" + filename + ") failed.", e);

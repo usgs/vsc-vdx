@@ -1,10 +1,10 @@
 package gov.usgs.vdx.data.generic.fixed;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -127,11 +127,10 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
-	 * @param active		active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active, int tid) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, active, tid, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, tid, channels, translations, ranks, columns);
 	}
 	
 	

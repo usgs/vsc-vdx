@@ -1,8 +1,8 @@
 package gov.usgs.vdx.data.gps;
 
-import gov.usgs.math.DownsamplingType;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
@@ -150,11 +150,10 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * @param lon
 	 * @param lat
 	 * @param height
-	 * @param active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active) {
-		return defaultCreateChannel(channelCode, channelName, lon, lat, height, active, 0, channels, translations, ranks, columns);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
+		return defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
 	}
 	
 	/**
@@ -255,30 +254,20 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				tempmaxrows = maxrows * defaultGetNumberOfRanks();
 			}
 			
-			sql  = "SELECT (j2ksec0 + j2ksec1) / 2, d.rid, x, y, z, sxx, syy, szz, sxy, sxz, syz ";
-			sql	+= "FROM   solutions a " +
-				   "INNER JOIN channels b ON a.cid = b.cid " +
-				   "INNER JOIN sources  c ON a.sid = c.sid " +
-				   "INNER JOIN ranks    d ON c.rid = d.rid " +
-				   "WHERE  b.cid    = ? " +
-				   "AND    (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
-				   "AND    (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
-			
-			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 FROM solutions a " +
-					   "INNER JOIN channels b ON a.cid = b.cid " + 
-					   "INNER JOIN sources c ON a.sid = c.sid " + 
-					   "INNER JOIN ranks d ON c.rid = d.rid " +
-					   "WHERE b.cid = ? " +
-					   "AND (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
-					   "AND (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
+			sql = "SELECT (j2ksec0 + j2ksec1) / 2, d.rid, x, y, z, sxx, syy, szz, sxy, sxz, syz " +
+				  "FROM   solutions a " +
+				  "INNER JOIN channels b ON a.cid = b.cid " +
+				  "INNER JOIN sources  c ON a.sid = c.sid " +
+				  "INNER JOIN ranks    d ON c.rid = d.rid " +
+				  "WHERE  b.cid    = ? " +
+				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 >= ? " +
+				  "AND    (c.j2ksec0 + c.j2ksec1) / 2 <= ? ";
 			
 			if (rid != 0) {
-				sql 	 += "AND   d.rid = ? ";
-				sqlCount += "AND d.rid = ? ";
+				sql = sql + "AND   d.rid = ? ";
 			}
 			
-			sql		 += "ORDER BY 1 ASC, d.rank DESC";
-			sqlCount += "ORDER BY 1 ASC, d.rank DESC";
+			sql	= sql +	"ORDER BY 1 ASC, d.rank DESC";
 			
 			if (rid != 0) {
 				try {
@@ -290,25 +279,6 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
-				
-				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-				// exceed that number prior to running the full query. This can save a decent amount of time
-				// for large queries. Note that this only applies for non-downsampled queries. This is done for
-				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
-				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
-				// just doing the full query to begin with.
-				if(ds.equals(DownsamplingType.NONE)) {
-					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (tempmaxrows + 1) + ") as T");
-					ps.setInt(1, cid);
-					ps.setDouble(2, st);
-					ps.setDouble(3, et);
-					if (rid != 0) {
-						ps.setInt(4, rid);
-					}
-					rs = ps.executeQuery();
-					if (rs.next() && rs.getInt(1) > tempmaxrows)
-						throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
-				}
 			}
 
 			ps = database.getPreparedStatement(sql);
@@ -331,9 +301,8 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 			
-			// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
-			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
-				throw new UtilException("Max rows (" + maxrows + " rows) for source '" + vdxName + "' exceeded. Please downsample further.");
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
+				throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			
 			double tempJ2ksec = Double.MAX_VALUE;
@@ -361,23 +330,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			rs.close();
 			
-			if (dataPoints.size() == 0) {
-				dp		= new DataPoint();
-				dp.t	= Double.NaN;
-				dp.r	= Double.NaN;
-				dp.x	= Double.NaN;
-				dp.y	= Double.NaN;
-				dp.z	= Double.NaN;
-				dp.sxx	= Double.NaN;
-				dp.syy	= Double.NaN;
-				dp.szz	= Double.NaN;
-				dp.sxy	= Double.NaN;
-				dp.sxz	= Double.NaN;
-				dp.syz	= Double.NaN;
-				dataPoints.add(dp);
+			if (dataPoints.size() > 0) {
+				return new GPSData(dataPoints);
 			}
-			
-			result = new GPSData(dataPoints);
 			
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLGPSDataSource.getGPSData(" + cid + "," + rid + "," + st + "," + et + ") failed.", e);
@@ -416,10 +371,9 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			}
 			
 			// lookup this filename/rank combination.  if it exists then delete it from the database
-			ps = database.getPreparedStatement("SELECT sid FROM sources WHERE j2ksec0 = ? AND j2ksec1 = ? AND rid = ?");
-			ps.setDouble(1, t0);
-			ps.setDouble(2, t1);
-			ps.setInt(3, rid);
+			ps = database.getPreparedStatement("SELECT sid FROM sources WHERE name = ? AND rid = ?");
+			ps.setString(1, name);
+			ps.setInt(2, rid);
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				Rank rank;

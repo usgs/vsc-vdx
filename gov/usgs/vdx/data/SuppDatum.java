@@ -175,15 +175,6 @@ public class SuppDatum
 		dl      = rs.getInt(15);
 		
 	}
-	
-	/** Adds a value to the start and end times (for time zone management).
-	 * @param adj the time adjustment
-	 */
-	public void adjustTime(double adj)
-	{
-		st += adj;
-		et += adj;
-	}
 
 	/**
 	 * @return SuppDatum's xml representation

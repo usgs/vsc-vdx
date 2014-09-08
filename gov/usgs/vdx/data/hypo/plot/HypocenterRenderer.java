@@ -1,12 +1,12 @@
 package gov.usgs.vdx.data.hypo.plot;
 
-import gov.usgs.plot.color.Jet;
-import gov.usgs.plot.color.Spectrum;
-import gov.usgs.plot.decorate.SmartTick;
-import gov.usgs.plot.render.ArbDepthFrameRenderer;
-import gov.usgs.plot.render.Renderer;
-import gov.usgs.plot.transform.ArbDepthCalculator;
-import gov.usgs.plot.transform.Transformer;
+import gov.usgs.plot.ArbDepthCalculator;
+import gov.usgs.plot.Jet;
+import gov.usgs.plot.Renderer;
+import gov.usgs.plot.ArbDepthFrameRenderer;
+import gov.usgs.plot.SmartTick;
+import gov.usgs.plot.Spectrum;
+import gov.usgs.plot.Transformer;
 import gov.usgs.vdx.data.hypo.Hypocenter;
 import gov.usgs.vdx.data.hypo.HypocenterList;
 

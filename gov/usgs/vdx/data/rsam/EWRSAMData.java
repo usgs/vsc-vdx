@@ -1,8 +1,7 @@
 package gov.usgs.vdx.data.rsam;
 
-import gov.usgs.math.BinSize;
-import gov.usgs.plot.data.RSAMData;
 import gov.usgs.util.Log;
+import gov.usgs.vdx.data.hypo.HypocenterList.BinSize;
 import hep.aida.ref.Histogram1D;
 
 import java.nio.ByteBuffer;

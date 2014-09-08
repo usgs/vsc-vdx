@@ -1,10 +1,11 @@
 package gov.usgs.vdx.data;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
+import gov.usgs.vdx.data.MetaDatum;
+import gov.usgs.vdx.data.SuppDatum;
 import gov.usgs.vdx.db.VDXDatabase;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
@@ -18,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.Level;
+import java.util.TimeZone;
 
 import cern.colt.matrix.DoubleMatrix2D;
 
@@ -43,7 +44,6 @@ abstract public class SQLDataSource implements DataSource {
 	protected PreparedStatement ps;
 	protected ResultSet rs;
 	protected String sql;
-	protected String sqlCount;
 	private int maxrows = 0;
 	
 	/**
@@ -243,7 +243,7 @@ abstract public class SQLDataSource implements DataSource {
 				// these are the basic channel options, we can add on to this below
 				sql = "CREATE TABLE channels (cid INT PRIMARY KEY AUTO_INCREMENT, "
 						+ "code VARCHAR(16) UNIQUE, name VARCHAR(255), "
-						+ "lon DOUBLE, lat DOUBLE, height DOUBLE, active TINYINT(1) NOT NULL DEFAULT 1";
+						+ "lon DOUBLE, lat DOUBLE, height DOUBLE";
 
 				// translations. logically you must have a channels table to have translations
 				if (translations) {
@@ -334,7 +334,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return true if success
 	 */
 	public boolean defaultCreateChannel(Channel channel, int tid, boolean channels, boolean translations, boolean ranks, boolean columns) {
-		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(), channel.getActive(), tid,
+		return defaultCreateChannel(channel.getCode(), channel.getName(), channel.getLon(), channel.getLat(), channel.getHeight(), tid,
 				channels, translations, ranks, columns);
 	}
 
@@ -346,7 +346,6 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
-	 * @param active		active status
 	 * @param tid			translation id
 	 * @param channels		if we need to add record in 'channels' table
 	 * @param translations	if we need to add tid field in channel table
@@ -355,7 +354,7 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return true if success
 	 */
 	public boolean defaultCreateChannel(String channelCode, String channelName, 
-			double lon, double lat, double height, int active, int tid,
+			double lon, double lat, double height, int tid,
 			boolean channels, boolean translations, boolean ranks, boolean columns) {
 
 		try {
@@ -375,8 +374,8 @@ abstract public class SQLDataSource implements DataSource {
 
 			// channels flag states we need to add a record to the channels table
 			if (channels) {
-				String columnList	= "code, name, lon, lat, height, active";
-				String variableList	= "?,?,?,?,?,?";
+				String columnList	= "code, name, lon, lat, height";
+				String variableList	= "?,?,?,?,?";
 				
 				if (translations) {
 					columnList		= columnList + ",tid";
@@ -390,8 +389,7 @@ abstract public class SQLDataSource implements DataSource {
 				if (Double.isNaN(lon))    { ps.setNull(3, java.sql.Types.DOUBLE); } else { ps.setDouble(3, lon);    }
 				if (Double.isNaN(lat))    { ps.setNull(4, java.sql.Types.DOUBLE); } else { ps.setDouble(4, lat);    }
 				if (Double.isNaN(height)) { ps.setNull(5, java.sql.Types.DOUBLE); } else { ps.setDouble(5, height); }
-				ps.setInt(6, active);
-				if (translations)         { ps.setInt(7, tid); }
+				if (translations)         { ps.setInt(6, tid); }
 				ps.execute();
 			}
 
@@ -749,14 +747,13 @@ abstract public class SQLDataSource implements DataSource {
 	public Channel defaultGetChannel(int cid, boolean channelTypes) {
 		Channel ch = null;
 		String code, name;
-		int active;
 		double lon, lat, height;
 		int ctid = 0;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT code, name, lon, lat, height, active ";
+			sql	= "SELECT code, name, lon, lat, height ";
 			if (channelTypes) {
 				sql = sql + ",ctid ";
 			}
@@ -775,12 +772,11 @@ abstract public class SQLDataSource implements DataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(5);
 				if (rs.wasNull()) { height	= Double.NaN; }
-				active  = rs.getInt(6);
 				if (channelTypes) {
-					ctid	= rs.getInt(7);
+					ctid	= rs.getInt(6);
 				}
 				
-				ch	= new Channel(cid, code, name, lon, lat, height, active, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, ctid);
 			}
 			rs.close();
 
@@ -828,14 +824,14 @@ abstract public class SQLDataSource implements DataSource {
 	public List<Channel> defaultGetChannelsList(boolean channelTypes) {
 		List<Channel> result = new ArrayList<Channel>();
 		Channel ch;
-		int active, cid, ctid;
+		int cid, ctid;
 		String code, name;
 		double lon, lat, height, azimuth;
 
 		try {
 			database.useDatabase(dbName);
 			
-			sql	= "SELECT cid, code, name, lon, lat, height, active ";
+			sql	= "SELECT cid, code, name, lon, lat, height ";
 			if(dbName.toLowerCase().contains("tensorstrain")){
 				sql = sql + ", natural_azimuth ";
 			} else if(dbName.toLowerCase().contains("tilt")){
@@ -861,15 +857,14 @@ abstract public class SQLDataSource implements DataSource {
 				if (rs.wasNull()) { lat	= Double.NaN; }
 				height	= rs.getDouble(6);
 				if (rs.wasNull()) { height	= Double.NaN; }
-				active  = rs.getInt(7);
-				azimuth	= rs.getDouble(8);
+				azimuth	= rs.getDouble(7);
 				if (rs.wasNull()) { azimuth	= Double.NaN; }
 				if (channelTypes) {
-					ctid	= rs.getInt(9);
+					ctid	= rs.getInt(8);
 				} else {
 					ctid	= 0;
 				}				
-				ch	= new Channel(cid, code, name, lon, lat, height, active, azimuth, ctid);
+				ch	= new Channel(cid, code, name, lon, lat, height, azimuth, ctid);
 				result.add(ch);
 			}
 			rs.close();
@@ -1370,46 +1365,40 @@ abstract public class SQLDataSource implements DataSource {
 			sql = "SELECT j2ksec";
 			
 			if (ranks) {
-				sql += ", c.rid";
+				sql = sql + ", c.rid";
 			}
 			
 			for (int i = 0; i < columns.size(); i++) {
 				column = columns.get(i);
 				if (translations) {
-					sql += ",a." + column.name + " * b.c" + column.name + " + b.d" + column.name + " as " + column.name + " ";
+					sql = sql + ",a." + column.name + " * b.c" + column.name + " + b.d" + column.name + " as " + column.name + " ";
 				} else {
-					sql += ",a." + column.name + " ";
+					sql = sql + ",a." + column.name + " ";
 				}
 			}
 
 			// FROM sql
-			sql	+= "FROM " + channel.getCode() + " a ";
+			sql	= sql + "FROM " + channel.getCode() + " a ";
 			if (translations) {
-				sql += "INNER JOIN translations b on a.tid = b.tid ";
+				sql = sql + "INNER JOIN translations b on a.tid = b.tid ";
 			}
 			if (ranks) {
-				sql	+= "INNER JOIN ranks        c on a.rid = c.rid ";
+				sql	= sql + "INNER JOIN ranks        c on a.rid = c.rid ";
 			}
 
 			// WHERE sql
-			sql += "WHERE j2ksec >= ? ";
-			sql += "AND   j2ksec <= ? ";
-			
-			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c ON a.rid=c.rid ";
-			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
+			sql = sql + "WHERE j2ksec >= ? ";
+			sql = sql + "AND   j2ksec <= ? ";
 			
 			// BEST POSSIBLE DATA query
 			if (ranks && rid != 0) {
-				sql 	 += "AND   c.rid  = ? ";
-				sqlCount += "AND c.rid = ? ";
+				sql = sql + "AND   c.rid  = ? ";
 			} 
 			
-			sql 	 += "ORDER BY a.j2ksec ASC";
-			sqlCount += "ORDER BY a.j2ksec ASC";
+			sql = sql + "ORDER BY a.j2ksec ASC";
 			
 			if (ranks && rid == 0) {
-				sql 	 += ", c.rank DESC";
-				sqlCount += ", c.rank DESC";
+				sql = sql + ", c.rank DESC";
 			}
 			
 			if (ranks && rid != 0) {
@@ -1422,26 +1411,8 @@ abstract public class SQLDataSource implements DataSource {
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
-				
-				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-				// exceed that number prior to running the full query. This can save a decent amount of time
-				// for large queries. Note that this only applies for non-downsampled queries. This is done for
-				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
-				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
-				// just doing the full query to begin with.
-				if (ds.equals(DownsamplingType.NONE)) {
-					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (tempmaxrows + 1) + ") as T");
-					ps.setDouble(1, st);
-					ps.setDouble(2, et);
-					if (ranks && rid != 0) {
-						ps.setInt(3, rid);
-					}
-					rs = ps.executeQuery();
-					if (rs.next() && rs.getInt(1) > tempmaxrows)
-						throw new UtilException("Max rows (" + maxrows + " rows) for source '" + dbName + "' exceeded. Please use downsampling.");
-				}
 			}
-			
+
 			ps = database.getPreparedStatement(sql);
 			if(ds.equals(DownsamplingType.MEAN)){
 				ps.setDouble(1, st);
@@ -1460,9 +1431,8 @@ abstract public class SQLDataSource implements DataSource {
 			}
 			rs = ps.executeQuery();
 			
-			// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
-			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
-				throw new UtilException("Max rows (" + maxrows + " rows) for source '" + dbName + "' exceeded. Please downsample further.");
+			if (maxrows != 0 && getResultSetSize(rs)> tempmaxrows) { 
+				throw new UtilException("Max rows (" + maxrows + "rows) for source '" + dbName + "' exceeded. Please use downsampling.");
 			}
 			
 			double tempJ2ksec = Double.MAX_VALUE;
@@ -1484,16 +1454,9 @@ abstract public class SQLDataSource implements DataSource {
 			}
 			rs.close();
 
-			// if no data rows were returned, instantiate a data matrix with a single row with all null values
-			if (pts.size() == 0) {
-				dataRow = new double[columnsReturned];
-				for (int i = 0; i < columnsReturned; i++) {
-					dataRow[i] = Double.NaN;
-				}
-				pts.add(dataRow);
+			if (pts.size() > 0) {
+				result = new GenericDataMatrix(pts);
 			}
-			
-			result = new GenericDataMatrix(pts);
 
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
@@ -1512,6 +1475,7 @@ abstract public class SQLDataSource implements DataSource {
      * value returned is <code>Double.NaN</code>
 	 * @throws SQLException
 	 */
+	
 	public double getDoubleNullCheck(ResultSet rs, int columnIndex) throws SQLException{
 		double value	= rs.getDouble(columnIndex);
 		if (rs.wasNull()) { value = Double.NaN; }
@@ -1528,6 +1492,7 @@ abstract public class SQLDataSource implements DataSource {
      * value returned is <code>Integer.MIN_VALUE</code>
 	 * @throws SQLException
 	 */
+	
 	public int getIntNullCheck(ResultSet rs, int columnIndex) throws SQLException{
 		int value	= rs.getInt(columnIndex);
 		if (rs.wasNull()) { value = Integer.MIN_VALUE; }
@@ -1704,104 +1669,52 @@ abstract public class SQLDataSource implements DataSource {
 	 * @param cm = "is the name of the columns table coulmns_menu?"
 	 * @return List<MetaDatum> the desired metadata (null if an error occurred)
 	 */
-	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm, String source ) {
+	public List<MetaDatum> getMatchingMetaData( MetaDatum md, boolean cm ) {
 		try {
 			database.useDatabase(dbName);
-			sql = "SELECT MD.*, CH.code, ";
-			if (source.contains("rsam")) {
-				// RSAM has no rank
-				sql += "COL.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN columns" + 
-					   (cm ? "_menu" : "") + " COL ON MD.colid=COL.colid WHERE ";
-			} else if (source.contains("hypocenters")) {
-				sql = "SELECT MD.*, RK.name FROM channelmetadata MD INNER JOIN ranks RK ON MD.rid=RK.rid WHERE ";
-			} else {
-				sql += "COL.name, RK.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN " +
-					   "columns" + (cm ? "_menu" : "") + " COL ON MD.colid=COL.colid INNER JOIN ranks RK ON " +
-					   "MD.rid=RK.rid WHERE ";
-			}
-			
-			List<String> wheres = new ArrayList<String>();
+			sql = "SELECT MD.cmid, MD.cid, MD.colid, MD.rid, MD.name, MD.value, " +
+				"CH.code, COL.name, RK.name FROM channelmetadata as MD, channels as CH, columns" + (cm ? "_menu" : "") + " as COL, ranks as RK "; // channelmetadata";
+			String where = "WHERE MD.cid=CH.cid AND MD.colid=COL.colid AND MD.rid=RK.rid";
 			
 			if ( md.chName != null )
-				if (md.cid < 0)
-					wheres.add("CH.code='" + md.chName + "'");
-				else
-					wheres.add("CH.cid IN (" + md.chName + ")");
+				where = where + " AND CH.code='" + md.chName + "'";
 			else if ( md.cid >= 0 )
-				wheres.add("MD.cid=" + md.cid);
-			
+				where = where + " AND MD.cid=" + md.cid;
 			if ( md.colName != null )
-				if (md.colid < 0)
-					wheres.add("COL.name='" + md.colName + "'");
-				else
-					wheres.add("MD.colid IN (" + md.colName + ")");
+				where = where + " AND COL.name='" + md.colName + "'";
 			else if ( md.colid >= 0 )
-				wheres.add("MD.colid=" + md.colid);
-			
+				where = where + " AND MD.colid=" + md.colid;
 			if ( md.rkName != null )
-				wheres.add("RK.name='" + md.rkName + "'");
+				where = where + " AND RK.name='" + md.rkName + "'";
 			else if ( md.rid >= 0 )
-				wheres.add("MD.rid=" + md.rid);
-			
+				where = where + " AND MD.rid=" + md.rid;
 			if ( md.name != null )
-				wheres.add("MD.name=" + md.name);
+				where = where + " AND MD.name=" + md.name;
 			if ( md.value != null )
-				wheres.add("MD.value=" + md.value);
-			
-			StringBuffer where = new StringBuffer();
-			boolean first = true;
-			for (String s : wheres) {
-				if (first) {
-					where.append(s);
-					first = false;
-				} else {
-					where.append(" AND " + s);
-				}
-			}
-			
-			logger.info( "SQL: " + sql + where.toString() );
+				where = where + " AND MD.value=" + md.value;
+				
+			logger.info( "SQL: " + sql + where );
 			ps = database.getPreparedStatement( sql + where );
 			rs	= ps.executeQuery();
 			List<MetaDatum> result = new ArrayList<MetaDatum>();
 			while (rs.next()) {
-				if (source.contains("rsam")) {
-					md = new MetaDatum();
-					md.cmid    = rs.getInt(1);
-					md.cid     = rs.getInt(2);
-					md.colid   = rs.getInt(3);
-					md.name    = rs.getString(4);
-					md.value   = rs.getString(5);
-					md.chName  = rs.getString(6);
-					md.colName = rs.getString(7);
-					result.add( md );
-				} else if (source.contains("hypocenters")) {
-					md = new MetaDatum();
-					md.cmid    = rs.getInt(1);
-					md.rid     = rs.getInt(2);
-					md.name    = rs.getString(3);
-					md.value   = rs.getString(4);
-					md.rkName  = rs.getString(5);
-					result.add( md );
-				} else {
-					md = new MetaDatum();
-					md.cmid    = rs.getInt(1);
-					md.cid     = rs.getInt(2);
-					md.colid   = rs.getInt(3);
-					md.rid     = rs.getInt(4);
-					md.name    = rs.getString(5);
-					md.value   = rs.getString(6);
-					md.chName  = rs.getString(7);
-					md.colName = rs.getString(8);
-					md.rkName  = rs.getString(9);
-					result.add( md );
-				}
+				md = new MetaDatum();
+				md.cmid    = rs.getInt(1);
+				md.cid     = rs.getInt(2);
+				md.colid   = rs.getInt(3);
+				md.rid     = rs.getInt(4);
+				md.name    = rs.getString(5);
+				md.value   = rs.getString(6);
+				md.chName  = rs.getString(7);
+				md.colName = rs.getString(8);
+				md.rkName  = rs.getString(9);
+				result.add( md );
 			}
 			rs.close();
 			return result;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLDataSource.getMatchingMetaData() failed. (" + database.getDatabasePrefix() +
-									 "_" + dbName + ")", e);
+			logger.log(Level.SEVERE, "SQLDataSource.getMatchingMetaData() failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
 			return null;
 		}
 	}
@@ -1814,51 +1727,39 @@ abstract public class SQLDataSource implements DataSource {
 	 * @return RequestResult the desired meta data (null if an error occurred)
 	 */
 	protected RequestResult getMetaData(Map<String, String> params, boolean cm) {
-		String source = params.get("source");
+		String arg = params.get("byID");
 		List<MetaDatum> data = null;
 		MetaDatum md_s;
-		List<String> result = new ArrayList<String>();
-		
-		String arg = params.get("byID");
 		if ( arg != null && arg.equals("true") ) {
-			md_s = new MetaDatum(-1, -1, -1);
-			
-			arg = params.get("ch");
-			if (arg == null || arg.equals("") || source.contains("hypocenters"))
-				md_s.cid = -1;
-			else {
-				md_s.chName = arg;
-				md_s.cid = 0;
-			}
-			
+			int cid			= Integer.parseInt(params.get("ch"));
 			arg = params.get("col");
-			if ( arg==null || arg.equals(""))
-				md_s.colid = -1;
-			else {
-				md_s.colName = arg;
-				md_s.colid = 0;
-			}
-			
-			arg = params.get("rk");
-			if ( arg==null || arg.equals("") || source.contains("rsam") )
-				md_s.rid = -1;
+			int colid;
+			if ( arg==null || arg=="" )
+				colid = -1;
 			else
-				md_s.rid = Integer.parseInt(arg);
+				colid = Integer.parseInt(arg);
+			arg = params.get("rk");
+			int rid;
+			if ( arg==null || arg=="" )
+				rid = -1;
+			else
+				rid = Integer.parseInt(arg);
+			md_s = new MetaDatum( cid, colid, rid );
 		} else {
 			String chName   = params.get("ch");
 			String colName  = params.get("col");
 			String rkName   = params.get("rk");
 			md_s = new MetaDatum( chName, colName, rkName );
 		}
-		
-		data = getMatchingMetaData( md_s, cm, source );
+		data = getMatchingMetaData( md_s, cm );
 		if (data != null) {
+			List<String> result = new ArrayList<String>();
 			for ( MetaDatum md: data )
 				result.add(String.format("%d,%d,%d,%d,\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"", 
 					md.cmid, md.cid, md.colid, md.rid, md.name, md.value, md.chName, md.colName, md.rkName ));
+			return new TextResult(result);
 		}
-		
-		return new TextResult(result);
+		return null;
 	}
 
 	/**

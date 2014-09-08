@@ -1,6 +1,6 @@
 package gov.usgs.vdx.data.generic.variable;
 
-import gov.usgs.plot.data.GenericDataMatrix;
+import gov.usgs.vdx.data.GenericDataMatrix;
 
 import java.util.List;
 

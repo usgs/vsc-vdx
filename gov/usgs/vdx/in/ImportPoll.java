@@ -15,17 +15,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Util;
+
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.Rank;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
+
 import gov.usgs.vdx.in.conn.Connection;
 import gov.usgs.vdx.in.hw.Device;
+
 import cern.colt.matrix.*;
 
 /**
@@ -134,8 +137,7 @@ public class ImportPoll extends Import implements Importer {
 			channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
 			channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
 			channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-			channelActive	= Util.stringToInt(channelParams.getString("active"), 1);
-			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelActive);
+			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight);
 			channelMap.put(channelCode, channel);
 		}
 		
@@ -679,7 +681,7 @@ public class ImportPoll extends Import implements Importer {
 							// channel for this data source.  create it if it doesn't exist
 							if (sqlDataSource.getChannelsFlag()) {
 								if (sqlDataSource.defaultGetChannel(channelCode, sqlDataSource.getChannelTypesFlag()) == null) {
-									sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, channelCode, Double.NaN, Double.NaN, Double.NaN, 1), 1,
+									sqlDataSource.defaultCreateChannel(new Channel(0, channelCode, channelCode, Double.NaN, Double.NaN, Double.NaN), 1,
 											sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 											sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
 								}

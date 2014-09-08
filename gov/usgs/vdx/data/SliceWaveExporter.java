@@ -1,7 +1,8 @@
-package gov.usgs.vdx.data.wave;
+package gov.usgs.vdx.data;
 
-import gov.usgs.plot.data.Wave;
-import gov.usgs.plot.render.wave.SliceWaveRenderer;
+import gov.usgs.vdx.data.wave.Wave;
+
+import gov.usgs.vdx.data.wave.plot.SliceWaveRenderer;
 import gov.usgs.vdx.data.Exportable;
 
 

@@ -1,16 +1,16 @@
 package gov.usgs.vdx.data.tilt;
 
-import gov.usgs.math.DownsamplingType;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
 import gov.usgs.vdx.data.SQLDataSource;
+import gov.usgs.vdx.data.tilt.TiltData;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -157,12 +157,11 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 	 * @param lon			longitude
 	 * @param lat			latitude
 	 * @param height		height
-	 * @param active		active
 	 * @param azimuth		azimuth of the deformation source
 	 * @return true if successful
 	 */	
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active, int tid, double azimuth) {
-		Channel channel = new Channel(0, channelCode, channelName, lon, lat, height, active, azimuth);
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int tid, double azimuth) {
+		Channel channel = new Channel(0, channelCode, channelName, lon, lat, azimuth, height);
 		return defaultCreateTiltChannel(channel, tid, azimuth, channels, translations, ranks, columns);
 	}
 
@@ -228,7 +227,6 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 		
 		double[] dataRow;		
 		List<double[]> pts	= new ArrayList<double[]>();
-		BinaryResult result	= null;
 		int columnsReturned	= 0;
 		
 		try {
@@ -261,21 +259,15 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			sql += "WHERE  j2ksec >= ? ";
 			sql += "AND    j2ksec <= ? ";
 			
-			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c on a.rid = c.rid ";
-			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
-			
 			// BEST POSSIBLE DATA QUERY
 			if (ranks && rid != 0) {
-				sql 	 += "AND   c.rid = ? ";
-				sqlCount += "AND c.rid = ? ";
+				sql = sql + "AND   c.rid = ? ";
 			}
 			
-			sql 	 += "ORDER BY j2ksec ASC";
-			sqlCount += "ORDER BY j2ksec ASC";
+			sql += "ORDER BY j2ksec ASC";
 			
 			if (ranks && rid == 0) {
-				sql 	 += ", c.rank DESC";
-				sqlCount += ", c.rank DESC";
+				sql = sql + ", c.rank DESC";
 			}
 			
 			if (ranks && rid != 0) {
@@ -288,24 +280,6 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			
 			if (maxrows != 0) {
 				sql += " LIMIT " + (tempmaxrows + 1);
-				
-				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-				// exceed that number prior to running the full query. This can save a decent amount of time
-				// for large queries. Note that this only applies for non-downsampled queries. This is done for
-				// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
-				// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
-				// just doing the full query to begin with.
-				if (ds.equals(DownsamplingType.NONE)) {
-					ps = database.getPreparedStatement(sqlCount + " LIMIT " + (tempmaxrows + 1) + ") as T");
-					ps.setDouble(1, st);
-					ps.setDouble(2, et);
-					if (ranks && rid != 0) {
-						ps.setInt(3, rid);
-					}
-					rs = ps.executeQuery();
-					if (rs.next() && rs.getInt(1) > tempmaxrows)
-						return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
-				}
 			}
 
 			ps	= database.getPreparedStatement(sql);
@@ -325,10 +299,9 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 				}
 			}
 			rs = ps.executeQuery();
-			
-			// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
-			if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
-				throw new UtilException("Max rows (" + maxrows + " rows) for source '" + vdxName + "' exceeded. Please downsample further.");
+		
+			if (maxrows != 0 && getResultSetSize(rs) > tempmaxrows) { 
+				return getErrorResult("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 			}
 			
 			double tempJ2ksec = Double.MAX_VALUE;
@@ -348,20 +321,15 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			}
 			rs.close();
 			
-			if (pts.size() == 0) {
-				dataRow = new double[columnsReturned];
-				for (int i = 0; i < columnsReturned; i++) {
-					dataRow[i] = Double.NaN;
-				}
-				pts.add(dataRow);
+			if (pts.size() > 0) {
+				return new BinaryResult(new TiltData(pts));
 			}
-			
-			result = new BinaryResult(new TiltData(pts));
 			
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			return null;
 		}
-		return result;
+		return null;
 	}
 
 	/**

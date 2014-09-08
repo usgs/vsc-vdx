@@ -2,12 +2,12 @@ package gov.usgs.vdx.in.tilt;
 
 import gov.usgs.pinnacle.Client;
 import gov.usgs.pinnacle.StatusBlock;
-import gov.usgs.plot.data.GenericDataMatrix;
 import gov.usgs.util.Arguments;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.Log;
 import gov.usgs.util.ResourceReader;
 import gov.usgs.util.Util;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.tilt.SQLTiltDataSource;
 import gov.usgs.vdx.db.VDXDatabase;
 
@@ -82,7 +82,7 @@ public class ImportPinnServer extends Client
 		
 		// this is commented out for now until i figure out how i want to handle channel existence
 		// if (!ips.dataSource.defaultChannelExists("etilt", ips.channel)) {
-			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 1, 0, 0))
+			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 0, 0))
 				ips.logger.info("created channel.");
 		// }
 		return ips;

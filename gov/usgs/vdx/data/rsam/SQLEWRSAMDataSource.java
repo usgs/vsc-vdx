@@ -1,13 +1,12 @@
 package gov.usgs.vdx.data.rsam;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.plot.data.RSAMData;
 import gov.usgs.util.ConfigFile;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.client.VDXClient.DownsamplingType;
 import gov.usgs.vdx.data.Channel;
 import gov.usgs.vdx.data.Column;
 import gov.usgs.vdx.data.DataSource;
+import gov.usgs.vdx.data.GenericDataMatrix;
 import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
@@ -144,17 +143,16 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 	 * @param lon
 	 * @param lat
 	 * @param height
-	 * @param active
 	 * @return true if successful
 	 */
-	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height, int active) {
+	public boolean createChannel(String channelCode, String channelName, double lon, double lat, double height) {
 		
 		// create an entry in the channels table but don't build the table
-		defaultCreateChannel(channelCode, channelName, lon, lat, height, active, 0, channels, translations, ranks, columns);
+		defaultCreateChannel(channelCode, channelName, lon, lat, height, 0, channels, translations, ranks, columns);
 		
 		// create a values and events table, and don't create an entry in the channels table
-		defaultCreateChannel(channelCode + "_values", null, Double.NaN, Double.NaN, Double.NaN, 0, 0, false, translations, ranks, columns);
-		defaultCreateChannel(channelCode + "_events", null, Double.NaN, Double.NaN, Double.NaN, 0, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_values", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
+		defaultCreateChannel(channelCode + "_events", null, Double.NaN, Double.NaN, Double.NaN, 0, false, translations, ranks, columns);
 		
 		return true;
 	}
@@ -264,45 +262,23 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			
 			// look up the channel code from the channels table, which is part of the name of the table to query
 			Channel ch	= defaultGetChannel(cid, channelTypes);
-			
-			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
 
 			if (plotType.equals("VALUES")) {
 				
-				sql  = "SELECT j2ksec, rsam ";
-				sql += "FROM   ?_values ";
-				sql	+= "WHERE  j2ksec >= ? and j2ksec <= ? ";
-				sql	+= "ORDER BY j2ksec";
-				
-				sqlCount += sql.substring(sql.indexOf("FROM"));
+				sql		= "SELECT j2ksec, rsam ";
+				sql	   += "FROM   ?_values ";
+				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? ";
+				sql	   += "ORDER BY j2ksec";
 				
 				try{
 					sql = getDownsamplingSQL(sql, "j2ksec", ds, dsInt);
 				} catch (UtilException e){
 					throw new UtilException("Can't downsample dataset: " + e.getMessage());
 				}
-				
 				if(maxrows !=0){
 					sql += " LIMIT " + (maxrows+1);
-					
-					// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-					// exceed that number prior to running the full query. This can save a decent amount of time
-					// for large queries. Note that this only applies for non-downsampled queries. This is done for
-					// two reasons: 1) If the user is downsampling, they already know they're dealing with a lot of data
-					// and 2) the way MySQL handles the multiple nested queries that would result makes it slower than
-					// just doing the full query to begin with.
-					if(ds.equals(DownsamplingType.NONE)) {
-						ps = database.getPreparedStatement(sqlCount + " LIMIT " + (maxrows + 1) + ") as T");
-						ps.setString(1, ch.getCode());
-						ps.setDouble(2, st);
-						ps.setDouble(3, et);
-						rs = ps.executeQuery();
-						if (rs.next() && rs.getInt(1) > maxrows)
-							throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
-					}
 				}
-				
-				ps = database.getPreparedStatement(sql);
+				ps		= database.getPreparedStatement(sql);
 				if(ds.equals(DownsamplingType.MEAN)){
 					ps.setDouble(1, st);
 					ps.setInt(2, dsInt);
@@ -314,14 +290,11 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 					ps.setDouble(2, st);
 					ps.setDouble(3, et);
 				}
-				rs = ps.executeQuery();
-				
-				// Check for the amount of data returned in a downsampled query. Non-downsampled queries are checked above.
-				if (!ds.equals(DownsamplingType.NONE) && maxrows != 0 && getResultSetSize(rs) > maxrows) { 
-					throw new UtilException("Max rows (" + maxrows + " rows) for source '" + vdxName + "' exceeded. Please downsample further.");
+				rs		= ps.executeQuery();
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded. Please use downsampling.");
 				}
-
-				pts	= new ArrayList<double[]>();
+				pts 	= new ArrayList<double[]>();
 				
 				// iterate through all results and create a double array to store the data
 				while (rs.next()) {
@@ -334,31 +307,21 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 				
 			} else if (plotType.equals("EVENTS")) {
 				
-				sql  = "SELECT j2ksec, rsam ";
-				sql += "FROM   ?_events ";
-				sql += "WHERE  j2ksec >= ? and j2ksec <= ? and rsam != 0";
-				
-				if(maxrows != 0){
+				sql		= "SELECT j2ksec, rsam ";
+				sql    += "FROM   ?_events ";
+				sql	   += "WHERE  j2ksec >= ? and j2ksec <= ? and rsam != 0";
+				if(maxrows !=0){
 					sql += " LIMIT " + (maxrows+1);
-					
-					// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-					// exceed that number prior to running the full query. This can save a decent amount of time
-					// for large queries.
-					ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
-					ps.setString(1, ch.getCode());
-					ps.setDouble(2, st);
-					ps.setDouble(3, et);
-					rs = ps.executeQuery();
-					if(rs.next() && rs.getInt(1) > maxrows)
-						throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
 				}
 				
-				ps = database.getPreparedStatement(sql);
+				ps		= database.getPreparedStatement(sql);
 				ps.setString(1, ch.getCode());
 				ps.setDouble(2, st);
 				ps.setDouble(3, et);
-				rs = ps.executeQuery();
-
+				rs		= ps.executeQuery();
+				if(maxrows !=0 && getResultSetSize(rs)> maxrows){ 
+					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+				}
 				// setup the initial value
 				count 		= 0;
 				dataRow		= new double[2];				

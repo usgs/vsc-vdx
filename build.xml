@@ -4,7 +4,7 @@
 	<property name="package" value="gov.usgs.vdx"/>
 	<property name="version" value="3.3.0"/>
 	<property name="jarfile" value="vdx.jar"/>
-	<property name="classpath" location="../USGS/lib/earthworm.jar;../USGS/lib/winston.jar;../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/JavaSeedLite.jar;../USGS/contrib/jtransforms-2.4.jar"/>
+	<property name="classpath" location="../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/JavaSeedLite.jar;../USGS/contrib/jtransforms-2.4.jar"/>
 	<property name="source" location="."/>
 	<property name="destination" location="./classes"/>
 
@@ -37,7 +37,7 @@ dist    -- creates a binary distribution
 	</target>
 
 	<target name="compile" depends="clean" description="compile the source">
-		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.6" source="1.6" debug="on" includeantruntime="false"/>
+		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.5" debug="on" includeantruntime="false"/>
 		<!--<compilerarg value="-Xlint"/>-->
 		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
 			<property name="package" value="${package}"/>

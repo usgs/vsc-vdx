@@ -1,10 +1,10 @@
 package gov.usgs.vdx.client;
 
 import gov.usgs.net.InternetClient;
-import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.util.Retriable;
 import gov.usgs.util.Util;
 import gov.usgs.util.UtilException;
+import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,22 +21,65 @@ import java.util.Map;
  */
 public class VDXClient extends InternetClient
 {	
+	public enum DownsamplingType
+	{
+		NONE("N"), DECIMATE("D"), MEAN("M");
+		
+		public String code;
+		
+		/**
+		 * Constructor
+		 * @param string rep of downsampling type
+		 */
+		private DownsamplingType(String c)
+		{
+			code = c;
+		}
+		
+		/**
+		 * Yield downsampling type from String
+		 * @param s string representation of downsampling type
+		 * @return downsampling type
+		 */
+		public static DownsamplingType fromString(String s)
+		{
+			if (s == null)
+				return null;
+			
+			if (s.equals("N") || s.equals("None"))
+				return NONE;
+			else if (s.equals("D") || s.equals("Decimation"))
+				return DECIMATE;
+			else if (s.equals("M") || s.equals("Mean filter"))
+				return MEAN;
+			else 
+				return null;
+		}
+		
+		/**
+		 * Yield string representation of a downsampling type
+		 * @return string rep of downsampling type
+		 */
+		public String toString(){
+			return code;
+		}
+	}
 	private static final int MAX_RETRIES = 3;
 	protected static Map<String, String> dataTypeMap; 
 	
 	static
 	{
 		dataTypeMap = new HashMap<String, String>();
-		dataTypeMap.put("genericfixed", "gov.usgs.plot.data.GenericDataMatrix");
-		dataTypeMap.put("genericvariable", "gov.usgs.plot.data.GenericDataMatrix");
+		dataTypeMap.put("genericfixed", "gov.usgs.vdx.data.GenericDataMatrix");
+		dataTypeMap.put("genericvariable", "gov.usgs.vdx.data.GenericDataMatrix");
 		dataTypeMap.put("gps", "gov.usgs.vdx.data.gps.GPSData");
-		dataTypeMap.put("helicorder", "gov.usgs.plot.data.HelicorderData");
+		dataTypeMap.put("helicorder", "gov.usgs.vdx.data.heli.HelicorderData");
 		dataTypeMap.put("hypocenters", "gov.usgs.vdx.data.hypo.HypocenterList");
-		dataTypeMap.put("rsam", "gov.usgs.plot.data.RSAMData");
+		dataTypeMap.put("rsam", "gov.usgs.vdx.data.rsam.RSAMData");
 		dataTypeMap.put("ewrsam", "gov.usgs.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("tilt", "gov.usgs.vdx.data.tilt.TiltData");
 		dataTypeMap.put("tensorstrain", "gov.usgs.vdx.data.tensorstrain.TensorstrainData");
-		dataTypeMap.put("wave", "gov.usgs.plot.data.Wave");
+		dataTypeMap.put("wave", "gov.usgs.vdx.data.wave.Wave");
 	}
 	
 	/**

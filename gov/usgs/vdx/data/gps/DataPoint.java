@@ -1,6 +1,6 @@
 package gov.usgs.vdx.data.gps;
 
-import gov.usgs.plot.data.BinaryDataSet;
+import gov.usgs.vdx.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 

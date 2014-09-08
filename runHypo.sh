@@ -1,0 +1,1 @@
+java -Xmx512M -classpath .:./lib/hypo.jar gov.usgs.vdx.calc.Hypo71 "$1"

@@ -1,7 +1,8 @@
 package gov.usgs.vdx.data;
 
 import hep.aida.ref.Histogram1D;
-import gov.usgs.plot.render.HistogramRenderer;
+
+import gov.usgs.plot.HistogramRenderer;
 import gov.usgs.vdx.data.Exportable;
 
 /**

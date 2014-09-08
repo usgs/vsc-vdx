@@ -1,6 +1,6 @@
 package gov.usgs.vdx.data.tilt;
 
-import gov.usgs.plot.data.GenericDataMatrix;
+import gov.usgs.vdx.data.GenericDataMatrix;
 
 import java.util.List;
 
