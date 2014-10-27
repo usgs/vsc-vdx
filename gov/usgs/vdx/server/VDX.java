@@ -105,8 +105,8 @@ public class VDX extends Server {
 		if (m < 0)
 			fatalError(configFilename + ": bad or missing 'vdx.maxConnections' setting.");
 
-		maxConnections = m;
-		logger.info("config: vdx.maxConnections=" + maxConnections + ".");
+		connections.setMaxConnections(m);
+		logger.info("config: vdx.maxConnections=" + connections.getMaxConnections() + ".");
 	}
 
 	/**
