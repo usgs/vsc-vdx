@@ -411,7 +411,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				
 				// if this is a new eid, then save this data, as it contains the highest rank
 				if (!tempEid.equals(rs.getString(18))) {
-					System.out.println("match");
 					
 					// these will never be null
 					j2ksec	= getDoubleNullCheck(rs, 1);
