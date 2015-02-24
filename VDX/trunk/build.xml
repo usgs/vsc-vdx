@@ -4,7 +4,7 @@
 	<property name="package" value="gov.usgs.vdx"/>
 	<property name="version" value="3.3.0"/>
 	<property name="jarfile" value="vdx.jar"/>
-	<property name="classpath" location="../USGS/lib/earthworm.jar;../USGS/lib/winston.jar;../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/JavaSeedLite.jar;../USGS/contrib/jtransforms-2.4.jar"/>
+	<property name="classpath" location="../USGS/lib/earthworm.jar;../USGS/lib/winston.jar;../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/JavaSeedLite.jar;../USGS/contrib/jtransforms-2.4.jar;../USGS/contrib/JSAP-2.1.jar"/>
 	<property name="source" location="."/>
 	<property name="destination" location="./classes"/>
 
@@ -93,6 +93,7 @@ dist    -- creates a binary distribution
 				<include name="JavaSeedLite.jar" />
 				<include name="commons-collections-3.2.1.jar" />
 				<include name="jtransforms-2.4.jar" />
+				<include name="JSAP-2.1.jar" />
 			</fileset>
 		</copy>
 		
