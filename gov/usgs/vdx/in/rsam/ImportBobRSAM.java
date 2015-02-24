@@ -26,11 +26,11 @@ import java.util.regex.Pattern;
  * initial commit
  *
  * @author Tom Parker
- * @version $Id: ImportEWRSAM.java,v 1.4 2007-07-02 22:58:59 tparker Exp $
+ * @version $Id: ImportBobRSAM.java,v 1.4 2007-07-02 22:58:59 tparker Exp $
  */
-public class ImportEWRSAM 
+public class ImportBobRSAM 
 {
-	private static final String CONFIG_FILE = "importEWRSAM.config";
+	private static final String CONFIG_FILE = "importBobRSAM.config";
 	private int year;
 	public ConfigFile params;
 	
@@ -39,7 +39,7 @@ public class ImportEWRSAM
 	 * @param cf configuration file
 	 * @param y year
 	 */
-	public ImportEWRSAM(String cf, int y)
+	public ImportBobRSAM(String cf, int y)
 	{
 		params = new ConfigFile(cf);
 		if (!params.wasSuccessfullyRead())
@@ -159,9 +159,9 @@ public class ImportEWRSAM
 	/**
 	 * Main method
 	 * Syntax is:
-	 * java gov.usgs.vdx.data.rsam.ImportEWRSAM [-c <configFile>] [-Y | -y <year> | -a]
+	 * java gov.usgs.vdx.data.rsam.ImportBobRSAM [-c <configFile>] [-Y | -y <year> | -a]
 	 * Options:
-	 * -c <configFile> config to use, Default: importEWRSAM.config
+	 * -c <configFile> config to use, Default: importBobRSAM.config
 	 * -Y import data for this year
 	 * -y <year> import data for given year
 	 * -a import all data
@@ -198,15 +198,15 @@ public class ImportEWRSAM
 		
 		if (args.contains("-h") || y == -2)
 		{
-			System.err.println("java gov.usgs.vdx.data.rsam.ImportEWRSAM [-c <configFile>] [-Y | -y <year> | -a]");
-			System.err.println("\t-c <configFile>\tconfig to use, Default: importEWRSAM.config");
+			System.err.println("java gov.usgs.vdx.data.rsam.ImportBobRSAM [-c <configFile>] [-Y | -y <year> | -a]");
+			System.err.println("\t-c <configFile>\tconfig to use, Default: importBobRSAM.config");
 			System.err.println("\t-Y\timport data for this year");
 			System.err.println("\t-y <year>\timport data for given year");
 			System.err.println("\t-a\timport all data");
 			System.exit(-1);
 		}
 
-		ImportEWRSAM in = new ImportEWRSAM(cf, y);
+		ImportBobRSAM in = new ImportBobRSAM(cf, y);
 		in.process();
 		
 		Calendar endTime = Calendar.getInstance();
