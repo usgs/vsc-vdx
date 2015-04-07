@@ -12,9 +12,9 @@ import gov.usgs.util.CurrentTime;
 import gov.usgs.util.Log;
 import gov.usgs.util.Util;
 import gov.usgs.vdx.data.Channel;
-import gov.usgs.vdx.data.SQLDataSource;
 import gov.usgs.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.vdx.data.SQLDataSourceHandler;
+import gov.usgs.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.winston.in.ew.ChannelStatus;
 import gov.usgs.winston.in.ew.Options;
 import gov.usgs.winston.in.ew.OptionsFilter;
@@ -75,7 +75,7 @@ public class ImportEWRSAM extends Thread {
 	public static final String DEFAULT_TABLE_ENGINE = "MyISAM";
 	public static final int DEFAULT_MAX_DAYS = 0;
 	public static final int DEFAULT_MAX_BACKLOG = 100;
-	public static final String DEFAULT_LOG_LEVEL = "FINE";
+	public static final String DEFAULT_LOG_LEVEL = "WARNING";
 	public static final String DEFAULT_LOG_FILE = "ImportEWRSAM.log";
 	public static final int DEFAULT_LOG_NUM_FILES = 10;
 	public static final int DEFAULT_LOG_FILE_SIZE = 1000000;
@@ -143,7 +143,7 @@ public class ImportEWRSAM extends Thread {
 	protected String configFilename;
 	protected ConfigFile config;	
 
-	public SQLDataSource sqlDataSource;
+	public SQLRSAMDataSource sqlDataSource;
 	public SQLDataSourceHandler sqlDataSourceHandler;
 	public SQLDataSourceDescriptor sqlDataSourceDescriptor;
 
@@ -363,7 +363,7 @@ public class ImportEWRSAM extends Thread {
 			logger.log(Level.SEVERE, vdxName + " not in vdxSources.config");
 			System.exit(-1);
 		}
-		sqlDataSource	= sqlDataSourceDescriptor.getSQLDataSource();
+		sqlDataSource	= (SQLRSAMDataSource) sqlDataSourceDescriptor.getSQLDataSource();
 	}
 
 	protected void processDefaultOptions() {
@@ -560,6 +560,7 @@ public class ImportEWRSAM extends Thread {
 			sqlDataSource.defaultCreateChannel(channel, 1, 
 					sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 					sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
+			sqlDataSource.create10MinAvgView(code);
 		}
 		existingChannels.add(code);
 
