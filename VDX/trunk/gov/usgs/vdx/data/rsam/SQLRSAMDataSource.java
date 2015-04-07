@@ -127,6 +127,29 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 	}
 	
 	/**
+	 * Create view of 10 min average rsam
+	 * @param channelCode	channel code
+	 * @return true if successful
+	 */
+	public boolean create10MinAvgView(String channelCode) {
+		try {
+			database.useDatabase(dbName);
+			sql	= "create view v_" + channelCode + "_10_min_avg "
+					+ "as select avg(rsam) as avg, count(*) as samples "
+					+ "from " + channelCode + " "
+					+ "where unix_timestamp() - (j2ksec + 946728000) <= 600 "
+					+ "and rsam is not null";
+			ps	= database.getPreparedStatement(sql);
+			ps.execute();
+			return true;
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "SQLRSAMDataSource.create10MinAvgView(" + channelCode + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			return false;
+		}
+	}
+	
+	/**
 	 * Getter for data. 
 	 * Search value of 'action' parameter and retrieve corresponding data.
 	 * @param params command to execute. 
