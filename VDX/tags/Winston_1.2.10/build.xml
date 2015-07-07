@@ -1,0 +1,136 @@
+<project name="VDX" default="compile" basedir=".">
+	<description>USGS VDX Build File</description>
+
+	<property name="package" value="gov.usgs.vdx"/>
+	<property name="version" value="3.3.0"/>
+	<property name="jarfile" value="vdx.jar"/>
+	<property name="classpath" location="../USGS/lib/earthworm.jar;../USGS/lib/winston.jar;../USGS/lib/net.jar;../USGS/lib/util.jar;../USGS/lib/plot.jar;../USGS/lib/math.jar;../USGS/contrib/colt.jar;../USGS/lib/pinnacle.jar;../USGS/contrib/JavaSeedLite.jar;../USGS/contrib/jtransforms-2.4.jar;../USGS/contrib/JSAP-2.1.jar"/>
+	<property name="source" location="."/>
+	<property name="destination" location="./classes"/>
+
+	<property name="dist-appdir" value="vdx" />
+	<property name="dist-tempdir" value="./temp"/>
+	<property name="dist-basedir" value="./dist" />
+	<property name="dist-jarfile" value="vdx.jar"/>
+	<property name="dist-jarfile-bin" value="vdx-bin.jar"/>
+	<property name="classdir" value="classes"/>
+
+	<target name="help">
+		<echo>
+Available targets:			
+help    -- displays this help information
+init    -- 
+clean   -- remove the classes directory
+compile -- compile the source
+jar     -- generates new jarfile
+deploy  -- build usgs.jar file
+dist    -- creates a binary distribution
+		</echo>
+	</target>
+	
+	<target name="init">
+	</target>
+
+	<target name="clean" description="remove the classes directory">
+		<delete dir="${destination}"/>
+		<mkdir  dir="${destination}"/>
+	</target>
+
+	<target name="compile" depends="clean" description="compile the source">
+		<javac srcdir="${source}" destdir="${destination}" classpath="${classpath}" target="1.6" source="1.6" debug="on" includeantruntime="false"/>
+		<!--<compilerarg value="-Xlint"/>-->
+		<ant antfile="${source}/../USGS/buildversion.xml" target="version" dir="${source}/../USGS" inheritAll="true">
+			<property name="package" value="${package}"/>
+			<property name="version" value="${version}"/>
+			<property name="srcpath" value="${source}"/>
+			<property name="destpath" value="${destination}"/>
+		</ant>
+	</target>
+
+	<target name="jar" depends="compile" description="generates new jarfile">
+		<mkdir dir="${source}/../USGS/lib"/>
+		<jar destfile="${source}/../USGS/lib/${jarfile}" basedir="${destination}" includes="**/*.class"/>
+	</target>
+	
+	<target name="deploy">
+		<!--<ant target="jar" inheritAll="false" antfile="../Util/build.xml" />-->
+		<ant target="jar" inheritAll="false" antfile="../Earthworm/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Math/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Net/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Pinnacle/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Plot/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Util/build.xml" />
+		<ant target="jar" inheritAll="false" antfile="../Winston/build.xml" />
+	</target>
+	
+	<target name="dist" depends="deploy">
+		
+		<!-- rebuild the dist dir -->
+		<delete dir="${dist-basedir}"/>
+		<mkdir  dir="${dist-basedir}"/>
+
+		<!-- Create the distribution directory structure -->
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/bin/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/config/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/lib/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/libexec/" />
+		<mkdir dir="${dist-tempdir}/${dist-appdir}/log/" />
+
+		<!-- Copy the distribution files -->
+		<copy todir="${dist-tempdir}/${dist-appdir}">
+			<fileset dir="${source}">
+				<include name="dist-vdxSources.config" />
+				<include name="dist-VDX.config" />
+				<include name="dist-vdx.sh" />
+				<include name="dist-vdx.bat" />
+			</fileset>
+		</copy>
+				
+		<copy todir="${dist-tempdir}/${dist-appdir}/lib">
+			<fileset dir="${source}/../USGS/contrib">
+				<include name="colt.jar" />
+				<include name="mysql.jar" />
+				<include name="JavaSeedLite.jar" />
+				<include name="commons-collections-3.2.1.jar" />
+				<include name="jtransforms-2.4.jar" />
+				<include name="JSAP-2.1.jar" />
+			</fileset>
+		</copy>
+		
+		<jar destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile-bin}">
+			<fileset dir="${source}/../Earthworm/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Math/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Net/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Pinnacle/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Plot/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Util/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../VDX/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+			<fileset dir="${source}/../Winston/${classdir}">
+				<include name="**/**.class" />	
+			</fileset>
+		</jar>
+		
+		<jar manifest="Manifest.txt" destfile="${dist-tempdir}/${dist-appdir}/lib/${dist-jarfile}" />
+		
+		<tar destfile="${dist-basedir}/vdx-bin.tar.gz" basedir="${dist-tempdir}" compression="gzip" />
+		<zip destfile="${dist-basedir}/vdx-bin.zip"    basedir="${dist-tempdir}" />
+		
+		<!-- Delete the temporary distribution folder -->
+		<delete dir="${dist-tempdir}" />
+		
+	</target>
+</project>
