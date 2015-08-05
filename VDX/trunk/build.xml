@@ -85,6 +85,17 @@ dist    -- creates a binary distribution
 				<include name="dist-vdx.bat" />
 			</fileset>
 		</copy>
+		
+		<copy todir="${dist-tempdir}/${dist-appdir}/libexec">
+			<fileset dir="${source}/perl">
+				<include name="exportData.pl" />
+				<include name="exportMeta.pl" />
+				<include name="exportSupp.pl" />
+				<include name="importData.pl" />
+				<include name="importMeta.pl" />
+				<include name="importSupp.pl" />
+			</fileset>
+		</copy>
 				
 		<copy todir="${dist-tempdir}/${dist-appdir}/lib">
 			<fileset dir="${source}/../USGS/contrib">
