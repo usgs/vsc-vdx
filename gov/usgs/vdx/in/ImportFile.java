@@ -481,7 +481,7 @@ public class ImportFile extends Import implements Importer {
 							
 						// elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA	
 						} else {					
-							if (valueMap.get(i).length() == 0 || valueMap.get(i).toUpperCase() == "NAN") {
+							if (valueMap.get(i).length() == 0 || valueMap.get(i).equalsIgnoreCase("NAN")) {
 								value	= Double.NaN;
 							} else {
 								value	= Double.parseDouble(valueMap.get(i));
