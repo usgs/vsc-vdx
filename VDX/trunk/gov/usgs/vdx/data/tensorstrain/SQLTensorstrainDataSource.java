@@ -245,7 +245,7 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c ON a.rid = c.rid ";
 			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
 			
-			// BEST POSSIBLE DATA QUERY
+			// BEST AVAILABLE DATA QUERY
 			if (ranks && rid != 0) {
 				sql 	 += "AND   c.rid = ? ";
 				sqlCount += "AND c.rid = ? ";

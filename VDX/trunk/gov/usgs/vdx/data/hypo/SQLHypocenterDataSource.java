@@ -326,7 +326,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				sql += "AND    a.rmk = '" + rmk + "' ";
 			}
 			
-			// BEST POSSIBLE DATA query
+			// BEST AVAILABLE DATA query
 			if (ranks && rid != 0) {
 				sql += "AND    c.rid  = ? ";
 			}

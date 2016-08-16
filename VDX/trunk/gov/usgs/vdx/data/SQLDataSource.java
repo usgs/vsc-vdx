@@ -1398,7 +1398,7 @@ abstract public class SQLDataSource implements DataSource {
 			sqlCount  = "SELECT COUNT(*) FROM (SELECT 1 FROM " + channel.getCode() + " a INNER JOIN ranks c ON a.rid=c.rid ";
 			sqlCount += "WHERE j2ksec >= ? AND j2ksec <= ? ";
 			
-			// BEST POSSIBLE DATA query
+			// BEST AVAILABLE DATA query
 			if (ranks && rid != 0) {
 				sql 	 += "AND   c.rid  = ? ";
 				sqlCount += "AND c.rid = ? ";
