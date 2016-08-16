@@ -43,11 +43,11 @@ public class Rank {
 	}
 	
 	/**
-	 * Get best possible rank
+	 * Get best available rank
 	 * @return rank
 	 */
-	public Rank bestPossible() {
-		return new Rank(0, "Best Possible Rank", 0, 0);
+	public Rank bestAvailable() {
+		return new Rank(0, "Best Available Rank", 0, 0);
 	}
 
 	/**
