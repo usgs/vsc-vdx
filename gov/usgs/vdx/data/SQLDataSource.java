@@ -1708,11 +1708,13 @@ abstract public class SQLDataSource implements DataSource {
 		try {
 			database.useDatabase(dbName);
 			sql = "SELECT MD.*, CH.code, ";
+			
+			// TODO: fix. shouldn't this be taken care of by overriding the method in subclasses? -tjp
 			if (source.contains("rsam")) {
 				// RSAM has no rank
 				sql += "COL.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN columns" + 
 					   (cm ? "_menu" : "") + " COL ON MD.colid=COL.colid WHERE ";
-			} else if (source.contains("hypocenters")) {
+			} else if (source.contains("hypocenters") || source.contains("lightning")) {
 				sql = "SELECT MD.*, RK.name FROM channelmetadata MD INNER JOIN ranks RK ON MD.rid=RK.rid WHERE ";
 			} else {
 				sql += "COL.name, RK.name FROM channelmetadata MD INNER JOIN channels CH ON MD.cid=CH.cid INNER JOIN " +
@@ -1774,7 +1776,7 @@ abstract public class SQLDataSource implements DataSource {
 					md.chName  = rs.getString(6);
 					md.colName = rs.getString(7);
 					result.add( md );
-				} else if (source.contains("hypocenters")) {
+				} else if (source.contains("hypocenters") | source.contains("lightning")) {
 					md = new MetaDatum();
 					md.cmid    = rs.getInt(1);
 					md.rid     = rs.getInt(2);
@@ -1824,7 +1826,7 @@ abstract public class SQLDataSource implements DataSource {
 			md_s = new MetaDatum(-1, -1, -1);
 			
 			arg = params.get("ch");
-			if (arg == null || arg.equals("") || source.contains("hypocenters"))
+			if (arg == null || arg.equals("") || source.contains("hypocenters") || source.contains("lightning"))
 				md_s.cid = -1;
 			else {
 				md_s.chName = arg;
