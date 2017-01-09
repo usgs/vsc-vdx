@@ -11,6 +11,7 @@ import gov.usgs.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 import gov.usgs.vdx.data.generic.variable.SQLGenericVariableDataSource;
 import gov.usgs.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.vdx.data.hypo.SQLHypocenterDataSource;
+import gov.usgs.vdx.data.lightning.SQLLightningDataSource;
 import gov.usgs.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.vdx.data.rsam.SQLEWRSAMDataSource;
 import gov.usgs.vdx.data.tensorstrain.SQLTensorstrainDataSource;
@@ -499,6 +500,7 @@ public class VDXDatabase {
 			System.out.println("createewrsam");
 			System.out.println("createtilt");
 			System.out.println("createtensorstrain");
+			System.out.println("createlightning");
 		} else {
 			action = action.toLowerCase();
 			if (action.equals("createvdx")) {
@@ -513,6 +515,7 @@ public class VDXDatabase {
 				sources.put("createewrsam", new SQLEWRSAMDataSource());
 				sources.put("createtilt", new SQLTiltDataSource());
 				sources.put("createtensorstrain", new SQLTensorstrainDataSource());
+				sources.put("createlightning", new SQLLightningDataSource());
 				SQLDataSource sds = sources.get(action);
 				if (sds != null) {
 					createDatabase(params, args, sds);
