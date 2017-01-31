@@ -9,6 +9,7 @@ import gov.usgs.vdx.server.BinaryResult;
 import gov.usgs.vdx.server.RequestResult;
 import gov.usgs.vdx.server.TextResult;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -226,11 +227,14 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double minStDst		= Double.parseDouble(params.get("minStDst"));
 			double maxStDst		= Double.parseDouble(params.get("maxStDst"));
 			double maxGap		= Double.parseDouble(params.get("maxGap"));
+			double centerLat    = Double.parseDouble(params.get("centerLat"));
+			double centerLon    = Double.parseDouble(params.get("centerLon"));
+			double radius       = Double.parseDouble(params.get("radius"));
 			HypocenterList data = null;
 			try{
 				data = getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, maxMag,
 					minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, minStDst,
-					maxStDst, maxGap, getMaxRows());
+					maxStDst, maxGap, centerLat, centerLon, radius, getMaxRows());
 			} catch (UtilException e){
 				return getErrorResult(e.getMessage());
 			}
@@ -268,6 +272,9 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 	 * @param minStDst		min distance from closest station
 	 * @param maxStDst		max distance from closest station
 	 * @param maxGap		max gap filter
+	 * @param centerLat     latitude of the center point
+	 * @param centerLon     longitude of the center point
+	 * @param radius        radius to search within
 	 * @param maxrows       maximum nbr of rows returned
 	 * @return list of hypocenter data
 	 * @throws UtilException
@@ -276,187 +283,404 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			double south, double north, double minDepth, double maxDepth, double minMag, double maxMag,
 			Integer minNPhases, Integer maxNPhases, double minRMS, double maxRMS, 
 			double minHerr, double maxHerr, double minVerr, double maxVerr, String rmk, double minStDst, 
-			double maxStDst, double maxGap, int maxrows) throws UtilException {
+			double maxStDst, double maxGap, double centerLat, double centerLon, double radius, 
+			int maxrows) throws UtilException {
 
 		List<Hypocenter> pts	= new ArrayList<Hypocenter>();
 		HypocenterList result	= null;
 		
-		try {
-			
-			database.useDatabase(dbName);
-			
-			// calculate the num of rows to limit the query to
-			int tempmaxrows;
-			if (rid != 0) {
-				tempmaxrows = maxrows;
-			} else {
-				tempmaxrows = maxrows * defaultGetNumberOfRanks();
-			}
-			
-			sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
-			
-			// build the sql
-			sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
-			sql += "       a.ampmag, a.codamag, a.nphases, a.azgap, a.dmin, a.rms, ";
-			sql += "       a.nstimes, a.herr, a.verr, a.magtype, a.rmk, a.eid ";
-			sql += "FROM   hypocenters a, ranks c ";
-			sql += "WHERE  a.rid = c.rid ";
-			sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
-			
-			if (west <= east)
-				sql += "AND a.lon >= ? AND a.lon <= ? ";
-
-			// wrap around date line
-			else
-				sql += "AND (a.lon >= ? OR a.lon <= ?) ";
-				
-			sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
-			sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
-			sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
-			sql += "AND    a.nphases >= ? AND a.nphases <= ? ";
-			sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
-			sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
-			sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
-			sql += "AND    a.dmin    >= ? AND a.dmin	<= ? ";
-			sql += "AND    a.azgap   <= ? ";
-			sql += "AND    a.prefmag IS NOT NULL ";
-			
-			// remarks filtering options
-			if (!rmk.equals("")) {
-				sql += "AND    a.rmk = '" + rmk + "' ";
-			}
-			
-			// BEST AVAILABLE DATA query
-			if (ranks && rid != 0) {
-				sql += "AND    c.rid  = ? ";
-			}
-			
-			sql += "ORDER BY eid ASC";
-			
-			if (ranks && rid == 0) {
-				sql = sql + ", c.rank DESC";
-			}
-			
-			if (maxrows != 0) {
-				sql += " LIMIT " + (tempmaxrows + 1);
-				
-				// If the dataset has a maxrows paramater, check that the number of requested rows doesn't
-				// exceed that number prior to running the full query. This can save a decent amount of time
-				// for large queries.
-				ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
-				ps.setDouble(1, st);
-				ps.setDouble(2, et);
-				ps.setDouble(3, west);
-				ps.setDouble(4, east);
-				ps.setDouble(5, south);
-				ps.setDouble(6, north);
-				ps.setDouble(7, minDepth);
-				ps.setDouble(8, maxDepth);
-				ps.setDouble(9, minMag);
-				ps.setDouble(10, maxMag);
-				ps.setInt(11, minNPhases);
-				ps.setInt(12, maxNPhases);
-				ps.setDouble(13, minRMS);
-				ps.setDouble(14, maxRMS);
-				ps.setDouble(15, minHerr);
-				ps.setDouble(16, maxHerr);
-				ps.setDouble(17, minVerr);
-				ps.setDouble(18, maxVerr);
-				ps.setDouble(19, minStDst);
-				ps.setDouble(20, maxStDst);
-				ps.setDouble(21, maxGap);
-				if (ranks && rid != 0) {
-					ps.setInt(22, rid);
-				}
-				rs = ps.executeQuery();
-				if (rs.next() && rs.getInt(1) > tempmaxrows)
-					throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
-			}
-			
-			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, st);
-			ps.setDouble(2, et);
-			ps.setDouble(3, west);
-			ps.setDouble(4, east);
-			ps.setDouble(5, south);
-			ps.setDouble(6, north);
-			ps.setDouble(7, minDepth);
-			ps.setDouble(8, maxDepth);
-			ps.setDouble(9, minMag);
-			ps.setDouble(10, maxMag);
-			ps.setInt(11, minNPhases);
-			ps.setInt(12, maxNPhases);
-			ps.setDouble(13, minRMS);
-			ps.setDouble(14, maxRMS);
-			ps.setDouble(15, minHerr);
-			ps.setDouble(16, maxHerr);
-			ps.setDouble(17, minVerr);
-			ps.setDouble(18, maxVerr);
-			ps.setDouble(19, minStDst);
-			ps.setDouble(20, maxStDst);
-			ps.setDouble(21, maxGap);
-			if (ranks && rid != 0) {
-				ps.setInt(22, rid);
-			}
-			rs = ps.executeQuery();
-			
-			double j2ksec, lat, lon, depth, mag;
-			double ampmag, codamag, dmin, rms, herr, verr;
-			int nphases, azgap, nstimes;
-			String magtype, rs_rmk;
-			String tempEid = "";
-			
-			// loop through each result and add to the list
-			while (rs.next()) {
-				
-				// if this is a new eid, then save this data, as it contains the highest rank
-				if (!tempEid.equals(rs.getString(18))) {
-					
-					// these will never be null
-					j2ksec	= getDoubleNullCheck(rs, 1);
-					rid		= rs.getInt(2);
-					lat		= getDoubleNullCheck(rs, 3);
-					lon		= getDoubleNullCheck(rs, 4);
-					depth	= getDoubleNullCheck(rs, 5);
-					mag		= getDoubleNullCheck(rs, 6);
-	
-					ampmag	= getDoubleNullCheck(rs, 7);
-					codamag	= getDoubleNullCheck(rs, 8);
-					nphases	= getIntNullCheck(rs, 9);
-					azgap	= getIntNullCheck(rs, 10);
-					dmin	= getDoubleNullCheck(rs, 11);
-					rms		= getDoubleNullCheck(rs, 12);
-					nstimes	= getIntNullCheck(rs, 13);
-					herr	= getDoubleNullCheck(rs, 14);
-					verr	= getDoubleNullCheck(rs, 15);
-					magtype	= rs.getString(16);
-					rs_rmk	= rs.getString(17);
-					
-					pts.add(new Hypocenter(j2ksec, (String)null, rid, lat, lon, depth, mag,
-							ampmag, codamag, nphases, azgap, dmin, rms, nstimes,
-							herr, verr, magtype, rs_rmk ));
-				}
-				tempEid = rs.getString(18);
-			}
-			rs.close();
-			
-			if (pts.size() > 0) {
-				Collections.sort(pts, new Comparator<Hypocenter>() {
-					public int compare(Hypocenter h1, Hypocenter h2) {
-						if (h1.j2ksec > h2.j2ksec) {
-							return 1;
-						} else {
-							return -1;
-						}
-					}
-				});
-			}
-			
-		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+		if (radius > 0.0) {
+		    getHypocenterData(rid, st, et, minDepth, maxDepth, minMag, maxMag, minNPhases, maxNPhases, 
+		            minRMS, maxRMS, minHerr, maxHerr, minVerr, maxVerr, rmk, minStDst, maxStDst, maxGap, 
+		            centerLat, centerLon, radius, maxrows);
 		}
-		result = new HypocenterList(pts);
-		return result;
+		else {
+		    getHypocenterData(rid, st, et, west, east, south, north, minDepth, maxDepth, minMag, 
+		            maxMag, minNPhases, maxNPhases, minRMS, maxRMS, minHerr, maxHerr, minVerr, 
+		            maxVerr, rmk, minStDst, maxStDst, maxGap, maxrows);
+		}
+    			
+		double j2ksec, lat, lon, depth, mag;
+		double ampmag, codamag, dmin, rms, herr, verr;
+		int nphases, azgap, nstimes;
+		String magtype, rs_rmk;
+		String tempEid = "";
+		
+		try {
+    		// loop through each result and add to the list
+    		while (rs.next()) {
+    			
+    			// if this is a new eid, then save this data, as it contains the highest rank
+    			if (!tempEid.equals(rs.getString(18))) {
+    				
+    				// these will never be null
+    				j2ksec	= getDoubleNullCheck(rs, 1);
+    				rid		= rs.getInt(2);
+    				lat		= getDoubleNullCheck(rs, 3);
+    				lon		= getDoubleNullCheck(rs, 4);
+    				depth	= getDoubleNullCheck(rs, 5);
+    				mag		= getDoubleNullCheck(rs, 6);
+    
+    				ampmag	= getDoubleNullCheck(rs, 7);
+    				codamag	= getDoubleNullCheck(rs, 8);
+    				nphases	= getIntNullCheck(rs, 9);
+    				azgap	= getIntNullCheck(rs, 10);
+    				dmin	= getDoubleNullCheck(rs, 11);
+    				rms		= getDoubleNullCheck(rs, 12);
+    				nstimes	= getIntNullCheck(rs, 13);
+    				herr	= getDoubleNullCheck(rs, 14);
+    				verr	= getDoubleNullCheck(rs, 15);
+    				magtype	= rs.getString(16);
+    				rs_rmk	= rs.getString(17);
+    				
+    				pts.add(new Hypocenter(j2ksec, (String)null, rid, lat, lon, depth, mag,
+    						ampmag, codamag, nphases, azgap, dmin, rms, nstimes,
+    						herr, verr, magtype, rs_rmk ));
+    			}
+    			tempEid = rs.getString(18);
+    		}
+    		rs.close();
+        			
+    		if (pts.size() > 0) {
+    			Collections.sort(pts, new Comparator<Hypocenter>() {
+    				public int compare(Hypocenter h1, Hypocenter h2) {
+    					if (h1.j2ksec > h2.j2ksec) {
+    						return 1;
+    					} else {
+    						return -1;
+    					}
+    				}
+    			});
+    		}
+    		result = new HypocenterList(pts);
+		} catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+        }
+    		
+    	return new HypocenterList(pts);
+	}
+
+	/**
+     * Get Hypocenter data -- boundary version
+     * 
+     * @param rid           rank id
+     * @param st            start time
+     * @param et            end time
+     * @param west          west boundary
+     * @param east          east boundary
+     * @param south         south boundary
+     * @param north         north boundary
+     * @param minDepth      minimum depth
+     * @param maxDepth      maximum depth
+     * @param minMag        minimum magnitude
+     * @param maxMag        maximum magnitude
+     * @param minNPhases    minimum number of phases
+     * @param maxNPhases    maximum number of phases
+     * @param minRMS        minimum RMS
+     * @param maxRMS        maximum RMS
+     * @param minHerr       minimum horizontal error
+     * @param maxHerr       maximum horizontal error
+     * @param minVerr       minimum vertical error
+     * @param maxVerr       maximum vertical error
+     * @param rmk           remarks filter
+     * @param minStDst      min distance from closest station
+     * @param maxStDst      max distance from closest station
+     * @param maxGap        max gap filter
+     * @param maxrows       maximum nbr of rows returned
+     * @return list of hypocenter data
+     * @throws UtilException
+     */
+    public void getHypocenterData(int rid, double st, double et, double west, double east, 
+            double south, double north, double minDepth, double maxDepth, double minMag, 
+            double maxMag, Integer minNPhases, Integer maxNPhases, double minRMS, 
+            double maxRMS, double minHerr, double maxHerr, double minVerr, double maxVerr, 
+            String rmk, double minStDst, double maxStDst, double maxGap, int maxrows) throws UtilException {
+                
+        try {
+            
+            database.useDatabase(dbName);
+            
+            // calculate the num of rows to limit the query to
+            int tempmaxrows;
+            if (rid != 0) {
+                tempmaxrows = maxrows;
+            } else {
+                tempmaxrows = maxrows * defaultGetNumberOfRanks();
+            }
+            
+            sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
+            
+            // build the sql
+            sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
+            sql += "       a.ampmag, a.codamag, a.nphases, a.azgap, a.dmin, a.rms, ";
+            sql += "       a.nstimes, a.herr, a.verr, a.magtype, a.rmk, a.eid ";
+            sql += "FROM   hypocenters a, ranks c ";
+            sql += "WHERE  a.rid = c.rid ";
+            sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
+            
+            if (west <= east)
+                sql += "AND a.lon >= ? AND a.lon <= ? ";
+
+            // wrap around date line
+            else
+                sql += "AND (a.lon >= ? OR a.lon <= ?) ";
+                
+            sql += "AND    a.lat     >= ? AND a.lat     <= ? ";
+            sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
+            sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
+            sql += "AND    a.nphases >= ? AND a.nphases <= ? ";
+            sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
+            sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
+            sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
+            sql += "AND    a.dmin    >= ? AND a.dmin    <= ? ";
+            sql += "AND    a.azgap   <= ? ";
+            sql += "AND    a.prefmag IS NOT NULL ";
+            
+            // remarks filtering options
+            if (!rmk.equals("")) {
+                sql += "AND    a.rmk = '" + rmk + "' ";
+            }
+            
+            // BEST AVAILABLE DATA query
+            if (ranks && rid != 0) {
+                sql += "AND    c.rid  = ? ";
+            }
+            
+            sql += "ORDER BY eid ASC";
+            
+            if (ranks && rid == 0) {
+                sql = sql + ", c.rank DESC";
+            }
+            
+            if (maxrows != 0) {
+                sql += " LIMIT " + (tempmaxrows + 1);
+                
+                // If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+                // exceed that number prior to running the full query. This can save a decent amount of time
+                // for large queries.
+                ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
+                ps.setDouble(1, st);
+                ps.setDouble(2, et);
+                ps.setDouble(3, west);
+                ps.setDouble(4, east);
+                ps.setDouble(5, south);
+                ps.setDouble(6, north);
+                ps.setDouble(7, minDepth);
+                ps.setDouble(8, maxDepth);
+                ps.setDouble(9, minMag);
+                ps.setDouble(10, maxMag);
+                ps.setInt(11, minNPhases);
+                ps.setInt(12, maxNPhases);
+                ps.setDouble(13, minRMS);
+                ps.setDouble(14, maxRMS);
+                ps.setDouble(15, minHerr);
+                ps.setDouble(16, maxHerr);
+                ps.setDouble(17, minVerr);
+                ps.setDouble(18, maxVerr);
+                ps.setDouble(19, minStDst);
+                ps.setDouble(20, maxStDst);
+                ps.setDouble(21, maxGap);
+                if (ranks && rid != 0) {
+                    ps.setInt(22, rid);
+                }
+                rs = ps.executeQuery();
+                if (rs.next() && rs.getInt(1) > tempmaxrows)
+                    throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+            }
+            
+            ps = database.getPreparedStatement(sql);
+            ps.setDouble(1, st);
+            ps.setDouble(2, et);
+            ps.setDouble(3, west);
+            ps.setDouble(4, east);
+            ps.setDouble(5, south);
+            ps.setDouble(6, north);
+            ps.setDouble(7, minDepth);
+            ps.setDouble(8, maxDepth);
+            ps.setDouble(9, minMag);
+            ps.setDouble(10, maxMag);
+            ps.setInt(11, minNPhases);
+            ps.setInt(12, maxNPhases);
+            ps.setDouble(13, minRMS);
+            ps.setDouble(14, maxRMS);
+            ps.setDouble(15, minHerr);
+            ps.setDouble(16, maxHerr);
+            ps.setDouble(17, minVerr);
+            ps.setDouble(18, maxVerr);
+            ps.setDouble(19, minStDst);
+            ps.setDouble(20, maxStDst);
+            ps.setDouble(21, maxGap);
+            if (ranks && rid != 0) {
+                ps.setInt(22, rid);
+            }
+            rs = ps.executeQuery();
+            
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+        }
+    }
+	
+    /**
+     * Get Hypocenter data based on a center point and radius.
+     * Solution taken from: https://developers.google.com/maps/articles/phpsqlsearch_v3#findnearsql
+     * 
+     * @param rid           rank id
+     * @param st            start time
+     * @param et            end time
+     * @param minDepth      minimum depth
+     * @param maxDepth      maximum depth
+     * @param minMag        minimum magnitude
+     * @param maxMag        maximum magnitude
+     * @param minNPhases    minimum number of phases
+     * @param maxNPhases    maximum number of phases
+     * @param minRMS        minimum RMS
+     * @param maxRMS        maximum RMS
+     * @param minHerr       minimum horizontal error
+     * @param maxHerr       maximum horizontal error
+     * @param minVerr       minimum vertical error
+     * @param maxVerr       maximum vertical error
+     * @param rmk           remarks filter
+     * @param minStDst      min distance from closest station
+     * @param maxStDst      max distance from closest station
+     * @param maxGap        max gap filter
+     * @param centerLat     latitude of center point
+     * @param centerLon     longitude of center point
+     * @param radius        radius to search within
+     * @param maxrows       maximum nbr of rows returned
+     * @return list of hypocenter data
+     * @throws UtilException
+     */
+	public void getHypocenterData(int rid, double st, double et, double minDepth, 
+	        double maxDepth, double minMag, double maxMag, Integer minNPhases, Integer maxNPhases, 
+	        double minRMS, double maxRMS, double minHerr, double maxHerr, double minVerr, 
+	        double maxVerr, String rmk, double minStDst, double maxStDst, double maxGap, 
+	        double centerLat, double centerLon, double radius, int maxrows) throws UtilException {
+        
+	    try {
+            
+            database.useDatabase(dbName);
+            
+            // calculate the num of rows to limit the query to
+            int tempmaxrows;
+            if (rid != 0) {
+                tempmaxrows = maxrows;
+            } else {
+                tempmaxrows = maxrows * defaultGetNumberOfRanks();
+            }
+            
+            sqlCount = "SELECT COUNT(*) FROM (SELECT 1 ";
+            
+            // build the sql
+            sql  = "SELECT a.j2ksec, a.rid, a.lat, a.lon, a.depth, a.prefmag, ";
+            sql += "       a.ampmag, a.codamag, a.nphases, a.azgap, a.dmin, a.rms, ";
+            sql += "       a.nstimes, a.herr, a.verr, a.magtype, a.rmk, a.eid, ";
+            sql += "       (6371 * acos ( ";
+            sql += "            cos(radians(?))";
+            sql += "            * cos(radians(a.lat))";
+            sql += "            * cos(radians(a.lon) - radians(?))";
+            sql += "            + sin(radians(?))";
+            sql += "            * sin(radians(a.lat))";
+            sql += "       )) AS distance ";
+            sql += "FROM   hypocenters a, ranks c ";
+            sql += "WHERE  a.rid = c.rid ";
+            sql += "AND    a.j2ksec  >= ? AND a.j2ksec  <= ? ";
+            sql += "AND    a.depth   >= ? AND a.depth   <= ? ";
+            sql += "AND    a.prefmag >= ? AND a.prefmag <= ? ";
+            sql += "AND    a.nphases >= ? AND a.nphases <= ? ";
+            sql += "AND    a.rms     >= ? AND a.rms     <= ? ";
+            sql += "AND    a.herr    >= ? AND a.herr    <= ? ";
+            sql += "AND    a.verr    >= ? AND a.verr    <= ? ";
+            sql += "AND    a.dmin    >= ? AND a.dmin    <= ? ";
+            sql += "AND    a.azgap   <= ? ";
+            sql += "AND    a.prefmag IS NOT NULL ";
+            
+            // remarks filtering options
+            if (!rmk.equals("")) {
+                sql += "AND    a.rmk = '" + rmk + "' ";
+            }
+            
+            // BEST AVAILABLE DATA query
+            if (ranks && rid != 0) {
+                sql += "AND    c.rid  = ? ";
+            }
+            
+            sql += "HAVING distance <= ? ";
+            sql += "ORDER BY eid ASC";
+            
+            if (ranks && rid == 0) {
+                sql = sql + ", c.rank DESC";
+            }
+            
+            if (maxrows != 0) {
+                sql += " LIMIT " + (tempmaxrows + 1);
+                
+                // If the dataset has a maxrows paramater, check that the number of requested rows doesn't
+                // exceed that number prior to running the full query. This can save a decent amount of time
+                // for large queries.
+                ps = database.getPreparedStatement(sqlCount + sql.substring(sql.indexOf("FROM")) + ") as T");
+                ps.setDouble(1, centerLat);
+                ps.setDouble(2, centerLon);
+                ps.setDouble(3, centerLat);
+                ps.setDouble(4, st);
+                ps.setDouble(5, et);
+                ps.setDouble(6, minDepth);
+                ps.setDouble(7, maxDepth);
+                ps.setDouble(8, minMag);
+                ps.setDouble(9, maxMag);
+                ps.setInt(10, minNPhases);
+                ps.setInt(11, maxNPhases);
+                ps.setDouble(12, minRMS);
+                ps.setDouble(13, maxRMS);
+                ps.setDouble(14, minHerr);
+                ps.setDouble(15, maxHerr);
+                ps.setDouble(16, minVerr);
+                ps.setDouble(17, maxVerr);
+                ps.setDouble(18, minStDst);
+                ps.setDouble(19, maxStDst);
+                ps.setDouble(20, maxGap);
+                if (ranks && rid != 0) {
+                    ps.setInt(21, rid);
+                    ps.setDouble(22, radius);
+                } else {
+                    ps.setDouble(21, radius);
+                }
+                rs = ps.executeQuery();
+                if (rs.next() && rs.getInt(1) > tempmaxrows)
+                    throw new UtilException("Max rows (" + maxrows + " rows) for data source '" + vdxName + "' exceeded.");
+            }
+            
+            ps = database.getPreparedStatement(sql);
+            ps.setDouble(1, centerLat);
+            ps.setDouble(2, centerLon);
+            ps.setDouble(3, centerLat);
+            ps.setDouble(4, st);
+            ps.setDouble(5, et);
+            ps.setDouble(6, minDepth);
+            ps.setDouble(7, maxDepth);
+            ps.setDouble(8, minMag);
+            ps.setDouble(9, maxMag);
+            ps.setInt(10, minNPhases);
+            ps.setInt(11, maxNPhases);
+            ps.setDouble(12, minRMS);
+            ps.setDouble(13, maxRMS);
+            ps.setDouble(14, minHerr);
+            ps.setDouble(15, maxHerr);
+            ps.setDouble(16, minVerr);
+            ps.setDouble(17, maxVerr);
+            ps.setDouble(18, minStDst);
+            ps.setDouble(19, maxStDst);
+            ps.setDouble(20, maxGap);
+            if (ranks && rid != 0) {
+                ps.setInt(21, rid);
+                ps.setDouble(22, radius);
+            } else {
+                ps.setDouble(21, radius);
+            }
+            rs = ps.executeQuery();
+            
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+        }
 	}
 	
 	/**
