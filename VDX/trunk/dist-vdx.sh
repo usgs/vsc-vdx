@@ -4,30 +4,43 @@
 # /path/to/VDX/lib/vdx.jar
 # alternatively, you can use -cp flag with the path to the vdx.jar file in the java command
 
-JAVA=/path/to/bin/java
-BASE=/path/to/VDX
-LOGDIR=/path/to/log/dir
-LOG=vdx.log
+VDX=/path/to/VDX
+LOG=/path/to/vdx.log
+CLASSPATH=$VDX/lib/vdx.jar
+
+start () {
+  echo "starting vdx ..."
+  cd $VDX
+  java -cp $CLASSPATH -Xmx512M gov.usgs.volcanoes.vdx.server.VDX --noinput > $LOG 2>&1 &
+}
+
+stop () {
+  echo "stopping vdx ..."
+  pkill -f gov.usgs.volcanoes.vdx.server.VDX
+}
+
+status () {
+  pgrep -l -f gov.usgs.volcanoes.vdx.server.VDX
+}
+
 
 case "$1" in
-'start')
-	su - vdx -c "cd $BASE ; java -Xmx256M gov.usgs.vdx.server.VDX --noinput > $LOGDIR/$LOG 2>&1 & "
-	echo "Successfully started VDX"
-        ;;
-
-'stop') 
-	kill `ps -ef | grep gov.usgs.vdx.server.VDX | grep -v grep | awk '{print $2}'` 
-	echo "Successfully stopped VDX"
-        ;;
-
-'restart')
-	$0 stop
-	sleep 2
-	$0 start
-        ;;
-
-*)
-        echo "Usage: $0 { start | stop | restart }"
-        ;;
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 { start|stop|status|restart }"
+    ;;
 esac
+
 exit 0

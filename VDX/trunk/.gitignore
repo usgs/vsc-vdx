@@ -1,0 +1,9 @@
+# Maven Stuff
+target/
+dependency-reduced-pom.xml
+
+# Eclipse
+.settings/
+
+# Other
+.DS_Store
