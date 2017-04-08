@@ -10,7 +10,7 @@
   <fileSets>
     <fileSet>
       <directory>${project.basedir}</directory>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory></outputDirectory>
       <includes>
         <include>README*</include>
         <include>LICENSE*</include>
@@ -21,36 +21,36 @@
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}</directory>
-      <outputDirectory>/lib/</outputDirectory>
+      <outputDirectory>lib</outputDirectory>
       <includes>
         <include>*.jar</include>
       </includes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}/lib/</directory>
-      <outputDirectory>/lib/</outputDirectory>
+      <outputDirectory>lib</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${project.basedir}/perl/</directory>
-      <outputDirectory>/libexec/</outputDirectory>
+      <outputDirectory>libexec</outputDirectory>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}</directory>
-      <outputDirectory>/bin</outputDirectory>
+      <outputDirectory>bin</outputDirectory>
       <excludes>
         <exclude>*/**</exclude>
       </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}</directory>
-      <outputDirectory>/config</outputDirectory>
+      <outputDirectory>config</outputDirectory>
       <excludes>
         <exclude>*/**</exclude>
       </excludes>
     </fileSet>
     <fileSet>
       <directory>${project.build.directory}</directory>
-      <outputDirectory>/log</outputDirectory>
+      <outputDirectory>log</outputDirectory>
       <excludes>
         <exclude>*/**</exclude>
       </excludes>

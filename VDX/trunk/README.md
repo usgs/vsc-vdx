@@ -1,6 +1,6 @@
 # VDX
 ---
-Valve Data Exchange (VDX) is collection of Java command-line applications and services developed for the intended purposes of inserting volcano-monitoring data into and pulling said data out of a database, While a VDX installation is often paired with a Valve3 web application installation, it's not necessary.
+Valve Data Exchange (VDX) is collection of Java command-line applications and services developed for the intended purposes of inserting volcano-monitoring data into and pulling said data out of a database. While a VDX installation is often paired with a Valve3 web application installation, it's not necessary.
 
 ## Installation
 ---
