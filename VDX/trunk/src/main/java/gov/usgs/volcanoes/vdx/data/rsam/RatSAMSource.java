@@ -3,7 +3,7 @@ package gov.usgs.volcanoes.vdx.data.rsam;
 import gov.usgs.math.DownsamplingType;
 import gov.usgs.plot.data.BinaryDataSet;
 import gov.usgs.plot.data.RSAMData;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 
 /**

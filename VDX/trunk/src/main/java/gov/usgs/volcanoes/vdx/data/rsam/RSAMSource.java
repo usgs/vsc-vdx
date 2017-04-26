@@ -1,17 +1,17 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import gov.usgs.math.DownsamplingType;
 import gov.usgs.plot.data.RSAMData;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
 import gov.usgs.volcanoes.vdx.server.TextResult;
-import gov.usgs.winston.Channel;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import gov.usgs.volcanoes.winston.Channel;
 
 /**
  * 
