@@ -1,18 +1,5 @@
 package gov.usgs.volcanoes.vdx.data;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
-import gov.usgs.util.UtilException;
-import gov.usgs.volcanoes.vdx.server.BinaryResult;
-import gov.usgs.volcanoes.vdx.server.RequestResult;
-import gov.usgs.volcanoes.vdx.server.TextResult;
-import gov.usgs.winston.Channel;
-import gov.usgs.winston.db.Channels;
-import gov.usgs.winston.db.Data;
-import gov.usgs.winston.db.WinstonDatabase;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,6 +8,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+
+import gov.usgs.math.DownsamplingType;
+import gov.usgs.plot.data.BinaryDataSet;
+import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.util.UtilException;
+import gov.usgs.volcanoes.vdx.server.BinaryResult;
+import gov.usgs.volcanoes.vdx.server.RequestResult;
+import gov.usgs.volcanoes.vdx.server.TextResult;
+import gov.usgs.volcanoes.winston.Channel;
+import gov.usgs.volcanoes.winston.db.Channels;
+import gov.usgs.volcanoes.winston.db.Data;
+import gov.usgs.volcanoes.winston.db.WinstonDatabase;
 
 /**
  * A base-class for VDX to directly access Winston databases.

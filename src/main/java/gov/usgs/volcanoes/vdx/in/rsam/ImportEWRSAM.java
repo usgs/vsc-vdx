@@ -1,25 +1,5 @@
 package gov.usgs.volcanoes.vdx.in.rsam;
 
-import gov.usgs.earthworm.ImportGeneric;
-import gov.usgs.earthworm.MessageListener;
-import gov.usgs.earthworm.message.Message;
-import gov.usgs.earthworm.message.MessageType;
-import gov.usgs.earthworm.message.TraceBuf;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.CodeTimer;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.CurrentTime;
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
-import gov.usgs.volcanoes.vdx.data.Channel;
-import gov.usgs.volcanoes.vdx.data.SQLDataSourceDescriptor;
-import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
-import gov.usgs.volcanoes.vdx.data.rsam.SQLRSAMDataSource;
-import gov.usgs.winston.in.ew.ChannelStatus;
-import gov.usgs.winston.in.ew.Options;
-import gov.usgs.winston.in.ew.OptionsFilter;
-import gov.usgs.winston.in.ew.TraceBufFilter;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,9 +20,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import cern.colt.matrix.DoubleFactory2D;
-import cern.colt.matrix.DoubleMatrix2D;
-
 import com.martiansoftware.jsap.FlaggedOption;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPResult;
@@ -50,6 +27,28 @@ import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.SimpleJSAP;
 import com.martiansoftware.jsap.Switch;
 import com.martiansoftware.jsap.UnflaggedOption;
+
+import cern.colt.matrix.DoubleFactory2D;
+import cern.colt.matrix.DoubleMatrix2D;
+import gov.usgs.earthworm.ImportGeneric;
+import gov.usgs.earthworm.MessageListener;
+import gov.usgs.earthworm.message.Message;
+import gov.usgs.earthworm.message.MessageType;
+import gov.usgs.earthworm.message.TraceBuf;
+import gov.usgs.plot.data.GenericDataMatrix;
+import gov.usgs.util.CodeTimer;
+import gov.usgs.util.CurrentTime;
+import gov.usgs.util.Log;
+import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.vdx.data.Channel;
+import gov.usgs.volcanoes.vdx.data.SQLDataSourceDescriptor;
+import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
+import gov.usgs.volcanoes.vdx.data.rsam.SQLRSAMDataSource;
+import gov.usgs.volcanoes.winston.in.ew.ChannelStatus;
+import gov.usgs.volcanoes.winston.in.ew.Options;
+import gov.usgs.volcanoes.winston.in.ew.OptionsFilter;
+import gov.usgs.volcanoes.winston.in.ew.TraceBufFilter;
 
 /**
  * The new ImportEWRSAM.

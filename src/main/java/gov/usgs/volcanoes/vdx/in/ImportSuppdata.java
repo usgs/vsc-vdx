@@ -156,7 +156,7 @@ public class ImportSuppdata {
 
 			// Build map of channels
 			channelMap = new HashMap<String, Integer>();
-			for ( gov.usgs.winston.Channel ch: vds.getChannels().getChannels() )
+			for ( gov.usgs.volcanoes.winston.Channel ch: vds.getChannels().getChannels() )
 				channelMap.put( ch.getCode(), ch.getSID() );
 			logger.info( "Channels mapped: " + channelMap.size() );
 			
