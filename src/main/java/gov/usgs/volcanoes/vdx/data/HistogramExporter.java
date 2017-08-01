@@ -56,7 +56,6 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
       row[1] = myHistogram.binHeight(expIndex);
       expIndex++;
     } else {
-      System.out.println("PADDING!!!");
       row[1] = 0.0;
     }
 

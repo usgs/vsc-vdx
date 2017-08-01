@@ -123,15 +123,24 @@
                   </includes>
                 </filter>
                 <filter>
-                  <artifact>mysql:mysql-connector-java</artifact>
+                  <artifact>gov.usgs.volcanoes:volcano-core</artifact>
                   <includes>
-                    <include>**</include>
+                    <include>gov/usgs/volcanoes/**</include>
                   </includes>
                 </filter>
                 <filter>
-                  <artifact>org.apache:log4j</artifact>
+                  <artifact>gov.usgs.volcanoes:winston</artifact>
                   <includes>
-                    <include>org/apache/log4j/**</include>
+                    <include>gov/usgs/volcanoes/winston/**</include>
+                    <include>edu/iris/**</include>
+                    <include>org/apache/**</include>
+                    <include>org/slf4j/**</include>
+                  </includes>
+                </filter>
+                <filter>
+                  <artifact>mysql:mysql-connector-java</artifact>
+                  <includes>
+                    <include>**</include>
                   </includes>
                 </filter>
               </filters>
@@ -142,10 +151,7 @@
                   <include>gov.usgs.volcanoes:winston</include>
                   <include>colt:colt</include>
                   <include>com.martiansoftware:jsap</include>
-                  <include>commons-collections:commons-collections</include>
-                  <include>edu.iris:JavaSeedLite</include>
                   <include>mysql:mysql-connector-java</include>
-                  <include>org.apache:log4j</include>
                 </includes>
               </artifactSet>
             </configuration>
@@ -214,24 +220,9 @@
       <version>2.1</version>
     </dependency>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>3.2.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.iris</groupId>
-      <artifactId>JavaSeedLite</artifactId>
-      <version>1.0</version>
-    </dependency>
-    <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
-      <version>5.1.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.13</version>
+      <version>5.1.5</version>
     </dependency>
   </dependencies>
 </project>
