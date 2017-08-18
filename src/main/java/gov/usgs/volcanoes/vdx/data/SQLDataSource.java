@@ -30,7 +30,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  * 
  * TODO: use Statements for low rate queries.
  * 
- * @author Dan Cervelli, Loren Antolik
+ * @author Dan Cervelli, Loren Antolik, Bill Tollett
  */
 abstract public class SQLDataSource implements DataSource {
 	
@@ -147,7 +147,7 @@ abstract public class SQLDataSource implements DataSource {
 		if(ds.equals(DownsamplingType.NONE))
 			return sql;
 		else if(ds.equals(DownsamplingType.DECIMATE))
-			return "SELECT * FROM(SELECT fullQuery.*, @row := @row+1 AS rownum FROM (" + sql + ") fullQuery, (SELECT @row:=0) r) ranked WHERE rownum % " + dsInt + " = 1";
+			return "SELECT * FROM(SELECT fullQuery.*, @row := @row+1 AS rownum FROM (" + sql.substring(0, sql.toUpperCase().lastIndexOf("ORDER BY") - 1) + ") fullQuery, (SELECT @row:=0) r ORDER BY 1 ASC) ranked WHERE rownum % " + dsInt + " = 1";
 		else if (ds.equals(DownsamplingType.MEAN)){
 			String sql_select_clause = sql.substring(6, sql.toUpperCase().indexOf("FROM")-1);
 			String sql_from_where_clause = sql.substring(sql.toUpperCase().indexOf("FROM")-1, sql.toUpperCase().lastIndexOf("ORDER BY")-1);
