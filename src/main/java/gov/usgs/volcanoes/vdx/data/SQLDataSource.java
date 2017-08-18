@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * SQL data source. Store reference to VDX database and provide methods to init default database
  * structure.
- * 
+ *
  * @author Dan Cervelli
  * @author Loren Antolik
  * @author Bill Tollett
