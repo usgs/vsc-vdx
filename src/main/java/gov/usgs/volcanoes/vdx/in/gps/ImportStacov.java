@@ -343,7 +343,7 @@ public class ImportStacov implements Importer {
 				}
 				
 				// insert the solution into the db
-				sqlDataSource.insertSolution(sid, channel.getCID(), spt.dp);
+				sqlDataSource.insertSolution(sid, channel.getCId(), spt.dp);
 			}
 
 		} catch (Exception e) {

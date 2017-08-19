@@ -119,7 +119,7 @@ public class TiltVelocity {
                     double threshold, double highThreshold, double residual) {
         DecimalFormat decimalOut = new DecimalFormat("#####.###");
         
-        int cid             = sqlDataSource.defaultGetChannel(channel, false).getCID();
+        int cid             = sqlDataSource.defaultGetChannel(channel, false).getCId();
         TiltData td         = (TiltData)((BinaryResult)sqlDataSource.getTiltData(cid, 0, start, end, 0, DownsamplingType.NONE, 0)).getData();
         DoubleMatrix2D data = DoubleFactory2D.dense.compose(new DoubleMatrix2D[][] {{
             td.getData().viewPart(0, 0, td.getData().rows(), 1),

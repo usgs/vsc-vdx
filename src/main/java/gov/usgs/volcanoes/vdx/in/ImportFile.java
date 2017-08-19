@@ -303,8 +303,8 @@ public class ImportFile extends Import implements Importer {
 						if (tid == 1) {
 							tid	= sqlDataSource.defaultInsertTranslation(channel.getCode(), gdm);
 						}							
-						if (tid != sqlDataSource.defaultGetChannelTranslationID(channel.getCode())) {
-							sqlDataSource.defaultUpdateChannelTranslationID(channel.getCode(), tid);
+						if (tid != sqlDataSource.defaultGetChannelTranslationId(channel.getCode())) {
+							sqlDataSource.defaultUpdateChannelTranslationId(channel.getCode(), tid);
 						}
 					}
 				}

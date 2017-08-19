@@ -113,7 +113,7 @@ public class ImportMetadata {
 		if ( ds != null ) {
 			channelMap = new HashMap<String, Integer>();
 			for ( Channel ch: ds.defaultGetChannelsList(false) )
-				channelMap.put( ch.getCode(), ch.getCID() );
+				channelMap.put( ch.getCode(), ch.getCId() );
 			logger.info( "Channels mapped: " + channelMap.size() );
 			
 			columnMap = new HashMap<String, Integer>();
