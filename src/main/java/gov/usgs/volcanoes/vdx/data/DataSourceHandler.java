@@ -1,6 +1,11 @@
 package gov.usgs.volcanoes.vdx.data;
 
+<<<<<<< HEAD
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
+=======
+import gov.usgs.util.ConfigFile;
+import gov.usgs.util.Log;
+>>>>>>> Checkstyle update for the gov.usgs.volcanoes.vdx.data namespace. A few method names changed, resulting in updates to a few classes outside of the gov.usgs.volcanoes.vdx.data namespace.
 import gov.usgs.volcanoes.vdx.ExportConfig;
 import java.util.ArrayList;
 import java.util.HashMap;

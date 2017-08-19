@@ -11,7 +11,6 @@ import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.db.VDXDatabase;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
 import gov.usgs.volcanoes.vdx.server.TextResult;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
