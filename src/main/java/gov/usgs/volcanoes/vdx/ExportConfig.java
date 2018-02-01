@@ -1,14 +1,15 @@
 package gov.usgs.volcanoes.vdx;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Representation of export configuration options.
@@ -16,13 +17,13 @@ import java.util.logging.Logger;
  * @author Scott Hunter
  */
 public class ExportConfig {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExportConfig.class);
 	private int exportable;						// -1 = undef, 1 = yes, 0 = no
 	private int numCommentLines;				// # comment lines; -1 = undef
 	private TreeMap<Integer, String> commentLine;	// map index -> comment line
 	private int[] width;						// display widths (int, dec)
 	private boolean closed;
-	protected Logger logger;
 	private String source;
 	
 	/**
@@ -32,7 +33,6 @@ public class ExportConfig {
 	 */
 	public ExportConfig( String source, ConfigFile config ) {
 		closed = false;
-		logger = Log.getLogger("gov.usgs.util.ExportConfig");
 		this.source = source;
 		
 		// is exporting allowed?
@@ -53,7 +53,7 @@ public class ExportConfig {
 					throw new Exception("exportCommentLines out of range: "+numLines);
 				numCommentLines = numLines;
 			} catch (Exception e) {
-				logger.warning( "Error parsing "+source+"exportCommentLines: " + str );
+				LOGGER.warn("Error parsing {} exportCommentLines: {}", source, str);
 			}
 		
 		// comment lines
@@ -74,7 +74,7 @@ public class ExportConfig {
 					else
 						commentLine.put(i, text);
 				} catch (Exception e) {
-					logger.warning( "Error parsing index: " + e); 
+					LOGGER.warn("Error parsing index: ", e);
 				}
 			}
 
@@ -102,7 +102,7 @@ public class ExportConfig {
 					throw new Exception(edwName+ " export data width sum ("+i+") > 23; ignored" );
 				}
 			} catch (Exception e) {
-				logger.warning( "Error parsing exportDataWidth; ignoring: " + e );
+				LOGGER.warn("Error parsing exportDataWidth; ignoring: ", e);
 			}
 	}
 	
@@ -118,7 +118,6 @@ public class ExportConfig {
 	 */
 	public ExportConfig( List<String> src_text ) {
 		closed = false;
-		logger = Log.getLogger("gov.usgs.util.ExportConfig");
 		Iterator<String> it = src_text.iterator();
 		exportable = Integer.parseInt(it.next());
 		int[] fw = new int[2];

@@ -1,26 +1,28 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.math.BinSize;
-import gov.usgs.plot.data.RSAMData;
-import gov.usgs.util.Log;
+import gov.usgs.volcanoes.core.math.BinSize;
+import gov.usgs.volcanoes.core.data.RSAMData;
 import hep.aida.ref.Histogram1D;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class that deals with precomputed RSAM data.  The data are stored in a 2-D matrix, 
  * the first column is the time (j2ksec), the second is the data.
  *
  * @author Tom Parker
+ * @author Bill Tollett
  */
 public class EWRSAMData extends RSAMData
 {
-	protected final static Logger logger = Log.getLogger("gov.usgs.volcanoes.vdx.data.rsam.EWRSAMData"); 
+	protected final static Logger LOGGER = LoggerFactory.getLogger(EWRSAMData.class);
 	protected static final int MAX_BINS = 1000000;
 	public DoubleMatrix2D events;
 
@@ -53,7 +55,7 @@ public class EWRSAMData extends RSAMData
 				for (int j = 0; j < cols; j++)
 					events.setQuick(i, j, d[j]);
 			}
-			logger.info("Events is " + events.size());
+			LOGGER.info("Events is {}", events.size());
 		}
 	}
 
@@ -138,7 +140,7 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			logger.info(":: FOUND NO VALUES IN " + bb.capacity());
+			LOGGER.info(":: FOUND NO VALUES IN {}", bb.capacity());
 		}
 		
 		rows = bb.getInt();
@@ -154,7 +156,7 @@ public class EWRSAMData extends RSAMData
 		}
 		else
 		{
-			logger.info(":: FOUND NO EVENTS");
+			LOGGER.info(":: FOUND NO EVENTS");
 		}
 	}
 	
@@ -177,11 +179,11 @@ public class EWRSAMData extends RSAMData
 		System.err.println("Entering ew hist");
 		if (events == null || events.size() == 0)
 		{
-			logger.info("No events");
+			LOGGER.info("No events");
 			return null;
 		}
 
-		logger.info("Filling histogram with " + events.size() + " points");
+		LOGGER.info("Filling histogram with {} points", events.size());
 
 		Histogram1D hist = new Histogram1D("", getHistogramAxis(bin));
 		

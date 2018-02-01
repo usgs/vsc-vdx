@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.data.wave;
 
-import gov.usgs.plot.data.Wave;
-import gov.usgs.plot.render.wave.SliceWaveRenderer;
+import gov.usgs.volcanoes.core.data.Wave;
+import gov.usgs.volcanoes.core.legacy.plot.render.wave.SliceWaveRenderer;
 import gov.usgs.volcanoes.vdx.data.Exportable;
 
 

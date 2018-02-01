@@ -1,9 +1,9 @@
 package gov.usgs.volcanoes.vdx.data.generic.fixed;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
@@ -13,7 +13,9 @@ import gov.usgs.volcanoes.vdx.server.TextResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for Generic Fixed Data
@@ -21,7 +23,9 @@ import java.util.logging.Level;
  * @author Dan Cervelli, Loren Antolik
  */
 public class SQLGenericFixedDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLGenericFixedDataSource.class);
+
 	public final String DATABASE_NAME	= "genericfixed";
 	public final boolean channels		= true;
 	public final boolean translations	= true;
@@ -100,7 +104,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 		
 		try {
 			defaultCreateDatabase(channels, translations, channelTypes, ranks, columns, menuColumns);			
-			logger.log(Level.INFO, "SQLGenericFixedDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+			LOGGER.info("SQLGenericFixedDataSource.createDatabase({}_{}) succeeded.",
+					database.getDatabasePrefix(), dbName);
 			return true;
 			
 			/*
@@ -114,7 +119,8 @@ public class SQLGenericFixedDataSource extends SQLDataSource implements DataSour
 			*/
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGenericFixedDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") failed.", e);
+			LOGGER.error("SQLGenericFixedDataSource.createDatabase({}_{}) failed.",
+					database.getDatabasePrefix(), dbName, e);
 		}
 		
 		return false;

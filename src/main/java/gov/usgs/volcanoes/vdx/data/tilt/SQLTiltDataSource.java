@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.data.tilt;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSource;
@@ -14,14 +14,20 @@ import gov.usgs.volcanoes.vdx.server.TextResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for Tilt Data
  *
- * @author Dan Cervelli, Loren Antolik
+ * @author Dan Cervelli
+ * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class SQLTiltDataSource extends SQLDataSource implements DataSource {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLTiltDataSource.class);
 	
 	public static final String DATABASE_NAME	= "tilt";
 	public static final boolean channels		= true;
@@ -144,7 +150,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			return true;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.createDatabase() failed.", e);
+			LOGGER.error("SQLTiltDataSource.createDatabase() failed.", e);
 		}
 		
 		return false;
@@ -359,7 +365,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			result = new BinaryResult(new TiltData(pts));
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getTiltData()", e);
+			LOGGER.error("SQLTiltDataSource.getTiltData()", e);
 		}
 		return result;
 	}
@@ -381,7 +387,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getAzimuths() failed.", e);
+			LOGGER.error("SQLTiltDataSource.getAzimuths() failed.", e);
 		}
 
 		return result;
@@ -404,7 +410,7 @@ public class SQLTiltDataSource extends SQLDataSource implements DataSource {
 			result = rs.getDouble(1);
 			rs.close();
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTiltDataSource.getNominalAzimuth() failed.", e);
+			LOGGER.error("SQLTiltDataSource.getNominalAzimuth() failed.", e);
 		}
 		return result;
 	}

@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSourceDescriptor;
@@ -20,8 +20,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Import metadata files.
@@ -31,9 +32,9 @@ import java.util.logging.Logger;
  */
 public class ImportMetadata {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ImportMetadata.class);
   private static Set<String> flags;
   private static Set<String> keys;
-  private Logger logger;
   private Map<String, Integer> channelMap;
   private Map<String, Integer> columnMap;
   private Map<String, Integer> rankMap;
@@ -54,9 +55,7 @@ public class ImportMetadata {
    */
   public void initialize(String importerClass, String configFile) {
 
-    // initialize the logger for this importer
-    logger = Logger.getLogger(importerClass);
-    logger.info("ImportMetadata.initialize() succeeded.");
+    LOGGER.info("ImportMetadata.initialize() succeeded.");
 
     // process the config file
     processConfigFile(configFile);
@@ -96,7 +95,7 @@ public class ImportMetadata {
 
     SQLDataSourceDescriptor dsd = sqlDataSourceHandler.getDataSourceDescriptor(source);
     if (dsd == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+      LOGGER.error("skipping: {} (datasource is invalid)", pathname);
       return;
     }
     SQLDataSource ds = null;
@@ -107,7 +106,7 @@ public class ImportMetadata {
         ds = dsd.getSQLDataSource();
       }
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Problem getting datasource");
+      LOGGER.error("Problem getting datasource");
     }
 
     // Build Channel and ( if appropriate) column & rank maps
@@ -120,13 +119,13 @@ public class ImportMetadata {
       for (Channel ch : ds.defaultGetChannelsList(false)) {
         channelMap.put(ch.getCode(), ch.getCId());
       }
-      logger.info("Channels mapped: " + channelMap.size());
+      LOGGER.info("Channels mapped: {}", channelMap.size());
 
       columnMap = new HashMap<String, Integer>();
       for (Column col : ds.defaultGetColumns(true, ds.getMenuColumnsFlag())) {
         columnMap.put(col.name, col.idx);
       }
-      logger.info("Columns mapped: " + columnMap.size());
+      LOGGER.info("Columns mapped: {}", columnMap.size());
 
       rankMap = new HashMap<String, Integer>();
       for (String rk : ds.defaultGetRanks()) {
@@ -137,7 +136,7 @@ public class ImportMetadata {
           defaultRank = id;
         }
       }
-      logger.info("Ranks mapped: " + rankMap.size());
+      LOGGER.info("Ranks mapped: {}", rankMap.size());
       lineLen1 = 5;
       lineLen2 = 6;
     } else {
@@ -145,25 +144,25 @@ public class ImportMetadata {
       try {
         vds = (VDXSource) vdsd.getDataSource();
         if (vds == null) {
-          logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+          LOGGER.error("skipping: {} (datasource is invalid)", pathname);
           return;
         }
       } catch (Exception e2) {
-        logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+        LOGGER.error("skipping: {} (datasource is invalid)", pathname);
         return;
       }
       channelMap = new HashMap<String, Integer>();
       for (gov.usgs.volcanoes.winston.Channel ch : vds.getChannels().getChannels()) {
         channelMap.put(ch.toString(), ch.sid);
       }
-      logger.info("Channels mapped: " + channelMap.size());
+      LOGGER.info("Channels mapped: " + channelMap.size());
 
       lineLen1 = lineLen2 = 4;
     }
 
     ResourceReader rr = ResourceReader.getResourceReader(pathname);
     if (rr == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (resource is invalid)");
+      LOGGER.error("skipping: {} (resource is invalid)", pathname);
       return;
     }
     // move to the first line in the file
@@ -172,11 +171,11 @@ public class ImportMetadata {
 
     // check that the file has data
     if (line == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (resource is empty)");
+      LOGGER.error("skipping: {} (resource is empty)", pathname);
       return;
     }
 
-    logger.info("importing: " + filename);
+    LOGGER.info("importing: " + filename);
 
     MetaDatum md        = new MetaDatum();
     int success         = 0;
@@ -189,7 +188,7 @@ public class ImportMetadata {
       // First, we split it by quotes
       String[] quoteParts = line.split("'", -1);
       if (quoteParts.length % 2 != 1) {
-        logger.warning("Aborting import of line " + lineNumber + ", mismatched quotes");
+        LOGGER.warn("Aborting import of line {}, mismatched quotes", lineNumber);
         continue;
       }
       // Next, walk through those parts, splitting those outside of matching quotes by comma
@@ -203,7 +202,7 @@ public class ImportMetadata {
         if (j == 0) { // section before first quote
           middle = false;
           if (parts.length > 1 && parts[0].trim().length() == 0) {
-            logger.warning("Aborting import of line " + lineNumber + ", leading comma");
+            LOGGER.warn("Aborting import of line {}, leading comma", lineNumber);
             ok = false;
             break;
           }
@@ -212,7 +211,7 @@ public class ImportMetadata {
         if (j == quoteParts.length - 1) { // section after last quote
           middle = false;
           if (parts.length > 1 && parts[parts.length - 1].trim().length() == 0) {
-            logger.warning("Aborting import of line " + lineNumber + ", trailing comma");
+            LOGGER.warn("Aborting import of line " + lineNumber + ", trailing comma", lineNumber);
             ok = false;
             break;
           }
@@ -220,20 +219,17 @@ public class ImportMetadata {
         }
         if (middle) {
           if (parts.length == 1) {
-            logger.warning(
-                "Aborting import of line " + lineNumber + ", missing comma between quotes");
+            LOGGER.warn("Aborting import of line {}, missing comma between quotes", lineNumber);
             ok = false;
             break;
           }
           if (parts[0].trim().length() != 0) {
-            logger
-                .warning("Aborting import of line " + lineNumber + ", missing comma after a quote");
+            LOGGER.warn("Aborting import of line {}, missing comma after a quote", lineNumber);
             ok = false;
             break;
           }
           if (parts[parts.length - 1].trim().length() != 0) {
-            logger.warning(
-                "Aborting import of line " + lineNumber + ", missing comma before a quote");
+            LOGGER.warn("Aborting import of line {}, missing comma before a quote", lineNumber);
             ok = false;
             break;
           }
@@ -241,7 +237,7 @@ public class ImportMetadata {
         int k;
         for (k = k1; ok && k < k2; k++) {
           if (valueArrayLength == lineLen2) {
-            logger.warning("Aborting import of line " + lineNumber + ", too many elements");
+            LOGGER.warn("Aborting import of line {}, too many elements", lineNumber);
             ok = false;
             break;
           }
@@ -249,7 +245,7 @@ public class ImportMetadata {
         }
         if (j + 1 < quoteParts.length) {
           if (valueArrayLength == lineLen2) {
-            logger.warning("Aborting import of line " + lineNumber + ", too many elements");
+            LOGGER.warn("Aborting import of line {}, too many elements", lineNumber);
             ok = false;
             break;
           }
@@ -262,22 +258,20 @@ public class ImportMetadata {
 
       // Validate & unmap arguments
       if (!(valueArrayLength == lineLen1 || valueArrayLength == lineLen2)) {
-        logger.warning("Aborting import of line " + lineNumber + ", wrong number of elements");
+        LOGGER.warn("Aborting import of line {}, wrong number of elements", lineNumber);
         continue;
       }
       try {
         md.cid = channelMap.get(valueArray[1].trim());
       } catch (Exception e) {
-        logger.warning(
-            "Aborting import of line " + lineNumber + ", unknown channel: " + valueArray[1]);
+        LOGGER.warn("Aborting import of line {}, unknown channel: {}", lineNumber, valueArray[1]);
         continue;
       }
       if (ds != null) {
         try {
           md.colid = columnMap.get(valueArray[4].trim());
         } catch (Exception e) {
-          logger.warning(
-              "Aborting import of line " + lineNumber + ", unknown column: " + valueArray[4]);
+          LOGGER.warn("Aborting import of line {}, unknown column: {}", lineNumber, valueArray[4]);
           continue;
         }
         if (valueArrayLength == lineLen1) {
@@ -286,8 +280,7 @@ public class ImportMetadata {
           try {
             md.rid = rankMap.get(valueArray[5].trim());
           } catch (Exception e) {
-            logger.warning(
-                "Aborting import of line " + lineNumber + ", unknown rank: " + valueArray[5]);
+            LOGGER.warn("Aborting import of line {}, unknown rank: {}", lineNumber, valueArray[5]);
             continue;
           }
         }
@@ -300,7 +293,7 @@ public class ImportMetadata {
       try {
         md.cmid = Integer.parseInt(valueArray[0]);
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber + ", unknown id: " + valueArray[0]);
+        LOGGER.warn("Aborting import of line {}, unknown id: {}", lineNumber, valueArray[0]);
         continue;
       }
 
@@ -318,12 +311,12 @@ public class ImportMetadata {
           vds.updateMetaDatum(md);
         }
       } catch (Exception e) {
-        logger.warning("Failed import of line " + lineNumber + ", db failure: " + e);
+        LOGGER.warn("Failed import of line {}, db failure: ", lineNumber, e);
         continue;
       }
       success++;
     }
-    logger.info("" + success + " of " + lineNumber + " lines successfully processed");
+    LOGGER.info("" + success + " of " + lineNumber + " lines successfully processed");
   }
 
   /**

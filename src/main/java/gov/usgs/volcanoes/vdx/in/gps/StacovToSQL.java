@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.in.gps;
 
-import gov.usgs.proj.Projection;
+import gov.usgs.volcanoes.core.math.proj.Projection;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.awt.geom.Point2D;

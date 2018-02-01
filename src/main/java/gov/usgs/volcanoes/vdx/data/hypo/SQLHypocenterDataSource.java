@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.data.hypo;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.SelectOption;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
@@ -16,7 +16,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for Hypocenter Data
@@ -24,7 +26,9 @@ import java.util.logging.Level;
  * @author Dan Cervelli, Loren Antolik
  */
 public class SQLHypocenterDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLHypocenterDataSource.class);
+
 	public static final String DATABASE_NAME	= "hypocenters";
 	public static final boolean channels		= false;
 	public static final boolean translations	= false;
@@ -174,12 +178,14 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 				ps.execute();
 			}
 			
-			logger.log(Level.INFO, "SQLHypocenterDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+			LOGGER.info("SQLHypocenterDataSource.createDatabase({}_{}) succeeded.",
+					database.getDatabasePrefix(), dbName);
 			
 			return true;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLHypocenterDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") failed.", e);
+			LOGGER.error("SQLHypocenterDataSource.createDatabase({}_{}) failed.",
+					database.getDatabasePrefix(), dbName, e);
 		}
 		return false;
 	}
@@ -354,7 +360,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
     		}
     		result = new HypocenterList(pts);
 		} catch (SQLException e) {
-            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+            LOGGER.error("SQLHypocenterDataSource.getHypocenterData() failed.", e);
         }
     		
     	return new HypocenterList(pts);
@@ -516,7 +522,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
             rs = ps.executeQuery();
             
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+            LOGGER.error("SQLHypocenterDataSource.getHypocenterData() failed.", e);
         }
     }
 	
@@ -679,7 +685,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
             rs = ps.executeQuery();
             
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "SQLHypocenterDataSource.getHypocenterData() failed.", e);
+            LOGGER.error("SQLHypocenterDataSource.getHypocenterData() failed.", e);
         }
 	}
 	
@@ -724,7 +730,7 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
 			result = ps.executeUpdate();
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLHypocenterDataSource.insertHypocenter() failed.", e);
+			LOGGER.error("SQLHypocenterDataSource.insertHypocenter() failed.", e);
 		}
 		return result;
 	}

@@ -1,12 +1,13 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.Command;
-import gov.usgs.net.NetTools;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.net.Command;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.apache.log4j.Level;
 
 /**
  * <p>
@@ -44,7 +45,7 @@ abstract public class BaseCommand implements Command
 	public void sendError(String msg, String cmd, SocketChannel channel)
 	{
 		netTools.writeString("error: " + msg + "\n", channel);
-		handler.log(Level.FINE, String.format("[%s] error: %s", cmd, msg), channel);
+		handler.log(Level.DEBUG, String.format("[%s] error: %s", cmd, msg), channel);
 	}
 	
 	/**
@@ -58,6 +59,6 @@ abstract public class BaseCommand implements Command
 		if (ci == -1)
 			return;
 		String paramString = cmd.substring(ci + 1);
-		inParams = Util.stringToMap(paramString);
+		inParams = StringUtils.stringToMap(paramString);
 	}
 }

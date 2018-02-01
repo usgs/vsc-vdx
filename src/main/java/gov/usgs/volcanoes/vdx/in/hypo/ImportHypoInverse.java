@@ -1,9 +1,10 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
@@ -24,16 +25,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Import HypoInverse files
  *  
  * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class ImportHypoInverse implements Importer {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportHypoInverse.class);
 	public ResourceReader rr;
 	
 	public static Set<String> flags;
@@ -101,9 +104,7 @@ public class ImportHypoInverse implements Importer {
 	public String defaultColumns;
 	
 	public String importerType = "hypocenters";
-	
-	public Logger logger;
-	
+
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
@@ -121,8 +122,7 @@ public class ImportHypoInverse implements Importer {
 	public void initialize(String importerClass, String configFile, boolean verbose) {
 		
 		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportHypoInverse.initialize() succeeded.");
+		LOGGER.info("ImportHypoInverse.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -141,19 +141,19 @@ public class ImportHypoInverse implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -172,26 +172,26 @@ public class ImportHypoInverse implements Importer {
 		// lookup the data source from the list that is in vdxSources.config
 		sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 		if (sqlDataSourceDescriptor == null) {
-			logger.log(Level.SEVERE, dataSource + " sql data source does not exist in vdxSources.config");
+			LOGGER.error("{} sql data source does not exist in vdxSources.config", dataSource);
 		}
 				
 		// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 		sqlDataSource	= (SQLHypocenterDataSource)sqlDataSourceDescriptor.getSQLDataSource();
 		
 		if (!sqlDataSource.getType().equals(importerType)) {
-			logger.log(Level.SEVERE, "dataSource not a " + importerType + " data source");
+			LOGGER.error("dataSource not a {} data source", importerType);
 			System.exit(-1);
 		}
 		
 		// information related to the time stamps
-		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyyMMddHHmmssSS"));
-		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
+		dateIn	= new SimpleDateFormat(StringUtils.stringToString(params.getString("timestamp"), "yyyyMMddHHmmssSS"));
+		dateIn.setTimeZone(TimeZone.getTimeZone(StringUtils.stringToString(params.getString("timezone"), "GMT")));
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "Raw Data");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
 		// create rank entry
@@ -201,7 +201,7 @@ public class ImportHypoInverse implements Importer {
 				tempRank = sqlDataSource.defaultInsertRank(rank);
 			}
 			if (tempRank == null) {
-				logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
+				LOGGER.error("invalid rank for dataSource {}", dataSource);
 				System.exit(-1);
 			}
 			rid	= tempRank.getId();
@@ -235,7 +235,7 @@ public class ImportHypoInverse implements Importer {
 			// check that the file exists
 			rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
+				LOGGER.error("skipping: {} (resource is invalid)", filename);
 				return;
 			}
 			
@@ -245,11 +245,11 @@ public class ImportHypoInverse implements Importer {
 			
 			// check that the file has data
 			if (line == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is empty)");
+				LOGGER.error("skipping: {} (resource is empty)", filename);
 				return;
 			}
 			
-			logger.log(Level.INFO, "importing: " + filename);
+			LOGGER.info("importing: {}", filename);
 
 			while (line != null) {
 				
@@ -261,9 +261,9 @@ public class ImportHypoInverse implements Importer {
 				try {
 					String timestamp	= line.substring(0,16) + "0";
 					date				= dateIn.parse(timestamp);
-					j2ksec				= Util.dateToJ2K(date);
+					j2ksec				= J2kSec.fromDate(date);
 				} catch (ParseException e) {
-					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Timestamp not valid.");					
+					LOGGER.error("skipping: line number {}.  Timestamp not valid.", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
@@ -271,7 +271,7 @@ public class ImportHypoInverse implements Importer {
 				// EID
 				eid			= line.substring(136, 146).trim();
 				if (eid.trim().length() == 0) {
-					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Event ID not valid.");					
+					LOGGER.error("skipping: line number {}.  Event ID not valid.", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
@@ -296,7 +296,7 @@ public class ImportHypoInverse implements Importer {
 				try {
 					depth		= Double.parseDouble(line.substring(31, 34).trim() + "." + line.substring(34, 36).trim());
 				} catch (NumberFormatException e) {
-					logger.log(Level.SEVERE, "skipping: line number " + lineNumber + ".  Depth not valid.");					
+					LOGGER.error("skipping: line number {}.  Depth not valid.", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
@@ -386,7 +386,7 @@ public class ImportHypoInverse implements Importer {
 				Hypocenter hc	= new Hypocenter(j2ksec, eid, rid, lat, lon, depth, prefmag, ampmag, codamag, 
 						nphases, azgap, dmin, rms, nstimes, herr, verr, magtype, rmk);
 				result = sqlDataSource.insertHypocenter(hc);				
-				logger.log(Level.INFO, result + ":" + hc.toString());
+				LOGGER.info("{}:{}", result, hc.toString());
 				
 				// move to the next line in the file
 				line	= rr.nextLine();
@@ -395,7 +395,7 @@ public class ImportHypoInverse implements Importer {
 			rr.close();
 				
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "ImportHypoInverse.process(" + filename + ") failed.", e);
+			LOGGER.error("ImportHypoInverse.process({}) failed.", filename, e);
 		}
 	}
 	

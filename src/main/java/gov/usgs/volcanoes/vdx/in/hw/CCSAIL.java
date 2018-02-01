@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hw;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.text.*;
 import java.util.*;
 
@@ -98,18 +98,18 @@ public class CCSAIL implements Device {
 	 * Initialize CCSAIL Device
 	 */
 	public void initialize(ConfigFile params) throws Exception {
-		id			= Util.stringToString(params.getString("id"), "0");
-		timestamp	= Util.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
-		timezone	= Util.stringToString(params.getString("timezone"), "GMT");
-		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
-		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
-		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
-		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
-		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		nullfield	= Util.stringToString(params.getString("nullfield"), "");
-		pollhist	= Util.stringToBoolean(params.getString("pollhist"), true);
-		fields		= Util.stringToString(params.getString("fields"), "");
-		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
+		id			= StringUtils.stringToString(params.getString("id"), "0");
+		timestamp	= StringUtils.stringToString(params.getString("timestamp"), "yy/MM/dd HH:mm:ss");
+		timezone	= StringUtils.stringToString(params.getString("timezone"), "GMT");
+		timeout		= StringUtils.stringToInt(params.getString("timeout"), 60000);
+		maxtries	= StringUtils.stringToInt(params.getString("maxtries"), 2);
+		maxlines	= StringUtils.stringToInt(params.getString("maxlines"), 30);
+		samplerate	= StringUtils.stringToInt(params.getString("samplerate"), 60);
+		delimiter	= StringUtils.stringToString(params.getString("delimiter"), ",");
+		nullfield	= StringUtils.stringToString(params.getString("nullfield"), "");
+		pollhist	= StringUtils.stringToBoolean(params.getString("pollhist"), true);
+		fields		= StringUtils.stringToString(params.getString("fields"), "");
+		acquisition	= Acquisition.fromString(StringUtils.stringToString(params.getString("acquisition"), "poll"));
 		
 		// validation
 		if (fields.length() == 0) {
@@ -155,8 +155,7 @@ public class CCSAIL implements Device {
      * Generates a CCSAIL command string for the <code>DA</code> command.
      * <i>Request nn data sets logged on or after the indicated start date-time value</i>
      *
-     * @param startDateL the start date for the polled values as a <code>long</code>
-     * @param samplesInRequest the number of date sets which are polled
+     * @param startDate the start date for the polled values as a <code>long</code>
      *
      * @exception Exception if <code>samplesInRequest</code> are not in range 1,...,9999
      * @return the complete CCSAIL command string
@@ -196,7 +195,7 @@ public class CCSAIL implements Device {
      * parses a CCSAIL command, checks it's components and returns the MSG part.
      * The CCSAIL command can be preceded by an CR/LF
      *
-     * @param str the CCSAIL command string which should be parsed
+     * @param message the CCSAIL command string which should be parsed
      * @param ignoreWrongAddress if true, a wrong ADR in the message is not considered as an error
      *        this happens e.g. for timeset, changeGain commands (not for get data commands)
      *
@@ -352,7 +351,6 @@ public class CCSAIL implements Device {
      * Adds the header (ATN, ADR, RTN) and the trailer (CHK, ETX)
      *
      * @param msg the message string
-     * @param stationNumber the station number to which the ccsail command will be send
      *
      * @return the complete CCSAIL string
      */

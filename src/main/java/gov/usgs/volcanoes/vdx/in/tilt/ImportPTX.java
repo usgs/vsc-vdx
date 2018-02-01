@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.in.tilt;
 
-import gov.usgs.plot.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
 import gov.usgs.volcanoes.vdx.data.tilt.SQLTiltDataSource;
 import gov.usgs.volcanoes.vdx.data.tilt.ptx.PTXRecord;
 import gov.usgs.volcanoes.vdx.db.VDXDatabase;

@@ -2,7 +2,7 @@ package gov.usgs.volcanoes.vdx.in.hw;
 
 import java.util.Date;
 
-import gov.usgs.util.ConfigFile;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
 /**
  * Interface to represent a device

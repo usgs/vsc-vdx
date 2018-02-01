@@ -19,7 +19,7 @@ public class LightningExporter implements Exportable {
     
     /**
      * Constructor
-     * @see gov.usgs.plot.render.Plot.HistogramRenderer
+     * @see gov.usgs.volcanoes.core.legacy.plot.render.HistogramRenderer
      */
     public LightningExporter(StrokeList hypos, boolean exportAll) {
     	this.hypos = hypos.getStrokes();

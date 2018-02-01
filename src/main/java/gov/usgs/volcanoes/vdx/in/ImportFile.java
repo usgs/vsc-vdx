@@ -1,44 +1,46 @@
 package gov.usgs.volcanoes.vdx.in;
 
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
+
 import cern.colt.matrix.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Import files
  *  
  * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class ImportFile extends Import implements Importer {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportFile.class);
 	public ResourceReader rr;
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
-		
-		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -57,19 +59,19 @@ public class ImportFile extends Import implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -80,19 +82,19 @@ public class ImportFile extends Import implements Importer {
 		prefix		= vdxParams.getString("vdx.prefix");
 		
 		// information related to the time stamps
-		dateIn	= new SimpleDateFormat(Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss"));
-		dateIn.setTimeZone(TimeZone.getTimeZone(Util.stringToString(params.getString("timezone"), "GMT")));
+		dateIn	= new SimpleDateFormat(StringUtils.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss"));
+		dateIn.setTimeZone(TimeZone.getTimeZone(StringUtils.stringToString(params.getString("timezone"), "GMT")));
 		
 		// ImportFile specific directives
-		filemask	= Util.stringToString(params.getString("filemask"), "");
-		headerlines	= Util.stringToInt(params.getString("headerlines"), 0);
-		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		logger.log(Level.INFO, "filemask:" + filemask + "/headerlines:" + headerlines + "/delimiter:" + delimiter);
+		filemask	= StringUtils.stringToString(params.getString("filemask"), "");
+		headerlines	= StringUtils.stringToInt(params.getString("headerlines"), 0);
+		delimiter	= StringUtils.stringToString(params.getString("delimiter"), ",");
+		LOGGER.info("filemask:{}/headerlines:{}/delimiter:{}", filemask, headerlines, delimiter);
 		
 		// Import Fields
-		fields	= Util.stringToString(params.getString("fields"), "");
+		fields	= StringUtils.stringToString(params.getString("fields"), "");
 		if (fields.length() == 0) {
-			logger.log(Level.SEVERE, "fields parameter missing from config file");
+			LOGGER.error("fields parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -105,12 +107,12 @@ public class ImportFile extends Import implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "Raw Data");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
-		logger.log(Level.INFO, "[Rank] " + rankName);
-		logger.log(Level.INFO, "");
+		LOGGER.info("[Rank] {}", rankName);
+		LOGGER.info("");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -120,23 +122,23 @@ public class ImportFile extends Import implements Importer {
 			for (int i = 0; i < stringList.size(); i++) {
 				channelCode		= stringList.get(i);
 				channelParams	= params.getSubConfig(channelCode);
-				channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-				channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
-				channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
-				channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-				channelActive   = Util.stringToInt(channelParams.getString("active"), 1);
+				channelName		= StringUtils.stringToString(channelParams.getString("name"), channelCode);
+				channelLon		= StringUtils.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+				channelLat		= StringUtils.stringToDouble(channelParams.getString("latitude"), Double.NaN);
+				channelHeight	= StringUtils.stringToDouble(channelParams.getString("height"), Double.NaN);
+				channelActive   = StringUtils.stringToInt(channelParams.getString("active"), 1);
 				channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelActive);
 				channelMap.put(channelCode, channel);
 				
 				// default the fields for this channel if they are not specified specifically
-				channelFieldMap.put(channelCode, Util.stringToString(channelParams.getString("fields"), fields));
+				channelFieldMap.put(channelCode, StringUtils.stringToString(channelParams.getString("fields"), fields));
 			}
 		}
 		
 		// get the list of data sources that are being used in this import
 		dataSourceList	= params.getList("dataSource");
 		if (dataSourceList == null) {
-			logger.log(Level.SEVERE, "dataSource parameter(s) missing from config file");
+			LOGGER.error("dataSource parameter(s) missing from config file");
 			System.exit(-1);			
 		}
 		
@@ -152,12 +154,12 @@ public class ImportFile extends Import implements Importer {
 			
 			// get the data source name
 			dataSource	= dataSourceList.get(i);
-			logger.log(Level.INFO, "[DataSource] " + dataSource);
+			LOGGER.info("[DataSource] {}", dataSource);
 			
 			// lookup the data source from the list that is in vdxSources.config
 			sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 			if (sqlDataSourceDescriptor == null) {
-				logger.log(Level.SEVERE, dataSource + " not in vdxSources.config - Skipping");
+				LOGGER.error("{} not in vdxSources.config - Skipping", dataSource);
 				continue;
 			}
 			
@@ -177,7 +179,7 @@ public class ImportFile extends Import implements Importer {
 					tempRank = sqlDataSource.defaultInsertRank(rank);
 				}
 				if (tempRank == null) {
-					logger.log(Level.SEVERE, dataSource + " " + rank.getName() + " rank creation failed");
+					LOGGER.error("{} {} rank creation failed.", dataSource, rank.getName());
 					System.exit(-1);
 				}
 				dataSourceRIDMap.put(dataSource, tempRank.getId());
@@ -192,13 +194,13 @@ public class ImportFile extends Import implements Importer {
 					for (int j = 0; j < stringList.size(); j++) {
 						columnName			= stringList.get(j);
 						columnParams		= dataSourceParams.getSubConfig(columnName);
-						columnIdx			= Util.stringToInt(columnParams.getString("idx"), i);
-						columnDescription	= Util.stringToString(columnParams.getString("description"), columnName);
-						columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
-						columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
-						columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-						columnBypass		= Util.stringToBoolean(columnParams.getString("bypass"), false);
-						columnAccumulate	= Util.stringToBoolean(columnParams.getString("accumulate"), false);
+						columnIdx			= StringUtils.stringToInt(columnParams.getString("idx"), i);
+						columnDescription	= StringUtils.stringToString(columnParams.getString("description"), columnName);
+						columnUnit			= StringUtils.stringToString(columnParams.getString("unit"), columnName);
+						columnChecked		= StringUtils.stringToBoolean(columnParams.getString("checked"), false);
+						columnActive		= StringUtils.stringToBoolean(columnParams.getString("active"), true);
+						columnBypass		= StringUtils.stringToBoolean(columnParams.getString("bypass"), false);
+						columnAccumulate	= StringUtils.stringToBoolean(columnParams.getString("accumulate"), false);
 						column 				= new Column(columnIdx, columnName, columnDescription, 
 								columnUnit, columnChecked, columnActive, columnBypass, columnAccumulate);
 						if (sqlDataSource.defaultGetColumn(columnName) == null) {
@@ -214,9 +216,9 @@ public class ImportFile extends Import implements Importer {
 					columns	   += columnList.get(j).name + ",";
 				}
 				columns	= columns.substring(0, columns.length() - 1);
-				columns	= Util.stringToString(dataSourceParams.getString("columns"), columns);
+				columns	= StringUtils.stringToString(dataSourceParams.getString("columns"), columns);
 				dataSourceColumnMap.put(dataSource, columns);
-				logger.log(Level.INFO, "[Columns] " + columns);
+				LOGGER.info("[Columns] {}", columns);
 			}
 			
 			// create translations table which is based on column entries
@@ -225,9 +227,9 @@ public class ImportFile extends Import implements Importer {
 			}
 			
 			// get the channels for this data source
-			channels = Util.stringToString(dataSourceParams.getString("channels"), "");
+			channels = StringUtils.stringToString(dataSourceParams.getString("channels"), "");
 			dataSourceChannelMap.put(dataSource, channels);
-			logger.log(Level.INFO, "[Channels]" + channels);
+			LOGGER.info("[Channels] {}", channels);
 
 			// create channels tables for this data source
 			if (sqlDataSource.getChannelsFlag() && channels.length() > 0) {				
@@ -244,7 +246,7 @@ public class ImportFile extends Import implements Importer {
 					// if the channel doesn't exist then create it with the default tid of 1
 					if (sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag()) == null) {
 						if (sqlDataSource.getType().equals("tilt")) {
-							azimuthNom	= Util.stringToDouble(channelParams.getString("azimuth"), 0);
+							azimuthNom	= StringUtils.stringToDouble(channelParams.getString("azimuth"), 0);
 							sqlDataSource.defaultCreateTiltChannel(channel, 1, azimuthNom, 
 								sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 								sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
@@ -279,7 +281,7 @@ public class ImportFile extends Import implements Importer {
 						
 						// save the installation azimuth if this is a tilt data source
 						if (sqlDataSource.getType().equals("tilt")) {
-							azimuthInst	= Util.stringToDouble(translationParams.getString("azimuth"), 0);
+							azimuthInst	= StringUtils.stringToDouble(translationParams.getString("azimuth"), 0);
 							dm.setQuick(0, columnList.size() * 2, azimuthInst);
 							columnNames[columnList.size() * 2]	= "azimuth";
 						}
@@ -288,8 +290,8 @@ public class ImportFile extends Import implements Importer {
 						for (int k = 0; k < columnList.size(); k++) {
 							column		= columnList.get(k);
 							columnName	= column.name;
-							multiplier	= Util.stringToDouble(translationParams.getString("c" + columnName), 1);
-							offset		= Util.stringToDouble(translationParams.getString("d" + columnName), 0);
+							multiplier	= StringUtils.stringToDouble(translationParams.getString("c" + columnName), 1);
+							offset		= StringUtils.stringToDouble(translationParams.getString("d" + columnName), 0);
 							dm.setQuick(0, k * 2, multiplier);
 							dm.setQuick(0, k * 2 + 1, offset);
 							columnNames[k * 2]		= "c" + columnName;
@@ -331,7 +333,7 @@ public class ImportFile extends Import implements Importer {
 			// check that the file exists
 			ResourceReader rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
+				LOGGER.error("skipping: {} (resource is invalid)", filename);
 				return;
 			}
 			
@@ -344,12 +346,12 @@ public class ImportFile extends Import implements Importer {
 			
 			// check that the file has data
 			if (line == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is empty)");
+				LOGGER.error("skipping: {} (resource is empty)", filename);
 				return;
 			}
 			
-			logger.log(Level.INFO, "");
-			logger.log(Level.INFO, "importing: " + filename);
+			LOGGER.info("");
+			LOGGER.info("importing: {}", filename);
 			
 			// reset the channel code, as it will be derived from the filename, and not the config file, or the contents of the file
 			channelCode	= "";
@@ -360,7 +362,7 @@ public class ImportFile extends Import implements Importer {
 				
 				// filename mask can be shorter than the filename, but not longer
 				if (filemask.length() > shortFilename.length()) {
-					logger.log(Level.SEVERE, "skipping: " + filename + " (bad filename mask)");
+					LOGGER.error("skipping: {} (bad filename mask)", filename);
 					return;
 				}
 				
@@ -373,11 +375,11 @@ public class ImportFile extends Import implements Importer {
 				
 				// lookup custom fields for this channel if they exist
 				if (channelCode.length() == 0) {
-					logger.log(Level.SEVERE, "skipping: " + filename + " (filename does not contain channel code)");
+					LOGGER.error("skipping: {} (filename does not contain channel code)", filename);
 					return;
 				}
 				
-				// logger.log(Level.INFO, "channelCode:" + channelCode + " (from filename)");
+				// LOGGER.log(Level.INFO, "channelCode:" + channelCode + " (from filename)");
 				
 				// indicate the channel code came from the file name and look up it's fields if they exist
 				channelCodeFromFilename	= true;
@@ -393,7 +395,7 @@ public class ImportFile extends Import implements Importer {
 			
 			// if any header lines are defined then skip them
 			if (headerlines > 0) {
-				logger.log(Level.INFO, "skipping " + headerlines + " header lines");
+				LOGGER.info("skipping {} header lines", headerlines);
 				for (int i = 0; i < headerlines; i++) {
 					line	= rr.nextLine();	
 					lineNumber++;
@@ -416,7 +418,7 @@ public class ImportFile extends Import implements Importer {
 				
 				// make sure the data row matches the defined data columns
 				if (fieldMap.size() > valueMap.size()) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " has too few values");
+					LOGGER.error("line {} has too few values", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
@@ -438,7 +440,7 @@ public class ImportFile extends Import implements Importer {
 					
 					// validate the channel code 
 					if (channelCode.length() == 0) {
-						logger.log(Level.SEVERE, "line " + lineNumber + " does not contain a channel code");
+						LOGGER.error("line {} does not contain a channel code", lineNumber);
 						line	= rr.nextLine();
 						continue;
 						
@@ -494,15 +496,15 @@ public class ImportFile extends Import implements Importer {
 					
 				// any problems with parsing the values for this line should be caught here
 				} catch (Exception e) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " parse error");
-					logger.log(Level.SEVERE, e.getMessage());
+					LOGGER.error("line {} parse error", lineNumber);
+					LOGGER.error("{}", e.getMessage());
 					line	= rr.nextLine();
 					continue;
 				}
 				
 				// make sure that the channel code has something in it
 				if (channelCode.length() == 0) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " channel code not found");
+					LOGGER.error("line {} channel code not found", lineNumber);
 					line	= rr.nextLine();
 					continue;
 					
@@ -513,7 +515,7 @@ public class ImportFile extends Import implements Importer {
 				
 				// make sure that the timestamp has something in it
 				if (tsValue.length() == 0) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp not found");
+					LOGGER.error("line {} timestamp not found", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
@@ -522,15 +524,15 @@ public class ImportFile extends Import implements Importer {
 				try {
 					String timestamp	= tsValue.trim();
 					date				= dateIn.parse(timestamp);				
-					j2ksec				= Util.dateToJ2K(date);
+					j2ksec				= J2kSec.fromDate(date);
 				} catch (ParseException e) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp parse error");
+					LOGGER.error("line {} timestamp parse error", lineNumber);
 					line	= rr.nextLine();
 					continue;
 				}
 				
 				// log the line to the log file that is being imported, now that all potential errors have been caught
-				// logger.log(Level.INFO, line);
+				// LOGGER.log(Level.INFO, line);
 				
 				ColumnValue tsColumn = new ColumnValue("j2ksec", j2ksec);
 				
@@ -559,7 +561,7 @@ public class ImportFile extends Import implements Importer {
 					// check that the sql data source was initialized properly above
 					sqlDataSource	= sqlDataSourceMap.get(dataSource);
 					if (sqlDataSource == null) {
-						logger.log(Level.SEVERE, "line " + lineNumber + " data source " + dataSource + " not initialized");
+						LOGGER.error("line {} data source {} not initialized", lineNumber, dataSource);
 						continue;
 					}
 					
@@ -634,7 +636,7 @@ public class ImportFile extends Import implements Importer {
 		
 		// catch exceptions
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "ImportFile.process(" + filename + ") failed.", e);
+			LOGGER.error("ImportFile.process({}) failed.", filename, e);
 		}
 	}
 	

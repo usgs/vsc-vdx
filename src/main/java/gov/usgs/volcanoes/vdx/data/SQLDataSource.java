@@ -1,14 +1,17 @@
 package gov.usgs.volcanoes.vdx.data;
 
 import cern.colt.matrix.DoubleMatrix2D;
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
-import gov.usgs.util.UtilException;
+
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.StringUtils;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.db.VDXDatabase;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
 import gov.usgs.volcanoes.vdx.server.TextResult;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,23 +22,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL data source. Store reference to VDX database and provide methods to init default database
  * structure.
  * 
- * @author Dan Cervelli, Loren Antolik, Bill Tollett
+ * @author Dan Cervelli
+ * @author Loren Antolik
+ * @author Bill Tollett
  */
 public abstract class SQLDataSource implements DataSource {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SQLDataSource.class);
   protected VDXDatabase database;
   protected String vdxName;
   protected String dbName;
-  protected static Logger logger = Logger.getLogger("gov.usgs.volcanoes.vdx.data.SQLDataSource");
 
   protected Statement st;
   protected PreparedStatement ps;
@@ -220,7 +224,7 @@ public abstract class SQLDataSource implements DataSource {
     
     // dbName is an additional parameter that VDX classes uses, unlike Winston or Earthworm
     dbName = vdxName + "$" + getType();
-    maxrows = Util.stringToInt(params.getString("maxrows"), 0);
+    maxrows = StringUtils.stringToInt(params.getString("maxrows"), 0);
   }
 
   /**
@@ -335,13 +339,13 @@ public abstract class SQLDataSource implements DataSource {
       }
       ps.execute(sql + "))");
 
-      logger.log(Level.INFO, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix()
-          + "_" + dbName + ") succeeded. ");
+      LOGGER.info("SQLDataSource.defaultCreateDatabase({}_{}) succeeded.",
+          database.getDatabasePrefix(), dbName);
       return true;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultCreateDatabase(" + database.getDatabasePrefix()
-          + "_" + dbName + ") failed.", e);
+      LOGGER.error("SQLDataSource.defaultCreateDatabase({}_{}) failed.",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return false;
@@ -483,13 +487,13 @@ public abstract class SQLDataSource implements DataSource {
         }
       }
 
-      logger.log(Level.INFO, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ","
-          + lat + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultCreateChannel({},{},{}) succeeded. ({}_{})",
+          channelCode, lon, lat, database.getDatabasePrefix(), dbName);
       return true;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultCreateChannel(" + channelCode + "," + lon + ","
-          + lat + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultCreateChannel({},{},{}) failed. ({}_{})",
+          channelCode, lon, lat, database.getDatabasePrefix(), dbName, e);
     }
 
     return false;
@@ -530,7 +534,7 @@ public abstract class SQLDataSource implements DataSource {
       ps.execute();
       return true;
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTiltChannel() failed.", e);
+      LOGGER.error("SQLDataSource.defaultCreateTiltChannel() failed.", e);
     }
     return false;
   }
@@ -550,13 +554,13 @@ public abstract class SQLDataSource implements DataSource {
       ps.setString(2, channelCode);
       ps.execute();
 
-      logger.log(Level.INFO, "SQLDataSource.defaultUpdateChannelTranslationID(" + channelCode + ","
-          + tid + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultUpdateChannelTranslationID({},{}) succeeded. ({}_{})",
+          channelCode, tid, database.getDatabasePrefix(), dbName);
       return true;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultUpdateChannelTranslationID(" + channelCode
-          + "," + tid + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultUpdateChannelTranslationID({},{}) failed. ({}_{})",
+          channelCode, tid, database.getDatabasePrefix(), dbName, e);
     }
 
     return false;
@@ -600,14 +604,14 @@ public abstract class SQLDataSource implements DataSource {
           ps.execute("INSERT INTO translations (name) VALUES ('DEFAULT')");
         }
 
-        logger.log(Level.INFO, "SQLDataSource.defaultCreateTranslation() succeeded. ("
-            + database.getDatabasePrefix() + "_" + dbName + ")");
+        LOGGER.info("SQLDataSource.defaultCreateTranslation() succeeded. ({}_{})",
+            database.getDatabasePrefix(), dbName);
         return true;
       }
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultCreateTranslation() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultCreateTranslation() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return false;
@@ -635,13 +639,13 @@ public abstract class SQLDataSource implements DataSource {
       ps.setBoolean(8, column.accumulate);
       ps.execute();
 
-      logger.log(Level.INFO, "SQLDataSource.defaultInsertColumn(" + column.name + ") succeeded. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultInsertColumn({}) succeeded. ({}_{})",
+          column.name, database.getDatabasePrefix(), dbName);
       return true;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertColumn(" + column.name + ") failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertColumn({}) failed. ({}_{})",
+          column.name, database.getDatabasePrefix(), dbName, e);
     }
     return false;
   }
@@ -667,13 +671,13 @@ public abstract class SQLDataSource implements DataSource {
       ps.setBoolean(8, column.accumulate);
       ps.execute();
 
-      logger.log(Level.INFO, "SQLDataSource.defaultInsertPlotColumn(" + column.name
-          + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultInsertPlotColumn({}) succeeded. ({}_{})",
+          column.name, database.getDatabasePrefix(), dbName);
       return true;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertPlotColumn(" + column.name
-          + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertPlotColumn({}) failed. ({}_{})",
+          column.name, database.getDatabasePrefix(), dbName, e);
     }
     return false;
   }
@@ -700,12 +704,12 @@ public abstract class SQLDataSource implements DataSource {
       }
       rs.close();
 
-      logger.log(Level.INFO, "SQLDataSource.defaultInsertChannelType(" + name + ") succeeded. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultInsertChannelType({}) succeeded. ({}_{})",
+          name, database.getDatabasePrefix(), dbName);
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertChannelType(" + name + ") failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertChannelType({}) failed. ({}_{})",
+          name, database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -763,12 +767,12 @@ public abstract class SQLDataSource implements DataSource {
       }
       rs.close();
 
-      logger.log(Level.INFO, "SQLDataSource.defaultInsertRank(" + name + "," + rank + ","
-          + userDefault + ") succeeded. (" + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultInsertRank({},{},{}) succeeded. ({}_{})",
+          name, rank, userDefault, database.getDatabasePrefix(), dbName);
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertRank(" + name + "," + rank + ","
-          + userDefault + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertRank({},{},{}) failed. ({}_{})",
+          name, rank, userDefault, database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -808,12 +812,12 @@ public abstract class SQLDataSource implements DataSource {
       ps.execute();
       tid = defaultGetTranslation(channelCode, gdm);
 
-      logger.log(Level.INFO, "SQLDataSource.defaultInsertTranslation() succeeded. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")");
+      LOGGER.info("SQLDataSource.defaultInsertTranslation() succeeded. ({}_{})",
+          database.getDatabasePrefix(), dbName);
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertTranslation() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertTranslation() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return tid;
@@ -874,8 +878,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(cid) failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannel(cid) failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return ch;
@@ -903,8 +907,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(code) failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannel(code) failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return ch;
@@ -980,8 +984,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelsList() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannelsList() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1003,8 +1007,8 @@ public abstract class SQLDataSource implements DataSource {
       }
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannels() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannels() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1029,8 +1033,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTypes() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannelTypes() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1067,8 +1071,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetRank() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetRank() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1094,8 +1098,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetRankID() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetRankID() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1121,8 +1125,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetRanks() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetRanks() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1145,8 +1149,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetNumberOfRanks() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetNumberOfRanks() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1184,8 +1188,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetTranslation() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetTranslation() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1211,8 +1215,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannelTranslationID() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannelTranslationID() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1295,8 +1299,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumns() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetColumns() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return columns;
@@ -1361,8 +1365,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetColumn(colid) failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetColumn(colid) failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return col;
@@ -1389,8 +1393,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetChannel(name) failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetChannel(name) failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return col;
@@ -1417,8 +1421,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetOptions() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetOptions() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1448,13 +1452,13 @@ public abstract class SQLDataSource implements DataSource {
         rs.next();
         double result = rs.getDouble(1);
         if (!rs.wasNull()) {
-          lastDataTime = Util.j2KToDate(result);
+          lastDataTime = J2kSec.asDate(result);
         }
         rs.close();
 
       } catch (Exception e) {
-        logger.log(Level.SEVERE, "SQLDataSource.defaultGetLastDataTime() failed. ("
-            + database.getDatabasePrefix() + "_" + dbName + ")", e);
+        LOGGER.error("SQLDataSource.defaultGetLastDataTime() failed. ({}_{})",
+            database.getDatabasePrefix(), dbName, e);
       }
 
     } else {
@@ -1652,8 +1656,8 @@ public abstract class SQLDataSource implements DataSource {
       result = new GenericDataMatrix(pts);
 
     } catch (SQLException e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetData() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetData() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return result;
@@ -1661,7 +1665,7 @@ public abstract class SQLDataSource implements DataSource {
 
   /**
    * Retrieves the value of the designated column in the current row of <code>ResultSet</code>
-   * object as a <code>double</code> in the Java programming language
+   * object as a <code>double</code> in the Java programming language.
    * 
    * @param rs result set to extract data
    * @param columnIndex the first column is 1, the second is 2, ...
@@ -1679,7 +1683,7 @@ public abstract class SQLDataSource implements DataSource {
 
   /**
    * Retrieves the value of the designated column in the current row of <code>ResultSet</code>
-   * object as a <code>int</code> in the Java programming language
+   * object as a <code>int</code> in the Java programming language.
    * 
    * @param rs result set to extract data
    * @param columnIndex the first column is 1, the second is 2, ...
@@ -1786,8 +1790,8 @@ public abstract class SQLDataSource implements DataSource {
       }
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultInsertData() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultInsertData() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
   }
 
@@ -1808,8 +1812,8 @@ public abstract class SQLDataSource implements DataSource {
       ps.execute();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.insertMetaDatum() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.insertMetaDatum() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
   }
 
@@ -1831,8 +1835,8 @@ public abstract class SQLDataSource implements DataSource {
       ps.execute();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.updateMetaDatum() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.updateMetaDatum() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
   }
 
@@ -1864,8 +1868,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
       return md;
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.getMetaDatum() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.getMetaDatum() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return null;
     }
   }
@@ -1943,7 +1947,7 @@ public abstract class SQLDataSource implements DataSource {
         }
       }
 
-      logger.info("SQL: " + sql + where.toString());
+      LOGGER.info("SQL: {}{}", sql, where.toString());
       ps = database.getPreparedStatement(sql + where);
       rs = ps.executeQuery();
       List<MetaDatum> result = new ArrayList<MetaDatum>();
@@ -1984,8 +1988,8 @@ public abstract class SQLDataSource implements DataSource {
       return result;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.getMatchingMetaData() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.getMatchingMetaData() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return null;
     }
   }
@@ -2143,8 +2147,8 @@ public abstract class SQLDataSource implements DataSource {
       return result;
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.getMatchingSuppData() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.getMatchingSuppData() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return null;
     }
   }
@@ -2173,8 +2177,8 @@ public abstract class SQLDataSource implements DataSource {
       return rs.getInt(1);
     } catch (SQLException e) {
       if (!e.getSQLState().equals("23000")) {
-        logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. ("
-            + database.getDatabasePrefix() + "_" + dbName + ")", e);
+        LOGGER.error("SQLDataSource.insertSuppDatum() failed. ({}_{})",
+            database.getDatabasePrefix(), dbName, e);
         return 0;
       }
     }
@@ -2190,8 +2194,8 @@ public abstract class SQLDataSource implements DataSource {
 
       return -rs.getInt(1);
     } catch (SQLException e2) {
-      logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatum() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e2);
+      LOGGER.error("SQLDataSource.insertSuppDatum() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e2);
       return 0;
     }
   }
@@ -2215,8 +2219,8 @@ public abstract class SQLDataSource implements DataSource {
 
       return sd.sdid;
     } catch (SQLException e) {
-      logger.log(Level.SEVERE, "SQLDataSource.updateSuppDatum() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.updateSuppDatum() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return 0;
     }
   }
@@ -2238,12 +2242,12 @@ public abstract class SQLDataSource implements DataSource {
       ps.execute();
     } catch (SQLException e) {
       if (!e.getSQLState().equals("23000")) {
-        logger.log(Level.SEVERE, "SQLDataSource.insertSuppDatumXref() failed. ("
+        LOGGER.error("SQLDataSource.insertSuppDatumXref() failed. ("
             + database.getDatabasePrefix() + "_" + dbName + ")", e);
         return false;
       }
-      logger.info("SQLDataSource.insertSuppDatumXref: SDID " + sd.sdid
-          + " xref already exists for given parameters");
+      LOGGER.info("SQLDataSource.insertSuppDatumXref: SDID {} "
+          + "xref already exists for given parameters", sd.sdid);
     }
     return true;
   }
@@ -2272,8 +2276,8 @@ public abstract class SQLDataSource implements DataSource {
       return rs.getInt(1);
     } catch (SQLException e) {
       if (!e.getSQLState().equals("23000")) {
-        logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. ("
-            + database.getDatabasePrefix() + "_" + dbName + ")", e);
+        LOGGER.error("SQLDataSource.insertSuppDataType() failed. ({}_{})",
+            database.getDatabasePrefix(), dbName, e);
         return 0;
       }
     }
@@ -2287,8 +2291,8 @@ public abstract class SQLDataSource implements DataSource {
       return -rs.getInt(1);
 
     } catch (SQLException e) {
-      logger.log(Level.SEVERE, "SQLDataSource.insertSuppDataType() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.insertSuppDataType() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return 0;
     }
   }
@@ -2315,12 +2319,12 @@ public abstract class SQLDataSource implements DataSource {
 
     try {
       arg = params.get("st");
-      st = Util.dateToJ2K(df.parse(arg));
+      st = J2kSec.fromDate(df.parse(arg));
       arg = params.get("et");
       if (arg == null || arg.equals("")) {
         et = Double.MAX_VALUE;
       } else {
-        et = Util.dateToJ2K(df.parse(arg));
+        et = J2kSec.fromDate(df.parse(arg));
       }
     } catch (Exception e) {
       return getErrorResult("Illegal time string: " + arg + ", " + e);
@@ -2409,8 +2413,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.getSuppDataTypes() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.getSuppDataTypes() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
       return null;
     }
 
@@ -2440,8 +2444,8 @@ public abstract class SQLDataSource implements DataSource {
       rs.close();
 
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "SQLDataSource.defaultGetSuppdataTypes() failed. ("
-          + database.getDatabasePrefix() + "_" + dbName + ")", e);
+      LOGGER.error("SQLDataSource.defaultGetSuppdataTypes() failed. ({}_{})",
+          database.getDatabasePrefix(), dbName, e);
     }
 
     return new TextResult(result);

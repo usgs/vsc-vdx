@@ -1,14 +1,20 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.Server;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.Log;
+import gov.usgs.volcanoes.core.legacy.net.Server;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.StringUtils;
+import gov.usgs.volcanoes.vdx.Version;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
+
+import org.apache.log4j.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Main class for VDX server
@@ -16,6 +22,7 @@ import java.util.logging.Level;
  * @author Dan Cervelli
  */
 public class VDX extends Server {
+	private static final Logger LOGGER = LoggerFactory.getLogger(VDX.class);
 	protected String configFilename = "VDX.config";
 	protected int numHandlers;
 	private String driver;
@@ -29,14 +36,8 @@ public class VDX extends Server {
 	public VDX(String cf) {
 		super();
 		name	= "VDX";
-		logger	= Log.getLogger("gov.usgs.volcanoes.vdx");
 
-		String[] version = Util.getVersion("gov.usgs.volcanoes.vdx");
-		if (version != null) {
-			logger.info("Version: " + version[0] + " Built: " + version[1]);
-		} else {
-			logger.info("No version information available.");
-		}
+		LOGGER.info(Version.VERSION_STRING);
 		
 		if (cf != null) {
 			configFilename = cf;
@@ -55,7 +56,7 @@ public class VDX extends Server {
 	 * @param msg error message
 	 */
 	protected void fatalError(String msg) {
-		logger.severe(msg);
+		LOGGER.error(msg);
 		System.exit(1);
 	}
 	
@@ -67,46 +68,56 @@ public class VDX extends Server {
 		if (!cf.wasSuccessfullyRead())
 			fatalError(configFilename + ": could not read config file.");
 
-		int l = Util.stringToInt(cf.getString("vdx.logLevel"), -1);
-		if (l > 1)
-			logger.setLevel(Level.ALL);
-		else
-			logger.setLevel(Level.INFO);
-		logger.info("config: vdx.logLevel=" + l + ".");
+		int l = StringUtils.stringToInt(cf.getString("vdx.logLevel"), -1);
+		if (l > 1) {
+			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel("DEBUG"));
+		} else {
+			org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
+		}
+		LOGGER.info("config: vdx.logLevel={}", l);
 
-		int p = Util.stringToInt(cf.getString("vdx.port"), -1);
+		int p = StringUtils.stringToInt(cf.getString("vdx.port"), -1);
 		if (p < 0 || p > 65535)
 			fatalError(configFilename + ": bad or missing 'vdx.port' setting.");
 		serverPort = p;
-		logger.info("config: vdx.port=" + serverPort + ".");
+		LOGGER.info("config: vdx.port={}", serverPort);
 
-		int h = Util.stringToInt(cf.getString("vdx.handlers"), -1);
+		int h = StringUtils.stringToInt(cf.getString("vdx.handlers"), -1);
 		if (h < 1 || h > 128)
 			fatalError(configFilename + ": bad or missing 'vdx.handlers' setting.");
 		numHandlers = h;
-		logger.info("config: vdx.handlers=" + numHandlers + ".");
+		LOGGER.info("config: vdx.handlers={}", numHandlers);
 
 		driver = cf.getString("vdx.driver");
 		if (driver == null)
 			fatalError(configFilename + ": bad or missing 'vdx.driver' setting.");
-		logger.info("config: vdx.driver=" + driver + ".");
+		LOGGER.info("config: vdx.driver={}", driver);
 
 		url = cf.getString("vdx.url");
 		if (url == null)
 			fatalError(configFilename + ": bad or missing 'vdx.url' setting.");
-		logger.info("config: vdx.url=" + url + ".");
+		LOGGER.info("config: vdx.url={}", url);
 
 		prefix = cf.getString("vdx.prefix");
 		if (prefix == null)
 			fatalError(configFilename + ": bad or missing 'vdx.prefix' setting.");
-		logger.info("config: vdx.prefix=" + prefix + ".");
+		LOGGER.info("config: vdx.prefix={}", prefix);
 
-		int m = Util.stringToInt(cf.getString("vdx.maxConnections"), -1);
+		String logFile = cf.getString("vdx.logFile");
+		if (logFile != null) {
+			try {
+				Log.addFileAppender(logFile, "%d{yyyy-MM-dd hh:mm:ss} %5p - %c{1} - %m%n");
+			} catch (IOException e) {
+				LOGGER.debug("Failed to create log file: {}", logFile, e);
+			}
+		}
+
+		int m = StringUtils.stringToInt(cf.getString("vdx.maxConnections"), -1);
 		if (m < 0)
 			fatalError(configFilename + ": bad or missing 'vdx.maxConnections' setting.");
 
 		connections.setMaxConnections(m);
-		logger.info("config: vdx.maxConnections=" + connections.getMaxConnections() + ".");
+		LOGGER.info("config: vdx.maxConnections={}", connections.getMaxConnections());
 	}
 
 	/**
@@ -141,7 +152,10 @@ public class VDX extends Server {
 	 * @throws IOException
 	 */
 	public static void main(final String[] args) throws IOException {
-		Set arguments = Util.toSet(args);
+		Set arguments = new HashSet<String>();
+		for (String arg : args) {
+			arguments.add(arg);
+		}
 		Thread vdxThread = new Thread(new Runnable()
 				{
 					public void run()

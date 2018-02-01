@@ -1,9 +1,9 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.RSAMData;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.RSAMData;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSource;
@@ -15,7 +15,9 @@ import gov.usgs.volcanoes.vdx.server.TextResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for RSAM Data
@@ -23,7 +25,9 @@ import java.util.logging.Level;
  * @author Dan Cervelli, Loren Antolik
  */
 public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLRSAMDataSource.class);
+
 	public static final String DATABASE_NAME	= "rsam";
 	public static final boolean channels		= true;
 	public static final boolean translations	= false;
@@ -144,7 +148,8 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			return true;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLRSAMDataSource.create10MinAvgView(" + channelCode + ") failed. (" + database.getDatabasePrefix() + "_" + dbName + ")", e);
+			LOGGER.error("SQLRSAMDataSource.create10MinAvgView({}) failed. ({}_{})",
+					channelCode, database.getDatabasePrefix(), dbName, e);
 			return false;
 		}
 	}
@@ -303,7 +308,7 @@ public class SQLRSAMDataSource extends SQLDataSource implements DataSource {
 			result = new RSAMData(pts);
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLRSAMDataSource.getRSAMData()", e);
+			LOGGER.error("SQLRSAMDataSource.getRSAMData()", e);
 		}
 		
 		return result;

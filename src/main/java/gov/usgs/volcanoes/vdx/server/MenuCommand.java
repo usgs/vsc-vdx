@@ -1,13 +1,14 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.NetTools;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.DataSourceDescriptor;
 import gov.usgs.volcanoes.vdx.data.DataSourceHandler;
 
 import java.nio.channels.SocketChannel;
 import java.util.List;
-import java.util.logging.Level;
+
+import org.apache.log4j.Level;
 
 /**
  * Comand to retrieve menu description data. 
@@ -34,7 +35,7 @@ public class MenuCommand extends BaseCommand
 	 */
 	public void doCommand(Object info, SocketChannel channel)
 	{
-		handler.log(Level.FINE, "[menu]", channel);
+		handler.log(Level.DEBUG, "[menu]", channel);
 		parseParams((String)info);
 		DataSourceHandler dsh = handler.getDataSourceHandler();
 		List<DataSourceDescriptor> dsds = dsh.getDataSources();

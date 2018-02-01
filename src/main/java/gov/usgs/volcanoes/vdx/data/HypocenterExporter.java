@@ -22,7 +22,7 @@ public class HypocenterExporter implements Exportable {
   /**
    * Constructor
    * 
-   * @see gov.usgs.plot.render.Plot.HistogramRenderer
+   * @see gov.usgs.volcanoes.core.legacy.plot.render.HistogramRenderer
    */
   public HypocenterExporter(HypocenterList hypos, boolean exportAll) {
     this.hypos = hypos.getHypocenters();

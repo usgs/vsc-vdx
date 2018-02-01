@@ -1,15 +1,16 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.NetTools;
-import gov.usgs.util.CodeTimer;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
+import gov.usgs.volcanoes.core.CodeTimer;
 import gov.usgs.volcanoes.vdx.ExportConfig;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.DataSourceDescriptor;
 import gov.usgs.volcanoes.vdx.data.DataSourceHandler;
 
 import java.nio.channels.SocketChannel;
-import java.util.logging.Level;
 import java.util.ArrayList;
+
+import org.apache.log4j.Level;
 
 /**
  * Comand to retrieve data. 
@@ -92,12 +93,12 @@ public class GetDataCommand extends BaseCommand
 			result.writeHeader(netTools, channel);
 			result.writeBody(netTools, channel);
 			ct.stop();
-			handler.log(Level.FINE, String.format("%s (%1.2f ms): [%s]", inParams.get("source"), ct.getRunTimeMillis(), info), channel);
+			handler.log(Level.DEBUG, String.format("%s (%1.2f ms): [%s]", inParams.get("source"), ct.getRunTimeMillis(), info), channel);
 		}
 		else
 		{
 			netTools.writeString("error: no data\n", channel);
-			handler.log(Level.FINE, "[getdata] returned nothing", channel);
+			handler.log(Level.DEBUG, "[getdata] returned nothing", channel);
 		}
 	}
 }

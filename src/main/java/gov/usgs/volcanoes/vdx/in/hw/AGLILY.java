@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hw;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -74,18 +74,18 @@ public class AGLILY implements Device {
 	 * Initialize Lily Device
 	 */
 	public void initialize(ConfigFile params) throws Exception {
-		id			= Util.stringToString(params.getString("id"), "0");
-		timestamp	= Util.stringToString(params.getString("timestamp"), "MM/dd/yy HH:mm:ss");
-		timezone	= Util.stringToString(params.getString("timezone"), "GMT");
-		timeout		= Util.stringToInt(params.getString("timeout"), 60000);
-		maxtries	= Util.stringToInt(params.getString("maxtries"), 2);
-		maxlines	= Util.stringToInt(params.getString("maxlines"), 30);
-		samplerate	= Util.stringToInt(params.getString("samplerate"), 60);
-		delimiter	= Util.stringToString(params.getString("delimiter"), ",");
-		nullfield	= Util.stringToString(params.getString("nullfield"), "");
-		pollhist	= Util.stringToBoolean(params.getString("pollhist"), true);
-		fields		= Util.stringToString(params.getString("fields"), "");
-		acquisition	= Acquisition.fromString(Util.stringToString(params.getString("acquisition"), "poll"));
+		id			= StringUtils.stringToString(params.getString("id"), "0");
+		timestamp	= StringUtils.stringToString(params.getString("timestamp"), "MM/dd/yy HH:mm:ss");
+		timezone	= StringUtils.stringToString(params.getString("timezone"), "GMT");
+		timeout		= StringUtils.stringToInt(params.getString("timeout"), 60000);
+		maxtries	= StringUtils.stringToInt(params.getString("maxtries"), 2);
+		maxlines	= StringUtils.stringToInt(params.getString("maxlines"), 30);
+		samplerate	= StringUtils.stringToInt(params.getString("samplerate"), 60);
+		delimiter	= StringUtils.stringToString(params.getString("delimiter"), ",");
+		nullfield	= StringUtils.stringToString(params.getString("nullfield"), "");
+		pollhist	= StringUtils.stringToBoolean(params.getString("pollhist"), true);
+		fields		= StringUtils.stringToString(params.getString("fields"), "");
+		acquisition	= Acquisition.fromString(StringUtils.stringToString(params.getString("acquisition"), "poll"));
 		
 		// validation
 		if (fields.length() == 0) {

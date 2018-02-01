@@ -1,19 +1,17 @@
 package gov.usgs.volcanoes.vdx.db;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.Retriable;
-import gov.usgs.util.Util;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.util.Retriable;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 import gov.usgs.volcanoes.vdx.data.generic.variable.SQLGenericVariableDataSource;
 import gov.usgs.volcanoes.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.volcanoes.vdx.data.hypo.SQLHypocenterDataSource;
 import gov.usgs.volcanoes.vdx.data.lightning.SQLLightningDataSource;
-import gov.usgs.volcanoes.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.volcanoes.vdx.data.rsam.SQLEWRSAMDataSource;
+import gov.usgs.volcanoes.vdx.data.rsam.SQLRSAMDataSource;
 import gov.usgs.volcanoes.vdx.data.tensorstrain.SQLTensorstrainDataSource;
 import gov.usgs.volcanoes.vdx.data.tilt.SQLTiltDataSource;
 
@@ -27,8 +25,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Keeps SQL database-related information needed to make connection.
@@ -42,6 +41,7 @@ import java.util.logging.Logger;
  * @author Dan Cervelli
  */
 public class VDXDatabase {
+	private static final Logger LOGGER = LoggerFactory.getLogger(VDXDatabase.class);
 	private static final String DEFAULT_CONFIG_FILE = "VDX.config";
 	private static final String CURRENT_SCHEMA_VERSION = "1.0.0";
 	private static final String DEFAULT_DATABASE_PREFIX = "V";
@@ -56,8 +56,6 @@ public class VDXDatabase {
 
 	private String dbPrefix = DEFAULT_DATABASE_PREFIX;
 
-	private Logger logger;
-
 	private Map<String, PreparedStatement> preparedStatements;
 
 	/**
@@ -71,7 +69,6 @@ public class VDXDatabase {
 	 *            database prefix
 	 */
 	public VDXDatabase(String driver, String url, String prefix) {
-		logger = Log.getLogger("gov.usgs.volcanoes.vdx");
 		// logger.finest("New VDXDatabase: " + driver + ":" + url + ":" + prefix);
 		dbDriver = driver;
 		dbURL = url;
@@ -110,22 +107,6 @@ public class VDXDatabase {
 	}
 
 	/**
-	 * Getter for logger
-	 * @return logger
-	 */
-	public Logger getLogger() {
-		return logger;
-	}
-
-	/**
-	 * Setter for logger
-	 * @param log logger
-	 */
-	public void setLogger(Logger log) {
-		logger = log;
-	}
-
-	/**
 	 * Performs database connection
 	 */
 	public void connect() {
@@ -138,12 +119,12 @@ public class VDXDatabase {
 			connected = true;
 			preparedStatements.clear();
 		} catch (ClassNotFoundException e) {
-			logger.log(Level.SEVERE, "Could not load the database driver, check your CLASSPATH.", Util.getLineNumber(this, e));
+			LOGGER.error("Could not load the database driver, check your CLASSPATH.", e);
 			System.exit(-1);
 		} catch (Exception e) {
 			connection = null;
 			statement = null;
-			logger.log(Level.SEVERE, "Could not connect to VDX.", e);
+			LOGGER.error("Could not connect to VDX.", e);
 			connected = false;
 		}
 	}
@@ -160,7 +141,7 @@ public class VDXDatabase {
 			connection.close();
 			connected = false;
 		} catch (Exception e) {
-			logger.warning("Error closing database.  This is unusual, but not critical.");
+			LOGGER.warn("Error closing database.  This is unusual, but not critical.");
 		}
 	}
 
@@ -241,7 +222,7 @@ public class VDXDatabase {
 						result = new Boolean(true);
 						return true;
 					} catch (SQLException e) {
-						logger.log(Level.SEVERE, "execute() failed, SQL: " + sql, e);
+						LOGGER.error("execute() failed, SQL: {}", sql, e);
 					}
 					result = new Boolean(false);
 					return false;
@@ -273,7 +254,7 @@ public class VDXDatabase {
 						result = statement.executeQuery(sql);
 						return true;
 					} catch (SQLException e) {
-						logger.log(Level.SEVERE, "executeQuery() failed, SQL: " + sql, e);
+						LOGGER.error("executeQuery() failed, SQL: {}", sql, e);
 					}
 					return false;
 				}
@@ -302,7 +283,7 @@ public class VDXDatabase {
 			getStatement().execute("CREATE TABLE version (schemaversion VARCHAR(10), installtime DATETIME)");
 			getStatement().execute("INSERT INTO version VALUES ('" + CURRENT_SCHEMA_VERSION + "', NOW())");
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not create table in VDX database.  Are permissions set properly?", Util.getLineNumber(this, e));
+			LOGGER.error("Could not create table in VDX database.  Are permissions set properly?", e);
 		}
 	}
 
@@ -337,9 +318,9 @@ public class VDXDatabase {
 			return true;
 		} catch (SQLException e) {
 			if (e.getMessage().indexOf("Unknown database") != -1)
-				logger.log(Level.SEVERE, db + " database does not exist");
+				LOGGER.error("{} database does not exist", db);
 			else
-				logger.log(Level.SEVERE, db + " database connection failed", e);
+				LOGGER.error("{} database connection failed", db, e);
 		}
 		return false;
 	}
@@ -359,7 +340,7 @@ public class VDXDatabase {
 			try {
 				statement.execute("USE " + db);
 			} catch (SQLException e) {
-				logger.log(Level.SEVERE, "Lost connection to VALVE 2 database, attempting to reconnect.");
+				LOGGER.error("Lost connection to VALVE 2 database, attempting to reconnect.");
 				close();
 				connect();
 			}
@@ -367,9 +348,9 @@ public class VDXDatabase {
 			return true;
 		} catch (SQLException e) {
 			if (e.getMessage().indexOf("Unknown database") != -1)
-				logger.log(Level.SEVERE, "Attempt to use nonexistent database: " + db);
+				LOGGER.error("Attempt to use nonexistent database: {}", db);
 			else
-				logger.log(Level.SEVERE, "Could not use database: " + db, e);
+				LOGGER.error("Could not use database: {}", db, e);
 		}
 		return false;
 	}
@@ -397,7 +378,7 @@ public class VDXDatabase {
 			}
 			return true;
 		} catch (Exception e) {
-			logger.severe("Could not locate or create VDX database.  Are permissions set properly?");
+			LOGGER.error("Could not locate or create VDX database.  Are permissions set properly?");
 		}
 		return false;
 	}
@@ -417,7 +398,7 @@ public class VDXDatabase {
 			}
 			return ps;
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not prepare statement.", e);
+			LOGGER.error("Could not prepare statement.", e);
 		}
 		return null;
 	}
@@ -425,12 +406,9 @@ public class VDXDatabase {
 	/**
 	 * Create given VDX database
 	 * 
-	 * @param db
-	 *            VDX database
-	 * @param args
-	 *            command line arguments
-	 * @param ds
-	 *            data source
+	 * @param params
+	 * @param args command line arguments
+	 * @param ds data source
 	 */
 	protected static void createDatabase(ConfigFile params, Arguments args, SQLDataSource ds) {
 		String name = args.get("-n");

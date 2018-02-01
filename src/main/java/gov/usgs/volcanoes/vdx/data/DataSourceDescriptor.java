@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.data;
 
-import gov.usgs.util.ConfigFile;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
 /**
  * Keeps all information needed to construct particular data source.

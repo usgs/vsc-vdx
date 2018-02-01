@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.data.gps;
 
-import gov.usgs.plot.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 

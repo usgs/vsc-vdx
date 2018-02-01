@@ -1,11 +1,12 @@
 package gov.usgs.volcanoes.vdx.data.tilt.ptx;
 
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
-
+import gov.usgs.volcanoes.core.time.Time;
+import gov.usgs.volcanoes.core.util.ByteUtil;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Presents one record in Pinnacle series 5000 tiltmeter PTX file
@@ -15,10 +16,11 @@ import java.util.logging.Logger;
  * Initial commit.
  *
  * @author Dan Cervelli
+ * @author Bill Tollett
  */
 public class PTXRecord
 {
-	protected final static Logger logger = Log.getLogger("gov.usgs.volcanoes.vdx.data.tilt.ptx.PTXRecord"); 
+	private static final Logger LOGGER = LoggerFactory.getLogger(PTXRecord.class);
 	public static final double VOLTS_PER_COUNT = 2.980232e-7;
 	public static final int MAX_BIT = 16777215;
 	
@@ -154,7 +156,7 @@ public class PTXRecord
 	 */
 	public String getLocationName()
 	{
-		return Util.bytesToString(buffer, 26, 8);
+		return ByteUtil.bytesToString(buffer, 26, 8);
 	}
 	
 	/**
@@ -181,7 +183,7 @@ public class PTXRecord
 		int samples = (getNumBytes() - 34) / (2 * 3);
 		double[][] result = new double[samples][5];
 		int[][] data = getData();
-		double t0 = Util.ewToJ2K(getStartTime());
+		double t0 = Time.ewToj2k(getStartTime());
 //		double xCal = 1000 * VOLTS_PER_COUNT * (getXCalibration() - MAX_BIT / 2);
 //		double yCal = 1000 * VOLTS_PER_COUNT * (getYCalibration() - MAX_BIT / 2);
 //		double xCal = getXCalibration() * 5000 / MAX_BIT - 2500;

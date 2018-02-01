@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.NetTools;
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.Zip;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -43,7 +43,7 @@ public class BinaryResult extends RequestResult
 	public void prepare()
 	{
 		ByteBuffer buffer = data.toBinary();
-		byte[] cb = Util.compress(buffer.array(), 1);
+		byte[] cb = Zip.compress(buffer.array(), 1);
 		compressedBytes = ByteBuffer.wrap(cb);
 		set("bytes", Integer.toString(compressedBytes.limit()));
 	}

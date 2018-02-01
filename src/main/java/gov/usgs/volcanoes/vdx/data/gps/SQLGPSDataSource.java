@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.data.gps;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSource;
@@ -16,15 +16,21 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for GPS Data
  * 
- * @author Dan Cervelli, Loren Antolik
+ * @author Dan Cervelli
+ * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class SQLGPSDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLGPSDataSource.class);
+
 	public static final String DATABASE_NAME	= "gps";
 	public static final boolean channels		= true;
 	public static final boolean translations	= false;
@@ -133,11 +139,13 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 					"sxy DOUBLE, sxz DOUBLE, syz DOUBLE," +
 					"PRIMARY KEY (sid, cid))");
 			
-			logger.log(Level.INFO, "SQLGPSDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") succeeded.");
+			LOGGER.info("SQLGPSDataSource.createDatabase({}_{}) succeeded.",
+					database.getDatabasePrefix(), dbName);
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.createDatabase(" + database.getDatabasePrefix() + "_" + dbName + ") failed.", e);
+			LOGGER.error("SQLGPSDataSource.createDatabase({}_{}) failed.",
+					database.getDatabasePrefix(), dbName, e);
 		}
 
 		return false;
@@ -380,7 +388,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			result = new GPSData(dataPoints);
 			
 		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.getGPSData(" + cid + "," + rid + "," + st + "," + et + ") failed.", e);
+			LOGGER.error("SQLGPSDataSource.getGPSData({},{},{},{}) failed.", cid, rid, st, et, e);
 		}
 		
 		return result;
@@ -432,7 +440,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setInt(1, sid);
 				ps.executeUpdate();
 				rank		= defaultGetRank(rid);
-				logger.severe("deleted " + name + " rank " + rank.getName() + " (" + delcount + " solutions)");
+				LOGGER.error("deleted {} rank {} ({} solutions)", name, rank.getName(), delcount);
 			}
 			
 			// it is now safe to insert this NEW source
@@ -452,7 +460,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			return sid;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.insertSource() failed.", e);
+			LOGGER.error("SQLGPSDataSource.insertSource() failed.", e);
 		}
 		
 		return sid;
@@ -462,7 +470,6 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 	 * Insert a source file entry to the database.
 	 * If the filename/rank combination already exist then they are first deleted to allow for an overwrite
 	 * @param name	name of the file
-	 * @param hash	md5 hash code of the file
 	 * @param t0	start time
 	 * @param t1	end time
 	 * @param rid	rank id
@@ -491,7 +498,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 				ps.setInt(1, sid);
 				ps.executeUpdate();
 				rank		= defaultGetRank(rid);
-				logger.severe("deleted j2ksec0:" + String.valueOf(t0) + " / j2ksec1:" + String.valueOf(t1) + " / rank:" + rank.getName() + " (" + delcount + " solutions)");
+				LOGGER.error("deleted j2ksec0:{} / j2ksec1:{} / rank:{} (solutions)", String.valueOf(t0), String.valueOf(t1), rank.getName(), delcount);
 			}
 			
 			// it is now safe to insert this NEW source
@@ -510,7 +517,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			return sid;
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.insertSource() failed.", e);
+			LOGGER.error("SQLGPSDataSource.insertSource() failed.", e);
 		}
 		
 		return sid;
@@ -541,7 +548,7 @@ public class SQLGPSDataSource extends SQLDataSource implements DataSource {
 			ps.execute();
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGPSDataSource.insertSolution() failed.", e);
+			LOGGER.error("SQLGPSDataSource.insertSolution() failed.", e);
 		}
 	}
 }

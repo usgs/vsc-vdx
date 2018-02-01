@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.in.conn;
 
-import gov.usgs.util.ConfigFile;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.in.hw.Device;
 /**
  * Interface to represent connection to a device

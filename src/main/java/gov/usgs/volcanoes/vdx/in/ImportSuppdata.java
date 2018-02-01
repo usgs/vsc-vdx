@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSourceDescriptor;
@@ -13,20 +13,22 @@ import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
 import gov.usgs.volcanoes.vdx.data.SuppDatum;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 import gov.usgs.volcanoes.vdx.db.VDXDatabase;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImportSuppdata {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ImportSuppdata.class);
   private static Set<String> flags;
   private static Set<String> keys;
-  private Logger logger;
   private Map<String, Integer> channelMap;
   private Map<String, Integer> columnMap;
   private Map<String, Integer> rankMap;
@@ -50,9 +52,8 @@ public class ImportSuppdata {
    */
   public void initialize(String importerClass, String configFile) {
 
-    // initialize the logger for this importer
-    logger = Logger.getLogger(importerClass);
-    logger.info("ImportSuppdata.initialize() succeeded.");
+    // initialize the LOGGER for this importer
+    LOGGER.info("ImportSuppdata.initialize() succeeded.");
 
     // process the config file
     processConfigFile(configFile);
@@ -89,7 +90,7 @@ public class ImportSuppdata {
     String source               = filename.substring(5, filename.length() - 19);
     SQLDataSourceDescriptor dsd = sqlDataSourceHandler.getDataSourceDescriptor(source);
     if (dsd == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+      LOGGER.error("skipping: {} (datasource is invalid)", pathname);
       return;
     }
     SQLDataSource ds = null;
@@ -100,7 +101,7 @@ public class ImportSuppdata {
         ds = dsd.getSQLDataSource();
       }
     } catch (Exception e) {
-      logger.log(Level.SEVERE, "Problem getting datasource");
+      LOGGER.error("Problem getting datasource");
     }
 
     int defaultRank = 0;
@@ -114,14 +115,14 @@ public class ImportSuppdata {
       for (Channel ch : ds.defaultGetChannelsList(false)) {
         channelMap.put(ch.getCode(), ch.getCId());
       }
-      logger.info("Channels mapped: " + channelMap.size());
+      LOGGER.info("Channels mapped: " + channelMap.size());
 
       // Build map of columns
       columnMap = new HashMap<String, Integer>();
       for (Column col : ds.defaultGetColumns(true, ds.getMenuColumnsFlag())) {
         columnMap.put(col.name, col.idx);
       }
-      logger.info("Columns mapped: " + columnMap.size());
+      LOGGER.info("Columns mapped: " + columnMap.size());
 
       // Build map of ranks
       rankMap = new HashMap<String, Integer>();
@@ -133,7 +134,7 @@ public class ImportSuppdata {
           defaultRank = id;
         }
       }
-      logger.info("Ranks mapped: " + rankMap.size());
+      LOGGER.info("Ranks mapped: " + rankMap.size());
 
       // Set limits on # args per input line
       lineLen1 = 7;
@@ -144,7 +145,7 @@ public class ImportSuppdata {
       for (SuppDatum sdt : ds.getSuppDataTypes()) {
         sdtypeMap.put(sdt.typeName, sdt.tid);
       }
-      logger.info("Suppdata types mapped: " + sdtypeMap.size());
+      LOGGER.info("Suppdata types mapped: " + sdtypeMap.size());
 
     } else {
       // It isn't a SQL datasource; try it as a Winston datasource
@@ -152,11 +153,11 @@ public class ImportSuppdata {
       try {
         vds = (VDXSource) vdsd.getDataSource();
         if (vds == null) {
-          logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+          LOGGER.error("skipping: {} (datasource is invalid)", pathname);
           return;
         }
       } catch (Exception e2) {
-        logger.log(Level.SEVERE, "skipping: " + pathname + " (datasource is invalid)");
+        LOGGER.error("skipping: {} (datasource is invalid)", pathname);
         return;
       }
 
@@ -165,7 +166,7 @@ public class ImportSuppdata {
       for (gov.usgs.volcanoes.winston.Channel ch : vds.getChannels().getChannels()) {
         channelMap.put(ch.toString(), ch.sid);
       }
-      logger.info("Channels mapped: " + channelMap.size());
+      LOGGER.info("Channels mapped: {}", channelMap.size());
 
       // Set limits on # args per input line
       lineLen1 = lineLen2 = 7;
@@ -176,9 +177,9 @@ public class ImportSuppdata {
         for (SuppDatum sdt : vds.getSuppDataTypes()) {
           sdtypeMap.put(sdt.typeName, sdt.tid);
         }
-        logger.info("Suppdata types mapped: " + sdtypeMap.size());
+        LOGGER.info("Suppdata types mapped: " + sdtypeMap.size());
       } catch (Exception e3) {
-        logger.log(Level.SEVERE,
+        LOGGER.error(
             "skipping: " + pathname + " (problem reading supplemental data types)");
         return;
       }
@@ -187,7 +188,7 @@ public class ImportSuppdata {
     // Access the input file
     ResourceReader rr = ResourceReader.getResourceReader(pathname);
     if (rr == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (resource is invalid)");
+      LOGGER.error("skipping: {} (resource is invalid)", pathname);
       return;
     }
     // move to the first line in the file
@@ -196,11 +197,11 @@ public class ImportSuppdata {
 
     // check that the file has data
     if (line == null) {
-      logger.log(Level.SEVERE, "skipping: " + pathname + " (resource is empty)");
+      LOGGER.error("skipping: {} (resource is empty)", pathname);
       return;
     }
 
-    logger.info("importing: " + filename);
+    LOGGER.info("importing: " + filename);
 
     SuppDatum sd = new SuppDatum();
     int success  = 0;
@@ -213,7 +214,7 @@ public class ImportSuppdata {
       // First, we split it by quotes
       String[] quoteParts = line.split("'", -1);
       if (quoteParts.length % 2 != 1) {
-        logger.warning("Aborting import of line " + lineNumber + ", mismatched quotes");
+        LOGGER.warn("Aborting import of line {}, mismatched quotes", lineNumber);
         continue;
       }
       // Next, walk through those parts, splitting those outside of matching quotes by comma
@@ -227,7 +228,7 @@ public class ImportSuppdata {
         if (j == 0) { // section before first quote
           middle = false;
           if (parts.length > 1 && parts[0].trim().length() == 0) {
-            logger.warning("Aborting import of line " + lineNumber + ", leading comma");
+            LOGGER.warn("Aborting import of line {}, leading comma", lineNumber);
             ok = false;
             break;
           }
@@ -236,7 +237,7 @@ public class ImportSuppdata {
         if (j == quoteParts.length - 1) { // section after last quote
           middle = false;
           if (parts.length > 1 && parts[parts.length - 1].trim().length() == 0) {
-            logger.warning("Aborting import of line " + lineNumber + ", trailing comma");
+            LOGGER.warn("Aborting import of line {}, trailing comma", lineNumber);
             ok = false;
             break;
           }
@@ -244,20 +245,17 @@ public class ImportSuppdata {
         }
         if (middle) {
           if (parts.length == 1) {
-            logger.warning(
-                "Aborting import of line " + lineNumber + ", missing comma between quotes");
+            LOGGER.warn("Aborting import of line {}, missing comma between quotes", lineNumber);
             ok = false;
             break;
           }
           if (parts[0].trim().length() != 0) {
-            logger
-                .warning("Aborting import of line " + lineNumber + ", missing comma after a quote");
+            LOGGER.warn("Aborting import of line {}, missing comma after a quote", lineNumber);
             ok = false;
             break;
           }
           if (parts[parts.length - 1].trim().length() != 0) {
-            logger.warning(
-                "Aborting import of line " + lineNumber + ", missing comma before a quote");
+            LOGGER.warn("Aborting import of line {}, missing comma before a quote", lineNumber);
             ok = false;
             break;
           }
@@ -265,7 +263,7 @@ public class ImportSuppdata {
         int k;
         for (k = k1; ok && k < k2; k++) {
           if (valueArrayLength == lineLen2) {
-            logger.warning("Aborting import of line " + lineNumber + ", too many elements");
+            LOGGER.warn("Aborting import of line {}, too many elements", lineNumber);
             ok = false;
             break;
           }
@@ -273,7 +271,7 @@ public class ImportSuppdata {
         }
         if (j + 1 < quoteParts.length) {
           if (valueArrayLength == lineLen2) {
-            logger.warning("Aborting import of line " + lineNumber + ", too many elements");
+            LOGGER.warn("Aborting import of line {}, too many elements", lineNumber);
             ok = false;
             break;
           }
@@ -289,23 +287,21 @@ public class ImportSuppdata {
 
       // Validate & unmap arguments
       if (valueArrayLength < lineLen1) {
-        logger.warning(
-            "Aborting import of line " + lineNumber + ", too few elements (" + valueArrayLength
-                + ")");
+        LOGGER.warn("Aborting import of line {}, too few elements ({})",
+            lineNumber, valueArrayLength);
         continue;
       }
       try {
         sd.cid = channelMap.get(valueArray[3].trim());
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber
-            + ", unknown channel: '" + valueArray[3] + "'");
+        LOGGER.warn("Aborting import of line {}, unknown channel: '{}'", lineNumber, valueArray[3]);
         continue;
       }
       try {
         sd.st = Double.parseDouble(valueArray[1].trim());
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber
-            + ", invalid start time: '" + valueArray[1] + "'");
+        LOGGER.warn("Aborting import of line {}, invalid start time: '{}'",
+            lineNumber, valueArray[1]);
         continue;
       }
       try {
@@ -316,8 +312,8 @@ public class ImportSuppdata {
           sd.et = Double.parseDouble(et);
         }
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber
-            + ", invalid end time: '" + valueArray[2] + "'");
+        LOGGER.warn("Aborting import of line {}, invalid end time: '{}'",
+            lineNumber, valueArray[2]);
         continue;
       }
       try {
@@ -331,8 +327,8 @@ public class ImportSuppdata {
           sd.tid = tid;
         }
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber
-            + ", couldn't create type: '" + valueArray[4] + "'");
+        LOGGER.warn("Aborting import of line {}, couldn't create type: '{}'",
+            lineNumber, valueArray[4]);
         continue;
       }
       if (ds != null) {
@@ -340,8 +336,8 @@ public class ImportSuppdata {
           try {
             sd.colid = columnMap.get(valueArray[7].trim());
           } catch (Exception e) {
-            logger.warning("Aborting import of line " + lineNumber
-                + ", unknown column: '" + valueArray[7] + "'");
+            LOGGER.warn("Aborting import of line {}, unknown column: '{}'",
+                lineNumber, valueArray[7]);
             continue;
           }
           if (valueArrayLength < lineLen2) {
@@ -350,8 +346,8 @@ public class ImportSuppdata {
             try {
               sd.rid = rankMap.get(valueArray[8].trim());
             } catch (Exception e) {
-              logger.warning("Aborting import of line " + lineNumber
-                  + ", unknown rank: '" + valueArray[8] + "'");
+              LOGGER.warn("Aborting import of line {}, unknown rank: '{}'",
+                  lineNumber, valueArray[8]);
               continue;
             }
           }
@@ -369,8 +365,7 @@ public class ImportSuppdata {
       try {
         sd.sdid = Integer.parseInt(valueArray[0]);
       } catch (Exception e) {
-        logger.warning("Aborting import of line " + lineNumber
-            + ", unknown id: '" + valueArray[0] + "'");
+        LOGGER.warn("Aborting import of line {}, unknown id: '{}'", lineNumber, valueArray[0]);
         continue;
       }
 
@@ -380,12 +375,11 @@ public class ImportSuppdata {
           if (sd.tid == -1) {
             sd.tid = ds.insertSuppDataType(sd);
             if (sd.tid == 0) {
-              logger.warning("Aborting import of line " + lineNumber
-                  + ", problem inserting datatype");
+              LOGGER.warn("Aborting import of line {}, problem inserting datatype", lineNumber);
               continue;
             }
             sdtypeMap.put(sd.typeName, sd.tid);
-            logger.info("Added supplemental datatype " + sd.typeName);
+            LOGGER.info("Added supplemental datatype {}", sd.typeName);
           }
           int readSdid = sd.sdid;
           if (sd.sdid == 0) {
@@ -395,33 +389,31 @@ public class ImportSuppdata {
           }
           if (sd.sdid < 0) {
             sd.sdid = -sd.sdid;
-            logger.info("For import of line " + lineNumber
-                + ", supp data record already exists as SDID " + sd.sdid
-                + "; will create xref record");
+            LOGGER.info("For import of line {}, supp data record already exists as SDID {}; "
+                + "will create xref record", lineNumber, sd.sdid);
           } else if (sd.sdid == 0) {
-            logger.warning("Aborting import of line " + lineNumber
-                + ", problem " + (readSdid == 0 ? "insert" : "updat") + "ing supp data");
+            LOGGER.warn("Aborting import of line {}, problem {}ing supp data",
+                lineNumber, (readSdid == 0 ? "insert" : "updat"));
             continue;
           } else if (readSdid == 0) {
-            logger.info("Added supp data record SDID " + sd.sdid);
+            LOGGER.info("Added supp data record SDID {}", sd.sdid);
           } else {
-            logger.info("Updated supp data record SDID " + sd.sdid);
+            LOGGER.info("Updated supp data record SDID {}", sd.sdid);
           }
           if (!ds.insertSuppDatumXref(sd)) {
             continue;
           } else {
-            logger.info("Added xref for SDID " + sd.sdid);
+            LOGGER.info("Added xref for SDID {}", sd.sdid);
           }
         } else {
           if (sd.tid == -1) {
             sd.tid = vds.insertSuppDataType(sd);
             if (sd.tid == 0) {
-              logger.warning("Aborting import of line " + lineNumber
-                  + ", problem inserting datatype");
+              LOGGER.warn("Aborting import of line {}, problem inserting datatype", lineNumber);
               continue;
             }
             sdtypeMap.put(sd.typeName, sd.tid);
-            logger.info("Added supplemental datatype " + sd.typeName);
+            LOGGER.info("Added supplemental datatype {}", sd.typeName);
           }
           int readSdid = sd.sdid;
           if (sd.sdid == 0) {
@@ -431,31 +423,30 @@ public class ImportSuppdata {
           }
           if (sd.sdid < 0) {
             sd.sdid = -sd.sdid;
-            logger.info("For import of line " + lineNumber
-                + ", supp data record already exists as SDID " + sd.sdid
-                + "; will create xref record");
+            LOGGER.info("For import of line {}, supp data record already exists as SDID {}; "
+                + "will create xref record", lineNumber, sd.sdid);
           } else if (sd.sdid == 0) {
-            logger.warning("Aborting import of line " + lineNumber
-                + ", problem " + (readSdid == 0 ? "insert" : "updat") + "ing supp data");
+            LOGGER.warn("Aborting import of line {}, problem {}ing supp data",
+                lineNumber, (readSdid == 0 ? "insert" : "updat"));
             continue;
           } else if (readSdid == 0) {
-            logger.info("Added supp data record SDID " + sd.sdid);
+            LOGGER.info("Added supp data record SDID {}", sd.sdid);
           } else {
-            logger.info("Updated supp data record SDID " + sd.sdid);
+            LOGGER.info("Updated supp data record SDID {}", sd.sdid);
           }
           if (!vds.insertSuppDatumXref(sd)) {
             continue;
           } else {
-            logger.info("Added xref for SDID " + sd.sdid);
+            LOGGER.info("Added xref for SDID {}", sd.sdid);
           }
         }
       } catch (Exception e) {
-        logger.warning("Failed import of line " + lineNumber + ", db failure: " + e);
+        LOGGER.warn("Failed import of line {}, db failure: ", lineNumber, e);
         continue;
       }
       success++;
     }
-    logger.info("" + success + " of " + lineNumber + " lines successfully processed");
+    LOGGER.info("{} of {} lines successfully processed", success, lineNumber);
   }
 
   /**

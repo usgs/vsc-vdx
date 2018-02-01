@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.in.gps;
 
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.time.J2kSec;
 import gov.usgs.volcanoes.vdx.data.gps.GPS;
 
 import java.io.BufferedReader;
@@ -30,7 +30,7 @@ public class Stacov {
                 String pattern = "yyMMMdd";
                 SimpleDateFormat format = new SimpleDateFormat(pattern);
                 format.setTimeZone(TimeZone.getTimeZone("UTC"));
-                double t = Util.dateToJ2K(format.parse(timeStamp));
+                double t = J2kSec.fromDate(format.parse(timeStamp));
                 return t;
 
         }

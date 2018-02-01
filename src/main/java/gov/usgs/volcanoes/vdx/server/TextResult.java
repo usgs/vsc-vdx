@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.NetTools;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
 
 import java.nio.channels.SocketChannel;
 import java.util.List;

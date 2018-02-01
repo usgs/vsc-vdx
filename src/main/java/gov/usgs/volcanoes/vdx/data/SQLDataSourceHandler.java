@@ -1,23 +1,27 @@
 package gov.usgs.volcanoes.vdx.data;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Construct list of data sources mentioned in the configuration file.
  *
- * @author Dan Cervelli, Loren Antolik, Bill Tollett
+ * @author Dan Cervelli
+ * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class SQLDataSourceHandler {
   private static final String CONFIG_FILE = "vdxSources.config";
+  private static final Logger LOGGER = LoggerFactory.getLogger(SQLDataSourceHandler.class);
 
-  protected Logger logger;
   protected Map<String, SQLDataSourceDescriptor> sqlDataSources;
   private ConfigFile config;
   private String driver;
@@ -36,7 +40,6 @@ public class SQLDataSourceHandler {
     url = u;
     prefix = p;
 
-    logger = Log.getLogger("gov.usgs.volcanoes.vdx");
     sqlDataSources = new HashMap<String, SQLDataSourceDescriptor>();
     processConfigFile();
   }
@@ -59,7 +62,7 @@ public class SQLDataSourceHandler {
       SQLDataSourceDescriptor dsd =
           new SQLDataSourceDescriptor(source, className, description, sub);
       sqlDataSources.put(source, dsd);
-      logger.fine("read data source: " + source);
+      LOGGER.debug("read data source: {}", source);
     }
   }
 

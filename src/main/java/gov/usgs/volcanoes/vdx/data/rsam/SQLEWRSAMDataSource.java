@@ -1,10 +1,10 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.plot.data.RSAMData;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.data.RSAMData;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSource;
@@ -17,9 +17,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import cern.colt.matrix.DoubleMatrix2D;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for RSAM Data
@@ -27,7 +29,9 @@ import cern.colt.matrix.DoubleMatrix2D;
  * @author Tom Parker, Loren Antolik
  */
 public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLEWRSAMDataSource.class);
+
 	public static final String DATABASE_NAME	= "ewrsam";	
 	public static final boolean channels		= true;
 	public static final boolean translations	= false;
@@ -236,7 +240,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLEWRSAMDataSource.getTypes()", e);
+			LOGGER.error("SQLEWRSAMDataSource.getTypes()", e);
 		}
 		return result;
 	}
@@ -391,7 +395,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			
 		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "SQLEWRSAMDataSource.getEWRSAMData()", e);
+			LOGGER.error("SQLEWRSAMDataSource.getEWRSAMData()", e);
 		}
 		return result;
 	}
@@ -431,7 +435,7 @@ public class SQLEWRSAMDataSource extends SQLDataSource implements DataSource {
 			}
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLEWRSAMDataSource.insertData()", e);
+			LOGGER.error("SQLEWRSAMDataSource.insertData()", e);
 		}
 	}
 }

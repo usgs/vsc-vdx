@@ -1,15 +1,15 @@
 package gov.usgs.volcanoes.vdx.data.hypo;
 
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
-
+import gov.usgs.volcanoes.core.time.J2kSec;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -51,10 +51,11 @@ import java.util.logging.Logger;
  * 
  * $Log: not supported by cvs2svn $
  * @author Dan Cervelli
+ * @author Bill Tollett
  */
 public class CUBEMessage
 {
-	protected final static Logger logger = Log.getLogger("gov.usgs.volcanoes.vdx.data.hypo.CUBEMessage"); 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CUBEMessage.class);
     private static SimpleDateFormat dateIn = new SimpleDateFormat("yyyyMMddHHmmss");
     private static SimpleDateFormat dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
     public static final int EARTHQUAKE = 1;
@@ -149,7 +150,7 @@ public class CUBEMessage
      */
     public double getJ2KSec()
     {
-        return Util.dateToJ2K(getDate());
+        return J2kSec.fromDate(getDate());
     }
     
     /**
@@ -216,8 +217,9 @@ public class CUBEMessage
                 BufferedReader in = new BufferedReader(new FileReader(files[i]));
                 CUBEMessage msg = new CUBEMessage(in.readLine());
                 if (msg.getMessageType() == EARTHQUAKE)
-                   logger.info(files[i].getName() + ": " + msg.getEventID() + " " + msg.getVersion() + " " + msg.getDataSource() + " " + dateOut.format(msg.getDate()) + " " + msg.getLongitude() + 
-                        " " + msg.getLatitude() + " " + msg.getDepth() + " " + msg.getMagnitude());
+                   LOGGER.info("{}: {} {} {} {} {} {} {} {}", files[i].getName(), msg.getEventID(),
+                       msg.getVersion(), msg.getDataSource(), dateOut.format(msg.getDate()),
+                       msg.getLongitude(), msg.getLatitude(), msg.getDepth(), msg.getMagnitude());
                 in.close();
             }
         }

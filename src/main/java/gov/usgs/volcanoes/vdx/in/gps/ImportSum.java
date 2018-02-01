@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.in.gps;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.gps.SQLGPSDataSource;
 
 /**

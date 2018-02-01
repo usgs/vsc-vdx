@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.RSAMData;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.RSAMData;
 import gov.usgs.volcanoes.core.data.Scnl;
 import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
