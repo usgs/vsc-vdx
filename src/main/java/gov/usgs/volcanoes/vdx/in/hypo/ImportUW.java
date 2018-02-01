@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.hypo.Hypocenter;
 import gov.usgs.volcanoes.vdx.data.hypo.SQLHypocenterDataSource;
 
@@ -61,7 +61,7 @@ public class ImportUW extends Importer
 					throw new Exception("Incomplete record.");
 				
 				Date d = dateIn.parse(s.substring(2, 14));
-				double j2ksec = Util.dateToJ2K(d);
+				double j2ksec = J2kSec.fromDate(d);
 				double ds = Double.parseDouble(s.substring(14, 20).trim());
 				j2ksec += ds;
 				

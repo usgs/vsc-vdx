@@ -1,23 +1,23 @@
 package gov.usgs.volcanoes.vdx.in.tilt;
 
-import gov.usgs.pinnacle.Client;
-import gov.usgs.pinnacle.StatusBlock;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.pinnacle.Client;
+import gov.usgs.volcanoes.core.legacy.pinnacle.StatusBlock;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.ResourceReader;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.tilt.SQLTiltDataSource;
 import gov.usgs.volcanoes.vdx.db.VDXDatabase;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Import pinnacle data - from pinnacle server socket or from files
@@ -26,13 +26,11 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class ImportPinnServer extends Client
 {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportPinnServer.class);
 	private static final String CONFIG_FILE = "PinnClient.config";
 	private SQLTiltDataSource dataSource;
 	private String channel;
-	private Logger logger;
-	
-		
-	
+
 	/**
 	 * Constructor
 	 * @param h host 
@@ -41,7 +39,6 @@ public class ImportPinnServer extends Client
 	public ImportPinnServer(String h, int p)
 	{
 		super(h, p);
-		logger = Log.getLogger("gov.usgs.volcanoes.vdx");
 	}
 	
 	/**
@@ -54,7 +51,7 @@ public class ImportPinnServer extends Client
 			fn = CONFIG_FILE;
 		ConfigFile cf = new ConfigFile(fn);
 		String host = cf.getString("server.host");
-		int port = Util.stringToInt(cf.getString("server.port"), 17000);
+		int port = StringUtils.stringToInt(cf.getString("server.port"), 17000);
 		ImportPinnServer ips = new ImportPinnServer(host, port);
 
 		ips.channel = cf.getString("channel");
@@ -77,20 +74,20 @@ public class ImportPinnServer extends Client
 		if (!ips.dataSource.databaseExists())
 		{
 			if (ips.dataSource.createDatabase())
-				ips.logger.info("created database.");
+				ips.LOGGER.info("created database.");
 		}
 		
 		// this is commented out for now until i figure out how i want to handle channel existence
 		// if (!ips.dataSource.defaultChannelExists("etilt", ips.channel)) {
 			if (ips.dataSource.createChannel(ips.channel, ips.channel, Double.NaN, Double.NaN, Double.NaN, 1, 0, 0))
-				ips.logger.info("created channel.");
+				ips.LOGGER.info("created channel.");
 		// }
 		return ips;
 	}
 
 	/**
 	 * Method to handle with data block which was got from pinnacle server
-	 * @see gov.usgs.pinnacle.Client
+	 * @see gov.usgs.volcanoes.core.legacy.pinnacle.Client
 	 */
 	public void handleStatusBlock(StatusBlock sb)
 	{
@@ -113,21 +110,28 @@ public class ImportPinnServer extends Client
 	 */
 	public void importFile(String fn)
 	{
-		logger = Log.getLogger("gov.usgs.volcanoes.vdx");
-		
 		try
 		{
 			ResourceReader rr = ResourceReader.getResourceReader(fn);
 			if (rr == null)
 				return;
-			logger.info("importing: " + fn);
+			LOGGER.info("importing: {}", fn);
 
 			String s = rr.nextLine();
 			while (s != null)
 			{
 				if (s.substring(21,24).equals("SB:"))
 				{
-					StatusBlock sb = new StatusBlock(Util.hexToBytes(s.substring(25)));
+					String sub = s.substring(25);
+					int n = sub.length() / 2;
+					byte[] buf = new byte[n];
+					for (int i = 0; i < n; i++)
+					{
+						String ss = sub.substring(i * 2, i * 2 + 2);
+						int j = Integer.parseInt(ss, 16);
+						buf[i] = (byte)j;
+					}
+					StatusBlock sb = new StatusBlock(buf);
 					handleStatusBlock(sb);
 				}
 				s = rr.nextLine();

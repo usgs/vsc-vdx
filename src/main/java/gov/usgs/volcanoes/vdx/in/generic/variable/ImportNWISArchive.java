@@ -1,9 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.generic.variable;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.ResourceReader;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.generic.variable.DataType;
 import gov.usgs.volcanoes.vdx.data.generic.variable.SQLGenericVariableDataSource;
 import gov.usgs.volcanoes.vdx.data.generic.variable.Station;
@@ -16,9 +15,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -36,7 +37,7 @@ import java.util.regex.Pattern;
 public class ImportNWISArchive
 {	
 	private static final String CONFIG_FILE = "NWIS.config";
-	private Logger logger;
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportNWISArchive.class);
 	private Station st;
 	private DataType dt;
 	private SQLGenericVariableDataSource dataSource;
@@ -64,14 +65,13 @@ public class ImportNWISArchive
 	public void importFile(String fn)
 	{
 		List<DataType> dataTypes = new ArrayList<DataType>();
-		logger = Log.getLogger("gov.usgs.volcanoes.vdx");
-		
+
 		try
 		{
 			ResourceReader rr = ResourceReader.getResourceReader(fn);
 			if (rr == null)
 				return;
-			logger.info("importing: " + fn);
+			LOGGER.info("importing: {}", fn);
 			
 			String s;
 			boolean next = false;

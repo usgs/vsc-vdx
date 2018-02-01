@@ -1,9 +1,10 @@
 package gov.usgs.volcanoes.vdx.in.gps;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
@@ -26,11 +27,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImportTDP implements Importer {	
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportTDP.class);
+
 	public ResourceReader rr;
 	
 	public static Set<String> flags;
@@ -99,9 +103,7 @@ public class ImportTDP implements Importer {
 	public String defaultColumns;
 	
 	public String importerType = "gps";
-	
-	public Logger logger;
-	
+
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
@@ -119,8 +121,7 @@ public class ImportTDP implements Importer {
 	public void initialize(String importerClass, String configFile, boolean verbose) {
 		
 		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportTDP.initialize() succeeded.");
+		LOGGER.info("ImportTDP.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -139,19 +140,19 @@ public class ImportTDP implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -170,14 +171,14 @@ public class ImportTDP implements Importer {
 		// lookup the data source from the list that is in vdxSources.config
 		sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 		if (sqlDataSourceDescriptor == null) {
-			logger.log(Level.SEVERE, dataSource + " sql data source does not exist in vdxSources.config");
+			LOGGER.error("{} sql data source does not exist in vdxSources.config", dataSource);
 		}
 				
 		// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 		sqlDataSource	= (SQLGPSDataSource)sqlDataSourceDescriptor.getSQLDataSource();
 		
 		if (!sqlDataSource.getType().equals(importerType)) {
-			logger.log(Level.SEVERE, "dataSource not a " + importerType + " data source");
+			LOGGER.error("dataSource not a {} data source", importerType);
 			System.exit(-1);
 		}
 		
@@ -187,9 +188,9 @@ public class ImportTDP implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "Raw Data");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
 		// create rank entry
@@ -199,7 +200,7 @@ public class ImportTDP implements Importer {
 				tempRank = sqlDataSource.defaultInsertRank(rank);
 			}
 			if (tempRank == null) {
-				logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
+				LOGGER.error("invalid rank for dataSource {}", dataSource);
 				System.exit(-1);
 			}
 			rid	= tempRank.getId();
@@ -234,7 +235,7 @@ public class ImportTDP implements Importer {
 			// check that the file exists
 			rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
+				LOGGER.error("skipping: {} (resource is invalid)", filename);
 				return;
 			}
 
@@ -247,13 +248,13 @@ public class ImportTDP implements Importer {
 			
 			// if the file is empty then exit
 			if (numberOfLines == 0) {
-				logger.log(Level.SEVERE, "skipping: " + filename + "(resource has 0 lines)");
+				LOGGER.error("skipping: {}(resource has 0 lines)", filename);
 				return;
 			}
 
 			// print out a confirmation message that we are getting going
-			logger.log(Level.INFO, "filename:" + filename);
-			logger.log(Level.INFO, "lines:" + numberOfLines);
+			LOGGER.info("filename: {}", filename);
+			LOGGER.info("lines: {}", numberOfLines);
 
 			// now read the file again and lets get all the information out of it
 			rr 				= ResourceReader.getResourceReader(filename);
@@ -273,7 +274,7 @@ public class ImportTDP implements Importer {
 				// get the j2ksec from the date
 				date		= dateIn.parse(oneLineArray[0]);
 				date.setTime(date.getTime());
-				j2ksec		= Util.dateToJ2K(date);
+				j2ksec		= J2kSec.fromDate(date);
 
 				// get the values for this observation
 				val			= Double.parseDouble(oneLineArray[2]) * 1000;
@@ -345,10 +346,10 @@ public class ImportTDP implements Importer {
 			}
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "ImportTDP.process(" + filename + ") failed.", e);
+			LOGGER.error("ImportTDP.process({}) failed.", filename, e);
 		}
 	}
-	
+
 	public void outputInstructions(String importerClass, String message) {
 		if (message == null) {
 			System.err.println(message);

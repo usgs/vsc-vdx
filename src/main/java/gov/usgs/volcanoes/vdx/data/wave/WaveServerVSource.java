@@ -1,11 +1,12 @@
 package gov.usgs.volcanoes.vdx.data.wave;
 
-import gov.usgs.earthworm.Menu;
-import gov.usgs.earthworm.MenuItem;
-import gov.usgs.earthworm.WaveServer;
-import gov.usgs.plot.data.Wave;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.data.Wave;
+import gov.usgs.volcanoes.core.legacy.ew.Menu;
+import gov.usgs.volcanoes.core.legacy.ew.MenuItem;
+import gov.usgs.volcanoes.core.legacy.ew.WaveServer;
+import gov.usgs.volcanoes.core.time.Time;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
@@ -50,7 +51,7 @@ public class WaveServerVSource implements DataSource
 		host = params.getString("host");
 		port = Integer.parseInt(params.getString("port"));
 		timeout = Integer.parseInt(params.getString("timeout"));
-		maxrows	= Util.stringToInt(params.getString("maxrows"), 0); 
+		maxrows	= StringUtils.stringToInt(params.getString("maxrows"), 0);
         waveServer = new WaveServer(host, port);
         waveServer.setTimeout(timeout);
 	}
@@ -90,7 +91,7 @@ public class WaveServerVSource implements DataSource
 			if (ss.length >= 4)
 				loc = ss[3];
 			waveServer.connect();
-			Wave sw = waveServer.getRawData(sta, cha, net, loc, Util.j2KToEW(t1), Util.j2KToEW(t2));
+			Wave sw = waveServer.getRawData(sta, cha, net, loc, Time.j2kToEw(t1), Time.j2kToEw(t2));
 			if (sw != null)
 				sw.convertToJ2K();
 			waveServer.close();

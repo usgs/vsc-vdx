@@ -1,11 +1,11 @@
 package gov.usgs.volcanoes.vdx.in.generic.fixed;
 
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.Log;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.generic.fixed.SQLGenericFixedDataSource;
 
@@ -17,17 +17,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.log4j.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for importing CSV format files.
  *  
  * @author Tom Parker
+ * @author Bill Tollett
  */
 public class ImportYVOTemp
 {
-
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportYVOTemp.class);
 	protected SQLGenericFixedDataSource dataSource;
 	protected static Set<String> flags;
 	protected static Set<String> keys;
@@ -40,7 +43,6 @@ public class ImportYVOTemp
 	private ConfigFile params;
 	private ConfigFile vdxParams;
 	private List<Column> fileCols;
-	protected Logger logger;
 
 	/**
 	 * Constructor
@@ -48,15 +50,14 @@ public class ImportYVOTemp
 	 */
 	public ImportYVOTemp(String cf)
 	{
-		logger = Log.getLogger("gov.usgs.volcanoes.vdx");
 		params = new ConfigFile(cf);
-		logger.finer("Processing config file");
+		LOGGER.debug("Processing config file");
 		processConfigFile();
 		dataSource = new SQLGenericFixedDataSource();
-		logger.finer("initalizing VDX params");
+		LOGGER.debug("initalizing VDX params");
 		// TODO: work out new initialization
 		// dataSource.initialize(vdxParams);
-		logger.finest("exiting constructor");
+		LOGGER.debug("exiting constructor");
 	}
 	
 	/**
@@ -86,7 +87,7 @@ public class ImportYVOTemp
 		while (it.hasNext())
 		{
 			String column = it.next();
-			logger.finest("found column: " + column);
+			LOGGER.debug("found column: {}", column);
 			sub = params.getSubConfig(column);
 			int index = Integer.parseInt(sub.getString("index"));
 			String description = sub.getString("description");
@@ -105,7 +106,7 @@ public class ImportYVOTemp
 	 */
 	public void process(String f)
 	{
-		logger.fine("processing " + f);
+		LOGGER.debug("processing {}", f);
 		List<double[]> pts = new ArrayList<double[]>();
 		
 		try
@@ -113,7 +114,7 @@ public class ImportYVOTemp
 			ResourceReader rr = ResourceReader.getResourceReader(f);
 			if (rr == null)
 				return;
-			logger.info("importing: " + f);
+			LOGGER.info("importing: {}", f);
 			
 			String line = rr.nextLine();
 
@@ -123,15 +124,15 @@ public class ImportYVOTemp
 			while (line != null)
 			{
 				String[] s = line.split(",");
-				logger.info("timestamp " + s[timeZoneIndex]);
+				LOGGER.info("timestamp {}", s[timeZoneIndex]);
 				int i=0;
 				double[] d = new double[fileCols.size() + 1];
 
 				Date date = dateIn.parse(s[timeZoneIndex]);
-				d[i++] = Util.dateToJ2K(date);
+				d[i++] = J2kSec.fromDate(date);
 				
 				for (Column c : fileCols) {
-					logger.info(c.description + " = " + s[c.idx]);
+					LOGGER.info("{} = {}", c.description, s[c.idx]);
 						d[i++] = Double.parseDouble(s[c.idx]);
 				}
 				
@@ -218,7 +219,7 @@ public class ImportYVOTemp
 				String sec = s.substring(13,19).trim();
 				
 				Date date = dateIn.parse(year+monthDay+hourMin+sec);
-				double j2ksec = Util.dateToJ2K(date);
+				double j2ksec = J2kSec.fromDate(date);
 
 				// LAT
 				double latdeg = Double.parseDouble(s.substring(19, 22).trim());
@@ -262,7 +263,7 @@ public class ImportYVOTemp
 	 */
 	public void create ()
 	{
-		logger.info("Creating channel " + table);
+		LOGGER.info("Creating channel {}", table);
 		dataSource.createChannel(table, table, lon, lat, Double.NaN, 1, 0);
 	}
 	
@@ -277,9 +278,8 @@ public class ImportYVOTemp
 	 */
 	public static void main(String as[])
 	{
-		Logger 	logger = Log.getLogger("gov.usgs.volcanoes.vdx");
-		logger.setLevel(Level.INFO);
-		
+
+		Log.setLevel(Level.INFO);
 		String cf = CONFIG_FILE;
 		Set<String> flags;
 		Set<String> keys;
@@ -309,7 +309,7 @@ public class ImportYVOTemp
 			cf = args.get("-c");
 		
 		if (args.flagged("-v"))
-			logger.setLevel(Level.ALL);
+			Log.setLevel(Level.ALL);
 		
 		ImportYVOTemp in = new ImportYVOTemp(cf);
 		List<String> files = args.unused();

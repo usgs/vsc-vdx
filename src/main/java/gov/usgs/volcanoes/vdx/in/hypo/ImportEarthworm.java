@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.hypo.Hypocenter;
 import gov.usgs.volcanoes.vdx.data.hypo.SQLHypocenterDataSource;
 
@@ -61,7 +61,7 @@ public class ImportEarthworm extends Importer
 				// DATE
 				String ds		= s.substring(0, 19).trim() + "0";
 				Date date		= dateIn.parse(ds);
-				double j2ksec	= Util.dateToJ2K(date);
+				double j2ksec	= J2kSec.fromDate(date);
 
 				// LAT
 				double latdeg	= Double.parseDouble(s.substring(20, 22).trim());

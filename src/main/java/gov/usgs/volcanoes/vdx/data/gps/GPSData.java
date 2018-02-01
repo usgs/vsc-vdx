@@ -1,16 +1,16 @@
 package gov.usgs.volcanoes.vdx.data.gps;
 
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.Log;
-
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A class that deals with GPS data.  The data are stored in four matrices:
@@ -21,7 +21,7 @@ import cern.colt.matrix.DoubleMatrix2D;
  */
 public class GPSData implements BinaryDataSet
 {
-	protected final static Logger logger = Log.getLogger("gov.usgs.volcanoes.vdx.data.gps.GPSData"); 
+	private final static Logger LOGGER = LoggerFactory.getLogger(GPSData.class);
 	private static final DoubleFactory2D DENSE	= DoubleFactory2D.dense;
 	private static final DoubleFactory2D SPARSE	= DoubleFactory2D.sparse;
 	private static final DoubleMatrix2D I3X3	= DENSE.identity(3);
@@ -473,28 +473,26 @@ public class GPSData implements BinaryDataSet
 	{
 		for (int i = 0; i < observations(); i++)
 		{
-			logger.fine(new Double(tData.getQuick(i, 0)).toString());
-			logger.fine(new Double(rData.getQuick(i, 0)).toString());
-			logger.fine("\t" +
-					xyzData.getQuick(i, 0) + " " + 
-					xyzData.getQuick(i, 1) + " " + 
-					xyzData.getQuick(i, 2) + " " + 
-					lenData.getQuick(i, 0));
-			
-			logger.fine("\t\t" +
-					covData.getQuick(i, 0) + " " + 
-					covData.getQuick(i, 1) + " " + 
-					covData.getQuick(i, 2) + " ");
-			
-			logger.fine("\t\t" +
-					covData.getQuick(i, 1) + " " + 
-					covData.getQuick(i, 3) + " " + 
-					covData.getQuick(i, 4) + " ");
-			
-			logger.fine("\t\t" +
-					covData.getQuick(i, 2) + " " + 
-					covData.getQuick(i, 4) + " " + 
-					covData.getQuick(i, 5) + " ");
+			LOGGER.debug(new Double(tData.getQuick(i, 0)).toString());
+			LOGGER.debug(new Double(rData.getQuick(i, 0)).toString());
+			LOGGER.debug("\t{} {} {} {} ",
+					xyzData.getQuick(i, 0), xyzData.getQuick(i, 1),
+					xyzData.getQuick(i, 2), lenData.getQuick(i, 0));
+
+			LOGGER.debug("\t\t{} {} {} ",
+					covData.getQuick(i, 0),
+					covData.getQuick(i, 1),
+					covData.getQuick(i, 2));
+
+			LOGGER.debug("\t\t{} {} {} ",
+					covData.getQuick(i, 1),
+					covData.getQuick(i, 3),
+					covData.getQuick(i, 4));
+
+			LOGGER.debug("\t\t{} {} {} ",
+					covData.getQuick(i, 2),
+					covData.getQuick(i, 4),
+					covData.getQuick(i, 5));
 		}
 	}
 	

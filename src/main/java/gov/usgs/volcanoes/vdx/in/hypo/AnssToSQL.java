@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Util;
-import gov.usgs.proj.GeographicFilter;
+import gov.usgs.volcanoes.core.legacy.math.proj.GeographicFilter;
 
+import gov.usgs.volcanoes.core.time.J2kSec;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,7 +36,7 @@ public class AnssToSQL {
 			SimpleDateFormat format = new SimpleDateFormat(INPUT_DATE_FORMAT);
 			format.setTimeZone(TimeZone.getTimeZone("UTC"));
 			try {
-				return Util.dateToJ2K(format.parse(timeStamp.trim())) + milliseconds;
+				return J2kSec.fromDate(format.parse(timeStamp.trim())) + milliseconds;
 			} catch (ParseException e) {
 				e.printStackTrace();
 				return 0;
@@ -87,7 +87,7 @@ public class AnssToSQL {
 
 		System.out.printf("%s(\"%s\",%s,%s,%s,%s,\"%s%s\")",
 						   Preamble,
-						   Util.j2KToDateString(parseTime(line)),	// Time
+						   J2kSec.toDateString(parseTime(line)),	// Time
 						   parse(line,24,33), // Latitude
 						   parse(line,33,43), // Longitude
 						   parse(line,43,51), // Depth

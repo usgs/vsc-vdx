@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.conn;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.text.*;
 
 /**
@@ -42,8 +42,8 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	 */
 	public void initialize(ConfigFile params) throws Exception {
 		super.initialize(params);
-		callnumber				= Util.stringToInt(params.getString("callnumber"));
-		repeater				= Util.stringToInt(params.getString("repeater"));
+		callnumber				= StringUtils.stringToInt(params.getString("callnumber"), Integer.MIN_VALUE);
+		repeater				= StringUtils.stringToInt(params.getString("repeater"), Integer.MIN_VALUE);
 		radioNumberFormatter	= new DecimalFormat ("#######");
 	}
 	
@@ -59,9 +59,6 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	
 	/** 
 	 * Connects to a FreeWave.
-	 * @param repeaterEntry the repeater entry number in the FreeWave callbook
-	 * @param radioNumber the radio phone number
-	 * @param timeout the timeout in milliseconds (-1 == none)
 	 * @throws Exception various exceptions can be thrown with different messages depending on the outcome
 	 */
 	public void connect() throws Exception {
@@ -73,7 +70,6 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	/** 
 	 * Calls the FreeWave.
 	 * @param radioNumber the radio phone number
-	 * @param establishConnectionTimeout the timeout (ms)
 	 */
 	private void call(int radioNumber) throws Exception {
 		String cmd = "ATD" + radioNumberFormatter.format(radioNumber);
@@ -88,7 +84,7 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	
 	/** 
 	 * Sets the repeater path.
-	 * @param repeaterEntry the repeater entry in the FreeWave phone book
+	 * @param repeater the repeater entry in the FreeWave phone book
 	 */
 	private void setRepeater(int repeater) throws Exception {
 		String cmd = "ATXC" + (char)('0' + repeater);
@@ -117,7 +113,7 @@ public class FreewaveIPConnection extends IPConnection implements Connection {
 	
 	/** 
 	 * Waits for a CONNECT from the FreeWave.
-	 * @param establishConnectionTimeout the timeout (ms) (-1 == none)
+	 * @param timeout the timeout (ms) (-1 == none)
 	 * @throws Exception if there was a problem
 	 */
 	private void wait4Connect (int timeout) throws Exception {

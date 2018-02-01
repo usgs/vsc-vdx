@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.data.lightning;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.SelectOption;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
@@ -15,7 +15,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for lightning Data.
@@ -23,8 +25,11 @@ import java.util.logging.Level;
  * Modeled after SQLHypocenterSource
  *
  * @author Tom Parker
+ * @author Bill Tollett
  */
 public class SQLLightningDataSource extends SQLDataSource implements DataSource {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLLightningDataSource.class);
 
 	public static final String DATABASE_NAME = "lightning";
 	public static final boolean channels = false;
@@ -147,14 +152,14 @@ public class SQLLightningDataSource extends SQLDataSource implements DataSource 
 			sql += " PRIMARY KEY(j2ksec, lat, lon), KEY index_j2ksec (j2ksec))";
 			st.execute(sql);
 
-			logger.log(Level.INFO, "SQLLightningDataSource.createDatabase(" + database.getDatabasePrefix() + "_"
-					+ dbName + ") succeeded.");
+			LOGGER.info("SQLLightningDataSource.createDatabase({}_{}) succeeded.",
+					database.getDatabasePrefix(), dbName);
 
 			return true;
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLLightningDataSource.createDatabase(" + database.getDatabasePrefix() + "_"
-					+ dbName + ") failed.", e);
+			LOGGER.error("SQLLightningDataSource.createDatabase({}_{}) failed.",
+					database.getDatabasePrefix(), dbName, e);
 		}
 		return false;
 	}
@@ -338,7 +343,7 @@ public class SQLLightningDataSource extends SQLDataSource implements DataSource 
 			}
 
 		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "SQLLightningDataSource.getHypocenterData() failed.", e);
+			LOGGER.error("SQLLightningDataSource.getHypocenterData() failed.", e);
 		}
 		result = new StrokeList(pts);
 		return result;
@@ -370,7 +375,7 @@ public class SQLLightningDataSource extends SQLDataSource implements DataSource 
 			result = ps.executeUpdate();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLLightningDataSource.insertHypocenter() failed.", e);
+			LOGGER.error("SQLLightningDataSource.insertHypocenter() failed.", e);
 		}
 		return result;
 	}

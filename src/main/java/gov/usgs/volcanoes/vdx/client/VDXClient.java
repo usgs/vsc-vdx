@@ -1,10 +1,11 @@
 package gov.usgs.volcanoes.vdx.client;
 
-import gov.usgs.net.InternetClient;
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.Retriable;
-import gov.usgs.util.Util;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.Zip;
+import gov.usgs.volcanoes.core.legacy.net.InternetClient;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.util.Retriable;
+import gov.usgs.volcanoes.core.util.StringUtils;
+import gov.usgs.volcanoes.core.util.UtilException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -70,7 +71,7 @@ public class VDXClient extends InternetClient
 	{
 		if (!connected())
 			connect();
-		String cmd = "getdata: " + Util.mapToString(params) + "\n";
+		String cmd = "getdata: " + StringUtils.mapToString(params) + "\n";
 		writeString(cmd);
 		
 		String rs = readString();
@@ -105,7 +106,7 @@ public class VDXClient extends InternetClient
 						}
 						catch (Exception e)
 						{
-							logger.warning("VDXClient.submitCommand() exception: " + e.getMessage());
+							logger.warn("VDXClient.submitCommand() exception: {}", e.getMessage());
 							return false;
 						}	
 						String rc = rs.substring(0, rs.indexOf(':'));
@@ -113,13 +114,13 @@ public class VDXClient extends InternetClient
 						result = null;
 						if (rc.equals("ok")){
 							logger.info("rc is ok: " + r);
-							Map<String, String> map = Util.stringToMap(r);
+							Map<String, String> map = StringUtils.stringToMap(r);
 							if (map.get("bytes") != null)
 							{	
 								try {
 									int bytes = Integer.parseInt(map.get("bytes"));
 									byte[] buffer = readBinary(bytes);
-									byte[] decompBuf = Util.decompress(buffer);
+									byte[] decompBuf = Zip.decompress(buffer);
 									ByteBuffer bb = ByteBuffer.wrap(decompBuf);
 
 									String className = dataTypeMap.get(map.get("type"));
@@ -129,13 +130,13 @@ public class VDXClient extends InternetClient
 								}
 								catch (Exception e)
 								{	
-									logger.warning("VDXClient: binary dataset unpacking exception: " + e.getMessage());
+									logger.warn("VDXClient: binary dataset unpacking exception: {}", e.getMessage());
 									return false;
 								}
 							}
 							else 
 							{
-								logger.warning("error, expected binary");
+								logger.warn("error, expected binary");
 							}
 							return true;
 						}
@@ -175,7 +176,7 @@ public class VDXClient extends InternetClient
 				}
 				catch (Exception e)
 				{
-					logger.warning("VDXClient.getData() exception: " + e.getMessage());
+					logger.warn("VDXClient.getData() exception: {}", e.getMessage());
 					return false;
 				}
 				String rc = rs.substring(0, rs.indexOf(':'));
@@ -185,7 +186,7 @@ public class VDXClient extends InternetClient
 				logger.info("VDXClient.getData(): r = " + r);
 				
 				if (rc.equals("ok")){
-					Map<String, String> map = Util.stringToMap(r);
+					Map<String, String> map = StringUtils.stringToMap(r);
 					if (map.get("lines") != null){
 						try{
 							int lines = Integer.parseInt(map.get("lines"));
@@ -195,12 +196,12 @@ public class VDXClient extends InternetClient
 							result = list;
 						}
 						catch (Exception e)	{	
-							logger.warning("VDXClient: text dataset unpacking exception: " + e.getMessage());
+							logger.warn("VDXClient: text dataset unpacking exception: {}", e.getMessage());
 							return false;
 						}
 					}
 					else {
-						logger.warning("VDXClient.getData(): error, expected text");
+						logger.warn("VDXClient.getData(): error, expected text");
 					}
 					return true;
 				} 

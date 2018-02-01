@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.data.tensorstrain;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.DataSource;
@@ -14,14 +14,19 @@ import gov.usgs.volcanoes.vdx.server.TextResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for Tensorstrain Data
  *
  * @author Max Kokoulin
+ * @author Bill Tollett
  */
 public class SQLTensorstrainDataSource extends SQLDataSource implements DataSource {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLTensorstrainDataSource.class);
 	
 	public static final String DATABASE_NAME	= "tensorstrain";
 	public static final boolean channels		= true;
@@ -121,7 +126,7 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			st.execute("ALTER TABLE channels ADD natural_azimuth DOUBLE DEFAULT 0");
 			return true;
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.createDatabase() failed.", e);
+			LOGGER.error("SQLTensorstrainDataSource.createDatabase() failed.", e);
 		}
 		return false;
 	}
@@ -341,7 +346,7 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			result = new BinaryResult(new TensorstrainData(pts));
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getTensorstrainData()", e);
+			LOGGER.error("SQLTensorstrainDataSource.getTensorstrainData()", e);
 			return null;
 		}
 		
@@ -365,7 +370,7 @@ public class SQLTensorstrainDataSource extends SQLDataSource implements DataSour
 			rs.close();
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLTensorstrainDataSource.getAzimuths() failed.", e);
+			LOGGER.error("SQLTensorstrainDataSource.getAzimuths() failed.", e);
 		}
 
 		return result;

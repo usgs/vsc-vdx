@@ -1,12 +1,12 @@
 package gov.usgs.volcanoes.vdx.data.hypo.plot;
 
-import gov.usgs.plot.color.Jet;
-import gov.usgs.plot.color.Spectrum;
-import gov.usgs.plot.decorate.SmartTick;
-import gov.usgs.plot.render.ArbDepthFrameRenderer;
-import gov.usgs.plot.render.Renderer;
-import gov.usgs.plot.transform.ArbDepthCalculator;
-import gov.usgs.plot.transform.Transformer;
+import gov.usgs.volcanoes.core.legacy.plot.color.Jet;
+import gov.usgs.volcanoes.core.legacy.plot.color.Spectrum;
+import gov.usgs.volcanoes.core.legacy.plot.decorate.SmartTick;
+import gov.usgs.volcanoes.core.legacy.plot.render.ArbDepthFrameRenderer;
+import gov.usgs.volcanoes.core.legacy.plot.render.Renderer;
+import gov.usgs.volcanoes.core.legacy.plot.transform.ArbDepthCalculator;
+import gov.usgs.volcanoes.core.legacy.plot.transform.Transformer;
 import gov.usgs.volcanoes.vdx.data.hypo.Hypocenter;
 import gov.usgs.volcanoes.vdx.data.hypo.HypocenterList;
 

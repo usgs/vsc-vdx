@@ -1,8 +1,9 @@
 package gov.usgs.volcanoes.vdx.data.lightning;
 
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.proj.Projection;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.math.proj.Projection;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.time.Time;
 import hep.aida.IAxis;
 import hep.aida.ref.FixedAxis;
 import hep.aida.ref.Histogram1D;
@@ -271,9 +272,9 @@ public class StrokeList implements BinaryDataSet
 		}
 		if (bin == BinSize.MONTH)
 		{
-			Date ds = Util.j2KToDate(startTime);
-			Date de = Util.j2KToDate(endTime);
-			bins = Util.getMonthsBetween(ds, de) + 1;
+			Date ds = J2kSec.asDate(startTime);
+			Date de = J2kSec.asDate(endTime);
+			bins = Time.getMonthsBetween(ds, de) + 1;
 			if (bins <= MAX_BINS)
 			{
 				Calendar cal = Calendar.getInstance();
@@ -286,7 +287,7 @@ public class StrokeList implements BinaryDataSet
 				double[] edges = new double[bins + 1];
 				for (int i = 0; i < bins + 1; i++)
 				{
-					edges[i] = Util.dateToJ2K(cal.getTime());
+					edges[i] = J2kSec.fromDate(cal.getTime());
 					cal.add(Calendar.MONTH, 1);
 				}
 				axis = new VariableAxis(edges);
@@ -296,9 +297,9 @@ public class StrokeList implements BinaryDataSet
 		}
 		if (bin == BinSize.YEAR)
 		{
-			Date ds = Util.j2KToDate(startTime);  
-			Date de = Util.j2KToDate(endTime);
-			bins = Util.getYear(de) - Util.getYear(ds) + 1;
+			Date ds = J2kSec.asDate(startTime);
+			Date de = J2kSec.asDate(endTime);
+			bins = Time.getYear(de) - Time.getYear(ds) + 1;
 			double edges[] = new double[bins + 1];
 			Calendar cal = Calendar.getInstance();
 			cal.setTime(ds);
@@ -310,7 +311,7 @@ public class StrokeList implements BinaryDataSet
 			cal.set(Calendar.MILLISECOND, 0);
 			for (int i = 0; i < bins + 1; i++)
 			{
-				edges[i] = Util.dateToJ2K(cal.getTime());
+				edges[i] = J2kSec.fromDate(cal.getTime());
 				cal.add(Calendar.YEAR, 1);
 			}
 			axis = new VariableAxis(edges);

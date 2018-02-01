@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.NetTools;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +66,7 @@ abstract public class RequestResult
 	 */
 	public void writeHeader(NetTools netTools, SocketChannel channel)
 	{
-		String resp = error ? "error: " : "ok: " + Util.mapToString(parameters) + "\n";
+		String resp = error ? "error: " : "ok: " + StringUtils.mapToString(parameters) + "\n";
 		netTools.writeString(resp, channel);
 	}
 	

@@ -1,6 +1,6 @@
 package gov.usgs.volcanoes.vdx.data.hypo;
 
-import gov.usgs.proj.Projection;
+import gov.usgs.volcanoes.core.math.proj.Projection;
 
 import java.awt.geom.Point2D;
 import java.io.FileWriter;

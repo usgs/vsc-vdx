@@ -1,5 +1,7 @@
 package gov.usgs.volcanoes.vdx.in;
 
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.lang.reflect.Constructor;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,14 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
@@ -26,15 +25,22 @@ import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
 import gov.usgs.volcanoes.vdx.in.conn.Connection;
 import gov.usgs.volcanoes.vdx.in.hw.Device;
+
 import cern.colt.matrix.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * A program to stream data from an ip device and put it in the database
  *
  * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class ImportStream extends Import implements Importer {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportStream.class);
 
 	public ConfigFile stationParams;
 	public ConfigFile deviceParams;
@@ -60,13 +66,10 @@ public class ImportStream extends Import implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
-		
-		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -85,19 +88,19 @@ public class ImportStream extends Import implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -112,18 +115,18 @@ public class ImportStream extends Import implements Importer {
 		dateOut.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		// get connection settings related to this instance
-		postConnectDelay	= Util.stringToInt(params.getString("postConnectDelay"), 1000);	
-		betweenPollDelay	= Util.stringToInt(params.getString("betweenPollDelay"), 1000);	
-		betweenCycleDelay	= Util.stringToInt(params.getString("betweenCycleDelay"), 1000);	
+		postConnectDelay	= StringUtils.stringToInt(params.getString("postConnectDelay"), 1000);
+		betweenPollDelay	= StringUtils.stringToInt(params.getString("betweenPollDelay"), 1000);
+		betweenCycleDelay	= StringUtils.stringToInt(params.getString("betweenCycleDelay"), 1000);
 		
 		// get the rank configuration for this import.  there can only be a single rank per import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "Raw Data");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
-		logger.log(Level.INFO, "[Rank] " + rankName);
-		logger.log(Level.INFO, "");
+		LOGGER.info("[Rank] {}", rankName);
+		LOGGER.info("");
 		
 		// get the channel configurations for this import.  there can be multiple channels per import
 		channelMap		= new HashMap<String, Channel>();
@@ -131,11 +134,11 @@ public class ImportStream extends Import implements Importer {
 		for (int i = 0; i < stringList.size(); i++) {
 			channelCode		= stringList.get(i);
 			channelParams	= params.getSubConfig(channelCode);
-			channelName		= Util.stringToString(channelParams.getString("name"), channelCode);
-			channelLon		= Util.stringToDouble(channelParams.getString("longitude"), Double.NaN);
-			channelLat		= Util.stringToDouble(channelParams.getString("latitude"), Double.NaN);
-			channelHeight	= Util.stringToDouble(channelParams.getString("height"), Double.NaN);
-			channelActive	= Util.stringToInt(channelParams.getString("active"), 1);
+			channelName		= StringUtils.stringToString(channelParams.getString("name"), channelCode);
+			channelLon		= StringUtils.stringToDouble(channelParams.getString("longitude"), Double.NaN);
+			channelLat		= StringUtils.stringToDouble(channelParams.getString("latitude"), Double.NaN);
+			channelHeight	= StringUtils.stringToDouble(channelParams.getString("height"), Double.NaN);
+			channelActive	= StringUtils.stringToInt(channelParams.getString("active"), 1);
 			channel			= new Channel(0, channelCode, channelName, channelLon, channelLat, channelHeight, channelActive);
 			channelMap.put(channelCode, channel);
 		}
@@ -151,7 +154,7 @@ public class ImportStream extends Import implements Importer {
 		// validate that station are defined in the config file
 		stringList	= params.getList("station");
 		if (stringList == null) {
-			logger.log(Level.SEVERE, "station parameter(s) missing from config file");
+			LOGGER.error("station parameter(s) missing from config file");
 			System.exit(-1);			
 		}
 		
@@ -163,12 +166,12 @@ public class ImportStream extends Import implements Importer {
 			stationParams		= params.getSubConfig(stationCode);
 			deviceParams		= stationParams.getSubConfig("device");
 			connectionParams	= stationParams.getSubConfig("connection");
-			channelCode			= Util.stringToString(stationParams.getString("channel"), stationCode);
+			channelCode			= StringUtils.stringToString(stationParams.getString("channel"), stationCode);
 			timesource			= stationParams.getString("timesource");
 			
 			// verify that the time source is configured for this station
 			if (timesource == null) {
-				logger.log(Level.SEVERE, "timesource parameter for " + stationCode + " missing from config file");
+				LOGGER.error("timesource parameter for {} missing from config file", stationCode);
 				System.exit(-1);			
 			}
 
@@ -179,7 +182,7 @@ public class ImportStream extends Import implements Importer {
 				connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
 				connection.initialize(connectionParams);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Connection initialization failed", e);
+				LOGGER.error("Connection initialization failed", e);
 				continue;
 			}
 			
@@ -188,7 +191,7 @@ public class ImportStream extends Import implements Importer {
 				device = (Device)Class.forName(deviceParams.getString("driver")).newInstance();
 				device.initialize(deviceParams);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Device driver initialization failed", e);
+				LOGGER.error("Device driver initialization failed", e);
 				System.exit(-1);
 			}
 			
@@ -200,14 +203,14 @@ public class ImportStream extends Import implements Importer {
 			stationTimesourceMap.put(stationCode, timesource);
 			
 			// display configuration information related to this station
-			logger.log(Level.INFO, "[Station] " + stationCode);
-			logger.log(Level.INFO, "[Connection] " + connection.toString());
-			logger.log(Level.INFO, "[ConnDriver] " + connectionParams.getString("driver"));
-			logger.log(Level.INFO, "[Device] " + device.toString());
-			logger.log(Level.INFO, "[DevDriver] " + deviceParams.getString("driver"));
-			logger.log(Level.INFO, "[Fields] " + device.getFields());
-			logger.log(Level.INFO, "[Channel] " + channelCode);
-			logger.log(Level.INFO, "");
+			LOGGER.info("[Station] {}", stationCode);
+			LOGGER.info("[Connection] {}", connection.toString());
+			LOGGER.info("[ConnDriver] {}", connectionParams.getString("driver"));
+			LOGGER.info("[Device] {}", device.toString());
+			LOGGER.info("[DevDriver] {}", deviceParams.getString("driver"));
+			LOGGER.info("[Fields] {}", device.getFields());
+			LOGGER.info("[Channel] {}", channelCode);
+			LOGGER.info("");
 			
 			// destroy this temporary connection
 			connection = null;
@@ -220,12 +223,12 @@ public class ImportStream extends Import implements Importer {
 			defaultChannels += channelList.get(i) + ",";
 		}
 		defaultChannels	= defaultChannels.substring(0, defaultChannels.length() - 1);
-		logger.log(Level.INFO, "[defaultChannels] " + defaultChannels);
+		LOGGER.info("[defaultChannels] {}", defaultChannels);
 		
 		// validate that data sources are defined in the config file
 		dataSourceList	= params.getList("dataSource");
 		if (dataSourceList == null) {
-			logger.log(Level.SEVERE, "dataSource parameter(s) missing from config file");
+			LOGGER.error("dataSource parameter(s) missing from config file");
 			System.exit(-1);			
 		}
 		
@@ -241,12 +244,12 @@ public class ImportStream extends Import implements Importer {
 			
 			// get the data source name
 			dataSource	= dataSourceList.get(i);
-			logger.log(Level.INFO, "[DataSource] " + dataSource);
+			LOGGER.info("[DataSource] {}", dataSource);
 			
 			// lookup the data source from the list that is in vdxSources.config
 			sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 			if (sqlDataSourceDescriptor == null) {
-				logger.log(Level.SEVERE, dataSource + " not in vdxSources.config - Skipping");
+				LOGGER.error("{} not in vdxSources.config - Skipping", dataSource);
 				continue;
 			}
 			
@@ -266,7 +269,7 @@ public class ImportStream extends Import implements Importer {
 					tempRank = sqlDataSource.defaultInsertRank(rank);
 				}
 				if (tempRank == null) {
-					logger.log(Level.SEVERE, dataSource + " " + rank.getName() + " rank creation failed");
+					LOGGER.error("{} {} rank creation failed", dataSource, rank.getName());
 					System.exit(-1);
 				}
 				dataSourceRIDMap.put(dataSource, tempRank.getId());
@@ -281,13 +284,13 @@ public class ImportStream extends Import implements Importer {
 					for (int j = 0; j < stringList.size(); j++) {
 						columnName			= stringList.get(j);
 						columnParams		= dataSourceParams.getSubConfig(columnName);
-						columnIdx			= Util.stringToInt(columnParams.getString("idx"), i);
-						columnDescription	= Util.stringToString(columnParams.getString("description"), columnName);
-						columnUnit			= Util.stringToString(columnParams.getString("unit"), columnName);
-						columnChecked		= Util.stringToBoolean(columnParams.getString("checked"), false);
-						columnActive		= Util.stringToBoolean(columnParams.getString("active"), true);
-						columnBypass		= Util.stringToBoolean(columnParams.getString("bypass"), false);
-						columnAccumulate	= Util.stringToBoolean(columnParams.getString("accumulate"), false);
+						columnIdx			= StringUtils.stringToInt(columnParams.getString("idx"), i);
+						columnDescription	= StringUtils.stringToString(columnParams.getString("description"), columnName);
+						columnUnit			= StringUtils.stringToString(columnParams.getString("unit"), columnName);
+						columnChecked		= StringUtils.stringToBoolean(columnParams.getString("checked"), false);
+						columnActive		= StringUtils.stringToBoolean(columnParams.getString("active"), true);
+						columnBypass		= StringUtils.stringToBoolean(columnParams.getString("bypass"), false);
+						columnAccumulate	= StringUtils.stringToBoolean(columnParams.getString("accumulate"), false);
 						column 				= new Column(columnIdx, columnName, columnDescription, 
 								columnUnit, columnChecked, columnActive, columnBypass, columnAccumulate);
 						if (sqlDataSource.defaultGetColumn(columnName) == null) {
@@ -303,9 +306,9 @@ public class ImportStream extends Import implements Importer {
 					columns	   += columnList.get(j).name + ",";
 				}
 				columns		= columns.substring(0, columns.length() - 1);
-				columns	= Util.stringToString(dataSourceParams.getString("columns"), columns);
+				columns	= StringUtils.stringToString(dataSourceParams.getString("columns"), columns);
 				dataSourceColumnMap.put(dataSource, columns);
-				logger.log(Level.INFO, "[Columns] " + columns);
+				LOGGER.info("[Columns] {}", columns);
 			}
 			
 			// create translations table which is based on column entries
@@ -314,9 +317,9 @@ public class ImportStream extends Import implements Importer {
 			}
 			
 			// get the channels for this data source
-			channels = Util.stringToString(dataSourceParams.getString("channels"), defaultChannels);
+			channels = StringUtils.stringToString(dataSourceParams.getString("channels"), defaultChannels);
 			dataSourceChannelMap.put(dataSource, channels);
-			logger.log(Level.INFO, "[Channels]" + channels);
+			LOGGER.info("[Channels] {}", channels);
 
 			// create channels tables for this data source
 			if (sqlDataSource.getChannelsFlag()) {				
@@ -333,7 +336,7 @@ public class ImportStream extends Import implements Importer {
 					// if the channel doesn't exist then create it with the default tid of 1
 					if (sqlDataSource.defaultGetChannel(channel.getCode(), sqlDataSource.getChannelTypesFlag()) == null) {
 						if (sqlDataSource.getType().equals("tilt")) {
-							azimuthNom	= Util.stringToDouble(channelParams.getString("azimuth"), 0);
+							azimuthNom	= StringUtils.stringToDouble(channelParams.getString("azimuth"), 0);
 							sqlDataSource.defaultCreateTiltChannel(channel, 1, azimuthNom, 
 								sqlDataSource.getChannelsFlag(), sqlDataSource.getTranslationsFlag(), 
 								sqlDataSource.getRanksFlag(), sqlDataSource.getColumnsFlag());
@@ -368,7 +371,7 @@ public class ImportStream extends Import implements Importer {
 						
 						// save the installation azimuth if this is a tilt data source
 						if (sqlDataSource.getType().equals("tilt")) {
-							azimuthInst	= Util.stringToDouble(translationParams.getString("azimuth"), 0);
+							azimuthInst	= StringUtils.stringToDouble(translationParams.getString("azimuth"), 0);
 							dm.setQuick(0, columnList.size() * 2, azimuthInst);
 							columnNames[columnList.size() * 2]	= "azimuth";
 						}
@@ -377,8 +380,8 @@ public class ImportStream extends Import implements Importer {
 						for (int k = 0; k < columnList.size(); k++) {
 							column		= columnList.get(k);
 							columnName	= column.name;
-							multiplier	= Util.stringToDouble(translationParams.getString("c" + columnName), 1);
-							offset		= Util.stringToDouble(translationParams.getString("d" + columnName), 0);
+							multiplier	= StringUtils.stringToDouble(translationParams.getString("c" + columnName), 1);
+							offset		= StringUtils.stringToDouble(translationParams.getString("d" + columnName), 0);
 							dm.setQuick(0, k * 2, multiplier);
 							dm.setQuick(0, k * 2 + 1, offset);
 							columnNames[k * 2]		= "c" + columnName;
@@ -408,12 +411,12 @@ public class ImportStream extends Import implements Importer {
 	public void process(String filename) {
 			
 		// output initial polling message
-		logger.log(Level.INFO, "");
-		logger.log(Level.INFO, "BEGIN STREAMING CYCLE");
+		LOGGER.info("");
+		LOGGER.info("BEGIN STREAMING CYCLE");
 		
 		// add an extra message to notify the nature of a streaming process
 		if (stationList.size() != 1) {
-			logger.log(Level.SEVERE, "ImportStream supports only one station");
+			LOGGER.error("ImportStream supports only one station");
 			System.exit(-1);
 		}
 		
@@ -436,8 +439,8 @@ public class ImportStream extends Import implements Importer {
 		Date lastDataTime	= sqlDataSource.defaultGetLastDataTime(channelCode, device.getNullfield(), device.getPollhist());
 		
 		// display logging information
-		logger.log(Level.INFO, "");
-		logger.log(Level.INFO, "Streaming " + stationCode + " [lastDataTime:" + dateOut.format(lastDataTime) + "]");
+		LOGGER.info("");
+		LOGGER.info("Streaming {} [lastDataTime: {}]", stationCode, dateOut.format(lastDataTime));
 		
 		// initialize data objects related to this device
 		dateIn	= new SimpleDateFormat(device.getTimestamp());
@@ -450,7 +453,7 @@ public class ImportStream extends Import implements Importer {
 			connection			= (Connection)cnst.newInstance(new Object[]{stationCode});
 			connection.initialize(connectionParams);
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Connection initialization failed", e);
+			LOGGER.error("Connection initialization failed", e);
 			System.exit(-1);
 		}
 
@@ -469,7 +472,7 @@ public class ImportStream extends Import implements Importer {
 					reconnect = false;
 					Thread.sleep(postConnectDelay);
 				} catch (Exception e) {
-					logger.log(Level.SEVERE, "Station Connection failed", e);
+					LOGGER.error("Station Connection failed", e);
 					if (connection.isOpen()) connection.disconnect();
 					reconnect = true;
 					continue;
@@ -481,7 +484,7 @@ public class ImportStream extends Import implements Importer {
 			try {
 				dataRequest	= device.requestData(lastDataTime);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Device build request failed", e);
+				LOGGER.error("Device build request failed", e);
 				continue;
 			}
 			
@@ -490,7 +493,7 @@ public class ImportStream extends Import implements Importer {
 				try {
 					connection.writeString(dataRequest);
 				} catch (Exception e) {
-					logger.log(Level.SEVERE, "Connection send data request failed", e);
+					LOGGER.error("Connection send data request failed", e);
 					continue;
 				}
 			}
@@ -500,7 +503,7 @@ public class ImportStream extends Import implements Importer {
 			try {
 				dataResponse	= connection.readString(device);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Device receive data response failed", e);
+				LOGGER.error("Device receive data response failed", e);
 				continue;
 			}
 			
@@ -508,7 +511,7 @@ public class ImportStream extends Import implements Importer {
 			try {
 				device.validateMessage(dataResponse, true);
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Message validation failed", e);
+				LOGGER.error("Message validation failed", e);
 				continue;
 			}
 				
@@ -531,7 +534,7 @@ public class ImportStream extends Import implements Importer {
 				try {
 					device.validateLine(line);
 				} catch (Exception e) {
-					logger.log(Level.INFO, "invalid:" + line);
+					LOGGER.info("invalid: {}", line);
 					continue;
 				}
 				
@@ -539,7 +542,7 @@ public class ImportStream extends Import implements Importer {
 				line = device.formatLine(line);
 				
 				// output this line to the log file
-				logger.log(Level.INFO, line);
+				LOGGER.info("{}", line);
 				
 				// split the data row into an ordered list. be sure to use the two argument split, as some lines may have many trailing delimiters
 				Pattern p	= Pattern.compile(device.getDelimiter());
@@ -551,7 +554,7 @@ public class ImportStream extends Import implements Importer {
 				
 				// make sure the data row matches the defined data columns
 				if (fieldMap.size() > valueMap.size()) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " has too few values:" + line);
+					LOGGER.error("line {} has too few values: {}", lineNumber, line);
 					continue;
 				}
 				
@@ -597,14 +600,14 @@ public class ImportStream extends Import implements Importer {
 					
 				// any problems with parsing the values for this line should be caught here
 				} catch (Exception e) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " parse error");
-					logger.log(Level.SEVERE, e.getMessage());
+					LOGGER.error("line {} parse error", lineNumber);
+					LOGGER.error(e.getMessage());
 					continue;
 				}
 				
 				// make sure that the timestamp has something in it
 				if (tsValue.length() == 0) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp not found");
+					LOGGER.error("line {} timestamp not found", lineNumber);
 					continue;
 				}
 				
@@ -612,9 +615,9 @@ public class ImportStream extends Import implements Importer {
 				try {
 					String timestamp	= tsValue.trim();
 					date				= dateIn.parse(timestamp);				
-					j2ksec				= Util.dateToJ2K(date);
+					j2ksec				= J2kSec.fromDate(date);
 				} catch (ParseException e) {
-					logger.log(Level.SEVERE, "line " + lineNumber + " timestamp parse error");
+					LOGGER.error("line {} timestamp parse error", lineNumber);
 					continue;
 				}
 					
@@ -643,7 +646,7 @@ public class ImportStream extends Import implements Importer {
 					// check that the sql data source was initialized properly above
 					sqlDataSource	= sqlDataSourceMap.get(dataSource);
 					if (sqlDataSource == null) {
-						logger.log(Level.SEVERE, "line " + lineNumber + " data source " + dataSource + " not initialized");
+						LOGGER.error("line {} data source {} not initialized", lineNumber, dataSource);
 						continue;
 					}
 					

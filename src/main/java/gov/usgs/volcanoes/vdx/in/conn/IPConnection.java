@@ -1,11 +1,11 @@
 package gov.usgs.volcanoes.vdx.in.conn;
 
+import gov.usgs.volcanoes.core.util.StringUtils;
 import java.net.*;
 import java.io.*;
 import java.util.*;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.in.hw.Device;
 
 /**
@@ -72,8 +72,8 @@ public class IPConnection extends Thread implements Connection {
 	 */
 	public void initialize(ConfigFile params) throws Exception {
 		host		= params.getString("host");
-		port		= Util.stringToInt(params.getString("port"));
-		timeout		= Util.stringToInt(params.getString("timeout"), 30000);
+		port		= StringUtils.stringToInt(params.getString("port"), Integer.MIN_VALUE);
+		timeout		= StringUtils.stringToInt(params.getString("timeout"), 30000);
 		buffer		= new char[BUFFER_SIZE];
 		msgQueue	= new Vector<String>(100);
 	}
@@ -147,7 +147,7 @@ public class IPConnection extends Thread implements Connection {
 	}
 	
 	/** Places received bytes in a message queue.
-	 * @param data the received bytes
+	 * @param buffer the received bytes
 	 * @param count the number of bytes (note count != data.length)
 	 */
 	private synchronized void receiveData(char[] buffer, int count) {
@@ -159,7 +159,7 @@ public class IPConnection extends Thread implements Connection {
 
 	/** 
 	 * Writes a string to the socket.
-	 * @param s the string
+	 * @param msg the string
 	 */
 	public void writeString(String msg) throws Exception {
 		

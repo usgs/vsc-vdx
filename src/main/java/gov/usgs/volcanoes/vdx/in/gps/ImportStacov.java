@@ -1,9 +1,10 @@
 package gov.usgs.volcanoes.vdx.in.gps;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
@@ -16,6 +17,11 @@ import gov.usgs.volcanoes.vdx.data.gps.SQLGPSDataSource;
 import gov.usgs.volcanoes.vdx.in.Importer;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,16 +32,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Import Stacov files
  * 
- * @author Dan Cervelli, Loren Antolik
+ * @author Dan Cervelli
+ * @author Loren Antolik
+ * @author Bill Tollett
  */
 public class ImportStacov implements Importer {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportStacov.class);
+
 	public ResourceReader rr;
 	
 	public static Set<String> flags;
@@ -104,9 +115,7 @@ public class ImportStacov implements Importer {
 	public String defaultColumns;
 	
 	public String importerType = "gps";
-	
-	public Logger logger;
-	
+
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
@@ -123,9 +132,8 @@ public class ImportStacov implements Importer {
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
 		
-		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportStacov.initialize() succeeded.");
+		// initialize the LOGGER for this importer
+		LOGGER.info("ImportStacov.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -144,19 +152,19 @@ public class ImportStacov implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -175,14 +183,14 @@ public class ImportStacov implements Importer {
 		// lookup the data source from the list that is in vdxSources.config
 		sqlDataSourceDescriptor	= sqlDataSourceHandler.getDataSourceDescriptor(dataSource);
 		if (sqlDataSourceDescriptor == null) {
-			logger.log(Level.SEVERE, dataSource + " sql data source does not exist in vdxSources.config");
+			LOGGER.error("{} sql data source does not exist in vdxSources.config", dataSource);
 		}
 				
 		// formally get the data source from the list of descriptors.  this will initialize the data source which includes db creation
 		sqlDataSource	= (SQLGPSDataSource)sqlDataSourceDescriptor.getSQLDataSource();
 		
 		if (!sqlDataSource.getType().equals(importerType)) {
-			logger.log(Level.SEVERE, "dataSource not a " + importerType + " data source");
+			LOGGER.error("dataSource not a {} data source", importerType);
 			System.exit(-1);
 		}
 		
@@ -192,9 +200,9 @@ public class ImportStacov implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "Raw Data");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "Raw Data");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
 		// create rank entry
@@ -204,7 +212,7 @@ public class ImportStacov implements Importer {
 				tempRank = sqlDataSource.defaultInsertRank(rank);
 			}
 			if (tempRank == null) {
-				logger.log(Level.SEVERE, "invalid rank for dataSource " + dataSource);
+				LOGGER.error("invalid rank for dataSource {}", dataSource);
 				System.exit(-1);
 			}
 			rid	= tempRank.getId();
@@ -238,7 +246,7 @@ public class ImportStacov implements Importer {
 			// check that the file exists
 			rr = ResourceReader.getResourceReader(filename);
 			if (rr == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is invalid)");
+				LOGGER.error("skipping: {} (resource is invalid)", filename);
 				return;
 			}
 			
@@ -247,7 +255,7 @@ public class ImportStacov implements Importer {
 			
 			// check that the file has data
 			if (line == null) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (resource is empty)");
+				LOGGER.error("skipping: {} (resource is empty)", filename);
 				return;
 			}
 			
@@ -261,21 +269,59 @@ public class ImportStacov implements Importer {
 				String timestamp	= line.substring(20, 27);
 				date				= dateIn.parse(timestamp);
 				date.setTime(date.getTime());
-				j2ksec0				= Util.dateToJ2K(date);
+				j2ksec0				= J2kSec.fromDate(date);
 				j2ksec1				= j2ksec0 + 86400;
 			} catch (ParseException e) {
-				logger.log(Level.SEVERE, "skipping: " + filename + "  (timestamp not valid)");
+				LOGGER.error("skipping: {}  (timestamp not valid)", filename);
 				return;
+			}
+
+			// Get md5 resource
+			String md5 = null;
+			try {
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				if (md != null) {
+					InputStream in = null;
+					if (filename.indexOf("://") != -1) {
+						URL url = new URL(filename);
+						in = url.openStream();
+					} else {
+						in = new FileInputStream(new File(filename));
+					}
+
+					int nr = 0;
+					byte[] buf = new byte[64 * 1024];
+					while (nr != -1) {
+						nr = in.read(buf);
+						if (nr != -1) {
+							md.update(buf, 0, nr);
+						}
+					}
+					in.close();
+
+					ByteBuffer bb = ByteBuffer.wrap(md.digest());
+					StringBuffer sb = new StringBuffer(32);
+					for (int i = 0; i < 4; i++) {
+						String h = Integer.toHexString(bb.getInt());
+						for (int j = h.length(); j < 8; j++) {
+							sb.append('0');
+						}
+						sb.append(h);
+					}
+					md5 = sb.toString();
+				}
+			} catch (Exception e) {
+				LOGGER.info("Problem getting the md5 of the resource {}", filename);
 			}
 			
 			// attempt to insert this source.  this method will tell if this file has already been imported
-			int sid	= sqlDataSource.insertSource(new File(filename).getName(), Util.md5Resource(filename), j2ksec0, j2ksec1, rid);
+			int sid	= sqlDataSource.insertSource(new File(filename).getName(), md5, j2ksec0, j2ksec1, rid);
 			if (sid == -1) {
-				logger.log(Level.SEVERE, "skipping: " + filename + " (hash already exists)");
+				LOGGER.error("skipping: {} (hash already exists)", filename);
 				return;
 			}
 			
-			logger.log(Level.INFO, "importing: " + filename);
+			LOGGER.info("importing: {}", filename);
 			
 			for (int i = 0; i < numParams / 3; i++) {
 				sx	= rr.nextLine();
@@ -347,7 +393,7 @@ public class ImportStacov implements Importer {
 			}
 
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "ImportStacov.process(" + filename + ") failed.", e);	
+			LOGGER.error("ImportStacov.process({}) failed.", filename, e);
 		}
 	}
 	

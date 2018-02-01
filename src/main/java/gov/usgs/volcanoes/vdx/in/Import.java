@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.in;
 
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.CurrentTime;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.CurrentTime;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;
 import gov.usgs.volcanoes.vdx.data.Rank;
@@ -16,12 +16,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * Superclass for importers.  Handles variable declarations
- * @author Loren Antolik (USGS)
  *
+ * @author Loren Antolik (USGS)
+ * @author Bill Tollett
  */
 public class Import {
 	
@@ -92,8 +92,6 @@ public class Import {
 	public String defaultColumns;
 	
 	public List<String> stringList;
-
-	public Logger logger;
 
 	public double azimuthNom;
 	public double azimuthInst; 

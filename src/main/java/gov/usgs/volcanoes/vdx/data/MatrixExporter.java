@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.data;
 
 import cern.colt.matrix.DoubleMatrix2D;
-import gov.usgs.plot.render.MatrixRenderer;
+import gov.usgs.volcanoes.core.legacy.plot.render.MatrixRenderer;
 import gov.usgs.volcanoes.vdx.data.Exportable;
 
 import java.util.Map;

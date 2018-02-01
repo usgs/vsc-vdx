@@ -1,5 +1,6 @@
 package gov.usgs.volcanoes.vdx.data.tilt;
 
+import gov.usgs.volcanoes.core.time.J2kSec;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.text.DecimalFormat;
@@ -13,10 +14,9 @@ import cern.colt.matrix.DoubleMatrix1DProcedure;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.linalg.Algebra;
 import cern.jet.math.Functions;
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
 import gov.usgs.volcanoes.vdx.data.tilt.SQLTiltDataSource;
@@ -101,7 +101,7 @@ public class TiltVelocity {
         double threshold = 0.0;
         double highthreshold = 0.0;
         double residual = 0.0;
-        double end = Util.dateToJ2K(new Date());
+        double end = J2kSec.fromDate(new Date());
         double start = end - (mins * 60);
         
         run(channel, name, start, end, samples, threshold, highthreshold, residual);
@@ -109,7 +109,7 @@ public class TiltVelocity {
 
     public void run(String channel, String name, int mins, int samples, double threshold, 
                     double highthreshold, double residual) {
-        double end   = Util.dateToJ2K(new Date());
+        double end   = J2kSec.fromDate(new Date());
         double start = end - (mins * 60);
         
         run(channel, name, start, end, samples, threshold, highthreshold, residual);

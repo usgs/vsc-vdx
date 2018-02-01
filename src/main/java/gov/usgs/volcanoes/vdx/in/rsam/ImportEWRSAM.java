@@ -1,5 +1,7 @@
 package gov.usgs.volcanoes.vdx.in.rsam;
 
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.time.Time;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,21 +32,22 @@ import com.martiansoftware.jsap.UnflaggedOption;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
-import gov.usgs.earthworm.ImportGeneric;
-import gov.usgs.earthworm.MessageListener;
-import gov.usgs.earthworm.message.Message;
-import gov.usgs.earthworm.message.MessageType;
-import gov.usgs.earthworm.message.TraceBuf;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.CodeTimer;
-import gov.usgs.util.CurrentTime;
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.ew.ImportGeneric;
+import gov.usgs.volcanoes.core.legacy.ew.MessageListener;
+import gov.usgs.volcanoes.core.legacy.ew.message.Message;
+import gov.usgs.volcanoes.core.legacy.ew.message.MessageType;
+import gov.usgs.volcanoes.core.legacy.ew.message.TraceBuf;
+import gov.usgs.volcanoes.core.legacy.util.Log;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.CodeTimer;
+import gov.usgs.volcanoes.core.time.CurrentTime;
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceDescriptor;
 import gov.usgs.volcanoes.vdx.data.SQLDataSourceHandler;
 import gov.usgs.volcanoes.vdx.data.rsam.SQLRSAMDataSource;
+import gov.usgs.volcanoes.vdx.Version;
 import gov.usgs.volcanoes.winston.in.ew.ChannelStatus;
 import gov.usgs.volcanoes.winston.in.ew.Options;
 import gov.usgs.volcanoes.winston.in.ew.OptionsFilter;
@@ -182,7 +185,7 @@ public class ImportEWRSAM extends Thread {
 	public ImportEWRSAM(String fn) {
 		this();
 
-		configFilename = Util.stringToString(fn, DEFAULT_CONFIG_FILENAME);
+		configFilename = StringUtils.stringToString(fn, DEFAULT_CONFIG_FILENAME);
 
 		importGeneric = new ImportGeneric() {
 			public void outOfMemoryErrorOccurred(OutOfMemoryError e) {
@@ -205,7 +208,7 @@ public class ImportEWRSAM extends Thread {
 	public ImportEWRSAM() {
 		setName("ImportEWRSAM");
 
-		importStartTime = CurrentTime.getInstance().nowDate();
+		importStartTime = new Date(CurrentTime.getInstance().now());
 		dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 		vdxDateFormat = new SimpleDateFormat("yyyy_MM_dd");
@@ -259,22 +262,17 @@ public class ImportEWRSAM extends Thread {
 	 * Extracts logging configuration information.
 	 */
 	protected void processLoggerConfig() {
-		logFile = Util.stringToString(config.getString("import.log.name"),
+		logFile = StringUtils.stringToString(config.getString("import.log.name"),
 				DEFAULT_LOG_FILE);
-		logNumFiles = Util.stringToInt(config.getString("import.log.numFiles"),
+		logNumFiles = StringUtils.stringToInt(config.getString("import.log.numFiles"),
 				DEFAULT_LOG_NUM_FILES);
-		logSize = Util.stringToInt(config.getString("import.log.maxSize"),
+		logSize = StringUtils.stringToInt(config.getString("import.log.maxSize"),
 				DEFAULT_LOG_FILE_SIZE);
 
 		if (logNumFiles > 0)
 			Log.attachFileLogger(logger, logFile, logSize, logNumFiles, true);
 
-		String[] version = Util.getVersion("gov.usgs.volcanoes.vdx");
-		if (version != null)
-			logger.info("Version: " + version[0] + " Built: " + version[1]);
-		else
-			logger.info("No version information available.");
-
+		logger.info(Version.VERSION_STRING);
 		logger.info("config: import.log.name=" + logFile);
 		logger.info("config: import.log.numFiles=" + logNumFiles);
 		logger.info("config: import.log.maxSize=" + logSize);
@@ -284,12 +282,12 @@ public class ImportEWRSAM extends Thread {
 	 * Extracts generalised configuration information.
 	 */
 	protected void processImportConfig() {
-		String host = Util.stringToString(config.getString("import.host"),
+		String host = StringUtils.stringToString(config.getString("import.host"),
 				DEFAULT_HOST);
-		int port = Util.stringToInt(config.getString("import.port"),
+		int port = StringUtils.stringToInt(config.getString("import.port"),
 				DEFAULT_PORT);
 		// String exportType =
-		// Util.stringToString(config.getString("import.exportType"),
+		// StringUtils.stringToString(config.getString("import.exportType"),
 		// DEFAULT_EXPORT_TYPE);
 		logger.info("config: import.host=" + host);
 		logger.info("config: import.port=" + port);
@@ -298,33 +296,33 @@ public class ImportEWRSAM extends Thread {
 		// importGeneric.setHostAndPortAndType(host, port, exportType);
 		importGeneric.setHostAndPort(host, port);
 
-		String recvID = Util.stringToString(
+		String recvID = StringUtils.stringToString(
 				config.getString("import.receiveID"), DEFAULT_RECEIVE_ID);
 		importGeneric.setRecvIDString(recvID);
 		logger.info("config: import.receiveID=" + recvID);
-		String sendID = Util.stringToString(config.getString("import.sendID"),
+		String sendID = StringUtils.stringToString(config.getString("import.sendID"),
 				DEFAULT_SEND_ID);
 		importGeneric.setSendIDString(sendID);
 		logger.info("config: import.sendID=" + sendID);
 
-		int hbInt = Util.stringToInt(
+		int hbInt = StringUtils.stringToInt(
 				config.getString("import.heartbeatInterval"),
 				DEFAULT_HEARTBEAT_INTERVAL);
 		importGeneric.setHeartbeatInterval(hbInt);
 		logger.info("config: import.heartbeatInterval=" + hbInt);
 
-		int ehbInt = Util.stringToInt(
+		int ehbInt = StringUtils.stringToInt(
 				config.getString("import.expectedHeartbeatInterval"),
 				DEFAULT_EXPECTED_HEARTBEAT_INTERVAL);
 		importGeneric.setExpectedHeartbeatInterval(ehbInt);
 		logger.info("config: import.expectedHeartbeatInterval=" + ehbInt);
 
-		int to = Util.stringToInt(config.getString("import.timeout"),
+		int to = StringUtils.stringToInt(config.getString("import.timeout"),
 				DEFAULT_TIMEOUT);
 		importGeneric.setTimeout(to);
 		logger.info("config: import.timeout=" + to);
 
-		dropTableDelay = Util.stringToInt(
+		dropTableDelay = StringUtils.stringToInt(
 				config.getString("import.dropTableDelay"),
 				DEFAULT_DROP_TABLE_DELAY);
 		dropTableDelay *= 1000;
@@ -337,7 +335,7 @@ public class ImportEWRSAM extends Thread {
 	 * VDX DB connection.
 	 */
 	protected void processVDXConfig() {
-		String vdxDriver = Util.stringToString(config.getString("vdx.driver"),
+		String vdxDriver = StringUtils.stringToString(config.getString("vdx.driver"),
 				DEFAULT_DRIVER);
 		logger.info("config: vdx.driver=" + vdxDriver);
 
@@ -580,7 +578,7 @@ public class ImportEWRSAM extends Thread {
 			GenericDataMatrix gdm = new GenericDataMatrix(dm);
 			gdm.setColumnNames(new String[] {"j2ksec", "rsam"});
 			sqlDataSource.defaultInsertData(code, gdm, sqlDataSource.getTranslationsFlag(), sqlDataSource.getRanksFlag(), 0);
-			logger.log(Level.FINE, code + " " + Util.j2KToDateString(tb.getStartTimeJ2K()) + " rsam:" + tb.samples()[0]);
+			logger.log(Level.FINE, code + " " + J2kSec.toDateString(tb.getStartTimeJ2K()) + " rsam:" + tb.samples()[0]);
             totalTraceBufsWritten++;
 		}
 		
@@ -660,7 +658,7 @@ public class ImportEWRSAM extends Thread {
 	}
 
 	public void printStatus() {
-		Date now = CurrentTime.getInstance().nowDate();
+		Date now = new Date(CurrentTime.getInstance().now());
 		long nowST = System.currentTimeMillis();
 		double uptime = (double) (now.getTime() - importStartTime.getTime()) / 1000.0;
 		List<String> strings = new ArrayList<String>(4);
@@ -668,7 +666,7 @@ public class ImportEWRSAM extends Thread {
 		strings.add("------- ImportEWRSAM --------");
 		strings.add("Status time: " + dateFormat.format(now));
 		strings.add("Start time:  " + dateFormat.format(importStartTime));
-		strings.add("Up time:     " + Util.timeDifferenceToString(uptime));
+		strings.add("Up time:     " + Time.secondsToString(uptime));
 
 		long ht = importGeneric.getLastHeartbeatTime();
 		double dt = (double) (nowST - ht) / 1000;
@@ -676,14 +674,14 @@ public class ImportEWRSAM extends Thread {
 			strings.add("Last HB RX:  (never)");
 		else
 			strings.add("Last HB RX:  " + dateFormat.format(new Date(ht))
-					+ ", " + Util.timeDifferenceToString(dt));
+					+ ", " + Time.secondsToString(dt));
 		ht = importGeneric.getLastHeartbeatSentTime();
 		dt = (double) (nowST - ht) / 1000;
 		if (ht == 0)
 			strings.add("Last HB TX:  (never)");
 		else
 			strings.add("Last HB TX:  " + dateFormat.format(new Date(ht))
-					+ ", " + Util.timeDifferenceToString(dt));
+					+ ", " + Time.secondsToString(dt));
 
 		Runtime rt = Runtime.getRuntime();
 		strings.add(String.format("Memory (used / max): %.1fMB / %.1fMB",
@@ -703,8 +701,8 @@ public class ImportEWRSAM extends Thread {
 
 		// by each filter
 		strings.add("---- Timing");
-		strings.add(String.format("Total input time:        %s", Util
-				.timeDifferenceToString(inputTimer.getTotalTimeMillis() / 1000)));
+		strings.add(String.format("Total input time:        %s",
+				Time.secondsToString(inputTimer.getTotalTimeMillis() / 1000)));
 		strings.add(String.format("Input time per TraceBuf: %.2fms",
 				inputTimer.getTotalTimeMillis() / totalTraceBufsWritten));
 
@@ -843,7 +841,7 @@ public class ImportEWRSAM extends Thread {
 	public static void main(String[] args) {
 		JSAPResult config = getArguments(args);
 
-		String fn = Util.stringToString(config.getString("configFilename"),
+		String fn = StringUtils.stringToString(config.getString("configFilename"),
 				DEFAULT_CONFIG_FILENAME);
 
 		Level logLevel = Level.parse(DEFAULT_LOG_LEVEL);

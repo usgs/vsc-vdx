@@ -1,10 +1,10 @@
 package gov.usgs.volcanoes.vdx.data.generic.variable;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
-import gov.usgs.util.UtilException;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.DataSource;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
@@ -15,7 +15,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQL Data Source for Generic Variable Data
@@ -23,7 +25,9 @@ import java.util.logging.Level;
  * @author Tom Parker, Loren Antolik
  */
 public class SQLGenericVariableDataSource extends SQLDataSource implements DataSource {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SQLGenericVariableDataSource.class);
+
 	public static final String DATABASE_NAME	= "genericvariable";
 	public static final boolean channels		= true;
 	public static final boolean translations	= true;
@@ -127,7 +131,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			// "UNIQUE KEY channel (channel, type))");
 			
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLGenericVariableDataSource.createDatabase() failed.", e);
+			LOGGER.error("SQLGenericVariableDataSource.createDatabase() failed.", e);
 		}
 		
 		return false;
@@ -324,7 +328,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			}
 			rs.close();
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not get data type list.", e);
+			LOGGER.error("Could not get data type list.", e);
 		}
 		return result;
 	}
@@ -345,7 +349,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			rs.close();
 			return id;
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not get station id.", e);
+			LOGGER.error("Could not get station id.", e);
 		}
 		return -1;
 	}
@@ -366,7 +370,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			rs.close();
 			return id;
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not get station id.", e);
+			LOGGER.error("Could not get station id.", e);
 		}
 		return -1;
 	}
@@ -383,7 +387,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			ps.setString(2, dt.getName());
 			ps.execute();
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not insert data type.", e);
+			LOGGER.error("Could not insert data type.", e);
 		}
 	}
 	
@@ -425,7 +429,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			
 			sql +=  stationTable + " (date, dataType, value) VALUES (?,?,?)";
 			ps = database.getPreparedStatement(sql);
-			ps.setDouble(1, Util.dateToJ2K(d));
+			ps.setDouble(1, J2kSec.fromDate(d));
 			ps.setInt(2, dt.getId());
 			ps.setDouble(3, dd);
 			ps.execute();
@@ -434,7 +438,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			st.execute("INSERT IGNORE INTO channel_data_types (sid, channel, type) " +
 					" values (0, " + station.getId() + ", " + dt.getId() + ")");
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "Could not insert record.", e);
+			LOGGER.error("Could not insert record.", e);
 		}
 		
 	}
@@ -456,7 +460,7 @@ public class SQLGenericVariableDataSource extends SQLDataSource implements DataS
 			st.execute(sql);
 			success = true;
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, "SQLNWISDataSource.createDatabase() failed.", e);
+			LOGGER.error("SQLNWISDataSource.createDatabase() failed.", e);
 		}
 		return success;
 	}

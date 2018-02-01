@@ -1,11 +1,13 @@
 package gov.usgs.volcanoes.vdx.in;
 
-import gov.usgs.plot.data.GenericDataMatrix;
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Time;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.data.GenericDataMatrix;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ByteUtil;
+import gov.usgs.volcanoes.core.util.ResourceReader;
+import gov.usgs.volcanoes.core.time.Time;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Rank;
 import gov.usgs.volcanoes.vdx.data.SQLDataSource;
 import gov.usgs.volcanoes.vdx.data.SQLNullDataSource;
@@ -23,11 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * import file with 2d data matrix into database
@@ -52,10 +55,13 @@ import cern.colt.matrix.DoubleMatrix2D;
  * Initial commit.
  * 
  * @author Dan Cervelli
+ * @author Bill Tollett
  * @version $Id: ImportBob.java,v 1.7 2007-06-12 20:44:29 tparker Exp $
  */
 public class ImportBob implements Importer {
-	
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ImportBob.class);
+
 	public ResourceReader rr;
 	
 	public static Set<String> flags;
@@ -90,8 +96,6 @@ public class ImportBob implements Importer {
 	
 	public SQLDataSource sqlDataSource;
 	
-	public Logger logger;
-	
 	static {
 		flags	= new HashSet<String>();
 		keys	= new HashSet<String>();
@@ -99,15 +103,7 @@ public class ImportBob implements Importer {
 		flags.add("-h");
 		flags.add("-v");
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	public int goodCount;
 	public double[] t;
 	public float[] d;
@@ -145,14 +141,13 @@ public class ImportBob implements Importer {
 
 	/**
 	 * takes a config file as a parameter and parses it to prepare for importing
-	 * @param cf configuration file
+	 * @param configFile configuration file
 	 * @param verbose true for info, false for severe
 	 */
 	public void initialize(String importerClass, String configFile, boolean verbose) {
 		
-		// initialize the logger for this importer
-		logger	= Logger.getLogger(importerClass);
-		logger.log(Level.INFO, "ImportBob.initialize() succeeded.");
+		// initialize the LOGGER for this importer
+		LOGGER.info("ImportBob.initialize() succeeded.");
 		
 		// process the config file
 		processConfigFile(configFile);
@@ -171,19 +166,19 @@ public class ImportBob implements Importer {
 	 */
 	public void processConfigFile(String configFile) {
 		
-		logger.log(Level.INFO, "Reading config file " + configFile);
+		LOGGER.info("Reading config file {}", configFile);
 		
 		// initialize the config file and verify that it was read
 		params		= new ConfigFile(configFile);
 		if (!params.wasSuccessfullyRead()) {
-			logger.log(Level.SEVERE, configFile + " was not successfully read");
+			LOGGER.error("{} was not successfully read", configFile);
 			System.exit(-1);
 		}
 		
 		// get the vdx parameter, and exit if it's missing
-		vdxConfig	= Util.stringToString(params.getString("vdx.config"), "VDX.config");
+		vdxConfig	= StringUtils.stringToString(params.getString("vdx.config"), "VDX.config");
 		if (vdxConfig == null) {
-			logger.log(Level.SEVERE, "vdx.config parameter missing from config file");
+			LOGGER.error("vdx.config parameter missing from config file");
 			System.exit(-1);
 		}
 		
@@ -194,12 +189,12 @@ public class ImportBob implements Importer {
 		prefix		= vdxParams.getString("vdx.prefix");
 		
 		// ImportFile specific directives
-		filenameMask	= Util.stringToString(params.getString("filenameMask"), "");
-		headerLines		= Util.stringToInt(params.getString("headerLines"), 0);
+		filenameMask	= StringUtils.stringToString(params.getString("filenameMask"), "");
+		headerLines		= StringUtils.stringToInt(params.getString("headerLines"), 0);
 		
 		// information related to the timestamps
-		timestamp		= Util.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss");
-		timezone		= Util.stringToString(params.getString("timezone"), "GMT");
+		timestamp		= StringUtils.stringToString(params.getString("timestamp"), "yyyy-MM-dd HH:mm:ss");
+		timezone		= StringUtils.stringToString(params.getString("timezone"), "GMT");
 		dateIn			= new SimpleDateFormat(timestamp);
 		dateOut			= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateIn.setTimeZone(TimeZone.getTimeZone(timezone));
@@ -207,9 +202,9 @@ public class ImportBob implements Importer {
 		
 		// get the list of ranks that are being used in this import
 		rankParams		= params.getSubConfig("rank");
-		rankName		= Util.stringToString(rankParams.getString("name"), "DEFAULT");
-		rankValue		= Util.stringToInt(rankParams.getString("value"), 1);
-		rankDefault		= Util.stringToInt(rankParams.getString("default"), 0);
+		rankName		= StringUtils.stringToString(rankParams.getString("name"), "DEFAULT");
+		rankValue		= StringUtils.stringToInt(rankParams.getString("value"), 1);
+		rankDefault		= StringUtils.stringToInt(rankParams.getString("default"), 0);
 		rank			= new Rank(0, rankName, rankValue, rankDefault);
 		
 	}
@@ -263,11 +258,11 @@ public class ImportBob implements Importer {
 
 		try {
 			DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(fn)));
-			int absoluteRecordSize = Util.swap(dis.readShort());
+			int absoluteRecordSize = ByteUtil.swap(dis.readShort());
 			int samplesPerRecord = absoluteRecordSize / 4;
 
 			double dt = 86400.0 / samplesPerRecord;
-			double time = Time.parse("yyyyMMDD", year + "0101");
+			double time = J2kSec.parse("yyyyMMDD", year + "0101");
 			dis.readShort(); // skip remaining 16-bits
 			dis.skip(absoluteRecordSize - 4);
 			GregorianCalendar cal = new GregorianCalendar();
@@ -283,7 +278,7 @@ public class ImportBob implements Importer {
 			System.err.println("expected filesize: " + absoluteRecordSize * (numRecords + 1));
 			goodCount = 0;
 			for (int i = 0; i < numRecords * samplesPerRecord; i++) {
-				float value = Float.intBitsToFloat(Util.swap(dis.readInt()));
+				float value = Float.intBitsToFloat(ByteUtil.swap(dis.readInt()));
 				if (value != -998.0f) {
 					data.setQuick(goodCount, 0, time);
 					data.setQuick(goodCount++, 1, value);

@@ -1,11 +1,12 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.CommandHandler;
-import gov.usgs.net.NetTools;
+import gov.usgs.volcanoes.core.legacy.net.CommandHandler;
+import gov.usgs.volcanoes.core.legacy.net.NetTools;
 import gov.usgs.volcanoes.vdx.data.DataSourceHandler;
 
 import java.nio.channels.SocketChannel;
-import java.util.logging.Level;
+
+import org.apache.log4j.Level;
 
 /**
  * Extended CommandHandler, a class that handles server requests on a separate thread.
@@ -51,7 +52,7 @@ public class ServerHandler extends CommandHandler
 					{
 						parseParams((String)info);
 						netTools.writeString("version=1.0.0\n", channel);
-						vdx.log(Level.FINE, "version", channel);
+						vdx.log(Level.DEBUG, "version", channel);
 					}
 				});
 		

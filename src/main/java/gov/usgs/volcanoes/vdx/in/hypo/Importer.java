@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ConfigFile;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.data.hypo.Hypocenter;
 import gov.usgs.volcanoes.vdx.data.hypo.SQLHypocenterDataSource;
 

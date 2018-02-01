@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.in.hypo;
 
-import gov.usgs.util.Arguments;
-import gov.usgs.util.ResourceReader;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.legacy.Arguments;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.hypo.Hypocenter;
 import gov.usgs.volcanoes.vdx.data.hypo.SQLHypocenterDataSource;
 
@@ -74,7 +74,7 @@ public class ImportH71 extends Importer
 				String sec = s.substring(13,19).trim();
 				
 				Date date = dateIn.parse(year+monthDay+hourMin+sec);
-				double j2ksec = Util.dateToJ2K(date);
+				double j2ksec = J2kSec.fromDate(date);
 
 				// LAT
 				double latdeg = Double.parseDouble(s.substring(19, 22).trim());

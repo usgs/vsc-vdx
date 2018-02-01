@@ -1,9 +1,10 @@
 package gov.usgs.volcanoes.vdx.data;
 
-import gov.usgs.math.DownsamplingType;
-import gov.usgs.plot.data.BinaryDataSet;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.time.J2kSec;
+import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
@@ -45,8 +46,8 @@ public abstract class VDXSource implements DataSource {
       String prefix = cf.getString("prefix");
       String url = cf.getString("url");
       vdxName = cf.getName();
-      maxrows = Util.stringToInt(cf.getString("maxrows"), 0);
-      int cacheCap = Util.stringToInt(cf.getString("statementCacheCap"), 100);
+      maxrows = StringUtils.stringToInt(cf.getString("maxrows"), 0);
+      int cacheCap = StringUtils.stringToInt(cf.getString("statementCacheCap"), 100);
       winston = new WinstonDatabase(driver, url, prefix, cacheCap);
     }
     data = new Data(winston);
@@ -123,12 +124,12 @@ public abstract class VDXSource implements DataSource {
 
       try {
         arg = params.get("st");
-        st = Util.dateToJ2K(df.parse(arg));
+        st = J2kSec.fromDate(df.parse(arg));
         arg = params.get("et");
         if (arg == null || arg.equals("")) {
           et = Double.MAX_VALUE;
         } else {
-          et = Util.dateToJ2K(df.parse(arg));
+          et = J2kSec.fromDate(df.parse(arg));
         }
       } catch (Exception e) {
         return getErrorResult("Illegal time string: " + arg + ", " + e);
@@ -588,12 +589,12 @@ public abstract class VDXSource implements DataSource {
 
     try {
       arg = params.get("st");
-      st = Util.dateToJ2K(df.parse(arg));
+      st = J2kSec.fromDate(df.parse(arg));
       arg = params.get("et");
       if (arg == null || arg == "") {
         et = Double.MAX_VALUE;
       } else {
-        et = Util.dateToJ2K(df.parse(arg));
+        et = J2kSec.fromDate(df.parse(arg));
       }
     } catch (Exception e) {
       return getErrorResult("Illegal time string: " + arg + ", " + e);
