@@ -28,16 +28,16 @@ public class VDXClient extends InternetClient
 	static
 	{
 		dataTypeMap = new HashMap<String, String>();
-		dataTypeMap.put("genericfixed", "gov.usgs.plot.data.GenericDataMatrix");
-		dataTypeMap.put("genericvariable", "gov.usgs.plot.data.GenericDataMatrix");
+		dataTypeMap.put("genericfixed", "gov.usgs.volcanoes.core.data.GenericDataMatrix");
+		dataTypeMap.put("genericvariable", "gov.usgs.volcanoes.core.data.GenericDataMatrix");
 		dataTypeMap.put("gps", "gov.usgs.volcanoes.vdx.data.gps.GPSData");
-		dataTypeMap.put("helicorder", "gov.usgs.plot.data.HelicorderData");
+		dataTypeMap.put("helicorder", "gov.usgs.volcanoes.core.data.HelicorderData");
 		dataTypeMap.put("hypocenters", "gov.usgs.volcanoes.vdx.data.hypo.HypocenterList");
-		dataTypeMap.put("rsam", "gov.usgs.plot.data.RSAMData");
+		dataTypeMap.put("rsam", "gov.usgs.volcanoes.core.data.RSAMData");
 		dataTypeMap.put("ewrsam", "gov.usgs.volcanoes.vdx.data.rsam.EWRSAMData");
 		dataTypeMap.put("tilt", "gov.usgs.volcanoes.vdx.data.tilt.TiltData");
 		dataTypeMap.put("tensorstrain", "gov.usgs.volcanoes.vdx.data.tensorstrain.TensorstrainData");
-		dataTypeMap.put("wave", "gov.usgs.plot.data.Wave");
+		dataTypeMap.put("wave", "gov.usgs.volcanoes.core.data.Wave");
 	}
 	
 	/**
