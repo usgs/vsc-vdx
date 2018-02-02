@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.data;
 
-import gov.usgs.volcanoes.core.math.DownsamplingType;
-import gov.usgs.volcanoes.core.data.BinaryDataSet;
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.data.BinaryDataSet;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.time.J2kSec;
 import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.core.util.UtilException;
@@ -13,6 +13,7 @@ import gov.usgs.volcanoes.winston.Channel;
 import gov.usgs.volcanoes.winston.db.Channels;
 import gov.usgs.volcanoes.winston.db.Data;
 import gov.usgs.volcanoes.winston.db.WinstonDatabase;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

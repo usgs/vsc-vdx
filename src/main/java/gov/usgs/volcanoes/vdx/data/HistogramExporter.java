@@ -2,6 +2,7 @@ package gov.usgs.volcanoes.vdx.data;
 
 import gov.usgs.volcanoes.core.legacy.plot.render.HistogramRenderer;
 import gov.usgs.volcanoes.vdx.data.Exportable;
+
 import hep.aida.ref.Histogram1D;
 
 /**

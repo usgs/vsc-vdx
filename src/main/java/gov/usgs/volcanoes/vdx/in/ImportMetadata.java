@@ -1,7 +1,7 @@
 package gov.usgs.volcanoes.vdx.in;
 
-import gov.usgs.volcanoes.core.legacy.Arguments;
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.legacy.Arguments;
 import gov.usgs.volcanoes.core.util.ResourceReader;
 import gov.usgs.volcanoes.vdx.data.Channel;
 import gov.usgs.volcanoes.vdx.data.Column;

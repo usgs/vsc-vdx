@@ -1,9 +1,9 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.data.BinaryDataSet;
 import gov.usgs.volcanoes.core.data.RSAMData;
 import gov.usgs.volcanoes.core.data.Scnl;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 
@@ -13,7 +13,7 @@ import gov.usgs.volcanoes.vdx.data.VDXSource;
  * @author Tom Parker
  * @author Bill Tollett
  */
-public class RatSAMSource extends VDXSource {
+public class RatSamSource extends VDXSource {
 
   public String getType() {
     return "rsam";

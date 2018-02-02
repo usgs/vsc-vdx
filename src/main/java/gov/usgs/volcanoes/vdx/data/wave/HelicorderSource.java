@@ -1,8 +1,8 @@
 package gov.usgs.volcanoes.vdx.data.wave;
 
-import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.data.BinaryDataSet;
 import gov.usgs.volcanoes.core.data.Scnl;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 

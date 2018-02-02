@@ -2,6 +2,7 @@ package gov.usgs.volcanoes.vdx.data;
 
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.vdx.ExportConfig;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;

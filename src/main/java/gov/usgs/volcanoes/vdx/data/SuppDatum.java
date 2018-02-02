@@ -195,16 +195,18 @@ public class SuppDatum {
   }
 
   /**
+   * Print the data in xml format.
    * @return SuppDatum's xml representation.
    */
-  public String toXML() {
-    return toXML(false);
+  public String toXml() {
+    return toXml(false);
   }
 
   /**
+   * Print the data in xml format.
    * @return SuppDatum's xml representation, w/ extra args.
    */
-  public String toXML(boolean addFrameInfo) {
+  public String toXml(boolean addFrameInfo) {
     StringBuffer sb = new StringBuffer();
     sb.append("<suppdatum>\n");
     sb.append("<![CDATA[" + sdid + "\"" + tid + "\"" + st + "\"" + et + "\"" + cid + "\"" + colid
