@@ -2,6 +2,7 @@ package gov.usgs.volcanoes.vdx.in;
 
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
+
 import gov.usgs.volcanoes.core.data.GenericDataMatrix;
 import gov.usgs.volcanoes.core.legacy.Arguments;
 import gov.usgs.volcanoes.core.configfile.ConfigFile;
