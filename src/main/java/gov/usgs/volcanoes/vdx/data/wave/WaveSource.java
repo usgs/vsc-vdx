@@ -6,6 +6,8 @@ import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 
 /**
+ * WaveSource.
+ *
  * @author Dan Cervelli
  */
 public class WaveSource extends VDXSource {

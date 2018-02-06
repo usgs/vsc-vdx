@@ -40,7 +40,7 @@ public class ImportSuppdata {
 
   static {
     flags = new HashSet<String>();
-    keys  = new HashSet<String>();
+    keys = new HashSet<String>();
     keys.add("-c");
     flags.add("-h");
     flags.add("-cm");
@@ -74,7 +74,7 @@ public class ImportSuppdata {
     // get the vdx config as it's own config file object
     vdxParams = new ConfigFile(vdxConfig);
     String driver = vdxParams.getString("vdx.driver");
-    String url    = vdxParams.getString("vdx.url");
+    String url = vdxParams.getString("vdx.url");
     String prefix = vdxParams.getString("vdx.prefix");
     database = new VDXDatabase(driver, url, prefix);
     dataSourceHandler = new DataSourceHandler(driver, url, prefix);
@@ -85,16 +85,16 @@ public class ImportSuppdata {
    * Process.  Reads a file and parses the contents to the database
    */
   public void process(String pathname) {
-    File file                   = new File(pathname);
-    String filename             = file.getName();
-    String source               = filename.substring(5, filename.length() - 19);
+    File file = new File(pathname);
+    String filename = file.getName();
+    String source = filename.substring(5, filename.length() - 19);
     SQLDataSourceDescriptor dsd = sqlDataSourceHandler.getDataSourceDescriptor(source);
     if (dsd == null) {
       LOGGER.error("skipping: {} (datasource is invalid)", pathname);
       return;
     }
     SQLDataSource ds = null;
-    VDXSource vds    = null;
+    VDXSource vds = null;
     try {
       Object ods = dsd.getSQLDataSource();
       if (ods != null) {
@@ -128,7 +128,7 @@ public class ImportSuppdata {
       rankMap = new HashMap<String, Integer>();
       for (String rk : ds.defaultGetRanks()) {
         String[] rkBits = rk.split(":");
-        int id          = Integer.parseInt(rkBits[0]);
+        int id = Integer.parseInt(rkBits[0]);
         rankMap.put(rkBits[1], id);
         if (rkBits[3].equals("1")) {
           defaultRank = id;
@@ -192,7 +192,7 @@ public class ImportSuppdata {
       return;
     }
     // move to the first line in the file
-    String line    = rr.nextLine();
+    String line = rr.nextLine();
     int lineNumber = 0;
 
     // check that the file has data
@@ -204,7 +204,7 @@ public class ImportSuppdata {
     LOGGER.info("importing: " + filename);
 
     SuppDatum sd = new SuppDatum();
-    int success  = 0;
+    int success = 0;
 
     // we are now at the first row of data.  time to import!
     String[] valueArray = new String[lineLen2];
@@ -219,12 +219,12 @@ public class ImportSuppdata {
       }
       // Next, walk through those parts, splitting those outside of matching quotes by comma
       int valueArrayLength = 0;
-      boolean ok           = true;
+      boolean ok = true;
       for (int j = 0; ok && j < quoteParts.length; j += 2) {
-        String[] parts  = quoteParts[j].split(",", -1);
-        int k1  = 1;
+        String[] parts = quoteParts[j].split(",", -1);
+        int k1 = 1;
         int k2 = parts.length - 1;
-        boolean  middle = true;
+        boolean middle = true;
         if (j == 0) { // section before first quote
           middle = false;
           if (parts.length > 1 && parts[0].trim().length() == 0) {
@@ -321,8 +321,8 @@ public class ImportSuppdata {
         Integer tid = sdtypeMap.get(sd.typeName);
         if (tid == null) {
           sd.color = "000000";
-          sd.dl    = 1;
-          sd.tid   = -1;
+          sd.dl = 1;
+          sd.tid = -1;
         } else {
           sd.tid = tid;
         }
@@ -353,13 +353,13 @@ public class ImportSuppdata {
           }
         } else {
           sd.colid = -1;
-          sd.rid   = -1;
+          sd.rid = -1;
         }
       } else {
         sd.colid = -1;
-        sd.rid   = -1;
+        sd.rid = -1;
       }
-      sd.name  = valueArray[5].trim();
+      sd.name = valueArray[5].trim();
       sd.value = valueArray[6].trim();
 
       try {

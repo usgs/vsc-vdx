@@ -86,7 +86,7 @@ public class MetaDatum {
    * 
    * @return MetaDatum's xml representation
    */
-  public String toXML() {
+  public String toXml() {
     StringBuffer sb = new StringBuffer();
     sb.append("<metadatum>\n");
     sb.append("<![CDATA[" + cmid + "\"" + cid + "\"" + colid + "\"" + rid);

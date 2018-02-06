@@ -3,9 +3,9 @@ package gov.usgs.volcanoes.vdx.in;
 import cern.colt.matrix.DoubleFactory2D;
 import cern.colt.matrix.DoubleMatrix2D;
 
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.core.data.GenericDataMatrix;
 import gov.usgs.volcanoes.core.legacy.Arguments;
-import gov.usgs.volcanoes.core.configfile.ConfigFile;
 import gov.usgs.volcanoes.core.time.J2kSec;
 import gov.usgs.volcanoes.core.util.StringUtils;
 import gov.usgs.volcanoes.vdx.data.Channel;
@@ -243,7 +243,7 @@ public class ImportPoll extends Import implements Importer {
     sqlDataSourceMap = new HashMap<String, SQLDataSource>();
     dataSourceChannelMap = new HashMap<String, String>();
     dataSourceColumnMap = new HashMap<String, String>();
-    dataSourceRIDMap = new HashMap<String, Integer>();
+    dataSourceRidMap = new HashMap<String, Integer>();
 
     // iterate through each of the data sources and setup the db for it
     for (int i = 0; i < dataSourceList.size(); i++) {
@@ -279,7 +279,7 @@ public class ImportPoll extends Import implements Importer {
           LOGGER.error("{} {} rank creation failed", dataSource, rank.getName());
           System.exit(-1);
         }
-        dataSourceRIDMap.put(dataSource, tempRank.getId());
+        dataSourceRidMap.put(dataSource, tempRank.getId());
       }
 
       // columns based configuration
@@ -298,7 +298,8 @@ public class ImportPoll extends Import implements Importer {
             columnChecked = StringUtils.stringToBoolean(columnParams.getString("checked"), false);
             columnActive = StringUtils.stringToBoolean(columnParams.getString("active"), true);
             columnBypass = StringUtils.stringToBoolean(columnParams.getString("bypass"), false);
-            columnAccumulate = StringUtils.stringToBoolean(columnParams.getString("accumulate"), false);
+            columnAccumulate = StringUtils.stringToBoolean(columnParams.getString("accumulate"),
+                false);
             column = new Column(columnIdx, columnName, columnDescription, columnUnit, columnChecked,
                 columnActive, columnBypass, columnAccumulate);
             if (sqlDataSource.defaultGetColumn(columnName) == null) {
@@ -325,7 +326,8 @@ public class ImportPoll extends Import implements Importer {
       }
 
       // get the channels for this data source
-      channels = StringUtils.stringToString(dataSourceParams.getString("channels"), defaultChannels);
+      channels = StringUtils.stringToString(dataSourceParams.getString("channels"),
+          defaultChannels);
       dataSourceChannelMap.put(dataSource, channels);
       LOGGER.info("[Channels] {}", channels);
 
@@ -391,7 +393,8 @@ public class ImportPoll extends Import implements Importer {
             for (int k = 0; k < columnList.size(); k++) {
               column = columnList.get(k);
               columnName = column.name;
-              multiplier = StringUtils.stringToDouble(translationParams.getString("c" + columnName), 1);
+              multiplier = StringUtils.stringToDouble(translationParams.getString("c" + columnName),
+                  1);
               offset = StringUtils.stringToDouble(translationParams.getString("d" + columnName), 0);
               dm.setQuick(0, k * 2, multiplier);
               dm.setQuick(0, k * 2 + 1, offset);
@@ -718,7 +721,7 @@ public class ImportPoll extends Import implements Importer {
 
               // rank for this data source. this should already exist in the database
               if (sqlDataSource.getRanksFlag()) {
-                rid = dataSourceRIDMap.get(dataSource);
+                rid = dataSourceRidMap.get(dataSource);
               } else {
                 rid = 1;
               }

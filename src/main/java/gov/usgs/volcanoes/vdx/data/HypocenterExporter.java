@@ -20,7 +20,7 @@ public class HypocenterExporter implements Exportable {
   protected boolean exportAll; // ="export all columns"
 
   /**
-   * Constructor
+   * Constructor.
    * 
    * @see gov.usgs.volcanoes.core.legacy.plot.render.HistogramRenderer
    */

@@ -1,14 +1,15 @@
 package gov.usgs.volcanoes.vdx.data.rsam;
 
-import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.data.RSAMData;
 import gov.usgs.volcanoes.core.data.Scnl;
+import gov.usgs.volcanoes.core.math.DownsamplingType;
 import gov.usgs.volcanoes.core.util.UtilException;
 import gov.usgs.volcanoes.vdx.data.VDXSource;
 import gov.usgs.volcanoes.vdx.server.BinaryResult;
 import gov.usgs.volcanoes.vdx.server.RequestResult;
 import gov.usgs.volcanoes.vdx.server.TextResult;
 import gov.usgs.volcanoes.winston.Channel;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ import java.util.Map;
  * @author Dan Cervelli
  * @author Bill Tollett
  */
-public class RSAMSource extends VDXSource {
+public class RsamSource extends VDXSource {
 
   public String getType() {
     return "rsam";
@@ -55,7 +56,7 @@ public class RSAMSource extends VDXSource {
       int dsInt           = Integer.parseInt(params.get("dsInt"));
       RSAMData data       = null;
       try {
-        data = getRatSAMData(cids, st, et, getMaxRows(), ds, dsInt);
+        data = getRatSamData(cids, st, et, getMaxRows(), ds, dsInt);
       } catch (UtilException e) {
         return getErrorResult(e.getMessage());
       }
@@ -91,7 +92,7 @@ public class RSAMSource extends VDXSource {
     return data.getRSAMData(scnl, st, et, maxrows, ds, dsInt);
   }
 
-  protected RSAMData getRatSAMData(String code, double st, double et, int maxrows,
+  protected RSAMData getRatSamData(String code, double st, double et, int maxrows,
       DownsamplingType ds, int dsInt) throws UtilException {
     RSAMData result1 = null;
     RSAMData result2 = null;
