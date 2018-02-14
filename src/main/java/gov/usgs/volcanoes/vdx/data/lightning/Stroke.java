@@ -68,7 +68,7 @@ public class Stroke {
    * @return the comma-delimited String
    */
   public String toString() {
-    return String.format("%f,%f,%f,%i,%f", j2ksec, lat, lon, stationsDetected, residual);
+    return String.format("%f,%f,%f,%d,%f", j2ksec, lat, lon, stationsDetected, residual);
   }
 
   /**

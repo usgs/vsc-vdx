@@ -74,6 +74,7 @@ public class GetDataCommand extends BaseCommand {
     } else {
       DataSourceDescriptor dsd = dsh.getDataSourceDescriptor(inParams.get("source"));
       DataSource ds = dsd.getDataSource();
+
       result = ds.getData(inParams);
       dsd.putDataSource();
       resultType = ds.getType();

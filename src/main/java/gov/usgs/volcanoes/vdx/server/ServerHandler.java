@@ -6,6 +6,7 @@ import gov.usgs.volcanoes.vdx.data.DataSourceHandler;
 
 import java.nio.channels.SocketChannel;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
 
 /**
@@ -16,7 +17,7 @@ import org.apache.log4j.Level;
  */
 public class ServerHandler extends CommandHandler {
 
-  private static int instances = 0;
+  private static AtomicInteger instances = new AtomicInteger(0);
   private VDX vdx;
   private DataSourceHandler dataSourceHandler;
   private NetTools netTools;
@@ -27,7 +28,7 @@ public class ServerHandler extends CommandHandler {
    * @param s VDX server
    */
   public ServerHandler(VDX s) {
-    super(s, "VDX/ServerHandler-" + instances++);
+    super(s, "VDX/ServerHandler-" + instances.getAndIncrement());
     vdx = s;
     netTools = new NetTools();
     dataSourceHandler = new DataSourceHandler(vdx.getDbDriver(), vdx.getDbUrl(), vdx.getPrefix());

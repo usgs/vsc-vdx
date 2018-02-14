@@ -101,7 +101,7 @@ public class ExportConfig {
           if (width[i] < 0 || width[i] > 23) {
             width = null;
             throw new Exception(
-                edwName + " export data width value (" + width[i] + ") > 23; ignored");
+                edwName + " export data width value (" + widthStr[i] + ") > 23; ignored");
           }
         }
         i = width[0] + width[1];
@@ -239,7 +239,6 @@ public class ExportConfig {
   public List<String> toStringList() {
     ArrayList<String> rep = new ArrayList<String>(numCommentLines + 3);
     rep.add("" + exportable);
-    int[] fw = getFixedWidth();
     if (width != null) {
       rep.add("" + width[0]);
       rep.add("" + width[1]);

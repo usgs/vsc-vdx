@@ -86,7 +86,7 @@ public abstract class VDXSource implements DataSource {
       }
       return new TextResult(result);
 
-    } else if (action.equals("data") || action == null) {
+    } else if (action.equals("data")) {
       int cid = Integer.parseInt(params.get("ch"));
       double st = Double.parseDouble(params.get("st"));
       double et = Double.parseDouble(params.get("et"));
@@ -604,14 +604,14 @@ public abstract class VDXSource implements DataSource {
     arg = params.get("byID");
     if (arg != null && arg.equals("true")) {
       arg = params.get("et");
-      if (arg == null || arg == "") {
+      if (arg == null || arg.equals("")) {
         et = Double.MAX_VALUE;
       } else {
         et = Double.parseDouble(arg);
       }
       arg = params.get("type");
       int tid;
-      if (arg == null || arg == "") {
+      if (arg == null || arg.equals("")) {
         tid = -1;
       } else {
         tid = Integer.parseInt(arg);

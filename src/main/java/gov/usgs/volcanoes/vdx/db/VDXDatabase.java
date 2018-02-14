@@ -220,12 +220,12 @@ public class VDXDatabase {
         public boolean attempt() throws UtilException {
           try {
             statement.execute(sql);
-            result = new Boolean(true);
+            result = Boolean.valueOf(true);
             return true;
           } catch (SQLException e) {
             LOGGER.error("execute() failed, SQL: {}", sql, e);
           }
-          result = new Boolean(false);
+          result = Boolean.valueOf(false);
           return false;
         }
       }.go();

@@ -326,7 +326,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
       int maxrows) throws UtilException {
 
     List<Hypocenter> pts = new ArrayList<Hypocenter>();
-    HypocenterList result = null;
 
     if (radius > 0.0) {
       getHypocenterData(rid, st, et, minDepth, maxDepth, minMag, maxMag, minNPhases, maxNPhases,
@@ -402,7 +401,6 @@ public class SQLHypocenterDataSource extends SQLDataSource implements DataSource
           }
         });
       }
-      result = new HypocenterList(pts);
     } catch (SQLException e) {
       LOGGER.error("SQLHypocenterDataSource.getHypocenterData() failed.", e);
     }

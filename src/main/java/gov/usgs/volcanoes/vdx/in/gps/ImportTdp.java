@@ -384,7 +384,7 @@ public class ImportTdp implements Importer {
   }
 
   @SuppressWarnings("rawtypes")
-  public class Observation implements Comparable {
+  public static class Observation implements Comparable {
 
     public String sortValue;
     public String code;

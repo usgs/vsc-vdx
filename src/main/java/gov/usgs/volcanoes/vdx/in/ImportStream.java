@@ -580,7 +580,7 @@ public class ImportStream extends Import implements Importer {
         String name;
         double value;
         int count = 0;
-        String tsValue = "";
+        StringBuilder tsValue = new StringBuilder();
 
         // try to parse the values from this data line
         try {
@@ -598,7 +598,7 @@ public class ImportStream extends Import implements Importer {
 
               // parse out the TIMESTAMP
             } else if (name.equals("TIMESTAMP")) {
-              tsValue += valueMap.get(i) + " ";
+              tsValue.append(valueMap.get(i)).append(" ");
               continue;
 
               // elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA
@@ -629,7 +629,7 @@ public class ImportStream extends Import implements Importer {
 
         // convert the timezone of the input date and convert to j2ksec
         try {
-          String timestamp = tsValue.trim();
+          String timestamp = tsValue.toString().trim();
           date = dateIn.parse(timestamp);
           j2ksec = J2kSec.fromDate(date);
         } catch (ParseException e) {

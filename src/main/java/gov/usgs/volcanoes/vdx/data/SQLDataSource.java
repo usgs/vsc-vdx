@@ -119,17 +119,18 @@ public abstract class SQLDataSource implements DataSource {
    * @throws SQLException if there's a problem with the ResultSet
    */
   public static int getResultSetSize(ResultSet rs) throws SQLException {
-    int size = 0;
-    int currentRow = rs.getRow();
-    if (rs != null) {
+    int size;
+    int currentRow;
+
+    size = 0;
+    currentRow = rs.getRow();
+    rs.beforeFirst();
+    rs.last();
+    size = rs.getRow();
+    if (currentRow == 0) {
       rs.beforeFirst();
-      rs.last();
-      size = rs.getRow();
-      if (currentRow == 0) {
-        rs.beforeFirst();
-      } else {
-        rs.absolute(currentRow);
-      }
+    } else {
+      rs.absolute(currentRow);
     }
     return size;
   }
@@ -176,7 +177,7 @@ public abstract class SQLDataSource implements DataSource {
       String sqlFromWhereClause = sql.substring(sql.toUpperCase().indexOf("FROM") - 1,
           sql.toUpperCase().lastIndexOf("ORDER BY") - 1);
       String[] columns = sqlSelectClause.split(",");
-      String avgSQL = "SELECT ";
+      StringBuilder avgSQL = new StringBuilder("SELECT ");
       for (String column : columns) {
         String groupFunction = "AVG";
         String[] columnParts = column.trim().split("\\sas\\s");
@@ -186,15 +187,16 @@ public abstract class SQLDataSource implements DataSource {
           groupFunction = "MIN";
         }
         if (columnParts.length > 1) {
-          avgSQL += groupFunction + "(" + columnParts[0] + ") as " + columnParts[1] + ", ";
+          avgSQL.append(groupFunction).append("(").append(columnParts[0]).append(") as ")
+              .append(columnParts[1]).append(", ");
         } else {
-          avgSQL += groupFunction + "(" + columnParts[0] + "), ";
+          avgSQL.append(groupFunction).append("(").append(columnParts[0]).append("), ");
         }
       }
-      avgSQL += "(((" + timeColumn + ") - ?) DIV ?) intNum ";
-      avgSQL += sqlFromWhereClause;
-      avgSQL += " GROUP BY intNum";
-      return avgSQL;
+      avgSQL.append("(((").append(timeColumn).append(") - ?) DIV ?) intNum ")
+          .append(sqlFromWhereClause).append(" GROUP BY intNum");
+
+      return avgSQL.toString();
     } else {
       throw new UtilException("Unknown downsampling type: " + ds);
     }
@@ -458,32 +460,33 @@ public abstract class SQLDataSource implements DataSource {
         if (columnsList.size() > 0) {
 
           // prepare the channels table sql, PRIMARY KEY is defined below
-          String sql = "CREATE TABLE " + channelCode + " (j2ksec DOUBLE";
+          StringBuilder sql = new StringBuilder("CREATE TABLE ")
+              .append(channelCode).append(" (j2ksec DOUBLE");
 
           // loop. all sql columns in the db are of type double and allow for null values
           for (int i = 0; i < columnsList.size(); i++) {
-            sql = sql + "," + columnsList.get(i).name + " DOUBLE";
+            sql.append(",").append(columnsList.get(i).name).append(" DOUBLE");
           }
 
           // if this channel uses translations then the channel table needs to have a tid
           if (translations) {
-            sql = sql + ",tid INT DEFAULT 1 NOT NULL";
+            sql.append(",tid INT DEFAULT 1 NOT NULL");
           }
 
           // if this channel uses ranks then the channel table needs to have a rid
           if (ranks) {
-            sql = sql + ",rid INT DEFAULT 1 NOT NULL,PRIMARY KEY(j2ksec,rid)";
+            sql.append(",rid INT DEFAULT 1 NOT NULL,PRIMARY KEY(j2ksec,rid)");
 
             // when using ranks, the primary key is the combo of j2ksec and rid, otherwise, it's
             // just the j2ksec
           } else {
-            sql = sql + ",PRIMARY KEY(j2ksec)";
+            sql.append(",PRIMARY KEY(j2ksec)");
           }
 
           // place the closing parenthesis and execute the sql statement
-          sql = sql + ",KEY index_j2ksec (j2ksec))";
-          ps = database.getPreparedStatement(sql);
-          ps.execute(sql);
+          sql.append(",KEY index_j2ksec (j2ksec))");
+          ps = database.getPreparedStatement(sql.toString());
+          ps.execute(sql.toString());
         }
       }
 
@@ -789,8 +792,8 @@ public abstract class SQLDataSource implements DataSource {
 
     // default local variables
     int tid = 1;
-    String columns = "";
-    String values = "";
+    StringBuilder columns = new StringBuilder();
+    StringBuilder values = new StringBuilder();
 
     try {
       database.useDatabase(dbName);
@@ -800,15 +803,15 @@ public abstract class SQLDataSource implements DataSource {
 
       // iterate through the generic data matrix to get a list of the values
       for (int i = 0; i < columnNames.length; i++) {
-        columns += columnNames[i] + ",";
-        values += dm.get(0, i) + ",";
+        columns.append(columnNames[i]).append(",");
+        values.append(dm.get(0, i)).append(",");
       }
-      columns += "name";
-      values += "'" + channelCode + "'";
+      columns.append("name");
+      values.append("'").append(channelCode).append("'");
 
       // insert the translation into the database
-      ps = database.getPreparedStatement("INSERT INTO translations (" + columns + ") "
-                                       + "VALUES (" + values + ")");
+      ps = database.getPreparedStatement("INSERT INTO translations ("
+          + columns.toString() + ") VALUES (" + values.toString() + ")");
       ps.execute();
       tid = defaultGetTranslation(channelCode, gdm);
 
@@ -1490,7 +1493,6 @@ public abstract class SQLDataSource implements DataSource {
     double[] dataRow;
     List<double[]> pts = new ArrayList<double[]>();
     GenericDataMatrix result = null;
-    List<Column> columns = new ArrayList<Column>();
     Column column;
     int columnsReturned = 0;
 
@@ -1501,7 +1503,7 @@ public abstract class SQLDataSource implements DataSource {
       // channel types is false because at this point we don't care about that, just trying to get
       // the channel name
       final Channel channel = defaultGetChannel(cid, false);
-      columns = defaultGetColumns(false, false);
+      List<Column> columns  = defaultGetColumns(false, false);
 
       // calculate the num of rows to limit the query to
       int tempmaxrows;
@@ -1718,7 +1720,7 @@ public abstract class SQLDataSource implements DataSource {
     StringBuffer columnBuffer = new StringBuffer();
     StringBuffer valuesBuffer = new StringBuffer();
     StringBuffer dupsBuffer = new StringBuffer();
-    String output;
+    StringBuilder output;
     String base;
 
     try {
@@ -1765,7 +1767,7 @@ public abstract class SQLDataSource implements DataSource {
 
       // loop through each of the rows and insert data
       for (int i = 0; i < gdm.rows(); i++) {
-        output = base;
+        output = new StringBuilder(base);
 
         // loop through each of the columns and set it
         for (int j = 0; j < columnNames.length; j++) {
@@ -1777,15 +1779,15 @@ public abstract class SQLDataSource implements DataSource {
           } else {
             ps.setDouble(j + 1, value);
           }
-          output = output + value + ",";
+          output.append(value).append(",");
         }
         ps.execute();
         if (translations) {
-          output += tid + ",";
+          output.append(tid).append(",");
         }
         
         if (ranks) {
-          output += rid + ",";
+          output.append(rid).append(",");
         }
       }
 
@@ -1962,7 +1964,7 @@ public abstract class SQLDataSource implements DataSource {
           md.chName = rs.getString(6);
           md.colName = rs.getString(7);
           result.add(md);
-        } else if (source.contains("hypocenters") | source.contains("lightning")) {
+        } else if (source.contains("hypocenters") || source.contains("lightning")) {
           md = new MetaDatum();
           md.cmid = rs.getInt(1);
           md.rid = rs.getInt(2);

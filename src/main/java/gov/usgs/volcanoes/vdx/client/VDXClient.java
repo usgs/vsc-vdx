@@ -19,11 +19,12 @@ import java.util.Map;
  * command and get command processing result.
  *
  * @author Dan Cervelli
+ * @author Bill Tollett
  */
 public class VDXClient extends InternetClient {
 
   private static final int MAX_RETRIES = 3;
-  protected static Map<String, String> dataTypeMap;
+  private static final Map<String, String> dataTypeMap;
 
   static {
     dataTypeMap = new HashMap<String, String>();

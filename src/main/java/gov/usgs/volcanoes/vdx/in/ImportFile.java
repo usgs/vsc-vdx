@@ -341,7 +341,6 @@ public class ImportFile extends Import implements Importer {
       ColumnValue columnValue;
       String name;
       String line;
-      String tsValue;
       int count;
       int lineNumber;
       double value;
@@ -421,6 +420,7 @@ public class ImportFile extends Import implements Importer {
       }
 
       // we are now at the first row of data.  time to import!
+      StringBuilder tsValue = new StringBuilder();
       while (line != null) {
 
         // increment the line number variable
@@ -481,7 +481,7 @@ public class ImportFile extends Import implements Importer {
 
         // try to parse the values from this data line
         count = 0;
-        tsValue = "";
+        tsValue.setLength(0);
         try {
           for (int i = 0; i < fieldMap.size(); i++) {
             name = fieldMap.get(i);
@@ -497,7 +497,7 @@ public class ImportFile extends Import implements Importer {
 
               // parse out the TIMESTAMP
             } else if (name.equals("TIMESTAMP")) {
-              tsValue = tsValue + valueMap.get(i) + " ";
+              tsValue.append(valueMap.get(i)).append(" ");
               continue;
 
               // elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA
@@ -543,7 +543,7 @@ public class ImportFile extends Import implements Importer {
 
         // convert the time zone of the input date and convert to j2ksec
         try {
-          String timestamp = tsValue.trim();
+          String timestamp = tsValue.toString().trim();
           date = dateIn.parse(timestamp);
           j2ksec = J2kSec.fromDate(date);
         } catch (ParseException e) {
@@ -704,6 +704,9 @@ public class ImportFile extends Import implements Importer {
     for (String file : files) {
       importer.process(file);
     }
+
+    // Stop the CurrentTime thread so that ImportFile can exit cleanly.
+    importer.currentTime.stopUpdating();
 
     importer.deinitialize();
   }
