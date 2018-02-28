@@ -35,8 +35,8 @@ public class Scheduler {
   private static Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
   // class variables
-  public static Set<String> flags;
-  public static Set<String> keys;
+  public static final Set<String> flags;
+  public static final Set<String> keys;
   public static ConfigFile params;
   public static ConfigFile schedulerParams;
   public static Class importClass;
@@ -285,7 +285,7 @@ public class Scheduler {
   /**
    * Extension of class for getting the proper file listing.
    */
-  class ImportFileFilter implements FileFilter {
+  static class ImportFileFilter implements FileFilter {
 
     /**
      * constructor.

@@ -94,8 +94,8 @@ public class ImportEwRsam extends Thread {
   public static final int DEFAULT_REPAIR_RETRY_INTERVAL = 10 * 60;
 
   // JSAP related stuff.
-  public static String JSAP_PROGRAM_NAME = "java gov.usgs.volcanoes.vdx.in.rsam.ImportEwRsam";
-  public static String JSAP_EXPLANATION_PREFACE = "ImportEwRsam\n"
+  public static final String JSAP_PROGRAM_NAME = "java gov.usgs.volcanoes.vdx.in.rsam.ImportEwRsam";
+  public static final String JSAP_EXPLANATION_PREFACE = "ImportEwRsam\n"
       + "\n"
       + "This program gets data from an Earthworm export process and imports\n"
       + "it into a Valve database. See 'ImportEwRsam.config' for more options.\n"
@@ -418,8 +418,7 @@ public class ImportEwRsam extends Thread {
         filter.configure(fc);
         traceBufFilters.add(filter);
       } catch (Exception ex) {
-        logger.log(Level.SEVERE, "Could not create TraceBuf filter: ",
-            ex);
+        logger.log(Level.SEVERE, "Could not create TraceBuf filter: ", ex);
       }
     }
     Collections.sort(traceBufFilters);
@@ -679,8 +678,7 @@ public class ImportEwRsam extends Thread {
     try {
       importGeneric.join();
     } catch (Throwable e) {
-      logger.log(Level.SEVERE,
-          "Failed to cleanly shutdown SeedLink Collector", e);
+      logger.log(Level.SEVERE, "Failed to cleanly shutdown SeedLink Collector", e);
     }
 
     logger.fine("Quitting cleanly.");
@@ -847,8 +845,7 @@ public class ImportEwRsam extends Thread {
             try {
               im.join();
             } catch (Throwable e) {
-              im.logger.log(Level.SEVERE,
-                  "Failed to quit cleanly.", e);
+              im.logger.log(Level.SEVERE, "Failed to quit cleanly.", e);
             } finally {
               im.printStatus();
             }
@@ -867,10 +864,7 @@ public class ImportEwRsam extends Thread {
             im.setLogLevel(Level.ALL);
           } else if (s.equals("i")) {
             acceptCommands = false;
-            im.logger
-                .warning("No longer accepting console commands.");
-          } else if (s.equals("?")) {
-            ImportEwRsam.printKeys();
+            im.logger.warning("No longer accepting console commands.");
           } else {
             ImportEwRsam.printKeys();
           }
@@ -899,8 +893,7 @@ public class ImportEwRsam extends Thread {
       try {
         logLevel = Level.parse(config.getString("logLevel"));
       } catch (IllegalArgumentException ex) {
-        System.err.println("Invalid log level: "
-            + config.getString("logLevel"));
+        System.err.println("Invalid log level: " + config.getString("logLevel"));
         System.err.println("Using default log level: " + logLevel);
       }
     } else {

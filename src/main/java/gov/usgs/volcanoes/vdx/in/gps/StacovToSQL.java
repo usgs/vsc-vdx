@@ -101,8 +101,8 @@ public class StacovToSQL {
     double[] boxFilter = null;
 
     Stacov stacov;
-    String circle = "";
-    String box = "";
+    StringBuilder circle = new StringBuilder();
+    StringBuilder box = new StringBuilder();
     String[] stations = null;
 
     boolean notAlreadyPrinted = true;
@@ -162,9 +162,9 @@ public class StacovToSQL {
       String key = args[c].split("=")[0].substring(2);
       String value = args[c].split("=")[1];
       if (key.toLowerCase().startsWith("c")) {
-        circle = circle + value + ",";
+        circle.append(value).append(",");
       } else if (key.toLowerCase().startsWith("b")) {
-        box = box + value + ",";
+        box.append(value).append(",");
       } else if (key.toLowerCase().startsWith("s")) {
         stations = value.split(",");
       } else if (key.toLowerCase().startsWith("r")) {
@@ -174,7 +174,7 @@ public class StacovToSQL {
     }
 
     if (circle.length() > 0) {
-      String[] circles = circle.split(",");
+      String[] circles = circle.toString().split(",");
       circleFilter = new double[circles.length];
       for (i = 0; i < circles.length; i++) {
         circleFilter[i] = Double.parseDouble(circles[i]);
@@ -182,7 +182,7 @@ public class StacovToSQL {
     }
 
     if (box.length() > 0) {
-      String[] boxes = box.split(",");
+      String[] boxes = box.toString().split(",");
       boxFilter = new double[boxes.length];
       for (i = 0; i < boxes.length; i++) {
         boxFilter[i] = Double.parseDouble(boxes[i]);

@@ -15,6 +15,7 @@
         <include>README*</include>
         <include>LICENSE*</include>
         <include>dist-VDX.config</include>
+        <include>dist-vdx.service</include>
         <include>dist-vdx.sh</include>
         <include>dist-vdxSources.config</include>
       </includes>

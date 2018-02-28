@@ -64,7 +64,7 @@ public class RsamSource extends VDXSource {
         return new BinaryResult(data);
       }
 
-    } else if (action.equals("data") || action == null) {
+    } else if (action.equals("data")) {
       int cid             = Integer.parseInt(params.get("ch"));
       double st           = Double.parseDouble(params.get("st"));
       double et           = Double.parseDouble(params.get("et"));
@@ -98,8 +98,8 @@ public class RsamSource extends VDXSource {
     RSAMData result2 = null;
 
     String[] codes = code.split(",");
-    String code1   = channels.getChannelCode(Integer.valueOf(codes[0]));
-    String code2   = channels.getChannelCode(Integer.valueOf(codes[1]));
+    String code1   = channels.getChannelCode(Integer.parseInt(codes[0]));
+    String code2   = channels.getChannelCode(Integer.parseInt(codes[1]));
     result1        = getData(code1, st, et, maxrows, ds, dsInt);
     result2        = getData(code2, st, et, maxrows, ds, dsInt);
 

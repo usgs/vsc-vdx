@@ -21,7 +21,6 @@ public abstract class BaseCommand implements Command {
   protected ServerHandler handler;
 
   protected Map<String, String> inParams;
-  protected Map<String, String> outParams;
 
   /**
    * Constructor.

@@ -148,14 +148,19 @@ public class HypocenterRenderer implements Renderer {
   /**
    * The colors for different depths.
    */
-  public static Color[] colors = new Color[]{Color.BLACK, Color.GREEN, Color.RED,
-      new Color(1.0f, 0.91f, 0.0f), Color.BLUE, new Color(0.8f, 0f, 1f)};
+  public static Color[] colors = new Color[] {Color.BLACK, Color.RED, new Color(1.0f, 0.5f, 0.1f),
+      new Color(1.0f, 0.91f, 0.0f), new Color(0.0f, 0.6f, 0.0f), Color.BLUE};
 
   /**
    * The depth intervals.
    */
   public static double[] depths = new double[]{-10000, 0, 5, 13, 20, 40, 10000};
-  public static String[] depthStrings = new String[]{"", "0", "5", "13", "20", "40", "70+"};
+  public static String[] depthStrings = new String[]{"<0", "0", "5", "13", "20", "40", "70+"};
+
+  static {
+    numberFormat = NumberFormat.getInstance();
+    numberFormat.setMaximumFractionDigits(0);
+  }
 
   /**
    * Constructor for HypocenterRenderer that gets the data, the coordinate transformer and the view
@@ -170,10 +175,10 @@ public class HypocenterRenderer implements Renderer {
     data = d;
     transformer = fr;
     axesOption = v;
-    if (numberFormat == null) {
-      numberFormat = NumberFormat.getInstance();
-      numberFormat.setMaximumFractionDigits(0);
-    }
+    //if (numberFormat == null) {
+    //  numberFormat = NumberFormat.getInstance();
+    //  numberFormat.setMaximumFractionDigits(0);
+    //}
     colorOption = ColorOption.chooseAuto(v);
   }
 
@@ -262,11 +267,11 @@ public class HypocenterRenderer implements Renderer {
         if (colorOption == ColorOption.DEPTH) {
           Rectangle2D.Double rect = new Rectangle2D.Double();
           double yoff = 0;
-          double ty = (depths.length - 2) * 18;
+          double ty = (depths.length - 1) * 18;
 
           g.drawString("Depth (km)", (float) startX + 60, (float) startY);
 
-          for (int i = 1; i < depths.length - 1; i++) {
+          for (int i = 0; i < depths.length - 1; i++) {
             rect.setRect(startX, startY - ty + yoff, 10, 18);
             g.drawString(depthStrings[i], (float) startX + 18, (float) (startY - ty + 4 + yoff));
             g.setPaint(colors[i]);
