@@ -1,171 +1,199 @@
 package gov.usgs.volcanoes.vdx.server;
 
-import gov.usgs.net.Server;
-import gov.usgs.util.ConfigFile;
-import gov.usgs.util.Log;
-import gov.usgs.util.Util;
+import gov.usgs.volcanoes.core.Log;
+import gov.usgs.volcanoes.core.configfile.ConfigFile;
+import gov.usgs.volcanoes.core.legacy.net.Server;
+import gov.usgs.volcanoes.core.util.StringUtils;
+import gov.usgs.volcanoes.vdx.Version;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
+
+import org.apache.log4j.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Main class for VDX server
+ * Main class for VDX server.
  *
  * @author Dan Cervelli
  */
 public class VDX extends Server {
-	protected String configFilename = "VDX.config";
-	protected int numHandlers;
-	private String driver;
-	private String url;
-	private String prefix;
 
-	/**
-	 * Constructor
-	 * @param cf configuration file name
-	 */	
-	public VDX(String cf) {
-		super();
-		name	= "VDX";
-		logger	= Log.getLogger("gov.usgs.volcanoes.vdx");
+  private static final Logger LOGGER = LoggerFactory.getLogger(VDX.class);
+  protected String configFilename = "VDX.config";
+  protected int numHandlers;
+  private String driver;
+  private String url;
+  private String prefix;
 
-		String[] version = Util.getVersion("gov.usgs.volcanoes.vdx");
-		if (version != null) {
-			logger.info("Version: " + version[0] + " Built: " + version[1]);
-		} else {
-			logger.info("No version information available.");
-		}
-		
-		if (cf != null) {
-			configFilename = cf;
-		}
-		processConfigFile();
-		
-		for (int i = 0; i < numHandlers; i++) {
-			this.addCommandHandler(new ServerHandler(this));
-		}
+  /**
+   * Constructor.
+   *
+   * @param cf configuration file name
+   */
+  public VDX(String cf) {
+    super();
+    name = "VDX";
 
-		startListening();
-	}
+    LOGGER.info(Version.VERSION_STRING);
 
-	/**
-	 * Log fatal error & shut down
-	 * @param msg error message
-	 */
-	protected void fatalError(String msg) {
-		logger.severe(msg);
-		System.exit(1);
-	}
-	
-	/**
-	 * Process configuration file and fill internal data
-	 */
-	public void processConfigFile() {
-		ConfigFile cf = new ConfigFile(configFilename);
-		if (!cf.wasSuccessfullyRead())
-			fatalError(configFilename + ": could not read config file.");
+    if (cf != null) {
+      configFilename = cf;
+    }
+    processConfigFile();
 
-		int l = Util.stringToInt(cf.getString("vdx.logLevel"), -1);
-		if (l > 1)
-			logger.setLevel(Level.ALL);
-		else
-			logger.setLevel(Level.INFO);
-		logger.info("config: vdx.logLevel=" + l + ".");
+    for (int i = 0; i < numHandlers; i++) {
+      this.addCommandHandler(new ServerHandler(this));
+    }
 
-		int p = Util.stringToInt(cf.getString("vdx.port"), -1);
-		if (p < 0 || p > 65535)
-			fatalError(configFilename + ": bad or missing 'vdx.port' setting.");
-		serverPort = p;
-		logger.info("config: vdx.port=" + serverPort + ".");
+    startListening();
+  }
 
-		int h = Util.stringToInt(cf.getString("vdx.handlers"), -1);
-		if (h < 1 || h > 128)
-			fatalError(configFilename + ": bad or missing 'vdx.handlers' setting.");
-		numHandlers = h;
-		logger.info("config: vdx.handlers=" + numHandlers + ".");
+  /**
+   * Log fatal error & shut down.
+   *
+   * @param msg error message
+   */
+  protected void fatalError(String msg) {
+    LOGGER.error(msg);
+    System.exit(1);
+  }
 
-		driver = cf.getString("vdx.driver");
-		if (driver == null)
-			fatalError(configFilename + ": bad or missing 'vdx.driver' setting.");
-		logger.info("config: vdx.driver=" + driver + ".");
+  /**
+   * Process configuration file and fill internal data.
+   */
+  public void processConfigFile() {
+    ConfigFile cf = new ConfigFile(configFilename);
+    if (!cf.wasSuccessfullyRead()) {
+      fatalError(configFilename + ": could not read config file.");
+    }
 
-		url = cf.getString("vdx.url");
-		if (url == null)
-			fatalError(configFilename + ": bad or missing 'vdx.url' setting.");
-		logger.info("config: vdx.url=" + url + ".");
+    int l = StringUtils.stringToInt(cf.getString("vdx.logLevel"), -1);
+    if (l > 1) {
+      org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel("DEBUG"));
+    } else {
+      org.apache.log4j.Logger.getRootLogger().setLevel(Level.INFO);
+    }
+    LOGGER.info("config: vdx.logLevel={}", l);
 
-		prefix = cf.getString("vdx.prefix");
-		if (prefix == null)
-			fatalError(configFilename + ": bad or missing 'vdx.prefix' setting.");
-		logger.info("config: vdx.prefix=" + prefix + ".");
+    int p = StringUtils.stringToInt(cf.getString("vdx.port"), -1);
+    if (p < 0 || p > 65535) {
+      fatalError(configFilename + ": bad or missing 'vdx.port' setting.");
+    }
+    serverPort = p;
+    LOGGER.info("config: vdx.port={}", serverPort);
 
-		int m = Util.stringToInt(cf.getString("vdx.maxConnections"), -1);
-		if (m < 0)
-			fatalError(configFilename + ": bad or missing 'vdx.maxConnections' setting.");
+    int h = StringUtils.stringToInt(cf.getString("vdx.handlers"), -1);
+    if (h < 1 || h > 128) {
+      fatalError(configFilename + ": bad or missing 'vdx.handlers' setting.");
+    }
+    numHandlers = h;
+    LOGGER.info("config: vdx.handlers={}", numHandlers);
 
-		connections.setMaxConnections(m);
-		logger.info("config: vdx.maxConnections=" + connections.getMaxConnections() + ".");
-	}
+    driver = cf.getString("vdx.driver");
+    if (driver == null) {
+      fatalError(configFilename + ": bad or missing 'vdx.driver' setting.");
+    }
+    LOGGER.info("config: vdx.driver={}", driver);
 
-	/**
-	 * Yield database driver
-	 * @return driver
-	 */
-	public String getDbDriver() {
-		return driver;
-	}
-	
-	/**
-	 * Yield database url
-	 * @return url
-	 */
-	public String getDbUrl() {
-		return url;
-	}
-	
-	/**
-	 * Yield prefix
-	 * @return prefix
-	 */
-	public String getPrefix() {
-		return prefix;
-	}
+    url = cf.getString("vdx.url");
+    if (url == null) {
+      fatalError(configFilename + ": bad or missing 'vdx.url' setting.");
+    }
+    LOGGER.info("config: vdx.url={}", url);
 
-	/**
-	 * Main method, 
-	 * starts new thread for VDX server which listen configured port,
-	 * and expect 'q' symbol on stdin to exit.
-	 * @param args command line args
-	 * @throws IOException
-	 */
-	public static void main(final String[] args) throws IOException {
-		Set arguments = Util.toSet(args);
-		Thread vdxThread = new Thread(new Runnable()
-				{
-					public void run()
-					{
-				String cf = null;
-				if (args.length > 0 && !args[args.length - 1].startsWith("-"))
-					cf = args[args.length - 1];
-				new VDX(cf);
-			}
-		});
-		vdxThread.setName("VDX");
-		vdxThread.start();
-		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-		boolean acceptCommands = !(arguments.contains("--noinput") || arguments.contains("-i"));
-		while (acceptCommands)
-		{
-			String s = in.readLine();
-			if (s != null)
-			{
-				s = s.toLowerCase().trim();
-				if (s.equals("q"))
-					System.exit(0);
-			}
-		}
-	}
+    prefix = cf.getString("vdx.prefix");
+    if (prefix == null) {
+      fatalError(configFilename + ": bad or missing 'vdx.prefix' setting.");
+    }
+    LOGGER.info("config: vdx.prefix={}", prefix);
+
+    String logFile = cf.getString("vdx.logFile");
+    if (logFile != null) {
+      try {
+        Log.addFileAppender(logFile, "%d{yyyy-MM-dd hh:mm:ss} %5p - %c{1} - %m%n");
+      } catch (IOException e) {
+        LOGGER.debug("Failed to create log file: {}", logFile, e);
+      }
+    }
+
+    int m = StringUtils.stringToInt(cf.getString("vdx.maxConnections"), -1);
+    if (m < 0) {
+      fatalError(configFilename + ": bad or missing 'vdx.maxConnections' setting.");
+    }
+
+    connections.setMaxConnections(m);
+    LOGGER.info("config: vdx.maxConnections={}", connections.getMaxConnections());
+  }
+
+  /**
+   * Yield database driver.
+   *
+   * @return driver
+   */
+  public String getDbDriver() {
+    return driver;
+  }
+
+  /**
+   * Yield database url.
+   *
+   * @return url
+   */
+  public String getDbUrl() {
+    return url;
+  }
+
+  /**
+   * Yield prefix.
+   *
+   * @return prefix
+   */
+  public String getPrefix() {
+    return prefix;
+  }
+
+  /**
+   * Main method, starts new thread for VDX server which listen configured port, and expect 'q'
+   * symbol on stdin to exit.
+   *
+   * @param args command line args
+   */
+  public static void main(final String[] args) throws IOException {
+    Set arguments = new HashSet<String>();
+    for (String arg : args) {
+      arguments.add(arg);
+    }
+    Thread vdxThread = new Thread(new Runnable() {
+      public void run() {
+        String cf = null;
+        if (args.length > 0 && !args[args.length - 1].startsWith("-")) {
+          cf = args[args.length - 1];
+        }
+        new VDX(cf);
+      }
+    });
+    vdxThread.setName("VDX");
+    vdxThread.start();
+    BufferedReader in = new BufferedReader(
+        new InputStreamReader(System.in, StandardCharsets.UTF_8));
+    boolean acceptCommands = !(arguments.contains("--noinput") || arguments.contains("-i"));
+    while (acceptCommands) {
+      String s = in.readLine();
+      if (s != null) {
+        s = s.toLowerCase().trim();
+        if (s.equals("q")) {
+          acceptCommands = false;
+        }
+      }
+    }
+
+    return;
+  }
 
 }
