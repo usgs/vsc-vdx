@@ -70,7 +70,7 @@ public class HypocenterRenderer implements Renderer {
    * Enumeration to define coloring mode.
    */
   public enum ColorOption {
-    DEPTH, TIME, MONOCHROME;
+    DEPTH, TIME, MONOCHROME, OLD;
 
     /**
      * Create ColorOption from string.
@@ -86,6 +86,8 @@ public class HypocenterRenderer implements Renderer {
           return TIME;  //Coloring by time
         case 'M':
           return MONOCHROME;
+        case 'O':
+          return OLD;
         default:
           return null;
       }
@@ -150,6 +152,8 @@ public class HypocenterRenderer implements Renderer {
    */
   public static Color[] colors = new Color[] {Color.BLACK, Color.RED, new Color(1.0f, 0.5f, 0.1f),
       new Color(1.0f, 0.91f, 0.0f), new Color(0.0f, 0.6f, 0.0f), Color.BLUE};
+  public static Color[] origColors = new Color[] {Color.BLACK, Color.GREEN, Color.RED,
+      new Color(1.0f, 0.91f, 0.0f), Color.BLUE, new Color(0.8f, 0.0f, 1.0f)};
 
   /**
    * The depth intervals.
@@ -264,7 +268,7 @@ public class HypocenterRenderer implements Renderer {
       public void render(Graphics2D g) {
         g.setStroke(new BasicStroke(1.0f));
         g.setFont(new Font("Arial", Font.PLAIN, 10));
-        if (colorOption == ColorOption.DEPTH) {
+        if (colorOption == ColorOption.DEPTH || colorOption == ColorOption.OLD) {
           Rectangle2D.Double rect = new Rectangle2D.Double();
           double yoff = 0;
           double ty = (depths.length - 1) * 18;
@@ -274,7 +278,11 @@ public class HypocenterRenderer implements Renderer {
           for (int i = 0; i < depths.length - 1; i++) {
             rect.setRect(startX, startY - ty + yoff, 10, 18);
             g.drawString(depthStrings[i], (float) startX + 18, (float) (startY - ty + 4 + yoff));
-            g.setPaint(colors[i]);
+            if (colorOption == ColorOption.OLD) {
+              g.setPaint(origColors[i]);
+            } else {
+              g.setPaint(colors[i]);
+            }
             g.fill(rect);
             g.setPaint(Color.BLACK);
             g.draw(rect);
@@ -449,10 +457,15 @@ public class HypocenterRenderer implements Renderer {
         g.translate(xt, yt);
 
         switch (colorOption) {
+          case OLD:
           case DEPTH:
             for (int j = 0; j < depths.length - 1; j++) {
               if (hc.depth >= depths[j] && hc.depth < depths[j + 1]) {
-                color = colors[j];
+                if (colorOption == ColorOption.OLD) {
+                  color = origColors[j];
+                } else {
+                  color = colors[j];
+                }
                 break;
               }
             }
