@@ -179,10 +179,6 @@ public class HypocenterRenderer implements Renderer {
     data = d;
     transformer = fr;
     axesOption = v;
-    //if (numberFormat == null) {
-    //  numberFormat = NumberFormat.getInstance();
-    //  numberFormat.setMaximumFractionDigits(0);
-    //}
     colorOption = ColorOption.chooseAuto(v);
   }
 

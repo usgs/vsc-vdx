@@ -90,14 +90,9 @@ public abstract class VDXSource implements DataSource {
       int cid = Integer.parseInt(params.get("ch"));
       double st = Double.parseDouble(params.get("st"));
       double et = Double.parseDouble(params.get("et"));
-      DownsamplingType ds = DownsamplingType.NONE;
-      int dsInt = 0;
-      try {
-        ds = DownsamplingType.fromString(params.get("ds"));
-        dsInt = Integer.parseInt(params.get("dsInt"));
-      } catch (Exception e) {
-        // do nothing
-      }
+      DownsamplingType ds = DownsamplingType.fromString(
+          StringUtils.stringToString(params.get("ds"), "None"));
+      int dsInt = StringUtils.stringToInt(params.get("dsInt"), 0);
       String code = channels.getChannelCode(cid);
       BinaryDataSet data = null;
       try {
