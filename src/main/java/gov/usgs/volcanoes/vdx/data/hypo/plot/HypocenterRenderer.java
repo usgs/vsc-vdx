@@ -150,8 +150,9 @@ public class HypocenterRenderer implements Renderer {
   /**
    * The colors for different depths.
    */
-  public static Color[] colors = new Color[] {Color.BLACK, Color.RED, new Color(1.0f, 0.5f, 0.1f),
-      new Color(1.0f, 0.91f, 0.0f), new Color(0.0f, 0.6f, 0.0f), Color.BLUE};
+  public static Color[] colors = new Color[] {Color.RED, new Color(1.0f, 0.5f, 0.1f),
+      new Color(0.95f, 0.93f, 0.15f), new Color(0.16f, 0.67f, 0.38f),
+      new Color(0.11f, 0.53f, 0.80f), new Color(0.40f, 0.18f, 0.56f)};
   public static Color[] origColors = new Color[] {Color.BLACK, Color.GREEN, Color.RED,
       new Color(1.0f, 0.91f, 0.0f), Color.BLUE, new Color(0.8f, 0.0f, 1.0f)};
 
@@ -477,12 +478,14 @@ public class HypocenterRenderer implements Renderer {
             break;
         }
 
-        g.setColor(color);
+        g.setColor(Color.BLACK);
         int ci = (int) Math.floor(hc.prefmag);
         if (ci < 0) {
           ci = 0;
         }
         g.draw(circles[ci]);
+        g.setColor(color);
+        g.fill(circles[ci]);
         g.translate(-xt, -yt);
       }
     }

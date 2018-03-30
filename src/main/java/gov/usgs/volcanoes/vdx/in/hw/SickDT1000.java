@@ -5,6 +5,7 @@ import gov.usgs.volcanoes.core.time.CurrentTime;
 import gov.usgs.volcanoes.core.time.Time;
 import gov.usgs.volcanoes.core.util.StringUtils;
 
+import java.text.DecimalFormat;
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -193,6 +194,8 @@ public class SickDT1000 implements Device {
    */
   @Override
   public String formatLine(String line) {
+    DecimalFormat df = new DecimalFormat("#.###");
+
     // Return date, mAbvSL, mRelOVL, sigStr
     String[] split = line.split("_");
     StringBuilder result = new StringBuilder();
@@ -208,7 +211,9 @@ public class SickDT1000 implements Device {
       meters = raw / 1000.0;
       meters = meters * Math.sin(Math.toRadians(54.7));
       meters = 1107 - meters;
+      meters = Double.valueOf(df.format(meters));
       ovl = (1131 - meters) * -1;
+      ovl = Double.valueOf(df.format(ovl));
     }
     result.append(",").append(meters).append(",").append(ovl);
 
