@@ -1949,7 +1949,6 @@ public abstract class SQLDataSource implements DataSource {
         }
       }
 
-      LOGGER.info("SQL: {}{}", sql, where.toString());
       ps = database.getPreparedStatement(sql + where);
       rs = ps.executeQuery();
       List<MetaDatum> result = new ArrayList<MetaDatum>();
