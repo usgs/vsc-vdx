@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class for the Sick DT1000 Long Range Distance Sensor.
+ * Class for the Sick DT1000 Long Range Distance Sensor. An importer that uses this device
+ * will store X (fields.length - 3) copies of the raw distance measurement, for use in computing
+ * other distances (height above sea level, etc).
  *
  * @author Bill Tollett
  */
@@ -72,6 +74,16 @@ public class SickDT1000 implements Device {
   protected String id;
 
   /**
+   * the angle of the sensor.
+   */
+  protected double angle;
+
+  /**
+   * value indicating nothing was received.
+   */
+  protected double badValue;
+
+  /**
    * Initialize the hardware device driver.
    * @param params ConfigFile
    * @throws Exception if the fields aren't defined
@@ -88,6 +100,8 @@ public class SickDT1000 implements Device {
     nullfield = StringUtils.stringToString(params.getString("nullfield"), "");
     pollhist = StringUtils.stringToBoolean(params.getString("pollhist"), false);
     fields = StringUtils.stringToString(params.getString("fields"), "");
+    angle = StringUtils.stringToDouble(params.getString("angle"), 0.0);
+    badValue = StringUtils.stringToDouble(params.getString("badvalue"), 6096000.0);
 
     // validation
     if (fields.length() == 0) {
@@ -194,7 +208,7 @@ public class SickDT1000 implements Device {
    */
   @Override
   public String formatLine(String line) {
-    DecimalFormat df = new DecimalFormat("#.###");
+    DecimalFormat df = new DecimalFormat("#.####");
 
     // Return date, mAbvSL, mRelOVL, sigStr
     String[] split = line.split("_");
@@ -204,21 +218,21 @@ public class SickDT1000 implements Device {
     result.append(Time.toDateString(CurrentTime.getInstance().now()));
 
     // Compute the meters above sea level
-    double raw = Double.valueOf(split[0]);
+    double raw = StringUtils.stringToDouble(split[0], badValue);
     double meters = Double.NaN;
-    double ovl = Double.NaN;
-    if (raw != 6096000.0) {
+    if (raw != badValue) {
       meters = raw / 1000.0;
-      meters = meters * Math.sin(Math.toRadians(54.7));
-      meters = 1107 - meters;
+      meters = meters * Math.sin(Math.toRadians(angle));
       meters = Double.valueOf(df.format(meters));
-      ovl = (1131 - meters) * -1;
-      ovl = Double.valueOf(df.format(ovl));
     }
-    result.append(",").append(meters).append(",").append(ovl);
+    result.append(",").append(meters);
+
+    for (int i = 0; i < fields.split(",").length - 3; i++) {
+      result.append(",").append(meters);
+    }
 
     // Add the signal strength
-    result.append(",").append(Integer.valueOf(split[1]));
+    result.append(",").append(StringUtils.stringToInt(split[1], 0));
 
     return result.toString();
   }
