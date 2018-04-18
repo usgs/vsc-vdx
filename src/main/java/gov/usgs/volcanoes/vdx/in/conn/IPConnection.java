@@ -178,7 +178,7 @@ public class IPConnection extends Thread implements Connection {
         int count = in.read(buffer);
         receiveData(buffer, count);
       } catch (Exception e) {
-        logger.error("Problem receiving data.", e);
+        logger.debug("Problem receiving data.", e);
       }
     }
   }
