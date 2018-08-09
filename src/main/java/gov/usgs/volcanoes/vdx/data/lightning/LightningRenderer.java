@@ -91,7 +91,7 @@ public class LightningRenderer implements Renderer {
     }
   }
 
-  public static enum StrokeCircle {
+  private enum StrokeCircle {
     ONE("1", 30, new Ellipse2D.Float(-1.5f, -1.5f, 3, 3)),
     LESS5("<5", 60, new Ellipse2D.Float(-3, -3, 6, 6)),
     LESS10("<10", 90, new Ellipse2D.Float(-5.5f, -5.5f, 11, 11)),
@@ -147,6 +147,11 @@ public class LightningRenderer implements Renderer {
   public static double[] depths = new double[]{-10000, 0, 5, 13, 20, 40, 10000};
   public static String[] depthStrings = new String[]{"", "0", "5", "13", "20", "40", "70+"};
 
+  static {
+    numberFormat = NumberFormat.getInstance();
+    numberFormat.setMaximumFractionDigits(0);
+  }
+
   /**
    * Constructor for HypocenterRenderer that gets the data, the coordinate transformer and the view
    * type.  The different views are:<br> M: map view (axes=lon/lat)<br> E or A: east view
@@ -160,10 +165,6 @@ public class LightningRenderer implements Renderer {
     data = d;
     transformer = fr;
     axesOption = v;
-    if (numberFormat == null) {
-      numberFormat = NumberFormat.getInstance();
-      numberFormat.setMaximumFractionDigits(0);
-    }
     colorOption = ColorOption.chooseAuto(v);
   }
 

@@ -235,12 +235,12 @@ public class AnssToSQL {
       try {
         s = new Scanner(readFile(args[i]));
       } catch (IOException e) {
-        System.err.printf("Could not open file: %s\n", args[i]);
+        System.err.printf("Could not open file: %s%n", args[i]);
         continue;
 
       }
 
-      System.err.printf("Reading file: %s\n", args[i]);
+      System.err.printf("Reading file: %s%n", args[i]);
 
       int j = 0;
       while (s.hasNextLine()) {
@@ -257,12 +257,12 @@ public class AnssToSQL {
               if (web) {
                 System.out.printf(
                     "%s INTO hypocenter (hypocenter_date_time,latitude,longitude,"
-                    + "depth,magnitude,event_id) VALUES\n", clause);
+                    + "depth,magnitude,event_id) VALUES%n", clause);
                 printLineWeb(line, "");
               } else {
                 System.out.printf(
                     "%s INTO hypocenters (j2ksec,eid,rid,lat,lon,depth,prefmag,"
-                    + " nphases,azgap,dmin,rms,nstimes,herr,verr,magtype) VALUES\n", clause);
+                    + " nphases,azgap,dmin,rms,nstimes,herr,verr,magtype) VALUES%n", clause);
                 printLine(line, "");
               }
 
@@ -278,17 +278,17 @@ public class AnssToSQL {
           }
         } catch (Exception e) {
           e.printStackTrace();
-          System.err.printf("Could not read line %d in file %s.\n", j, args[i]);
+          System.err.printf("Could not read line %d in file %s.%n", j, args[i]);
         }
       }
       if (!first) {
-        System.out.printf(";\n");
+        System.out.printf(";%n");
       }
       s.close();
 
     }
 
-    System.err.printf("\nElapsed Time: %d ms\n", System.currentTimeMillis() - start_time);
+    System.err.printf("\nElapsed Time: %d ms%n", System.currentTimeMillis() - start_time);
 
   }
 }

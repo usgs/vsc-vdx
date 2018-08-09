@@ -181,16 +181,24 @@ public class TiltVelocity {
           LOGGER.debug("Generating real alarm.");
           LOGGER.debug("Final: V: {} ({}), R: {} ({})", decimalOut.format(vals[0]),
               threshold, decimalOut.format(vals[1]), residual);
+          System.out.println("alarm," + decimalOut.format(vals[0]) + ","
+              + decimalOut.format(vals[1]));
         } else {
           LOGGER.debug("Generating weak alarm.");
           LOGGER.debug("Final: V: {} ({}), R: {} ({})", decimalOut.format(vals[0]),
               threshold, decimalOut.format(vals[1]), residual);
+          System.out.println("weak," + decimalOut.format(vals[0]) + ","
+              + decimalOut.format(vals[1]));
         }
+      } else {
+        System.out.println("no," + decimalOut.format(vals[0]) + ","
+            + decimalOut.format(vals[1]));
       }
 
-      LOGGER.info("{},{}", decimalOut.format(vals[0]), decimalOut.format(vals[1]));
+      LOGGER.debug("{},{}", decimalOut.format(vals[0]), decimalOut.format(vals[1]));
     } else {
       LOGGER.info("Not enough samples for a velocity test");
+      System.out.println("Insufficient samples.");
     }
   }
 
@@ -270,10 +278,10 @@ public class TiltVelocity {
     if ((file = args.get("-configFile")) != null) {
       tv.runAllFromFile(file);
     } else {
-      tv.run(args.get("c"), args.get("n"), Integer.valueOf(args.get("m")),
-          Integer.valueOf(args.get("s")),
-          Double.valueOf(args.get("t")), Double.valueOf(args.get("h")),
-          Double.valueOf(args.get("r")));
+      tv.run(args.get("-c"), args.get("-n"), Integer.valueOf(args.get("-m")),
+          Integer.valueOf(args.get("-s")),
+          Double.valueOf(args.get("-t")), Double.valueOf(args.get("-h")),
+          Double.valueOf(args.get("-r")));
     }
 
     tv.deinitialize();

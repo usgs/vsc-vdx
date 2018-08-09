@@ -214,22 +214,22 @@ public class StacovToSQL {
             if (notAlreadyPrinted) {
               System.out.printf(
                   "INSERT IGNORE INTO sources (name,j2ksec0,j2ksec1,rid) VALUES "
-                  + "(\"%s\",%f,%f,%s);\n", stacov.name, stacov.j2ksec0, stacov.j2ksec1, rankID);
+                  + "(\"%s\",%f,%f,%s);%n", stacov.name, stacov.j2ksec0, stacov.j2ksec1, rankID);
               System.out.printf(
                   "SELECT sid FROM sources WHERE name=\"%s\" AND j2ksec0=%f AND j2ksec1=%f AND "
-                  + "rid=%s INTO @sourceID;\n",
+                  + "rid=%s INTO @sourceID;%n",
                   stacov.name, stacov.j2ksec0, stacov.j2ksec1, rankID);
               notAlreadyPrinted = false;
             }
 
             System.out.printf(
                 "INSERT IGNORE INTO channels (code,lon,lat,height) VALUES "
-                + "(\"%s\",%20.15f,%20.15f,%20.15f);\n", stacov.code[j], llh[0], llh[1], llh[2]);
-            System.out.printf("SELECT cid FROM channels WHERE code=\"%s\" INTO @channelID;\n",
+                + "(\"%s\",%20.15f,%20.15f,%20.15f);%n", stacov.code[j], llh[0], llh[1], llh[2]);
+            System.out.printf("SELECT cid FROM channels WHERE code=\"%s\" INTO @channelID;%n",
                 stacov.code[j]);
             System.out.printf(
                 "INSERT INTO solutions VALUES "
-                + "(@sourceID,@channelID,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e);\n",
+                + "(@sourceID,@channelID,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e,%.17e);%n",
                 stacov.data[0][j], stacov.data[1][j], stacov.data[2][j],
                 stacov.covariance[0][j],
                 stacov.covariance[1][j],
