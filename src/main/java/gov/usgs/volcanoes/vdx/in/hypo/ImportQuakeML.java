@@ -236,10 +236,12 @@ public class ImportQuakeML implements Importer {
 
     ResourceReader rr = ResourceReader.getResourceReader(resource);
     if (rr == null) {
+      LOGGER.error("skipping: {} (resource is invalid)", resource);
       return;
     }
     EventSet eventSet = null;
     try {
+      LOGGER.info("importing: {}", resource);
       eventSet = EventSet.parseQuakeml(rr.getInputStream());
     } catch (IOException e1) {
       // TODO Auto-generated catch block
