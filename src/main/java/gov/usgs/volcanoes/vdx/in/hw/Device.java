@@ -44,4 +44,6 @@ public interface Device {
   public int getTimeout();
 
   public int getMaxtries();
+
+  public String getBadDataValue();
 }

@@ -631,7 +631,8 @@ public class ImportPoll extends Import implements Importer {
 
                   // elements that are neither IGNORE nor CHANNELS nor TIMESTAMPS are DATA
                 } else {
-                  if (valueMap.get(i).length() == 0) {
+                  if (valueMap.get(i).length() == 0
+                      || valueMap.get(i).equalsIgnoreCase(device.getBadDataValue())) {
                     value = Double.NaN;
                   } else {
                     value = Double.parseDouble(valueMap.get(i));

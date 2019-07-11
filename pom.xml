@@ -3,7 +3,7 @@
 
   <groupId>gov.usgs.volcanoes</groupId>
   <artifactId>vdx</artifactId>
-  <version>3.6.2</version>
+  <version>3.6.3</version>
   <packaging>jar</packaging>
 
   <name>VDX</name>
@@ -124,7 +124,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.1</version>
+        <version>3.2.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -321,7 +321,7 @@
     <dependency>
       <groupId>gov.usgs.volcanoes</groupId>
       <artifactId>volcano-core</artifactId>
-      <version>1.4.7</version>
+      <version>1.4.14</version>
     </dependency>
     <dependency>
       <groupId>gov.usgs.volcanoes</groupId>
