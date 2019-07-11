@@ -97,6 +97,11 @@ public class Esc8832 implements Device {
    */
   protected String id;
 
+  /**
+   * the value returned for bad data.
+   */
+  protected String badDataValue;
+
   protected SimpleDateFormat dateIn = new SimpleDateFormat("DDDHHmmss");
   protected SimpleDateFormat dateOut = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -134,6 +139,7 @@ public class Esc8832 implements Device {
     fields = StringUtils.stringToString(params.getString("fields"), "");
     acquisition = Acquisition
         .fromString(StringUtils.stringToString(params.getString("acquisition"), "poll"));
+    badDataValue = StringUtils.stringToString(params.getString("baddataval"), "");
 
     // validation
     if (fields.length() == 0) {
@@ -163,6 +169,7 @@ public class Esc8832 implements Device {
     settings += "nullfield:" + nullfield + "/";
     settings += "pollhist:" + pollhist + "/";
     settings += "calchannel:" + calchannel + "/";
+    settings += "baddataval:" + badDataValue + "/";
     return settings;
   }
 
@@ -506,6 +513,13 @@ public class Esc8832 implements Device {
    */
   public String getFields() {
     return fields;
+  }
+
+  /**
+   * getter method for badDataValue.
+   */
+  public String getBadDataValue() {
+    return badDataValue;
   }
 
   /**

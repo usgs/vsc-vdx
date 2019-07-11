@@ -79,9 +79,9 @@ public class SickDT1000 implements Device {
   protected double angle;
 
   /**
-   * value indicating nothing was received.
+   * the value returned for bad data.
    */
-  protected double badValue;
+  protected String badDataValue;
 
   /**
    * Initialize the hardware device driver.
@@ -101,7 +101,7 @@ public class SickDT1000 implements Device {
     pollhist = StringUtils.stringToBoolean(params.getString("pollhist"), false);
     fields = StringUtils.stringToString(params.getString("fields"), "");
     angle = StringUtils.stringToDouble(params.getString("angle"), 0.0);
-    badValue = StringUtils.stringToDouble(params.getString("badvalue"), 6096000.0);
+    badDataValue = StringUtils.stringToString(params.getString("baddataval"), "0.0");
 
     // validation
     if (fields.length() == 0) {
@@ -218,9 +218,10 @@ public class SickDT1000 implements Device {
     result.append(Time.toDateString(CurrentTime.getInstance().now()));
 
     // Compute the meters above sea level
-    double raw = StringUtils.stringToDouble(split[0], badValue);
+    boolean isBadValue = split[0].equalsIgnoreCase(badDataValue);
+    double raw = StringUtils.stringToDouble(split[0], Double.valueOf(badDataValue));
     double meters = Double.NaN;
-    if (raw != badValue) {
+    if (!isBadValue) {
       meters = raw / 1000.0;
       meters = meters * Math.sin(Math.toRadians(angle));
       meters = Double.valueOf(df.format(meters));
@@ -307,5 +308,12 @@ public class SickDT1000 implements Device {
   @Override
   public int getMaxtries() {
     return maxtries;
+  }
+
+  /**
+   * getter method for badDataValue.
+   */
+  public String getBadDataValue() {
+    return badDataValue;
   }
 }

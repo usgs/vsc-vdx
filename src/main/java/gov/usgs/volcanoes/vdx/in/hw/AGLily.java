@@ -85,6 +85,11 @@ public class AGLily implements Device {
    */
   protected String id;
 
+  /**
+   * the value returned for bad data.
+   */
+  protected String badDataValue;
+
   private enum Acquisition {
     STREAM, POLL;
 
@@ -116,6 +121,7 @@ public class AGLily implements Device {
     fields = StringUtils.stringToString(params.getString("fields"), "");
     acquisition = Acquisition
         .fromString(StringUtils.stringToString(params.getString("acquisition"), "poll"));
+    badDataValue = StringUtils.stringToString(params.getString("baddataval"), "");
 
     // validation
     if (fields.length() == 0) {
@@ -140,6 +146,7 @@ public class AGLily implements Device {
     settings += "delimiter:" + delimiter + "/";
     settings += "nullfield:" + nullfield + "/";
     settings += "pollhist:" + pollhist + "/";
+    settings += "baddataval:" + badDataValue + "/";
     return settings;
   }
 
@@ -355,6 +362,13 @@ public class AGLily implements Device {
    */
   public String getFields() {
     return fields;
+  }
+
+  /**
+   * getter method for badDataValue.
+   */
+  public String getBadDataValue() {
+    return badDataValue;
   }
 
   /**
