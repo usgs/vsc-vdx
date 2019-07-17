@@ -43,7 +43,7 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
    * @return next row
    */
   public Double[] getNextExportRow() {
-    if (expIndex >= bins && ((time + getMinX()) > getMaxX())) {
+    if (expIndex >= bins) {
       return null;
     }
 
@@ -55,12 +55,13 @@ public class HistogramExporter extends HistogramRenderer implements Exportable {
         && (time + getMinX()) < myHistogram.xAxis().upperEdge()) {
       // Current date falls within histogram dates.
       row[1] = myHistogram.binHeight(expIndex);
-      expIndex++;
     } else {
       row[1] = 0.0;
+      expIndex--;
     }
 
     time += myHistogram.xAxis().binWidth(expIndex);
+    expIndex++;
     return row;
   }
 
