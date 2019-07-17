@@ -3,7 +3,7 @@
 
   <groupId>gov.usgs.volcanoes</groupId>
   <artifactId>vdx</artifactId>
-  <version>3.6.3</version>
+  <version>3.6.4</version>
   <packaging>jar</packaging>
 
   <name>VDX</name>
